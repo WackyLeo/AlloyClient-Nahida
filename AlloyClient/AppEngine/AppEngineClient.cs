@@ -1,11 +1,12 @@
-﻿using System;
+﻿using AlloyClient.State;
+using AlloyClient.Utils;
+using Common;
+using System;
 using System.Collections.Generic;
+using System.Net;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
-using AlloyClient.State;
-using AlloyClient.Utils;
-using Common;
 
 namespace AlloyClient.AppEngine;
 
@@ -15,7 +16,13 @@ public static class AppEngineClient {
     private static readonly HttpClient Client;
 
     static AppEngineClient() {
-        Client = new HttpClient();
+
+        var handler = new HttpClientHandler
+        {
+            AutomaticDecompression = DecompressionMethods.Deflate | DecompressionMethods.GZip
+        };
+
+        Client = new HttpClient(handler);
         Client.BaseAddress = new Uri(Settings.AppEngineUrl);
 
         Client.DefaultRequestHeaders.Add("Pragma", "no-cache");
@@ -35,7 +42,10 @@ public static class AppEngineClient {
 
         for (var i = 0; i <= retries; i++) {
             Log.Trace($"Sending request to {endpoint}." + (i == 0 ? "" : $" Attempt {i + 1} of {retries + 1}."));
-
+            foreach(var str in data) {
+                Log.Trace($"Key: {str.Key} \nValue: {str.Value}");
+            }
+           
             try {
                 var response = await client.PostAsync(endpoint, content, cancellationTokenSource.Token);
                 return await response.Content.ReadAsStringAsync(cancellationTokenSource.Token);

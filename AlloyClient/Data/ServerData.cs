@@ -16,7 +16,7 @@ public sealed class ServerItem(XElement xml) {
 
     public readonly string Dns = xml.GetValue("DNS", "");
 
-    public readonly int Port = xml.GetValue("Port", 2050);
+    public readonly int Port = xml.GetValue("Port", 2051);
 
     public readonly int Players = xml.GetValue("Players", 0);
 

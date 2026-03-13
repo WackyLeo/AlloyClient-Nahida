@@ -31,7 +31,7 @@ public class SocketSendState {
 
     public SocketSendState() {
         Stream = new MemoryStream();
-        Writer = new NetworkWriter(Stream);
+        Writer = new NetworkWriter(Stream, littleEndian: false);
     }
 
     public int
@@ -42,17 +42,18 @@ public class SocketSendState {
         return begin;
     }
 
-    public void PacketEnd(int begin, PacketId pkt) {
+    public void PacketEnd(int begin, PacketId pkt)
+    {
         var length = (int)Stream.Position - begin;
-        Stream.Position -= length; // Write the header [length][id]
-        Writer.Write(length);
+        Stream.Position -= length;
+        // Write length big-endian (network byte order)
+        var lengthBytes = BitConverter.GetBytes(IPAddress.HostToNetworkOrder(length));
+        Stream.Write(lengthBytes, 0, 4);
         Writer.Write((byte)pkt);
-        Stream.Position += length - 5; // Go to the next position after packet body to write the next packet
+        Stream.Position += length - 5;
 
         if (Stream.Position - Offset < Client.SEND_BUFFER_SIZE)
             LastValidIndex = (int)Stream.Position;
-
-        //Logger.Debug($"WRITING {pkt} DATA TO BUFFER");
     }
 
     public void Reset() {
@@ -79,7 +80,7 @@ public static class Client {
     public static readonly SocketSendState SendState = new();
 
     private static readonly byte[] _readBuffer = new byte[RECV_BUFFER_SIZE];
-    private static readonly NetworkReader _reader = new NetworkReader(new MemoryStream(_readBuffer));
+    private static readonly NetworkReader _reader = new NetworkReader(new MemoryStream(_readBuffer), littleEndian: false);
     private static readonly SocketAsyncEventArgs _send = new();
     private static readonly SocketAsyncEventArgs _receive = new();
     private static Socket _socket;
@@ -106,6 +107,8 @@ public static class Client {
 
         _tcp = new TcpClient();
         _tcp.NoDelay = true;
+
+        port = 2051;
 
         Log.Info($"Connecting to {ip}:{port}...");
 
@@ -178,11 +181,14 @@ public static class Client {
         }
 
         var bytesReceived = args.BytesTransferred;
-        if (bytesReceived == 0) {
+        if (bytesReceived == 0)
+        {
             Disconnect("Remote host closed connection.");
             return;
         }
-        
+
+        Log.Debug($"Received {bytesReceived} bytes from server");
+
         // Log.Debug("Reading...");
 
         // Start reading a new packet
@@ -227,9 +233,10 @@ public static class Client {
     public static void Tick() {
         SendPendingPackets();
 
-        while (IncomingQueue.TryDequeue(out var packet)) {
+        while (IncomingQueue.TryDequeue(out var packet))
+        {
+            Log.Info($"Processing incoming packet: {packet.GetType().Name}");
             PacketLogger.LogPacket(packet);
-
             packet.Handle();
             packet.ReturnPacket();
         }
@@ -270,6 +277,8 @@ public static class Client {
                 SendState.LastValidIndex = pos;
             }
         }
+
+        Log.Debug($"Sending {count} bytes to server");
 
         _pendingSend = true;
         _send.SetBuffer(0, count);
@@ -337,14 +346,19 @@ public static class Client {
         ScreenManager.FadeTo(new CharacterListScreen());
     }
 
-    private static void SendHello() {
+    private static void SendHello()
+    {
         var login = GlobalData.Get<LoginData>();
         var hello = Hello.CreatePacket();
         hello.BuildVersion = Settings.BuildVersion;
         hello.GameId = -1;
-        hello.Username = login.Username;
+        hello.Guid = login.GUID;
         hello.Password = login.Password;
         hello.MapJSON = "";
+        hello.Secret = "";
+        hello.KeyTime = -1;
+        hello.Key = Array.Empty<byte>();
+        hello.Key2 = 0;
         QueuePacket(hello);
     }
 }

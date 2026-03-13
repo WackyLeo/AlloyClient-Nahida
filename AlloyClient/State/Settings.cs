@@ -25,18 +25,18 @@ public static class Settings {
     public const string BuildVersion = "0.3.3";
     public const string BuildLabel = $"OpenTK v{BuildVersion}";
 
-    public const string AppEngineAddress = "127.0.0.1";
+    public const string AppEngineAddress = "116.255.20.214";
     //public const string AppEngineAddress = "204.13.235.158";
     public const string AssetUrl = "https://domain-of-magica.github.io";
 
-    public const string AppEnginePort = "80";
+    public const string AppEnginePort = "65001";
     public const string AppEngineUrl = $"http://{AppEngineAddress}:{AppEnginePort}";
 
     public const int AppEngineTimeout = 10000;
 
-    public const string GameServerAddress = "127.0.0.1";
+    public const string GameServerAddress = "116.255.20.214";
     //public const string GameServerAddress = "204.13.235.158";
-    public const ushort GameServerPort = 2050;
+    public const ushort GameServerPort = 2051;
 
     public const int DefaultScreenWidth = 1280;
     public const int DefaultScreenHeight = 720;
@@ -270,6 +270,7 @@ public static class Settings {
 
     public static void LoadSettings() {
         LoadLocalAccount();
+
         try {
             ResetToDefault();
             TryLoadSettings();
@@ -408,15 +409,18 @@ public static class Settings {
             return;
         }
 
-        var loadedUser = info.TryGetValue("username", out var username) && !string.IsNullOrWhiteSpace(username);
-        var loadedPass = info.TryGetValue("password", out var password) && !string.IsNullOrWhiteSpace(password);
+        var loadedGUID = info.TryGetValue("GUID", out var guid) && !string.IsNullOrWhiteSpace(guid);
+        var loadedPASSWORD = info.TryGetValue("Password", out var password) && !string.IsNullOrWhiteSpace(password);
 
-        if (username == string.Empty && password == string.Empty) {
+        // Log the stuff
+
+
+        if (guid == string.Empty && password == string.Empty) {
             Log.Debug("No local account data");
             return;
         }
 
-        if (!loadedUser || !loadedPass) {
+        if (!loadedGUID || !loadedPASSWORD) {
             Log.Debug("Incomplete/Invalid local account data");
             return;
         }
@@ -428,7 +432,7 @@ public static class Settings {
             return;
         }
 
-        GlobalData.Add(new LoginData(username, Encoding.UTF8.GetString(data.AsSpan(0, count))));
+        GlobalData.Add(new LoginData(guid, Encoding.UTF8.GetString(data.AsSpan(0, count))));
     }
 
     public static void SaveLocalAccount() {
@@ -446,10 +450,10 @@ public static class Settings {
             return;
         }
 
-        var username = data.Username;
+        var guid = data.GUID;
         var password = new string(chars.AsSpan(0, charCount));
 
-        var jsonString = JsonConvert.SerializeObject(new Dictionary<string, string>{{"username", username}, {"password", password}});
+        var jsonString = JsonConvert.SerializeObject(new Dictionary<string, string>{{"GUID", guid}, {"password", password}});
 
         try {
             File.WriteAllText(Path.Combine(LocalFolderPath, AccountFileName), jsonString);

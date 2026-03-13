@@ -72,7 +72,7 @@ public class Main {
     private void Initialize() {
         GL.Viewport(0, 0, Settings.ScreenWidth, Settings.ScreenHeight);
         Toolkit.Window.SetClientSize(Window, new Vector2i(Settings.ScreenWidth, Settings.ScreenHeight));
-        Toolkit.Window.SetTitle(Window, "RealmTk");
+        Toolkit.Window.SetTitle(Window, "Ica's Client");
         Toolkit.Window.SetMinClientSize(Window, 800, 600);
 
         var mode = Settings.Fullscreen ? WindowMode.WindowedFullscreen : WindowMode.Normal;
@@ -96,11 +96,21 @@ public class Main {
     private void LoadContent() {
         ContentReader.Init(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Content"));
         
+        // We're going to need to request textures here
+
+        // We're going to need to request sheets here too
+
+
         Atlas = ContentReader.LoadAtlas("Game.atlas");
         UiAtlas = ContentReader.LoadAtlas("Ui.atlas");
+
+
         MinimapTexture.Init(out var mapTexture);
+
+      
         var titleBackground = ContentReader.LoadTexture("TitleScreen/TitleScreenBackground.png");
         var titleGraphic = ContentReader.LoadTexture("TitleScreen/TitleScreenGraphic.png");
+
         var font = new BitmapFamily(ContentReader.LoadFont("Fonts/MyriadPro/MyriadPro.msdf"));
         
         // Set texture units
@@ -132,14 +142,13 @@ public class Main {
         UiRender.RegisterTexture(TextureType.TitleBackground, titleBackgroundSampler);
         UiRender.RegisterTexture(TextureType.TitleGraphic, titleGraphicSampler);
         
+
         Render.FirstTimeInit(gameAtlasSampler);
 
         SliceLibrary.Load();
         
         DisplayManager.Init(stage);
-        
-        
-
+       
         ScreenManager.FadeToScreen(new LoadingScreen(), Easing.SineInOut, 1000, 0x0);
         //ScreenManager.SetScreen(new TestScreen());
     }

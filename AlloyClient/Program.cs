@@ -23,6 +23,7 @@ public static class Program {
         
         var game = new Main();
         game.Run();
+
         Settings.SaveSettings();
     }
     

@@ -26,4 +26,6 @@ public static class ContentReader {
         return new Shader(Path.Combine(_folder, path), defines);
     }
 
+    // LoadAtlas and LoadTexture from a http responce
+
 }

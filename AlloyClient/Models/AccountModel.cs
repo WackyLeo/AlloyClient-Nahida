@@ -20,14 +20,14 @@ public struct AccountResponse {
 public static class AccountModel1 {
     
     private const string AccountFileName = "account.json";
-    private const string UsernameKey = "username";
+    private const string GuidKey = "GUID";
     private const string PasswordKey = "password";
 
     private static readonly Logger Log = new(typeof(AccountModel1));
     
     public static bool IsLoggedIn { get; private set; }
 
-    public static string Username{ get; private set; }
+    public static string Guid{ get; private set; }
 
     public static string Password { get; private set; }
     
@@ -57,10 +57,10 @@ public static class AccountModel1 {
             return;
         }
 
-        var loadedUser = info.TryGetValue(UsernameKey, out var username) && !string.IsNullOrWhiteSpace(username);
+        var loadedGUID = info.TryGetValue(GuidKey, out var guid) && !string.IsNullOrWhiteSpace(guid);
         var loadedPass = info.TryGetValue(PasswordKey, out var password) && !string.IsNullOrWhiteSpace(password);
 
-        if (!loadedUser || !loadedPass) {
+        if (!loadedGUID || !loadedPass) {
             SetNoAccount();
             Log.Debug("Incomplete/Invalid local account data");
             return;
@@ -74,7 +74,7 @@ public static class AccountModel1 {
             return;
         }
 
-        Username = username;
+        Guid = Guid;
         Password = Encoding.UTF8.GetString(data.AsSpan(0, count));
     }
 
@@ -91,10 +91,10 @@ public static class AccountModel1 {
             return;
         }
 
-        var username = Username;
+        var guid = Guid;
         var password = new string(chars.AsSpan(0, charCount));
 
-        var jsonString = JsonConvert.SerializeObject(BuildAccountRequestData(username, password));
+        var jsonString = JsonConvert.SerializeObject(BuildAccountRequestData(guid, password));
 
         try {
             File.WriteAllText(GetLocalAccountFilePath(), jsonString);
@@ -105,15 +105,15 @@ public static class AccountModel1 {
 
     public static void Logout() {
         IsLoggedIn = false;
-        Username = string.Empty;
+        Guid = string.Empty;
         Password = string.Empty;
         SaveLocalAccount();
     }
 
-    private static Dictionary<string, string> GetAccountRequestData() => new() {{UsernameKey, Username}, {PasswordKey, Password}};
-    private static Dictionary<string, string> BuildAccountRequestData(string username, string password) => new() {{UsernameKey, username}, {PasswordKey, password}};
+    private static Dictionary<string, string> GetAccountRequestData() => new() {{GuidKey, Guid}, {PasswordKey, Password}};
+    private static Dictionary<string, string> BuildAccountRequestData(string guid, string password) => new() {{GuidKey, guid }, {PasswordKey, password}};
 
-    private static void SetNoAccount() => Username = Password = string.Empty;
+    private static void SetNoAccount() => Guid = Password = string.Empty;
 
     private static string GetLocalAccountFilePath() => Path.Combine(Settings.LocalFolderPath, AccountFileName);
 }

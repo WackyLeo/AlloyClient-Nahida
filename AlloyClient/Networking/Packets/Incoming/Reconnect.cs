@@ -26,7 +26,7 @@ public class Reconnect : IncomingPacket<Reconnect> {
         var hello = Hello.CreatePacket();
         hello.BuildVersion = Settings.BuildVersion;
         hello.GameId = GameId;
-        hello.Username = login.Username;
+        hello.Guid = login.GUID;
         hello.Password = login.Password;
         hello.MapJSON = "";
         Client.QueuePacket(hello);
