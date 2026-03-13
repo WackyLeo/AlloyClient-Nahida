@@ -216,12 +216,12 @@ public class Player : Entity {
                 case StatsType.Wisdom:
                     Wisdom = stat.Value;
                     break;
-                /*case StatsType.MaxHpBonus:
+                case StatsType.HpBoost:
                     MaxHpBoost = stat.Value;
                     break;
-                case StatsType.MaxMpBonus:
+                case StatsType.MpBoost:
                     MaxMpBoost = stat.Value;
-                    break;*/
+                    break;
                 case StatsType.AttackBonus:
                     AttackBoost = stat.Value;
                     break;
@@ -243,9 +243,9 @@ public class Player : Entity {
                 case StatsType.AccountId:
                     AccountId = stat.Value;
                     break;
-                /*case StatsType.NextLevelXp:
+                case StatsType.ExperienceGoal:
                     NextLevelExp = stat.Value;
-                    break;*/
+                    break;
                 case StatsType.Experience:
                     Experience = stat.Value;
                     break;

@@ -126,7 +126,7 @@ public static class Map {
         Render.SetShaderParams(gameTime);
 
         #region Tile
-        
+        if (LocalPlayer == null) return;
         var pos = Vector2.Floor(LocalPlayer.Position);
         if (pos != _lastPosition) {
             _lastPosition = pos;

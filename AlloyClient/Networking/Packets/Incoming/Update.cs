@@ -29,13 +29,16 @@ public class Update : IncomingPacket<Update> {
         TileCount = NewObjCount = DropCount = 0;
     }
 
-    public override void Read(NetworkReader reader) {
+    public override void Read(NetworkReader reader)
+    {
         ObjectDef.StatsPoolIndex = 0;
-        
+
         TileCount = reader.ReadInt16();
         EnsureCapacity(ref _tilesBuffer, TileCount);
         for (int i = 0; i < TileCount; i++)
             _tilesBuffer[i].Read(reader);
+
+        Logger.Debug($"[Update] After tiles: tileCount={TileCount} pos={reader.BaseStream.Position}");
 
         NewObjCount = reader.ReadInt16();
         EnsureCapacity(ref _newObjsBuffer, NewObjCount);
@@ -44,12 +47,10 @@ public class Update : IncomingPacket<Update> {
 
         DropCount = reader.ReadInt16();
         EnsureCapacity(ref _dropsBuffer, DropCount);
-        for (int i = 0; i < DropCount; i++) {
+        for (int i = 0; i < DropCount; i++)
             _dropsBuffer[i] = reader.ReadInt32();
-            _ = reader.ReadBoolean();
-        }
     }
-    
+
     private static void EnsureCapacity<T>(ref T[] array, int needed) {
         if (array.Length < needed)
             array = new T[needed * 2]; // double to avoid frequent resizes

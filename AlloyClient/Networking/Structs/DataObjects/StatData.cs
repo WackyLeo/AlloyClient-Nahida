@@ -1,4 +1,5 @@
 ﻿using AlloyClient.Networking.Enums;
+using Common;
 
 namespace AlloyClient.Networking.Structs.DataObjects;
 
@@ -17,15 +18,20 @@ public struct StatData : IDataObject {
         DataObject = null;
     }
 
-    public void Read(NetworkReader reader) {
+    public void Read(NetworkReader reader)
+    {
         Type = (StatsType)reader.ReadByte();
+        Logger.Debug($"[StatData] Reading stat type=0x{(byte)Type:X2} ({Type})");
 
-        if (IsStringStat(Type)) {
+        if (IsStringStat(Type))
+        {
             Text = reader.ReadUTF();
-        } else if (IsFloatStat(Type)) {
-            FloatValue = reader.ReadSingle();
-        } else {
+            Value = 0;
+        }
+        else
+        {
             Value = reader.ReadInt32();
+            Text = null;
         }
     }
 
@@ -46,44 +52,32 @@ public struct StatData : IDataObject {
         {
             case StatsType.Name:
             case StatsType.Guild:
-            /*case StatsType.InventoryData0:
-            case StatsType.InventoryData1:
-            case StatsType.InventoryData2:
-            case StatsType.InventoryData3:
-            case StatsType.InventoryData4:
-            case StatsType.InventoryData5:
-            case StatsType.InventoryData6:
-            case StatsType.InventoryData7:
-            case StatsType.InventoryData8:
-            case StatsType.InventoryData9:
-            case StatsType.InventoryData10:
-            case StatsType.InventoryData11:
-            case StatsType.InventoryData12:
-            case StatsType.InventoryData13:
-            case StatsType.InventoryData14:
-            case StatsType.InventoryData15:
-            case StatsType.InventoryData16:
-            case StatsType.InventoryData17:
-            case StatsType.InventoryData18:
-            case StatsType.InventoryData19:
-            case StatsType.AbilityDataA:
-            case StatsType.AbilityDataB:
-            case StatsType.AbilityDataC:
-            case StatsType.AbilityDataD:*/
+            case StatsType.AccountId:
+            case StatsType.OwnerAccountId:
+            /* case StatsType.Inventoory0:
+            case StatsType.Inventory1:
+            case StatsType.Inventory2:
+            case StatsType.Inventory3:
+            case StatsType.Inventory4:
+            case StatsType.Inventory5:
+            case StatsType.Inventory6:
+            case StatsType.Inventory7:
+            case StatsType.Inventory8:
+            case StatsType.Inventory9:
+            case StatsType.Inventory10:
+            case StatsType.Inventory11:
+            case StatsType.BackPack0:
+            case StatsType.BackPack1:
+            case StatsType.BackPack2:
+            case StatsType.BackPack3:
+            case StatsType.BackPack4:
+            case StatsType.BackPack5:
+            case StatsType.BackPack6:
+            case StatsType.BackPack7: */
                 return true;
             default:
                 return false;
         }
-    }
-    
-    private static bool IsFloatStat(StatsType type)
-    {
-        return type switch
-        {
-            StatsType.Speed => true,
-            StatsType.SpeedBonus => true,
-            _ => false
-        };
     }
 
     public override string ToString() {

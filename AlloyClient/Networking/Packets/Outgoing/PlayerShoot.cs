@@ -28,20 +28,13 @@ public class PlayerShoot : OutgoingPacket<PlayerShoot> {
     }
 
     public override void Write(NetworkWriter writer) {
-        writer.Write(Angle);
-        StartingPos.Write(writer);
+        writer.Write(1);
         writer.Write(Time);
-        writer.Write(IsServerShoot);
-        if (IsServerShoot) {
-            writer.Write(AngleInc);
-            writer.Write((byte)DamageList.Length);
-            for (var i = 0; i < DamageList.Length; i++)
-                writer.Write(DamageList[i]);
-            writer.Write((byte)CritList.Length);
-            for (var i = 0; i < CritList.Length; i++)
-                writer.Write(CritList[i]);
-            writer.Write(ItemType);
-        }
+        writer.Write(0);
+        writer.Write(ItemType);
+        writer.Write((double)StartingPos.X);
+        writer.Write((double)StartingPos.Y);
+        writer.Write(Angle);
     }
 
     public override string ToString() {

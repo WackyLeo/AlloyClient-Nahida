@@ -50,6 +50,9 @@ public sealed class EquippedGrid : Sprite {
     public void UpdateAbilitySlot() {
         var slot = _tileSlots[1];
 
+        if(Map.LocalPlayer == null) 
+            return;
+
         if (slot.ItemDesc == null || slot.ItemDesc.ObjectType == 0)
             return;
 

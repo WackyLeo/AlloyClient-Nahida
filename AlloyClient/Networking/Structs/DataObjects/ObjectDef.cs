@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Common;
+using System;
 using System.Collections.Generic;
 
 namespace AlloyClient.Networking.Structs.DataObjects;
@@ -22,11 +23,12 @@ public struct ObjectDef : IDataObject {
     }
 
     public void Read(NetworkReader reader) {
+        var startPos = reader.BaseStream.Position;
         ObjectType = reader.ReadUInt16();
         Id = reader.ReadInt32();
         Position.Read(reader);
-
         var len = reader.ReadInt16();
+        Logger.Debug($"[ObjectDef] pos={startPos} type=0x{ObjectType:X4} id={Id} x={Position.X} y={Position.Y} statCount={len}");
         StatOffset = StatsPoolIndex;
         StatCount = len;
 

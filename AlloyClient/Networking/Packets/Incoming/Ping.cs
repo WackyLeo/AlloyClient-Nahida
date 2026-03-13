@@ -1,25 +1,28 @@
-﻿using AlloyClient.Networking.Packets.Outgoing;
+﻿using AlloyClient.Networking;
+using AlloyClient.Networking.Packets;
+using AlloyClient.Networking.Packets.Outgoing;
+using System;
 
-namespace AlloyClient.Networking.Packets.Incoming;
-
-public class Ping : IncomingPacket<Ping> {
+public class Ping : IncomingPacket<Ping>
+{
+    public int Serial;
     public int RTT;
-
-    public override PacketId PacketId => PacketId.Unknown;
-
-    public override void Reset() {
+    public override PacketId PacketId => PacketId.Ping;
+    public override void Reset()
+    {
+        Serial = 0;
         RTT = 0;
     }
-
-    public override void Read(NetworkReader reader) {
+    public override void Read(NetworkReader reader)
+    {
+        Serial = reader.ReadInt32();
         RTT = reader.ReadInt32();
     }
-
-    public override void Handle() {
-        Client.QueuePacket(Pong.CreatePacket());
-    }
-
-    public override string ToString() {
-        return $"RTT: {RTT}";
+    public override void Handle()
+    {
+        var pong = Pong.CreatePacket();
+        pong.Serial = Serial;
+        pong.Time = Environment.TickCount;
+        Client.QueuePacket(pong);
     }
 }
