@@ -3,6 +3,7 @@ using AlloyClient.Networking.Packets.Outgoing;
 using AlloyClient.Networking.Structs.DataObjects;
 using AlloyClient.Utils;
 using Common;
+using System;
 
 namespace AlloyClient.Networking.Packets.Incoming;
 
@@ -12,6 +13,8 @@ public class NewTick : IncomingPacket<NewTick> {
     
     private static ObjectStats[] _statsBuffer = new ObjectStats[256];
     public int ObjectStatsCount;
+    public int TickTime;
+    public int TickId;
     public ObjectStats[] ObjectStats => _statsBuffer;
 
     public override void Reset() {
@@ -19,8 +22,13 @@ public class NewTick : IncomingPacket<NewTick> {
     }
 
     public override void Read(NetworkReader reader) {
+
+        TickId = reader.ReadInt32();
+        TickTime = reader.ReadInt32();
+
+
         Structs.DataObjects.ObjectStats.StatsPoolIndex = 0;
-        
+      
         ObjectStatsCount = reader.ReadInt16();
         EnsureCapacity(ref _statsBuffer, ObjectStatsCount);
         for (int i = 0; i < ObjectStatsCount; i++)
@@ -35,18 +43,19 @@ public class NewTick : IncomingPacket<NewTick> {
     public override void Handle() {
         var isLocalPlayer = false;
 
-        if (Map.LocalPlayer != null) {
+        if (Map.LocalPlayer != null)
+        {
             var move = Move.CreatePacket();
-            move.NewPosition = new Position {
+            move.ObjectId = Map.LocalPlayer.ObjectId;
+            move.TickId = TickId;
+            move.Time = (int)Main.GameTime.TotalMs;
+            move.NewPosition = new Position
+            {
                 X = Map.LocalPlayer.Position.X,
                 Y = Map.LocalPlayer.Position.Y
             };
-
+            move.Records = Array.Empty<TimedPosition>();
             Client.QueuePacket(move);
-
-            isLocalPlayer = true;
-
-            Map.LocalPlayer.OnMove();
         }
 
         for (int i = 0; i < ObjectStatsCount; i++)

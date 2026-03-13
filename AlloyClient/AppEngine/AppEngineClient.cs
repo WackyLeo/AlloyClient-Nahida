@@ -3,6 +3,8 @@ using AlloyClient.Utils;
 using Common;
 using System;
 using System.Collections.Generic;
+using System.IO;
+using System.IO.Compression;
 using System.Net;
 using System.Net.Http;
 using System.Threading;
@@ -19,7 +21,7 @@ public static class AppEngineClient {
 
         var handler = new HttpClientHandler
         {
-            AutomaticDecompression = DecompressionMethods.Deflate | DecompressionMethods.GZip
+            AutomaticDecompression = System.Net.DecompressionMethods.Deflate | System.Net.DecompressionMethods.GZip
         };
 
         Client = new HttpClient(handler);
@@ -36,15 +38,39 @@ public static class AppEngineClient {
         return await SendClientRequest(Client, endpoint, data, retries);
     }
 
+    public static async Task<byte[]> SendRequestRaw(string endpoint, Dictionary<string, string> data = null, int retries = 0)
+    {
+        var content = data == null ? null : new FormUrlEncodedContent(data);
+        var cts = new CancellationTokenSource(Settings.AppEngineTimeout);
+
+        for (var i = 0; i <= retries; i++)
+        {
+            Log.Trace($"[Raw] Sending request to {endpoint}." + (i == 0 ? "" : $" Attempt {i + 1} of {retries + 1}."));
+            try
+            {
+                using var response = await Client.PostAsync(endpoint, content, cts.Token);
+                return await response.Content.ReadAsByteArrayAsync(cts.Token);
+            }
+            catch (Exception e)
+            {
+                Log.Error($"[Raw] Attempt {i + 1} failed: {e.Message}");
+                if (i == retries)
+                {
+                    Log.Error("[Raw] All attempts failed.");
+                    return null;
+                }
+            }
+        }
+
+        return null;
+    }
+
     private static async Task<string> SendClientRequest(HttpClient client, string endpoint, Dictionary<string, string> data = null, int retries = 0) {
         var cancellationTokenSource = new CancellationTokenSource(Settings.AppEngineTimeout);
         var content = data == null ? null : new FormUrlEncodedContent(data);
 
         for (var i = 0; i <= retries; i++) {
             Log.Trace($"Sending request to {endpoint}." + (i == 0 ? "" : $" Attempt {i + 1} of {retries + 1}."));
-            foreach(var str in data) {
-                Log.Trace($"Key: {str.Key} \nValue: {str.Value}");
-            }
            
             try {
                 var response = await client.PostAsync(endpoint, content, cancellationTokenSource.Token);
@@ -64,4 +90,41 @@ public static class AppEngineClient {
 
         return null;
     }
+
+    private static byte[] DecompressZLib(byte[] compressed)
+    {
+        try
+        {
+            using var input = new MemoryStream(compressed);
+            using var zlib = new ZLibStream(input, CompressionMode.Decompress);
+            using var output = new MemoryStream();
+            zlib.CopyTo(output);
+            return output.ToArray();
+        }
+        catch (Exception e)
+        {
+            Log.Warn($"ZLib decompression failed ({e.Message}), trying raw deflate...");
+            return DecompressRawDeflate(compressed);
+        }
+    }
+
+    private static byte[] DecompressRawDeflate(byte[] compressed)
+    {
+        using var input = new MemoryStream(compressed);
+        using var deflate = new DeflateStream(input, CompressionMode.Decompress);
+        using var output = new MemoryStream();
+        deflate.CopyTo(output);
+        return output.ToArray();
+    }
+
+    private static byte[] DecompressGZip(byte[] compressed)
+    {
+        using var input = new MemoryStream(compressed);
+        using var gz = new GZipStream(input, CompressionMode.Decompress);
+        using var output = new MemoryStream();
+        gz.CopyTo(output);
+        return output.ToArray();
+    }
+
 }
+

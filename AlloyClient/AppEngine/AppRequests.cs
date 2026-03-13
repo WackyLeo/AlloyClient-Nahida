@@ -19,6 +19,8 @@ public static class AppRequests {
     public static async Task Startup() {
         await VerifyAsync();
         await GetCharList();
+
+        await Assets.RemoteAssetLoader.LoadAllAsync();
     }
     
     public static async Task<AppResponse> VerifyAsync() {

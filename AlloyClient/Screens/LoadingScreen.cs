@@ -1,15 +1,16 @@
-﻿using System.Threading.Tasks;
-using AlloyClient.AppEngine;
+﻿using AlloyClient.AppEngine;
 using AlloyClient.Assets;
+using AlloyClient.Assets.Libraries;
 using AlloyClient.Display;
+using AlloyClient.Models;
 using AlloyClient.State;
 using AlloyClient.Ui.Components.Graphics;
 using AlloyClient.UiLib.BuiltIn;
 using AlloyClient.UiLib.Core;
 using AlloyClient.UiLib.Enums;
 using AlloyClient.UiLib.Extra;
-using AlloyClient.Models;
 using AlloyClient.Utils;
+using System.Threading.Tasks;
 
 namespace AlloyClient.Screens;
 
@@ -35,7 +36,8 @@ public class LoadingScreen : Screen {
         
         AddEventListener(Event.AddedToStage, OnStageEnter);
         AddEventListener(Event.RemovedFromStage, OnStageExit);
-        
+        ObjectLibrary.SetFallback();
+
         AddEventListener(Task.WhenAll(
             AppRequests.Startup(),
             //Task.Run(SoundManager.PreLoadSounds),

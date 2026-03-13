@@ -22,7 +22,7 @@ public static class Settings {
     private const string AccountFileName = "account.json";
     public const string SettingsPath = "settings.json"; // Relative to application directory
 
-    public const string BuildVersion = "0.3.3";
+    public const string BuildVersion = "localhost";
     public const string BuildLabel = $"OpenTK v{BuildVersion}";
 
     public const string AppEngineAddress = "116.255.20.214";

@@ -46,7 +46,7 @@ public struct StatData : IDataObject {
         {
             case StatsType.Name:
             case StatsType.Guild:
-            case StatsType.InventoryData0:
+            /*case StatsType.InventoryData0:
             case StatsType.InventoryData1:
             case StatsType.InventoryData2:
             case StatsType.InventoryData3:
@@ -69,7 +69,7 @@ public struct StatData : IDataObject {
             case StatsType.AbilityDataA:
             case StatsType.AbilityDataB:
             case StatsType.AbilityDataC:
-            case StatsType.AbilityDataD:
+            case StatsType.AbilityDataD:*/
                 return true;
             default:
                 return false;
@@ -80,12 +80,6 @@ public struct StatData : IDataObject {
     {
         return type switch
         {
-            StatsType.CriticalChance => true,
-            StatsType.DodgeChance => true,
-            StatsType.CriticalChanceBonus => true,
-            StatsType.DodgeChanceBonus => true,
-            StatsType.AttackSpeed => true,
-            StatsType.AttackSpeedBonus => true,
             StatsType.Speed => true,
             StatsType.SpeedBonus => true,
             _ => false

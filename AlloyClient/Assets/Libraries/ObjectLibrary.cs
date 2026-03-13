@@ -4,15 +4,23 @@ using AlloyClient.Assets.XmlStructs;
 
 namespace AlloyClient.Assets.Libraries;
 
-public static class ObjectLibrary {
+public static class ObjectLibrary
+{
     public static readonly Dictionary<ushort, ObjectProperties> TypeToObjectProps = new();
     public static readonly Dictionary<ushort, PlayerProperties> TypeToClassProps = new();
     public static readonly List<Tuple<ushort, ushort>> TypeToSkins = new();
     public static readonly Dictionary<ushort, TextureData> TypeToTextureData = new();
-
     public static readonly Dictionary<string, ushort> IdToObjectType = new();
-
     public static readonly Dictionary<ushort, ItemDesc> TypeToItem = new();
 
-    public static ItemDesc GetItem(ushort type) => type == 0 ? null : TypeToItem[type];
+    public const ushort FallbackType = 0xFFFF;
+
+    public static ItemDesc GetItem(ushort type) => type == 0 ? null : TypeToItem.GetValueOrDefault(type);
+
+    public static void SetFallback()
+    {
+        var fallback = new TextureData();
+        fallback.Texture = Main.Atlas.GetAtlasData("lofiObj3", 255);
+        TypeToTextureData[FallbackType] = fallback;
+    }
 }

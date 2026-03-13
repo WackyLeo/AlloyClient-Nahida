@@ -115,10 +115,29 @@ public class Entity {
         Effect = ParticleEffect.FromProperties(Properties.Effect, this);
     }
 
-    public void SetType(ushort type) {
+    public void SetType(ushort type)
+    {
         Type = type;
-        TextureData = ObjectLibrary.TypeToTextureData[type];
-        Texture = TextureData.HasAnimationData ? TextureData.AnimatedTextures.FaceRight[0] : TextureData.GetTexture();
+
+        if (!ObjectLibrary.TypeToTextureData.TryGetValue(type, out var textureData))
+        {
+            Log.Warn($"No texture data found for type 0x{type:X4}, using fallback.");
+            textureData = ObjectLibrary.TypeToTextureData[ObjectLibrary.FallbackType];
+        }
+
+        TextureData = textureData;
+
+        if (TextureData.HasAnimationData
+            && TextureData.AnimatedTextures.FaceRight != null
+            && TextureData.AnimatedTextures.FaceRight.Length > 0)
+        {
+            Texture = TextureData.AnimatedTextures.FaceRight[0];
+        }
+        else
+        {
+            Texture = TextureData.GetTexture();
+        }
+
         RenderBaseType = GetRenderType(type);
     }
 
@@ -310,11 +329,18 @@ public class Entity {
                     if (stat.Value == -1) {
                         Equipment[index] = null;
                     } else if (Equipment[index] == null || (Equipment[index] != null && stat.Value != Equipment[index].ObjectType)) {
-                        Equipment[index] = ObjectLibrary.TypeToItem[(ushort)stat.Value];
+                        if(ObjectLibrary.TypeToItem.TryGetValue((ushort)stat.Value, out var b))
+                        {
+                            Equipment[index] = b;
+                        }
+                        else
+                        {
+                            Equipment[index] = null;
+                        }
                     }
                     InventoryUpdate.Dispatch(index);
                     break;
-                case StatsType.Condition1:
+                case StatsType.Effects:
                     ConditionEffects = (ConditionEffects)stat.Value;
                     RenderBaseType.Extra.Alpha = HasConditionEffect(ConditionEffects.Invisible) ? 0.5f : 1;
                     break;
@@ -360,7 +386,14 @@ public class Entity {
                     if (stat.Value == -1) {
                         Equipment[index] = null;
                     } else if (Equipment[index] == null || (Equipment[index] != null && stat.Value != Equipment[index].ObjectType)) {
-                        Equipment[index] = ObjectLibrary.TypeToItem[(ushort)stat.Value];
+                        if (ObjectLibrary.TypeToItem.TryGetValue((ushort)stat.Value, out var b))
+                        {
+                            Equipment[index] = b;
+                        }
+                        else
+                        {
+                            Equipment[index] = null;
+                        }
                     }
                     InventoryUpdate.Dispatch(index);
                     break;
@@ -448,8 +481,9 @@ public class Entity {
         PositionAtTick = Position;
         TickPosition = Position;
 
-        if (!MoveTo(position.X, position.Y)) {
-            Log.Error($"Failed to add entity {ObjectId} to map.");
+        if (!MoveTo(position.X, position.Y))
+        {
+            Log.Error($"Failed to add entity {ObjectId} (type=0x{Type:X4}) to map at ({position.X}, {position.Y}). Map size: {Map.Width}x{Map.Height}, tiles null: {Map._tiles == null}");
         }
 
         // Add entity's effect

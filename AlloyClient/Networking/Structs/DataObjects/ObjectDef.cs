@@ -26,7 +26,7 @@ public struct ObjectDef : IDataObject {
         Id = reader.ReadInt32();
         Position.Read(reader);
 
-        var len = reader.ReadByte();
+        var len = reader.ReadInt16();
         StatOffset = StatsPoolIndex;
         StatCount = len;
 

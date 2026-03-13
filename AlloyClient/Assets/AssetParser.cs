@@ -18,18 +18,18 @@ public static class AssetParser {
     }
 
     private static void ParseGround() {
-        var path = File.ReadAllText("Content/Xmls/Ground.xml");
+        var path = File.ReadAllText("Content/Xmls/EmbeddedData_GroundCXML.xml");
         var groundContainer = XElement.Parse(path).Elements("Ground");
         Parallel.ForEach(groundContainer, ground => {
             var props = new GroundProperties(ground);
             lock (GroundLibrary.TypeToGroundProps)
-                GroundLibrary.TypeToGroundProps.Add(props.ObjectType, props);
+                GroundLibrary.TypeToGroundProps.TryAdd(props.ObjectType, props);
             
             lock (GroundLibrary.TypeToTextureData)
-                GroundLibrary.TypeToTextureData.Add(props.ObjectType, new TextureData(ground));
+                GroundLibrary.TypeToTextureData.TryAdd(props.ObjectType, new TextureData(ground));
             
             lock (GroundLibrary.IdToTileType)
-                GroundLibrary.IdToTileType.Add(props.ObjectId, props.ObjectType);
+                GroundLibrary.IdToTileType.TryAdd(props.ObjectId, props.ObjectType);
         });
     }
 
@@ -82,6 +82,7 @@ public sealed class TextureData {
     public AtlasData? EditorTexture;
     public Color DominantColor = Color.Transparent;
 
+    public TextureData() { }
     public TextureData(XElement xml) {
         if (xml.GetElement("Texture", out var elem)) {
             Texture = Main.Atlas.GetAtlasData(elem.GetValue<string>("File"), (int) elem.GetValue<uint>("Index"));

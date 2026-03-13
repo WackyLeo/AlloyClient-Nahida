@@ -37,7 +37,7 @@ public static class Map {
     public static bool AllowPlayerTeleport;
     public static bool ShowDisplays;
 
-    private static MapTile[,] _tiles;
+    public static MapTile[,] _tiles;
     public static readonly RenderStorage EntityStorage = new();
     public static readonly Dictionary<int, Player> Players = new();
     public static readonly Dictionary<int, Entity> Entities = new(); // todo: add players to separate dic for minimap prio

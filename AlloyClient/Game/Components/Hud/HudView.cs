@@ -70,7 +70,10 @@ public sealed class HudView : Sprite {
         if (Map.LocalPlayer == null) return;
 
         _bars.Update();
-        _equippedGrid.UpdateAbilitySlot();
+        if (_equippedGrid != null) {
+            _equippedGrid.UpdateAbilitySlot();
+        }
+
         _interactPanel.Update();
     }
 }

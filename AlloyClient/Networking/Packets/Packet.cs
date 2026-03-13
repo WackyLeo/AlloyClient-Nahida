@@ -91,7 +91,13 @@ public static class PacketUtils {
             PacketId.TradeRequested => TradeRequested.CreatePacket(),
             PacketId.TradeStart => TradeStart.CreatePacket(),
             PacketId.Update => Update.CreatePacket(),
-            _ => throw new ArgumentException($"Unsupported packet ID: {packetId}")
+            _ => LogAndReturnUnknown(packetId)
         };
+    }
+
+    private static IIncomingPacket LogAndReturnUnknown(PacketId packetId)
+    {
+        Client.Log.Warn($"Unsupported incoming packet: {packetId} (0x{(byte)packetId:X2}), skipping.");
+        return UnknownPacket.CreatePacket();
     }
 }

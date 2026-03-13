@@ -74,6 +74,10 @@ public sealed class SimpleText : Sprite {
     }
 
     private void FillData() {
+        if(Text == null)
+        {
+            return;
+        }
         var scale = _fontScale;
         var zero = new Vector2(0f, _font.Ascender * scale);
         var lastSpaceIndex = 0;

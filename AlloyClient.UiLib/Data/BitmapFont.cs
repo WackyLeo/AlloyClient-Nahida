@@ -155,6 +155,8 @@ public class BitmapFont {
     }
 
     public int GetCharCount(string text) {
+        if(text == null) return 0;
+
         var count = 0;
         foreach (var c in text) {
             switch (c) {
