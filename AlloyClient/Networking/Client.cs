@@ -28,7 +28,7 @@ public class SocketSendState {
     public byte[] SocketBuffer { get; private set; } = new byte[Client.SEND_BUFFER_SIZE];
     public int LastValidIndex { get; set; } // End position of the packet that still fits within buffer size
     public int Offset { get; set; }
-
+    
     public SocketSendState() {
         Stream = new MemoryStream();
         Writer = new NetworkWriter(Stream, littleEndian: false);
@@ -107,11 +107,8 @@ public static class Client {
 
         _tcp = new TcpClient();
         _tcp.NoDelay = true;
-
-        port = 2051;
-
+        
         Log.Info($"Connecting to {ip}:{port}...");
-
         while (true) {
             try {
                 await _tcp.ConnectAsync(ip, port);
@@ -324,27 +321,60 @@ public static class Client {
         }
     }
 
+    public static void ReconnectToGame(int gameId, int keyTime, byte[] key) {
+        IsReconnecting = true;
+    
+        _tcp?.Close();
+        _socket?.Close();
+        State = ConnectionState.Disconnected;
+        Reset();
+
+        Task.Run(async () => {
+            await Task.Delay(0);
+
+            _tcp = new TcpClient { NoDelay = true };
+            await _tcp.ConnectAsync(Settings.GameServerAddress, Settings.SelectedGameServerPort);
+            _socket = _tcp.Client;
+            State = ConnectionState.Connected;
+            IsReconnecting = false;
+
+            Log.Info("Reconnected to server.");
+
+            var login = GlobalData.Get<LoginData>();
+            var hello = Hello.CreatePacket();
+            hello.BuildVersion = Settings.BuildVersion;
+            hello.GameId = gameId;
+            hello.Guid = login.GUID;
+            hello.Password = login.Password;
+            hello.KeyTime = keyTime;
+            hello.Key = key;
+            hello.MapJSON = "";
+            QueuePacket(hello);
+
+            StartReceive();
+        });
+    }
+
     public static void Disconnect(string message = null) {
         if (State != ConnectionState.Disconnected) {
             State = ConnectionState.Disconnected;
-
             Reset();
-
             _tcp?.Close();
             _socket?.Close();
             _reader.BaseStream.Seek(0, SeekOrigin.Begin);
-
             Log.Info($"Disconnecting client {(message != null ? $"({message})" : "")}");
-
             while (IncomingQueue.TryDequeue(out var pkt)) {
                 pkt.ReturnPacket();
             }
         }
-        
+
+        if (IsReconnecting) return;
+
         Sound.Music.Stop();
         Map.Reset();
         ScreenManager.FadeTo(new CharacterListScreen());
     }
+    
 
     private static void SendHello()
     {

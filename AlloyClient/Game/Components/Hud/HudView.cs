@@ -74,6 +74,8 @@ public sealed class HudView : Sprite {
             _equippedGrid.UpdateAbilitySlot();
         }
 
-        _interactPanel.Update();
+        if (_interactPanel != null) {
+            _interactPanel.Update();
+        }
     }
 }

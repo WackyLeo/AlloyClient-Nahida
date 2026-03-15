@@ -40,7 +40,10 @@ public class ItemDesc {
     public readonly bool XpBoost;
     public readonly float Timer;
     public readonly int MpEndCost;
-
+    public readonly int StartCount;
+    public readonly int NextCount;
+    public readonly ProjectileDesc[] AllProjectiles;
+    
     public readonly StatBoostDesc[] StatBoosts;
     public readonly ActivateEffectDesc[] ActivateEffects;
     public readonly ProjectileDesc Projectiles;
@@ -83,6 +86,12 @@ public class ItemDesc {
         StatBoosts = xml.Elements("ActivateOnEquip").Select(i => new StatBoostDesc(i)).ToArray();
         ActivateEffects = xml.Elements("Activate").Select(i => new ActivateEffectDesc(i)).ToArray();
         Projectiles = xml.HasElement("Projectile") ? new ProjectileDesc(xml.Element("Projectile")) : null;
+        
+        StartCount = xml.GetValue<int>("StartCount", 0);
+        NextCount = xml.GetValue<int>("NextCount", 99999);
+        AllProjectiles = xml.Elements("Projectile")
+            .Select(p => new ProjectileDesc(p))
+            .ToArray();
     }
 }
 

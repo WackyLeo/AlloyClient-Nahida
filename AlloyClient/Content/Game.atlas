@@ -1,25 +1,20 @@
 ﻿<Atlas source="Sheets">
     <Image name="invisible"                  w="8"  h="8" >invisible.png</Image>
     <Image name="cursorsEmbed"               w="32" h="32">Cursors.png</Image>
-    <Image name="tileAlphaBlend"             w="8" h="8">AlphaBlendTile.png</Image>
+    <Image name="tileAlphaBlend"             w="8"  h="8" >AlphaBlendTile.png</Image>
     <Image name="lofiChar8x8"                w="8"  h="8" >EmbeddedAssets_lofiCharEmbed_.png</Image>
     <Image name="lofiChar16x8"               w="16" h="8" >EmbeddedAssets_lofiCharEmbed_.png</Image>
     <Image name="lofiChar16x16"              w="16" h="16">EmbeddedAssets_lofiCharEmbed_.png</Image>
-
     <Image name="lofiChar28x8"               w="8"  h="8" >EmbeddedAssets_lofiChar2Embed_.png</Image>
     <Image name="lofiChar216x8"              w="16" h="8" >EmbeddedAssets_lofiChar2Embed_.png</Image>
     <Image name="lofiChar216x16"             w="16" h="16">EmbeddedAssets_lofiChar2Embed_.png</Image>
-
     <Image name="lofiCharBig"                w="16" h="16">EmbeddedAssets_lofiCharBigEmbed_.png</Image>
-
     <Image name="lofiEnvironment"            w="8"  h="8" >EmbeddedAssets_lofiEnvironmentEmbed_.png</Image>
     <Image name="lofiEnvironment2"           w="8"  h="8" >EmbeddedAssets_lofiEnvironment2Embed_.png</Image>
     <Image name="lofiEnvironment3"           w="8"  h="8" >EmbeddedAssets_lofiEnvironment3Embed_.png</Image>
-
     <Image name="lofiInterface"              w="8"  h="8" >EmbeddedAssets_lofiInterfaceEmbed_.png</Image>
     <Image name="lofiInterfaceBig"           w="16" h="16">EmbeddedAssets_lofiInterfaceBigEmbed_.png</Image>
     <Image name="lofiInterface2"             w="8"  h="8" >EmbeddedAssets_lofiInterface2Embed_.png</Image>
-
     <Image name="lofiObj"                    w="8"  h="8" >EmbeddedAssets_lofiObjEmbed_.png</Image>
     <Image name="lofiObj2"                   w="8"  h="8" >EmbeddedAssets_lofiObj2Embed_.png</Image>
     <Image name="lofiObj3"                   w="8"  h="8" >EmbeddedAssets_lofiObj3Embed_.png</Image>
@@ -29,15 +24,12 @@
     <Image name="lofiObjBig"                 w="16" h="16">EmbeddedAssets_lofiObjBigEmbed_.png</Image>
     <Image name="lofiObj40x40"               w="40" h="40">EmbeddedAssets_lofiObj40x40Embed_.png</Image>
     <Image name="redLootBag"                 w="8"  h="8" >EmbeddedAssets_redLootBagEmbed_.png</Image>
-
     <Image name="lofiProjs"                  w="8"  h="8" >EmbeddedAssets_lofiProjsEmbed_.png</Image>
     <Image name="lofiProjsBig"               w="16" h="16">EmbeddedAssets_lofiProjsBigEmbed_.png</Image>
     <Image name="lofiParticlesShocker"       w="16" h="16">EmbeddedAssets_lofiParticlesShockerEmbed_.png</Image>
     <Image name="lofiParts"                  w="8"  h="8" >EmbeddedAssets_lofiPartsEmbed_.png</Image>
-
     <Image name="stars"                      w="5"  h="5" >EmbeddedAssets_starsEmbed_.png</Image>
     <Image name="emotes"                     w="16" h="16">EmbeddedAssets_emotesEmbed_.png</Image>
-
     <Image name="textile4x4"                 w="4"  h="4" >EmbeddedAssets_textile4x4Embed_.png</Image>
     <Image name="textile5x5"                 w="5"  h="5" >EmbeddedAssets_textile5x5Embed_.png</Image>
     <Image name="textile9x9"                 w="9"  h="9" >EmbeddedAssets_textile9x9Embed_.png</Image>
@@ -66,6 +58,32 @@
     <Image name="lostHallsObjects16x16"      w="16" h="16">EmbeddedAssets_lostHallsObjects16x16.png</Image>
     <Image name="epicHiveObjects8x8"         w="8"  h="8" >EmbeddedAssets_epicHiveObjects8x8Embed_.png</Image>
     <Image name="epicHiveObjects16x16"       w="16" h="16">EmbeddedAssets_epicHiveObjects16x16Embed_.png</Image>
+
+    <Image name="SR32x32objects1"            w="32" h="32">SRAssets_SR32x32objects1Embed_.png</Image>
+    <Image name="Divinities"                 w="16" h="16">SRAssets_DivinitiesEmbed_.png</Image>
+    <Image name="Totems"                     w="16" h="16">SRAssets_TotemsEmbed_.png</Image>
+    <Image name="arena16"                    w="16" h="16">SRAssets_arena16Embed_.png</Image>
+    <Image name="relicAbility"               w="8"  h="8" >SRAssets_relicAbilityEmbed_.png</Image>
+    <Image name="SR8x8items1"                w="8"  h="8" >SRAssets_SR8x8items1Embed_.png</Image>
+    <Image name="SR8x8items2"                w="8"  h="8" >SRAssets_SR8x8items2Embed_.png</Image>
+    <Image name="SR8x8projectiles1"          w="8"  h="8" >SRAssets_SR8x8projectiles1Embed_.png</Image>
+    <Image name="Bird8"                      w="8"  h="8" >SRAssets_Bird8Embed_.png</Image>
+    <Image name="SR16x16projectiles1"        w="16" h="16">SRAssets_SR16x16projectiles1Embed_.png</Image>
+    <Image name="LHItems"                    w="8"  h="8" >SRAssets_LHItemsEmbed_.png</Image>
+    <Image name="FeroziumTower16x16"         w="16" h="16">SRAssets_FeroziumTower16x16Embed_.png</Image>
+    <Image name="GhostKingSword"             w="8"  h="8" >SRAssets_GhostKingSwordEmbed_.png</Image>
+    <Image name="Quests"                     w="8"  h="8" >SRAssets_QuestsEmbed_.png</Image>
+    <Image name="SummerObjects8"             w="8"  h="8" >SRAssets_SummerObjects8Embed_.png</Image>
+    <Image name="SummerObjects16"            w="16" h="16">SRAssets_SummerObjects16Embed_.png</Image>
+    <Image name="Cathedral8"                 w="8"  h="8" >SRAssets_Cathedral8Embed_.png</Image>
+    <Image name="CathProj8"                  w="8"  h="8" >SRAssets_CathProj8Embed_.png</Image>
+    <Image name="CathProj16"                 w="16" h="16">SRAssets_CathProj16Embed_.png</Image>
+    <Image name="CathWalls8"                 w="8"  h="8" >SRAssets_CathWalls8Embed_.png</Image>
+    <Image name="production"                 w="8"  h="8" >SRAssets_ProductionEmbed_.png</Image>
+    <Image name="swmp8"                      w="8"  h="8" >SRAssets_swmp8Embed_.png</Image>
+    <Image name="Zeppy"                      w="8"  h="8" >SRAssets_Zeppy8Embed_.png</Image>
+    <Image name="WinterObjects8"             w="8"  h="8" >SRAssets_WinterObjects8Embed_.png</Image>
+    <Image name="LunarInvasion8"             w="8"  h="8" >SRAssets_LunarInvasionEmbed_.png</Image>
 
     <Animated name="chars8x8rBeach"          w="8"  h="8" >EmbeddedAssets_chars8x8rBeachEmbed_.png</Animated>
     <Animated name="chars8x8dBeach"          w="8"  h="8" >EmbeddedAssets_chars8x8dBeachEmbed_.png</Animated>
@@ -107,4 +125,94 @@
     <Animated name="lostHallsChars16x16"     w="16" h="16">EmbeddedAssets_lostHallsChars16x16.png</Animated>
     <Animated name="epicHiveChars8x8"        w="8"  h="8" >EmbeddedAssets_epicHiveChars8x8Embed_.png</Animated>
     <Animated name="epicHiveChars16x16"      w="16" h="16">EmbeddedAssets_epicHiveChars16x16Embed_.png</Animated>
+
+    <Animated name="prodSkins16"             w="16" h="16">SRAssets_ProdSkins16Embed.png</Animated>
+    <Animated name="prodMasks16"             w="16" h="16">SRAssets_ProdMasks16Embed_.png</Animated>
+    <Animated name="Feroziumenemies8x8"      w="8"  h="8" >SRAssets_Feroziumenemies8x8Embed_.png</Animated>
+    <Animated name="Feroziumenemies16x16"    w="16" h="16">SRAssets_Feroziumenemies16x16Embed_.png</Animated>
+    <Animated name="SR8x8enemies1"           w="8"  h="8" >SRAssets_SR8x8enemies1Embed_.png</Animated>
+    <Animated name="swmpMobs8"               w="8"  h="8" >SRAssets_swmpMobs8Embed_.png</Animated>
+    <Animated name="swmpMobs16"              w="16" h="16">SRAssets_swmpMobs16Embed_.png</Animated>
+    <Animated name="SR8x8enemiesRight1"      w="8"  h="8" >SRAssets_SR8x8enemiesRight1Embed_.png</Animated>
+    <Animated name="SR32x32chars"            w="32" h="32">SRAssets_SR32x32charsEmbed_.png</Animated>
+    <Animated name="SROryx3"                 w="32" h="32">SRAssets_Oryx3Embed_.png</Animated>
+    <Animated name="SR16x16skins1"           w="16" h="16">SRAssets_SR16x16skins1Embed_.png</Animated>
+    <Animated name="SR16x16skins2"           w="16" h="16">SRAssets_SR16x16skins2Embed_.png</Animated>
+    <Animated name="SR8x8skins2"             w="8"  h="8" >SRAssets_SR8x8Skins2Embed_.png</Animated>
+    <Animated name="playerskins"             w="8"  h="8"  group="Full">SRAssets_skins8x8Embed_.png</Animated>
+    <Animated name="SR16x16enemies1"         w="16" h="16">SRAssets_SR16x16enemies1Embed_.png</Animated>
+    <Animated name="SR16x16enemiesRight1"    w="16" h="16">SRAssets_SR16x16enemiesRight1Embed_.png</Animated>
+    <Animated name="SR16x16enemies2"         w="16" h="16">SRAssets_SR16x16enemies2Embed_.png</Animated>
+    <Animated name="zombieSkins"             w="8"  h="8" >SRAssets_zombieSkinsEmbed_.png</Animated>
+    <Animated name="bunnySkin"               w="8"  h="8" >SRAssets_bunnySkin_.png</Animated>
+
+    <Image name="SRAssets"                w="8"  h="8" >SRRandom.png</Image>
+    <Image name="SummerObjects16"         w="16" h="16">SummerObjects16.png</Image>
+    <Image name="PaintStaff"              w="8"  h="8" >PaintStaff.png</Image>
+    <Image name="Zeppy"                   w="8"  h="8" >Zeppy8.png</Image>
+    <Image name="WinterObjects8"          w="8"  h="8" >WinterObjects8.png</Image>
+    <Image name="WinterObjects16"         w="16" h="16">WinterObjects16.png</Image>
+    <Image name="EasterObjects8"          w="8"  h="8" >EasterObjects8.png</Image>
+    <Image name="LHItems"                 w="8"  h="8" >LHItems.png</Image>
+    <Image name="Totems"                  w="16" h="16">Totems.png</Image>
+    <Image name="CathProj16"              w="16" h="16">CathProj16.png</Image>
+    <Image name="thanosObjects8"          w="8"  h="8" >thanosObjects8.png</Image>
+    <Image name="thanosObjects16"         w="16" h="16">thanosObjects16.png</Image>
+    <Image name="thanosObjects32"         w="32" h="32">thanosObjects32.png</Image>
+    <Image name="production"              w="8"  h="8" >Production.png</Image>
+    <Image name="SCobj8x8"                w="8"  h="8" >SCobj8x8.png</Image>
+    <Image name="SCobj16x16"              w="16" h="16">SCobj16x16.png</Image>
+    <Image name="Bird8"                   w="8"  h="8" >Bird8.png</Image>
+    <Image name="Stone8"                  w="8"  h="8" >Stone8.png</Image>
+    <Image name="FeroziumTower16x16"      w="16" h="16">FeroziumTower16x16.png</Image>
+    <Image name="EclipseShrine8x8"        w="8"  h="8" >Eclipseshrine8x8.png</Image>
+    <Image name="Icamiscitems8x8"         w="8"  h="8" >Icamiscitems8x8.png</Image>
+    <Image name="Objects8"                w="8"  h="8" >Objects8.png</Image>
+    <Image name="Celeste"                 w="32" h="32">Celeste.png</Image>
+    <Image name="Objects32x32"            w="32" h="32">Objects32x32.png</Image>
+    <Image name="Objects16"               w="16" h="16">Objects16.png</Image>
+    <Image name="CSProj16"                w="16" h="16">CSProj16.png</Image>
+    <Image name="Projectiles16x16"        w="16" h="16">Projectiles16x16.png</Image>
+    <Image name="SR32x32projectiles"      w="32" h="32">SR32x32projectiles.png</Image>
+    <Image name="CosmicSanctum8"          w="8"  h="8" >CosmicSanctum8.png</Image>
+    <Image name="IcaItemsExtra"           w="8"  h="8" >IcaItemsExtra.png</Image>
+    <Image name="IcaItemsExtra2"          w="8"  h="8" >IcaItemsExtra2.png</Image>
+    <Image name="Events8"                 w="8"  h="8" >Events8.png</Image>
+    <Image name="GenericLofiWorld8ProductionTiles" w="8" h="8">Genericproductiontiles8.png</Image>
+    <Image name="GenericLofiWorld8ProductionTiles2" w="8" h="8">Genericproduction2tiles8.png</Image>
+    <Image name="GenericLofiWorld8ProductionTiles3" w="8" h="8">Genericproduction3tiles8.png</Image>
+    <Image name="Serleon32"               w="32" h="32">Serleon.png</Image>
+    <Image name="Serleon8"                w="8"  h="8" >Serleon8x8.png</Image>
+    <Image name="SR8x8objects1"           w="8"  h="8" >Objects8.png</Image>
+    <Image name="Outcast8"                w="8"  h="8" >Outcast8x8.png</Image>
+    <Image name="FeroziumTower8x8"        w="8"  h="8" >feroziumtower8x8.png</Image>
+    <Image name="Serleon16"               w="16" h="16">Serleon16x16.png</Image>
+    <Image name="ZAShots8"                w="8"  h="8" >ZAShots8x8.png</Image>
+    <Image name="ZAtiles"                 w="8"  h="8" >ZenithArcanaTiles.png</Image>
+    <Image name="LodDragon32"             w="32" h="32">Icadragoncharacters32.png</Image>
+    <Image name="IcaShotsExtra16"         w="16" h="16">IcaShotsExtra16.png</Image>
+    <Image name="SR16x16objects1"         w="16" h="16">Ica16Obj1.png</Image>
+    <Image name="IcaTiered"               w="8"  h="8" >Icatiered.png</Image>
+    <Image name="HaloC"                   w="8"  h="8" >HaloC.png</Image>
+
+    <Image name="Torbjorn"                w="8"  h="8" >Torbjorn.png</Image>
+    <Image name="partySkin"               w="8"  h="8" >PartySkin.png</Image>
+    <Image name="partySkin"               w="8"  h="8" >ReindeerSkin.png</Image>
+    <Image name="santaSkin"               w="16" h="16">SantaSkin.png</Image>
+    <Image name="rainbowSkin"             w="16" h="16">RainbowSkin.png</Image>
+    <Image name="prodSkins16"             w="16" h="16">ProdSkins16.png</Image>
+    <Image name="SCchars8x8"              w="8"  h="8" >SCchars8x8.png</Image>
+    <Image name="SCchars16x16"            w="16" h="16">SCchars16x16.png</Image>
+    <Image name="skins8"                  w="8"  h="8" >skins8x8.png</Image>
+    <Image name="swmpMobs8"               w="8"  h="8" >swmpMobs8.png</Image>
+    <Image name="swmpMobs16"              w="16" h="16">swmpMobs16.png</Image>
+    <Image name="masks8"                  w="8"  h="8" >masks8x8.png</Image>
+    <Image name="CSEnemies16"             w="16" h="16">CSEnemies16.png</Image>
+    <Image name="Feroziumenemies16x16"    w="16" h="16">Feroziumenemies16x16.png</Image>
+    <Image name="EternaBird16"            w="16" h="16">_EternaBird.png</Image>
+    <Image name="Hopeswing8"              w="8"  h="8" >_hopeswingskin.png</Image>
+    <Image name="skins8"                  w="8"  h="8" >skins8x8.png</Image>
+    <Image name="SR32x32charsTrue"        w="32" h="32">SR32x32chars.png</Image>
+    <Image name="talkingmoraa8"           w="32" h="32">talkingmoraa.png</Image>
+    <Image name="DreamBosses"             w="16" h="16">DreamBosses.png</Image>
 </Atlas>

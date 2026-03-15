@@ -29,4 +29,6 @@ public sealed class Texture {
     public void SetData(ReadOnlySpan<Color> data, Vector4i rect) => GL.TextureSubImage2D(Handle, 0, rect.X, rect.Y, rect.Z, rect.W, PixelFormat.Rgba, PixelType.UnsignedByte, data);
 
     public void SetData(ReadOnlySpan<Color> data, int width, int height) => GL.TextureSubImage2D(Handle, 0, 0, 0, width, height, PixelFormat.Rgba, PixelType.UnsignedByte, data);
+    
+    public void Bind(uint t = 0) { GL.BindTextureUnit(t, Handle); }
 }

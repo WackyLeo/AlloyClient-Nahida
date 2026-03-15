@@ -123,7 +123,7 @@ public sealed class ItemTile : Sprite {
             if (_tooltip != null) TooltipManager.RemoveTooltip(_tooltip);
         }
 
-        UpdateTierTag();
+        UpdateTierTag(); 
     }
 
     public void SetTileNumber(int slot) {

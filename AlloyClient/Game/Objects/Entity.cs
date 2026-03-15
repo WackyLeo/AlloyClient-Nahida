@@ -135,7 +135,7 @@ public class Entity {
         }
         else
         {
-            Texture = TextureData.GetTexture();
+            Texture = TextureData.GetTexture(random: true);
         }
 
         RenderBaseType = GetRenderType(type);
@@ -434,38 +434,28 @@ public class Entity {
     }
     
     public virtual AtlasData GetTexture(double time, out bool attackFrame, out bool flipped) {
-        const float ZeroLimit = 0.00001f;
-        const float NegZeroLimit = -ZeroLimit;
-        
-        
-        var texture = new AtlasData();
+        attackFrame = false;
+        flipped = false;
+
+        if (!TextureData.HasAnimationData)
+            return Texture;
+
         var action = AnimationType.Stand;
-        if (TextureData.HasAnimationData) {
-            var idx = 0d;
-            if (time < AttackStart + AttackPeriod) {
-                action = AnimationType.Attack;
-                idx = (time - AttackStart) % AttackPeriod / AttackPeriod;
-                FacingAngle = AttackAngle;
-            } else if (MovementVector != Vector2.Zero) {
-                var walkPer = 0.5f / MovementVector.Length;
-                walkPer = walkPer + (400 - walkPer % 400);
+        var idx = 0d;
 
-                if (MovementVector.X > ZeroLimit || MovementVector.X < NegZeroLimit || MovementVector.Y > ZeroLimit || MovementVector.Y < NegZeroLimit) {
-                    FacingAngle = MathF.Atan2(MovementVector.Y, MovementVector.X);
-                    action = AnimationType.Walk;
-                } else {
-                    action = AnimationType.Stand;
-                }
-                
-                idx = time % walkPer / walkPer;
-            }
-
-            texture = TextureData.AnimatedTextures.TextureFromFacing(FacingAngle, action, (float)idx, out attackFrame, out flipped);
-
+        if (time < AttackStart + AttackPeriod) {
+            action = AnimationType.Attack;
+            idx = (time - AttackStart) % AttackPeriod / AttackPeriod;
+            FacingAngle = AttackAngle;
+        } else if (MovementVector != Vector2.Zero) {
+            var walkPer = 0.5f / MovementVector.Length;
+            walkPer = walkPer + (400 - walkPer % 400);
+            FacingAngle = MathF.Atan2(MovementVector.Y, MovementVector.X);
+            action = AnimationType.Walk;
+            idx = time % walkPer / walkPer;
         }
 
-        attackFrame = flipped = false;
-        return texture;
+        return TextureData.AnimatedTextures.TextureFromFacing(FacingAngle, action, (float)idx, out attackFrame, out flipped);
     }
 
     // we should move this shit somewhere else too

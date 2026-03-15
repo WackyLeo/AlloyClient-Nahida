@@ -25,10 +25,10 @@ public static class RemoteAssetLoader
 
         Log.Info("Starting remote asset load...");
 
-        await LoadSheetsAsync();
-        await LoadAnimatedAsync();
+        //await LoadSheetsAsync();
+        //await LoadAnimatedAsync();
         await LoadXmlsAsync();
-        await LoadTexturesAsync();
+        //await LoadTexturesAsync();
         _ = LoadEmotesAsync();
 
         _loaded = true;
@@ -62,12 +62,14 @@ public static class RemoteAssetLoader
                 }
 
                 SpriteSheetLibrary.AddSheet(id, png, sw, sh);
+                Log.Info($"Sheet '{id}' loaded, checking SR8x8items1: {SpriteSheetLibrary.HasSheet("SR8x8items1")}");
             }
             catch (Exception e)
             {
                 Log.Error($"Sheet {i} error: {e.Message}");
             }
         }
+        Log.Info($"All loaded sheets: {string.Join(", ", SpriteSheetLibrary.GetAll().Keys)}");
     }
 
     private static async Task LoadAnimatedAsync()

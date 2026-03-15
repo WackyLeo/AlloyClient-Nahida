@@ -206,7 +206,7 @@ public class Main {
         GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
         
         while (true) {
-            var elapsedMs = sw.Elapsed.TotalMilliseconds;
+            var elapsedMs = sw.Elapsed.TotalMilliseconds;   
             
             if (elapsedMs < _targetFrameTime) continue;
             

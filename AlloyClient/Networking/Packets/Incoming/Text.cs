@@ -33,11 +33,12 @@ public class Text : IncomingPacket<Text> {
     }
 
     public override void Handle() {
+        if (string.IsNullOrEmpty(Txt)) return;
+    
         ChatBox.AddChatLine.Dispatch(new ChatBoxLineData(Main.GetTime(), Name, NumStars, Recipient, Txt));
 
-        if (Map.Entities.TryGetValue(ObjectId, out var en)) {
+        if (Map.Entities.TryGetValue(ObjectId, out var en))
             ChatLayer.QueueSpeech(new SpeechData(en, Txt, Recipient));
-        }
     }
 
     public override string ToString() {

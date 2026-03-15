@@ -56,6 +56,9 @@ public class NewTick : IncomingPacket<NewTick> {
             };
             move.Records = Array.Empty<TimedPosition>();
             Client.QueuePacket(move);
+            
+            Map.FlushEnemyHits();
+            Map.FlushPlayerHits();
         }
 
         for (int i = 0; i < ObjectStatsCount; i++)

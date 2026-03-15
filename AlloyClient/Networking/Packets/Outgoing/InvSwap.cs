@@ -25,6 +25,6 @@ public class InvSwap : OutgoingPacket<InvSwap> {
     }
 
     public override string ToString() {
-        return $"SlotObj1: {SlotObj1}, SlotObj2: {SlotObj2}";
+        return $"Time: {Time}, Position{Position}, SlotObj1: {SlotObj1}, SlotObj2: {SlotObj2}";
     }
 }

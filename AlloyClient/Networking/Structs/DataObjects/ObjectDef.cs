@@ -28,7 +28,7 @@ public struct ObjectDef : IDataObject {
         Id = reader.ReadInt32();
         Position.Read(reader);
         var len = reader.ReadInt16();
-        Logger.Debug($"[ObjectDef] pos={startPos} type=0x{ObjectType:X4} id={Id} x={Position.X} y={Position.Y} statCount={len}");
+        //Logger.Debug($"[ObjectDef] pos={startPos} type=0x{ObjectType:X4} id={Id} x={Position.X} y={Position.Y} statCount={len}");
         StatOffset = StatsPoolIndex;
         StatCount = len;
 

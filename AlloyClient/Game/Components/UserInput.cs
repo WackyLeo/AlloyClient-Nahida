@@ -103,7 +103,7 @@ public sealed class UserInput : Sprite {
         var dY = pos.Y - Map.LocalPlayer.Position.Y;
         var angle = MathF.Atan2(dY, dX);
         
-        Map.LocalPlayer.Shoot(angle, Stage.GameTime);
+        Map.LocalPlayer.Shoot(angle, Stage.GameTime, false);
     }
 
     private void SetPlayerMovement() {
@@ -165,8 +165,18 @@ public sealed class UserInput : Sprite {
             case true when Settings.AutoFire.CheckValue(key):
                 _autoFire = !_autoFire;
                 break;
-            case true when Settings.Special.CheckValue(key):
-                //TODO: abilities
+            case true when Settings.Special.CheckValue(key): {
+                /*
+                var pos = Camera.ScreenToWorld(_mousePosition);
+                var dX = pos.X - Map.LocalPlayer.Position.X;
+                var dY = pos.Y - Map.LocalPlayer.Position.Y;
+                var angle = MathF.Atan2(dY, dX);
+        
+                Map.LocalPlayer.Shoot(angle, Stage.GameTime, true);
+                */
+                
+                // todo
+            }
                 break;
             case true when Settings.Escape.CheckValue(key):
                 if (Map.Name == "Nexus" || Client.IsReconnecting)

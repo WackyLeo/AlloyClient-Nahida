@@ -5,6 +5,8 @@ using AlloyClient.Assets;
 using AlloyClient.Game.Components;
 using AlloyClient.Game.Components.Hud;
 using AlloyClient.Game.Objects;
+using AlloyClient.Networking;
+using AlloyClient.Networking.Packets.Outgoing;
 using AlloyClient.Networking.Structs.DataObjects;
 using AlloyClient.ParticleEffects;
 using AlloyClient.Rendering;
@@ -46,7 +48,8 @@ public static class Map {
     public static readonly List<ParticleEffect> ParticleGenerators = [];
 
     public static int ParticleGenCount;
-
+    public static EnemyHit PendingEnemyHit = EnemyHit.CreatePacket();
+    public static PlayerHit PendingPlayerHit = PlayerHit.CreatePacket();
     private static readonly List<Projectile> Projectiles = [];
 
     public static int LocalPlayerId;
@@ -58,7 +61,7 @@ public static class Map {
 
     private static int _particleCount;
     private static readonly ParticleData[] Particles = new ParticleData[30000];
-
+    private static readonly List<int> EntitiesToRemove = [];
     public static void InitMap(int width, int height, string name, string display, int diff, uint seed, int background, bool allowTp, bool showDisplays) {
         Width = width;
         Height = height;
@@ -80,14 +83,17 @@ public static class Map {
         _particleCount = 0;
         var fullMatrix = Camera.WorldMatrix * Camera.ViewMatrix * Camera.ProjectionMatrix;
         var matrix = new DepthMatrix(fullMatrix);
-
+        
         foreach (var (objectId, entity) in Entities) {
             if (!entity.Update(time, dt)) {
-                Entities.Remove(objectId);
+                EntitiesToRemove.Add(objectId);
             }
-
             entity.UpdateVisibility(ref fullMatrix);
         }
+
+        foreach (var id in EntitiesToRemove)
+            RemoveEntity(id);
+        EntitiesToRemove.Clear();
 
         for (var i = ParticleGenCount - 1; i >= 0; i--) {
             var gen = ParticleGenerators[i];
@@ -215,7 +221,21 @@ public static class Map {
 
 
     }
-
+    
+    public static void FlushEnemyHits() {
+        if (PendingEnemyHit.Stack > 0) {
+            Client.QueuePacket(PendingEnemyHit);
+            PendingEnemyHit = EnemyHit.CreatePacket();
+        }
+    }
+    
+    public static void FlushPlayerHits() {
+        if (PendingPlayerHit.Stack > 0) {
+            Client.QueuePacket(PendingPlayerHit);
+            PendingPlayerHit = PlayerHit.CreatePacket();
+        }
+    }
+    
     public static MapTile GetTile(Vector2 position) => GetTile((int)position.X, (int)position.Y);
 
     public static MapTile GetTile(int x, int y) {

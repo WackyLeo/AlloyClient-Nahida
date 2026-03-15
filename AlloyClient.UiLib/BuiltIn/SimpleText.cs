@@ -38,7 +38,12 @@ public sealed class SimpleText : Sprite {
     private readonly BitmapFont _font;
 
     public SimpleText(TextConfig config) {
-        Text = config.Text;
+        if (config.Text == null) {
+            Text = "test";
+        } else {
+            Text = config.Text;
+        }
+        
         _fontScale = config.FontSize;
         _font = UiRender.GetFont(config.FontType);
         _maxWidth = config.MaxWidth;
@@ -57,14 +62,13 @@ public sealed class SimpleText : Sprite {
     }
     
     private void ResizeBackBuffer() {
-        var size = _font.GetCharCount(Text);
+        var size = Text.Length;
         VertexData = new VertexUi[size * 4];
         Indices = new ushort[size * 6];
-        for (var i = 0; i < Indices.Length / 6; i++) {
+        for (var i = 0; i < size; i++) {
             var idx6 = i * 6;
             var idx4 = i * 4;
-
-            Indices[idx6] = (ushort)(0 + idx4);
+            Indices[idx6]     = (ushort)(0 + idx4);
             Indices[idx6 + 1] = (ushort)(1 + idx4);
             Indices[idx6 + 2] = (ushort)(2 + idx4);
             Indices[idx6 + 3] = (ushort)(0 + idx4);
@@ -108,6 +112,7 @@ public sealed class SimpleText : Sprite {
 
                     var uv = glyph.UV;
                     var pos = glyph.Position;
+                    
                     VertexData[idx * 4 + 0] = new VertexUi(new Vector2(zero.X + pos.X0 * scale, zero.Y - pos.Y1 * scale), new Vector2(uv.X0, uv.Y1)); //bl
                     VertexData[idx * 4 + 1] = new VertexUi(new Vector2(zero.X + pos.X0 * scale, zero.Y - pos.Y0 * scale), new Vector2(uv.X0, uv.Y0)); //tl
                     VertexData[idx * 4 + 2] = new VertexUi(new Vector2(zero.X + pos.X1 * scale, zero.Y - pos.Y0 * scale), new Vector2(uv.X1, uv.Y0)); //tr
@@ -155,14 +160,7 @@ public sealed class SimpleText : Sprite {
     }
 
     private void Rebuild() {
-        var size = _font.GetCharCount(Text);
-        if (size * 4 <= VertexData.Length) {
-            OverridePrimCount = size * 2;
-        }
-        else {
-            ResizeBackBuffer();
-        }
-        
+        ResizeBackBuffer();
         FillData();
     }
 

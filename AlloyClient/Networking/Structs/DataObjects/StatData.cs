@@ -21,7 +21,7 @@ public struct StatData : IDataObject {
     public void Read(NetworkReader reader)
     {
         Type = (StatsType)reader.ReadByte();
-        Logger.Debug($"[StatData] Reading stat type=0x{(byte)Type:X2} ({Type})");
+        //Logger.Debug($"[StatData] Reading stat type=0x{(byte)Type:X2} ({Type})");
 
         if (IsStringStat(Type))
         {
@@ -54,26 +54,6 @@ public struct StatData : IDataObject {
             case StatsType.Guild:
             case StatsType.AccountId:
             case StatsType.OwnerAccountId:
-            /* case StatsType.Inventoory0:
-            case StatsType.Inventory1:
-            case StatsType.Inventory2:
-            case StatsType.Inventory3:
-            case StatsType.Inventory4:
-            case StatsType.Inventory5:
-            case StatsType.Inventory6:
-            case StatsType.Inventory7:
-            case StatsType.Inventory8:
-            case StatsType.Inventory9:
-            case StatsType.Inventory10:
-            case StatsType.Inventory11:
-            case StatsType.BackPack0:
-            case StatsType.BackPack1:
-            case StatsType.BackPack2:
-            case StatsType.BackPack3:
-            case StatsType.BackPack4:
-            case StatsType.BackPack5:
-            case StatsType.BackPack6:
-            case StatsType.BackPack7: */
                 return true;
             default:
                 return false;

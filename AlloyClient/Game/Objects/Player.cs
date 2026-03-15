@@ -24,9 +24,10 @@ public class Player : Entity {
     private const float MaxMoveSpeed = 0.0096f;
     private const float MinAttackFreq = 0.0015f;
     private const float MaxAttackFreq = 0.008f;
-
+    
     private static readonly Logger Log = new(nameof(Player));
 
+    
     public float Rotate;
     public Vector2 RelativeMoveVector;
 
@@ -40,7 +41,8 @@ public class Player : Entity {
 
     public bool Ignored;
 
-    public byte NextBulletId = 1;
+    public int NextBulletId = 0;
+    public int NextBulletId2 = 0;
 
     #region StatData
 
@@ -71,9 +73,10 @@ public class Player : Entity {
 
     public int Stars;
 
+    public int Tribute;
     public int Credits;
-
     public int Fame;
+    
     public int CurrentFame;
     public int FameGoal;
 
@@ -345,52 +348,64 @@ public class Player : Entity {
         return attFreq;
     }
 
-    public void Shoot(float attackAngle, GameTime gameTime) {
+    public void Shoot(float attackAngle, GameTime gameTime, bool isAbility) {
         if (HasConditionEffect(ConditionEffects.Stunned) || HasConditionEffect(ConditionEffects.Paused))
             return;
         
         var item = Equipment[0];
-
         if (item == null)
             return;
-
         var temp = AttackFrequency();
         
         AttackPeriod = 1 / temp * (1 / item.RateOfFire);
-
         if (gameTime.TotalMs < AttackStart + AttackPeriod)
             return;
-
         AttackAngle = attackAngle;
         AttackStart = gameTime.TotalMs;
         
         var props = ObjectLibrary.TypeToObjectProps[item.ObjectType];
-        
-        var projType = ObjectLibrary.IdToObjectType[props.Projectiles[0].ObjectId];
-        var objProps =  ObjectLibrary.TypeToObjectProps[projType];
-        var projProps = props.Projectiles[0];
+        var shootPacket = PlayerShoot.CreatePacket();
+
+        var arc = MathHelper.DegreesToRadians(props.ArcGap) * (props.NumProjectiles - 1);
+        var startAngle = attackAngle - arc / 2;
+
+        var startCount = item.StartCount;
+        var nextCount = item.NextCount;
+        var projTypeIndex = 0;
 
         for (int i = 0; i < props.NumProjectiles; i++) {
-            var arc = MathHelper.DegreesToRadians(props.ArcGap) * (props.NumProjectiles - 1);
-            var startAngle = AttackAngle - arc / 2;
+            var projDesc = item.AllProjectiles[projTypeIndex % item.AllProjectiles.Length];
+            var projObjType = ObjectLibrary.IdToObjectType[projDesc.ObjectId];
+            var objProps = ObjectLibrary.TypeToObjectProps[projObjType];
             var angle = startAngle + MathHelper.DegreesToRadians(props.ArcGap) * i;
+            var bId = isAbility ? GetBulletId2() : GetBulletId();
+            var dmg = MathUtils.RandomInt(projDesc.MinDamage, projDesc.MaxDamage);
 
-            var bId = GetBulletId();
+            if (!props.ProjectilesDict.TryGetValue(projDesc.BulletType, out var projProps))
+                projProps = props.Projectiles[0];
+
             var proj = ObjectPools.Projectiles.Pop();
-            var dmg = MathUtils.RandomInt(projProps.MinDamage, projProps.MaxDamage);
             proj.Reset(bId, dmg, angle, this, objProps, projProps);
             Map.AddProjectile(proj);
-            
-            var shoot = PlayerShoot.CreatePacket();
-            shoot.ItemType = item.ObjectType;
-            shoot.Angle = angle;
-            shoot.Time = (int)gameTime.TotalMs;
-            shoot.StartingPos = new Position { X = Position.X, Y = Position.Y };
-            
-            Client.QueuePacket(shoot);
-        }
-    }
 
+            if (i == 0) {
+                shootPacket.Shots.Add(new ShootData {
+                    Time = (int)Main.GameTime.TotalMs,
+                    BulletId = bId,
+                    ItemType = item.ObjectType,
+                    StartingPos = new Position { X = Position.X, Y = Position.Y },
+                    Angle = angle
+                });
+            }
+            
+            startCount++;
+            if (startCount % nextCount == 0)
+                projTypeIndex++;
+        }
+
+        Client.QueuePacket(shootPacket);
+    }
+    
     private Vector2 ModifyMove(float x, float y) {
         var result = new Vector2();
 
@@ -597,10 +612,21 @@ public class Player : Entity {
         return moveSpeed * MovementMultiplier;
     }
 
-    public byte GetBulletId() {
+    public int GetBulletId() {
         var ret = NextBulletId;
-        NextBulletId = (byte)((NextBulletId + 1) % 128);
+        Log.Info($"GetBulletId: returning {ret}, next will be {(NextBulletId + 2) % 1024}");
+        NextBulletId = (NextBulletId + 2) % 1024;
         return ret;
+    }
+    
+    public int GetBulletId2() {
+        var ret = NextBulletId2 + 1024;
+        NextBulletId2 = (NextBulletId2 + 1) % 512;
+        return ret;
+    }
+
+    public int ReadServerId() {
+        return NextBulletId2 + 1024;
     }
 
     private static bool IsFullOccupy(float x, float y) {

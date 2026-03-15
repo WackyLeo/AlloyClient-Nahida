@@ -3,7 +3,7 @@
 public struct ObjectSlot : IDataObject {
     public int ObjectId;
     public byte SlotId;
-    public ushort ObjectType;
+    public int ObjectType;
 
     public void Reset() {
         ObjectId = 0;

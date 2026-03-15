@@ -1,22 +1,28 @@
-﻿namespace AlloyClient.Networking.Packets.Outgoing;
+﻿using System.Collections.Generic;
+
+namespace AlloyClient.Networking.Packets.Outgoing;
 
 public class PlayerHit : OutgoingPacket<PlayerHit> {
-    public byte BulletId;
-    public int ObjectId;
+
+    public int Stack;
+    public List<int> HitInfo = new();
 
     public override PacketId PacketId => PacketId.PlayerHit;
 
     public override void Reset() {
-        BulletId = 0;
-        ObjectId = 0;
+        Stack = 0;
+        HitInfo.Clear();
+    }
+
+    public void AddHit(int bulletId, int objectId) {
+        Stack++;
+        HitInfo.Add(bulletId);
+        HitInfo.Add(objectId);
     }
 
     public override void Write(NetworkWriter writer) {
-        writer.Write(BulletId);
-        writer.Write(ObjectId);
-    }
-
-    public override string ToString() {
-        return $"BulletId: {BulletId}, ObjectId: {ObjectId}";
+        writer.Write(Stack);
+        foreach (var val in HitInfo)
+            writer.Write(val);
     }
 }

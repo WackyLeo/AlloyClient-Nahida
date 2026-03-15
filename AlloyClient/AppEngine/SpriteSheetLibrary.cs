@@ -23,6 +23,7 @@ public static class SpriteSheetLibrary {
     public static bool HasSheet(string id) => Sheets.ContainsKey(id);
 
     public static void AddSheet(string id, byte[] pngBytes, int spriteW, int spriteH) {
+        
         if (Sheets.ContainsKey(id)) return;
 
         var (texW, texH) = ReadPngDimensions(pngBytes);
@@ -42,7 +43,6 @@ public static class SpriteSheetLibrary {
         data = default;
 
         if (!Sheets.TryGetValue(id, out var entry)) {
-            Log.Warn($"Sheet '{id}' not found.");
             return false;
         }
 

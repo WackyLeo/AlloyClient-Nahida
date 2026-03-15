@@ -5,6 +5,7 @@ using AlloyClient.Ui.Components.Elements;
 using AlloyClient.UiLib.BuiltIn;
 using AlloyClient.UiLib.Enums;
 using AlloyClient.Utils;
+using Common;
 
 namespace AlloyClient.Ui.Components.Tooltips;
 
@@ -22,6 +23,7 @@ public sealed class EquipmentToolTip : Tooltip
     private string statsText;
     public EquipmentToolTip(ItemDesc itemDesc) : base(220, 100)
     {
+        Logger.Info("We got called");
         _itemDesc = itemDesc;
         AddIcon();
         AddTitle();

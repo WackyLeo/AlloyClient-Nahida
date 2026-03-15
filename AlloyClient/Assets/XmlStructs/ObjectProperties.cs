@@ -57,10 +57,10 @@ public class ObjectProperties {
     public ObjectProperties(XElement e) {
         ObjectType = e.GetAttribute<ushort>("type");
         ObjectId = e.GetAttribute<string>("id");
-        
+
         DisplayId = e.GetValue<string>("DisplayId");
         DisplayName = string.IsNullOrWhiteSpace(DisplayId) ? ObjectId : DisplayId;
-        
+
         Projectiles = [];
         ProjectilesDict = [];
         foreach (var proj in e.Elements("Projectile")) {
@@ -68,6 +68,7 @@ public class ObjectProperties {
             Projectiles.Add(props);
             ProjectilesDict.TryAdd(props.BulletType, props);
         }
+
         NumProjectiles = e.GetValue("NumProjectiles", 1);
         ArcGap = e.GetValue("ArcGap", 11.25f);
 
@@ -80,11 +81,11 @@ public class ObjectProperties {
         IsPlayer = e.GetValue<bool>("Player");
         IsEnemy = e.GetValue<bool>("Enemy");
         IsAlly = e.GetValue<bool>("Ally");
-        
+
         if (IsPlayer) {
             PlayerProperties = new PlayerProperties(e);
         }
-        
+
         EnemyOccupySquare = e.GetValue<bool>("EnemyOccupySquare");
         OccupySquare = e.GetValue<bool>("OccupySquare");
         FullOccupy = e.GetValue<bool>("FullOccupy");
@@ -97,9 +98,9 @@ public class ObjectProperties {
         MinSize = e.GetValue<int>("MinSize");
         MaxSize = e.GetValue<int>("MaxSize");
         SizeStep = e.GetValue("SizeStep", 5);
-        
+
         Description = e.GetValue<string>("Description");
-        
+
         PlayerClassType = e.GetValue<ushort>("PlayerClassType");
         Skin = e.GetValue<bool>("Skin");
 
@@ -114,7 +115,7 @@ public class ObjectProperties {
         Container = e.HasElement("Container");
         LockedPortal = e.HasElement("LockedPortal");
 
-        Equipment = [];
+        Equipment = new List<ushort?>();
         var equipment = e.GetValue<string>("Equipment");
         if (equipment != null) {
             foreach (var equip in equipment.Split(',')) {
@@ -123,10 +124,23 @@ public class ObjectProperties {
                     Equipment.Add(null);
                     continue;
                 }
-                
-                var objectType = Convert.ToUInt16(clean, Common.Utils.GetBase(clean));
+
+                var objectType = Convert.ToUInt16(PadHexIfNeeded(clean), Common.Utils.GetBase(clean));
                 Equipment.Add(objectType);
             }
         }
+    }
+    
+    private static string PadHexIfNeeded(string hexValue) {
+        if (hexValue.StartsWith("0x", StringComparison.OrdinalIgnoreCase)) {
+            hexValue = hexValue.Substring(2);
+        
+            if (hexValue.Length < 4) {
+                hexValue = hexValue.PadLeft(4, '0');
+            }
+        
+            return "0x" + hexValue;
+        }
+        return hexValue;
     }
 }

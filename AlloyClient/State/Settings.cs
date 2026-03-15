@@ -26,17 +26,20 @@ public static class Settings {
     public const string BuildLabel = $"OpenTK v{BuildVersion}";
 
     public const string AppEngineAddress = "116.255.20.214";
-    //public const string AppEngineAddress = "204.13.235.158";
+    //public const string AppEngineAddress = "135.125.181.109";
     public const string AssetUrl = "https://domain-of-magica.github.io";
 
     public const string AppEnginePort = "65001";
+    //public const string AppEnginePort = "8080";
     public const string AppEngineUrl = $"http://{AppEngineAddress}:{AppEnginePort}";
 
     public const int AppEngineTimeout = 10000;
 
     public const string GameServerAddress = "116.255.20.214";
-    //public const string GameServerAddress = "204.13.235.158";
+    //public const string GameServerAddress = "135.125.181.109";
+    
     public const ushort GameServerPort = 2051;
+    //public const ushort GameServerPort = 26959;
 
     public const int DefaultScreenWidth = 1280;
     public const int DefaultScreenHeight = 720;

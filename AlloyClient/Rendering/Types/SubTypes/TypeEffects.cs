@@ -46,6 +46,10 @@ public class TypeEffects : SubRenderBase {
             var y = num * s + yOffset * c;
 
             var p = new Vector3(pos.X - x, pos.Y + y, pos.Z);
+
+            if (!ConditionEffectUtil.EffectIcons.ContainsKey((ConditionEffects)(1 << i))) {
+                return;
+            }
             
             Render.DrawEntity(new VertexObject(p, ConditionEffectUtil.EffectIcons[(ConditionEffects)(1 << i)][0], Scale, Rotation, Extra.Data, Color));
             num -= Size * 2;

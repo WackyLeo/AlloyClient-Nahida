@@ -6796,7 +6796,6 @@
       </RandomTexture>
       <Static/>
       <OccupySquare/>
-      <Z>-0.15</Z>
       <ShadowSize>0</ShadowSize>
    </Object>
    <Object type="0x191a" id="Japanese Paper Wall A">

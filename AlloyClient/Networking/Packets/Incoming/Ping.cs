@@ -2,6 +2,7 @@
 using AlloyClient.Networking.Packets;
 using AlloyClient.Networking.Packets.Outgoing;
 using System;
+using AlloyClient;
 
 public class Ping : IncomingPacket<Ping>
 {
@@ -22,7 +23,7 @@ public class Ping : IncomingPacket<Ping>
     {
         var pong = Pong.CreatePacket();
         pong.Serial = Serial;
-        pong.Time = Environment.TickCount;
+        pong.Time = (int)Main.GameTime.TotalMs;
         Client.QueuePacket(pong);
     }
 }

@@ -6,6 +6,7 @@ using System.Xml.Linq;
 using AlloyClient.Assets.Libraries;
 using AlloyClient.Assets.XmlStructs;
 using AlloyClient.Engine.Common;
+using AlloyClient.Engine.Graphics;
 using Common;
 using Common.Structs;
 
@@ -24,10 +25,8 @@ public static class AssetParser {
             var props = new GroundProperties(ground);
             lock (GroundLibrary.TypeToGroundProps)
                 GroundLibrary.TypeToGroundProps.TryAdd(props.ObjectType, props);
-            
             lock (GroundLibrary.TypeToTextureData)
                 GroundLibrary.TypeToTextureData.TryAdd(props.ObjectType, new TextureData(ground));
-            
             lock (GroundLibrary.IdToTileType)
                 GroundLibrary.IdToTileType.TryAdd(props.ObjectId, props.ObjectType);
         });
@@ -39,27 +38,21 @@ public static class AssetParser {
             var path = File.ReadAllText(xmlFile);
             var objectContainer = XElement.Parse(path).Elements("Object");
             Parallel.ForEach(objectContainer, gameObject => {
-                //Console.WriteLine($"XML:{gameObject.Attribute("id")}");// This line might become handy if you're messing with xmls
                 var props = new ObjectProperties(gameObject);
                 lock (ObjectLibrary.TypeToObjectProps)
                     ObjectLibrary.TypeToObjectProps.TryAdd(props.ObjectType, props);
-                
                 lock (ObjectLibrary.TypeToTextureData)
                     ObjectLibrary.TypeToTextureData.TryAdd(props.ObjectType, new TextureData(gameObject));
-                
                 lock (ObjectLibrary.IdToObjectType)
                     ObjectLibrary.IdToObjectType.TryAdd(props.ObjectId, props.ObjectType);
-
                 if (props.Class == "Player") {
                     lock (ObjectLibrary.TypeToClassProps)
                         ObjectLibrary.TypeToClassProps.TryAdd(props.ObjectType, props.PlayerProperties);
                 }
-
                 if (props.Skin) {
                     lock (ObjectLibrary.TypeToSkins)
                         ObjectLibrary.TypeToSkins.Add(new Tuple<ushort, ushort>(props.PlayerClassType, props.ObjectType));
                 }
-
                 if (gameObject.HasElement("Item")) {
                     lock (ObjectLibrary.TypeToItem)
                         ObjectLibrary.TypeToItem.TryAdd(props.ObjectType, new ItemDesc(props.ObjectType, gameObject));
@@ -73,7 +66,7 @@ public sealed class TextureData {
     private static readonly Logger Log = new(typeof(TextureData));
 
     public bool HasAnimationData = false;
-    
+
     public AtlasData Texture;
     public TextureData TopTexture;
     public AnimationAtlasData AnimatedTextures;
@@ -81,12 +74,40 @@ public sealed class TextureData {
     public Dictionary<int, TextureData> AltTextures;
     public AtlasData? EditorTexture;
     public Color DominantColor = Color.Transparent;
+    public Texture OverrideTexture;
+
+    public bool IsRemoteSheet => OverrideTexture != null;
 
     public TextureData() { }
+
     public TextureData(XElement xml) {
         if (xml.GetElement("Texture", out var elem)) {
-            Texture = Main.Atlas.GetAtlasData(elem.GetValue<string>("File"), (int) elem.GetValue<uint>("Index"));
-            DominantColor = Main.Atlas.GetDominantColor(elem.GetValue<string>("File"), elem.GetValue<int>("Index"));
+            var file = elem.GetValue<string>("File");
+            var index = (int)elem.GetValue<uint>("Index");
+            
+            var atlasData = Main.Atlas.GetAtlasData(file, index);
+            
+            if (atlasData.W == 0 && atlasData.H == 0) {
+                
+                var t1 = Main.Atlas.GetAtlasData("lofiObj", 44);
+                var t2 = Main.Atlas.GetAtlasData("lofiObj2", 44);
+                var t3 = Main.Atlas.GetAtlasData("lofiObj3", 44);
+                //Log.Debug($"lofiObj[44]: {t1.U},{t1.V},{t1.W},{t1.H}");
+                //Log.Debug($"lofiObj2[44]: {t2.U},{t2.V},{t2.W},{t2.H}");
+                //Log.Debug($"lofiObj3[44]: {t3.U},{t3.V},{t3.W},{t3.H}");
+                
+                if (SpriteSheetLibrary.TryGetSprite(file, index, out var sheetData)) {
+                    Texture = sheetData;
+                    var entry = SpriteSheetLibrary.GetEntry(file);
+                    OverrideTexture = entry?.Texture;
+                } else {
+                    Texture = atlasData;
+                    //Log.Warn($"Texture '{file}'[{index}] not found in atlas or sheet library.");
+                }
+            } else {
+                Texture = atlasData;
+                DominantColor = Main.Atlas.GetDominantColor(file, index);
+            }
         }
 
         if (xml.GetElement("Top", out elem)) {
@@ -94,8 +115,25 @@ public sealed class TextureData {
         }
 
         if (xml.GetElement("AnimatedTexture", out elem)) {
-            AnimatedTextures = Main.Atlas.GetAnimationAtlasData(elem.GetValue<string>("File"), elem.GetValue<int>("Index"));
-            HasAnimationData = true;
+            var file = elem.GetValue<string>("File");
+            var index = elem.GetValue<int>("Index");
+
+            var animData = Main.Atlas.GetAnimationAtlasData(file, index);
+
+            if (animData.FaceRight == null || animData.FaceRight.Length == 0) {
+                var sheetEntry = SpriteSheetLibrary.GetEntry(file);
+                if (sheetEntry != null) {
+                    AnimatedTextures = BuildAnimationFromSheet(sheetEntry, index);
+                    OverrideTexture = sheetEntry.Texture;
+                    HasAnimationData = AnimatedTextures.FaceRight != null && AnimatedTextures.FaceRight.Length > 0;
+                } else {
+                    HasAnimationData = false;
+                    //Log.Warn($"Animated sheet '{file}'[{index}] not found in atlas or sheet library.");
+                }
+            } else {
+                AnimatedTextures = animData;
+                HasAnimationData = true;
+            }
         }
 
         if (xml.GetElements("RandomTexture", out var elems)) {
@@ -109,10 +147,8 @@ public sealed class TextureData {
             AltTextures = [];
             foreach (var e in elems) {
                 var id = e.GetAttribute("id", 0);
-                if (AltTextures.ContainsKey(id)) {
+                if (AltTextures.ContainsKey(id))
                     Log.Warn($"[Dupe AltTextureId] object: {xml.GetAttribute("id", "")} has dupe id: {id}");
-                }
-
                 AltTextures[id] = new TextureData(e);
             }
         }
@@ -121,37 +157,63 @@ public sealed class TextureData {
             EditorTexture = Main.Atlas.GetAtlasData(elem.GetValue<string>("File"), elem.GetValue<int>("Index"));
         }
     }
+    
+    private static AnimationAtlasData BuildAnimationFromSheet(SpriteSheetLibrary.SheetEntry entry, int index) {
+        const int framesPerRow = 7;
+        var spritesPerRow = entry.SpritesPerRow;
+        var totalRows = entry.TextureHeight / entry.SpriteHeight;
+        var isFullFacing = totalRows % 3 == 0;
+        
+        var baseRow = isFullFacing ? index * 3 : index;
+
+        AnimationAtlasData anim = new();
+        anim.FaceRight = BuildFrameRow(entry, baseRow, framesPerRow);
+        
+        if (isFullFacing) {
+            anim.FaceDown = BuildFrameRow(entry, baseRow + 1, framesPerRow);
+            anim.FaceUp   = BuildFrameRow(entry, baseRow + 2, framesPerRow);
+        } else {
+            anim.FaceDown = anim.FaceRight;
+            anim.FaceUp   = anim.FaceRight;
+        }
+
+        return anim;
+    }
+
+    private static AtlasData[] BuildFrameRow(SpriteSheetLibrary.SheetEntry entry, int row, int frameCount) {
+        var frames = new AtlasData[frameCount];
+        var spritesPerRow = entry.SpritesPerRow;
+
+        for (var f = 0; f < frameCount; f++) {
+            var col = f % spritesPerRow;
+            frames[f] = new AtlasData {
+                U = (float)(col * entry.SpriteWidth)  / entry.TextureWidth,
+                V = (float)(row * entry.SpriteHeight) / entry.TextureHeight,
+                W = (float)entry.SpriteWidth           / entry.TextureWidth,
+                H = (float)entry.SpriteHeight          / entry.TextureHeight,
+            };
+        }
+
+        return frames;
+    }
 
     public AtlasData GetTexture(out Color color, bool random = false, int id = 0) {
         if (RandomTextures == null) {
             color = DominantColor;
             return Texture;
         }
-
-        if (random) {
-            id = Random.Shared.Next(0, RandomTextures.Length);
-        }
-
+        if (random) id = Random.Shared.Next(0, RandomTextures.Length);
         return RandomTextures[id].GetTexture(out color, false, id);
     }
 
     public AtlasData GetTexture(bool random = false, int id = 0) {
-        if (RandomTextures == null) {
-            return Texture;
-        }
-
-        if (random) {
-            id = Random.Shared.Next(0, RandomTextures.Length);
-        }
-
+        if (RandomTextures == null) return Texture;
+        if (random) id = Random.Shared.Next(0, RandomTextures.Length);
         return RandomTextures[id].GetTexture(false, id);
     }
 
     public AtlasData GetTopTexture() {
-        if (TopTexture == null) {
-            return new AtlasData();
-        }
-
+        if (TopTexture == null) return new AtlasData();
         return TopTexture.GetTexture();
     }
 
@@ -161,7 +223,6 @@ public sealed class TextureData {
             data = null;
             return false;
         }
-
         AltTextures.TryGetValue(id, out data);
         return true;
     }
