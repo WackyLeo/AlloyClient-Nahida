@@ -93,7 +93,7 @@ public sealed class TypePlayer : RenderBase {
         //y += _hpBar.Height;
         //_mpBar.Draw(y);
         
-        _effects.Draw(Entity.HeightOffset);
+        _effects.Draw(Entity.HeightOffset / 1.75f);
         
     }
 

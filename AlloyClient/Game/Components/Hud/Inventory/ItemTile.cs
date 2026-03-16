@@ -142,10 +142,36 @@ public sealed class ItemTile : Sprite {
 
         var color = 0xFFFFFFu;
         var tag = $"T{ItemDesc.Tier}";
-
-        if (ItemDesc.Tier == -1) {
-            color = 0x8A2BE2;
-            tag = "UT";
+        if (ItemDesc.TributePoints > 0)
+        {
+            if (ItemDesc.ST) {
+                color = 0xFF9900;
+                tag = "ST";
+            }
+            else if (ItemDesc.UnHoly) {
+                color = 0x9E9859;
+                tag = "UH";
+            }
+            else if (ItemDesc.Div) {
+                color = 0xFCE53D;
+                tag = "DIV";
+            }
+            else if (ItemDesc.Ferozium) {
+                color = 0x52DCFF;
+                tag = "FT" + ItemDesc.Tier;
+            } else {
+                tag = "UT";
+                if(ItemDesc.TributePoints > 749999){ color = 0x00D287;}
+                else if(ItemDesc.TributePoints > 99999){ color = 0xB2001D;}
+                else { color = 9055202;}
+            } 
+        } else {
+            if (ItemDesc.Tier == -1) {
+                tag = "UT";
+                color = 9055202;
+            } else {           
+                tag = "T" + ItemDesc.Tier;
+            }
         }
 
         //todo: item set

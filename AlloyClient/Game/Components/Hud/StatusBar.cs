@@ -56,7 +56,7 @@ public class StatusBar : Sprite {
 
         valueText.Visible = false;
 
-        if ((mouseOver || Settings.ToggleBarText) && drawLabel) 
+        if ((mouseOver || Settings.ToggleBarText) && drawLabel)
             UpdateText(val, max, boost, baseMax, level);
     }
     
@@ -64,7 +64,6 @@ public class StatusBar : Sprite {
         CurrentHeight = h;
 
         backgroundBar.Resize(w, h);
-        mainBar.Resize(w, h);
 
         if (label != null) label.Y = CurrentHeight / 2 + 1;
         if (valueText != null) valueText.Y = CurrentHeight / 2 + 1;

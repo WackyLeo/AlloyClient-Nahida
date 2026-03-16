@@ -67,7 +67,7 @@ public class Player : Entity {
 
     public int AccountId;
 
-    public int NextLevelExp;
+    public int NextLevelExp = 1000;
     public int Experience;
 
     public int Stars;
@@ -251,13 +251,19 @@ public class Player : Entity {
                 case StatsType.Experience:
                     Experience = stat.Value;
                     break;
+                case StatsType.Fame:
+                    CurrentFame = stat.Value;
+                    break;
+                case StatsType.FameGoal:
+                    FameGoal = stat.Value;
+                    break;
                 /*case StatsType.NumStars:
                     Stars = stat.Value;
                     break;*/
                 case StatsType.Credits:
                     Credits = stat.Value;
                     break;
-                case StatsType.Fame:
+                case StatsType.CurrentFame:
                     Fame = stat.Value;
                     break;
                 case StatsType.CurrentTribute: // Atm we just double up
@@ -279,13 +285,13 @@ public class Player : Entity {
                     break;
                 /*case StatsType.Oxygen:
                     OxygenBar = stat.Value;
-                    break;
-                case StatsType.HealthPotionStack:
+                    break;*/
+                case StatsType.HealthStackCount:
                     HealthStackCount = stat.Value;
                     break;
-                case StatsType.MagicPotionStack:
+                case StatsType.MagicStackCount:
                     MagicStackCount = stat.Value;
-                    break;*/
+                    break;
                 case StatsType.Skin:
                     Skin = (ushort)stat.Value;
                     SetPlayerSkinTemplate(Skin);

@@ -42,6 +42,11 @@ public class ItemDesc {
     public readonly int MpEndCost;
     public readonly int StartCount;
     public readonly int NextCount;
+    public readonly int TributePoints;
+    public readonly bool Div;
+    public readonly bool UnHoly;
+    public readonly bool Ferozium;
+    public readonly bool ST;
     public readonly ProjectileDesc[] AllProjectiles;
     
     public readonly StatBoostDesc[] StatBoosts;
@@ -88,6 +93,12 @@ public class ItemDesc {
         Projectiles = xml.HasElement("Projectile") ? new ProjectileDesc(xml.Element("Projectile")) : null;
         
         StartCount = xml.GetValue<int>("StartCount", 0);
+        TributePoints = xml.GetValue<int>("tributePoints", 0);
+        Div = xml.HasElement("DIV");
+        UnHoly = xml.HasElement("Unholy");
+        Ferozium = xml.HasElement("Ferozium");
+        ST = xml.HasElement("setType");
+        
         NextCount = xml.GetValue<int>("NextCount", 99999);
         AllProjectiles = xml.Elements("Projectile")
             .Select(p => new ProjectileDesc(p))

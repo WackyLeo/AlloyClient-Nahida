@@ -28,47 +28,43 @@ public class TypeName : SubRenderBase {
         }
 
         if (string.IsNullOrEmpty(Name))
-            Name = "Default";
+            Name = "Default ";
         
         SetTextures();
         Extra = new ExtraData(RenderConfig.TypeText, RenderConfig.NoShade);
     }
 
     public void SetTextures() {
-        const float size = 0.5f * 0.5f;
-        
-        var font = UiRender.GetFont(FontType.Normal);
+        const float size = 0.55f;
+
+        var font = UiRender.GetFont(FontType.Bold);
         _glyphs = new GlyphData[Name.Length];
 
         _height = font.Ascender * size;
-        var zero = new Vector2(0f, _height);
+        var cursorX = 0f;
 
         var len = Name.Length;
         for (var i = 0; i < len; i++) {
             var c = Name[i];
-            if (!font.Glyphs.TryGetValue(c, out var glyph)) {
+            if (!font.Glyphs.TryGetValue(c, out var glyph))
                 continue;
-            }
 
-            var uv = glyph.UV;
             var pos = glyph.Position;
             var w = (pos.X1 - pos.X0) / 2.0f * size;
             var h = (pos.Y0 - pos.Y1) / 2.0f * size;
-
-            _glyphs[i] = new GlyphData(uv.ToVector4(), w, h, zero.X, zero.Y - pos.Y0 * size);
+            
+            var cx = cursorX + w;
+            var cy = _height - (pos.Y0 + pos.Y1) / 2.0f * size;
+            _glyphs[i] = new GlyphData(glyph.UV.ToVector4(), w, h, cx, cy);
 
             if (i < len - 1) {
                 font.Kernings.TryGetValue((c, Name[i + 1]), out var kern);
-                zero.X += kern * size * 2f;
+                cursorX += kern * size;
             }
-
-            zero.X += glyph.Advance * size;
-            zero.X += 12f / font.PixelRange * size * 2f;
+            cursorX += glyph.Advance * size;
         }
-
-        for (var index = 0; index < _glyphs.Length; index++) {
-            _glyphs[index].Center(zero.X / 2f);
-        }
+        for (var index = 0; index < _glyphs.Length; index++)
+            _glyphs[index].Center(cursorX / 2f);
 
         Rotation = new Vector4(0, 1, 1, -1);
         Color = new Color(0xFC, 0xDF, 0, 1);
@@ -82,9 +78,9 @@ public class TypeName : SubRenderBase {
         }
     }
     
-    private struct GlyphData(Vector4 uv, float w, float h, float x, float y) {
+    private struct GlyphData(Vector4 uv, float w, float h, float cx, float cy) {
         public Vector4 UV = uv;
-        public Vector4 Scale = new(w, h, 1f * w + x, 1f * h + y);
+        public Vector4 Scale = new(w, h, cx, cy);
 
         public void Center(float x) {
             Scale.Z -= x;

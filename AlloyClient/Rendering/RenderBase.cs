@@ -1,125 +1,125 @@
-﻿using System;
-using AlloyClient.Assets;
-using AlloyClient.Engine.Common;
-using AlloyClient.Game.Objects;
-using Common;
-using Common.Structs;
-using OpenTK.Mathematics;
+﻿    using System;
+    using AlloyClient.Assets;
+    using AlloyClient.Engine.Common;
+    using AlloyClient.Game.Objects;
+    using Common;
+    using Common.Structs;
+    using OpenTK.Mathematics;
 
 
-namespace AlloyClient.Rendering;
+    namespace AlloyClient.Rendering;
 
-public abstract class RenderBase : IComparable<RenderBase> {
-    public abstract ModelType ModelType { get; }
-    
-    public abstract bool HasShadow { get; }
-
-    public bool Visible;
-
-    public float RotationAngle;
-
-    public float Size;
-
-    protected internal Entity Entity;
-    
-    public Vector3 Position = Vector3.Zero;
-    public Vector4 UV = Vector4.Zero;
-    public Vector4 Scale = Vector4.Zero;
-    public Vector4 Rotation = Vector4.Zero;
-    public ExtraData Extra;
-    public Color Color = Color.Transparent;
-    
-    public abstract void SetPosition(float x, float y, float z = 0);
-
-    public void SetTexture(AtlasData texture) => SetTexture(texture, false);
-
-    public virtual void SetTexture(AtlasData texture, bool attackFrame) {
-        UV = texture.ToVector4();
-
-        var frameMult = attackFrame ? 2f : 1f;
-        var w = texture.RawW() - AtlasConfig.Padding * 2;
-        var h = texture.RawH() - AtlasConfig.Padding * 2;
+    public abstract class RenderBase : IComparable<RenderBase> {
+        public abstract ModelType ModelType { get; }
         
-        // this should be padding * 2 but the attack frame doesnt line up unless its 3 for some fucking reason
-        var padW = 1.0f + AtlasConfig.Padding * 3 / texture.RawW();
-        var padH = 1.0f + AtlasConfig.Padding * 3 / texture.RawH();
+        public abstract bool HasShadow { get; }
+
+        public bool Visible;
+
+        public float RotationAngle;
+
+        public float Size;
+
+        protected internal Entity Entity;
         
-        var ratio = w / h / frameMult * MathF.Max(w / frameMult / 8, h / 8);
-
-        var widthScale = 0.75f * ratio * frameMult * padW;
-        var heightScale = 0.75f * ratio * padH;
+        public Vector3 Position = Vector3.Zero;
+        public Vector4 UV = Vector4.Zero;
+        public Vector4 Scale = Vector4.Zero;
+        public Vector4 Rotation = Vector4.Zero;
+        public ExtraData Extra;
+        public Color Color = Color.Transparent;
         
-        var padX = attackFrame ? widthScale * (0.5f - (AtlasConfig.Padding + w / 4) / texture.RawW()) : 0f;
-        var padY = heightScale * (0.5f - AtlasConfig.Padding / texture.RawH());
+        public abstract void SetPosition(float x, float y, float z = 0);
 
-        Scale = new Vector4(widthScale, heightScale, padX, -padY);
-    }
+        public void SetTexture(AtlasData texture) => SetTexture(texture, false);
 
-    public abstract void SetVisibility(bool visible);
+        public virtual void SetTexture(AtlasData texture, bool attackFrame) {
+            UV = texture.ToVector4();
 
-    public abstract void SetDepth(float depth);
-    public abstract void SetName(string name);
-    public abstract void SetAlpha(float alpha);
+            var frameMult = attackFrame ? 2f : 1f;
+            var w = texture.RawW() - AtlasConfig.Padding * 2;
+            var h = texture.RawH() - AtlasConfig.Padding * 2;
     
-    public void SetRotation(float rotation) => RotationAngle = rotation;
+            var padW = 1.0f + AtlasConfig.Padding * 3 / texture.RawW();
+            var padH = 1.0f + AtlasConfig.Padding * 3 / texture.RawH();
 
-    public void SetSize(float size) => Size = size;
+            var wTiles = w / frameMult / 8f;    
+            var hTiles = h / 8f;
 
-    public abstract void Draw();
+            var widthScale  = 0.75f * wTiles * frameMult * padW;
+            var heightScale = 0.75f * hTiles * padH;
     
-    public virtual void DrawShadow() { }
+            var padX = attackFrame ? widthScale * (0.5f - (AtlasConfig.Padding + w / 4) / texture.RawW()) : 0f;
+            var padY = heightScale * (0.5f - AtlasConfig.Padding / texture.RawH());
 
-    public int CompareTo(RenderBase other) {
-        if (Extra.SortId < other.Extra.SortId) {
-            return 1;
+            Scale = new Vector4(widthScale, heightScale, padX, -padY);
         }
 
-        if (Extra.SortId > other.Extra.SortId) {
-            return -1;
-        }
+        public abstract void SetVisibility(bool visible);
+
+        public abstract void SetDepth(float depth);
+        public abstract void SetName(string name);
+        public abstract void SetAlpha(float alpha);
         
-        return 0;
-    }
-}
+        public void SetRotation(float rotation) => RotationAngle = rotation;
 
-public abstract class SubRenderBase {
-    public abstract float Height { get; }
+        public void SetSize(float size) => Size = size;
 
-    protected RenderBase Parent;
-    
-    protected Entity Entity;
-    
-    public Vector3 Position = Vector3.Zero;
-    public Vector4 UV = Vector4.Zero;
-    public Vector4 Scale = Vector4.Zero;
-    public Vector4 Rotation = Vector4.Zero;
-    public ExtraData Extra;
-    public Color Color = Color.Transparent;
+        public abstract void Draw();
+        
+        public virtual void DrawShadow() { }
 
-    public void SetDepth(float depth) => Extra.SortId = depth;
+        public int CompareTo(RenderBase other) {
+            if (Extra.SortId < other.Extra.SortId) {
+                return 1;
+            }
 
-    public void SetAlpha(float alpha) => Extra.Alpha = alpha;
-    
-    public abstract void Draw(float yOffset);
-}
-
-public struct ExtraData {
-
-    public Vector4 Data => _internal;
-    
-    public float SortId {
-        get => _internal.Y;
-        set => _internal.Y = value;
+            if (Extra.SortId > other.Extra.SortId) {
+                return -1;
+            }
+            
+            return 0;
+        }
     }
 
-    public float Alpha {
-        get => _internal.W;
-        set => _internal.W = value;
+    public abstract class SubRenderBase {
+        public abstract float Height { get; }
+
+        protected RenderBase Parent;
+        
+        protected Entity Entity;
+        
+        public Vector3 Position = Vector3.Zero;
+        public Vector4 UV = Vector4.Zero;
+        public Vector4 Scale = Vector4.Zero;
+        public Vector4 Rotation = Vector4.Zero;
+        public ExtraData Extra;
+        public Color Color = Color.Transparent;
+
+        public void SetDepth(float depth) => Extra.SortId = depth;
+
+        public void SetAlpha(float alpha) => Extra.Alpha = alpha;
+        
+        public abstract void Draw(float yOffset);
     }
 
-    private Vector4 _internal;
+    public struct ExtraData {
 
-    public ExtraData(float type, float shade) {
-        _internal = new Vector4(type, 0f, shade, 1f);
+        public Vector4 Data => _internal;
+        
+        public float SortId {
+            get => _internal.Y;
+            set => _internal.Y = value;
+        }
+
+        public float Alpha {
+            get => _internal.W;
+            set => _internal.W = value;
+        }
+
+        private Vector4 _internal;
+
+        public ExtraData(float type, float shade) {
+            _internal = new Vector4(type, 0f, shade, 1f);
+        }
     }
-}

@@ -39,6 +39,27 @@ public static class SpriteSheetLibrary {
         Sheets[id] = entry;
         Log.Info($"Registered sheet '{id}' ({texW}x{texH}, sprite {spriteW}x{spriteH}, {texW / spriteW * (texH / spriteH)} sprites)");
     }
+    
+    public static bool TryGetSprite(string id, int index, int spriteW, int spriteH, out AtlasData data) {
+        data = default;
+        if (!Sheets.TryGetValue(id, out var entry)) return false;
+
+        var baseTileW = entry.SpriteWidth;
+        var baseTileH = entry.SpriteHeight;
+        var tilesPerRow = entry.TextureWidth / baseTileW;
+
+        var tileCol = index % tilesPerRow;
+        var tileRow = index / tilesPerRow;
+
+        data = new AtlasData {
+            U = (float)(tileCol * baseTileW) / entry.TextureWidth,
+            V = (float)(tileRow * baseTileH) / entry.TextureHeight,
+            W = (float)spriteW / entry.TextureWidth,
+            H = (float)spriteH / entry.TextureHeight,
+        };
+        return true;
+    }
+    
     public static bool TryGetSprite(string id, int index, out AtlasData data) {
         data = default;
 
