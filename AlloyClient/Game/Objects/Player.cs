@@ -26,26 +26,25 @@ public class Player : Entity {
     private const float MaxAttackFreq = 0.008f;
     
     private static readonly Logger Log = new(nameof(Player));
-
     
-    public float Rotate;
     public Vector2 RelativeMoveVector;
-
     public float MovementMultiplier = 1;
-
-    public bool Focused;
-
-    public int SinkLevel;
-
-    public bool Locked;
-
-    public bool Ignored;
+    public float Rotate;
 
     public int NextBulletId = 0;
     public int NextBulletId2 = 0;
+    
+    public bool Focused;
+    public int SinkLevel;
+
+    public bool Locked;
+    public bool Ignored;
 
     #region StatData
 
+    public int Restoration;
+    public int MaxShield;
+    public int Shield;
     public int MaxMp;
     public int Mp;
     public int Attack;
@@ -261,7 +260,11 @@ public class Player : Entity {
                 case StatsType.Fame:
                     Fame = stat.Value;
                     break;
-                /*case StatsType.CharFame:
+                case StatsType.CurrentTribute: // Atm we just double up
+                case StatsType.Tribute:
+                    Tribute = stat.Value;
+                    break;
+                /*case StatsType.CurrentFame:
                     CurrentFame = stat.Value;
                     break;
                 case StatsType.NextClassQuestFame:
@@ -290,6 +293,15 @@ public class Player : Entity {
                 case StatsType.HasBackpack:
                     HasBackPack = stat.Value != 0;
                     // add backpack signal
+                    break;
+                case StatsType.MaxShield:
+                    MaxShield = stat.Value;
+                    break;
+                case StatsType.Shield:
+                    Shield = stat.Value;
+                    break;
+                case StatsType.Restoration:
+                    Restoration = stat.Value;
                     break;
             }
         }

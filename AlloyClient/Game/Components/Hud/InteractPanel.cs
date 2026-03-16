@@ -78,6 +78,16 @@ public sealed class InteractPanel : Sprite {
             "Container" => new ContainerPanel(entity, false),
             "OneWayContainer" => new ContainerPanel(entity, true),
             "Portal" => new PortalPanel(entity),
+            "Button" => null,
+            "TributeButton" => null,
+            "CurseButton" => null,
+            "CurseObject" => null,
+            "TributeObjectOption" => null,
+            "MarketNPC" => null,
+            "StorageNPC" => null,
+            "StorageBuyNPC" => null,
+            "WikiAlter" => null,
+            "Merchant" => null,
             _ => null
         };
     }

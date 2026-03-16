@@ -77,13 +77,13 @@ namespace AlloyClient.Game.Components.Hud.Inventory
                         invTab = InventoryTab;
                         invTabButton = InventoryTabButton;
                         break;
-                    case TabTypes.StatsView:
-                        invTab = StatsViewTab;
-                        invTabButton = StatsViewTabButton;
-                        break;
                     case TabTypes.Backpack:
                         invTab = BackpackTab;
                         invTabButton = BackpackTabButton;
+                        break;
+                    case TabTypes.StatsView:
+                        invTab = StatsViewTab;
+                        invTabButton = StatsViewTabButton;
                         break;
                     case TabTypes.PetInfo:
                         break;
@@ -124,11 +124,12 @@ namespace AlloyClient.Game.Components.Hud.Inventory
             _inventoryGrid = new InventoryGrid(Map.LocalPlayer, 4, false);
             AddChild(_inventoryGrid);
 
-            _statsPanel = new StatsPanel();
-            AddChild(_statsPanel);
-
             _backpackPanel = new InventoryGrid(Map.LocalPlayer, 12, false, true);
             AddChild(_backpackPanel);
+            
+            _statsPanel = new StatsPanel();
+            AddChild(_statsPanel);
+            
 
             SetTabVisibility(currentTabIndex);
         }
@@ -136,8 +137,8 @@ namespace AlloyClient.Game.Components.Hud.Inventory
         private void SetTabVisibility(int tabType)
         {
             _inventoryGrid.Visible = tabType == (int)TabTypes.Inventory;
-            _statsPanel.Visible = tabType == (int)TabTypes.StatsView;
             _backpackPanel.Visible = tabType == (int)TabTypes.Backpack;
+            _statsPanel.Visible = tabType == (int)TabTypes.StatsView;
         }
 
         private void OnTabSelected(TabTypes tabType)

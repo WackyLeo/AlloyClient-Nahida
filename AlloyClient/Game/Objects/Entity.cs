@@ -108,6 +108,10 @@ public class Entity {
     public float Jitter;
 
     public ParticleEffect Effect;
+    
+    // Merchant Specific
+
+    public int merchandiseType_;
 
     public void SetObjectId(int id) {
         ObjectId = id;

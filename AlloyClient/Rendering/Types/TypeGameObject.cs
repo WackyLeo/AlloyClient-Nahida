@@ -75,10 +75,12 @@ public sealed class TypeGameObject : RenderBase {
         if (Entity.Properties.Static) return;
         
         var y = 0.1f;
-
+        float fill = 1f * Entity.Hp / Entity.MaxHp;
+        float safeFill = Math.Clamp(fill, 0.0f, 1.0f);
+        
         if (Entity.MaxHp != 0) {
-            _hpBar.SetFill(1f * Entity.Hp / Entity.MaxHp);
-            _hpBar.Draw(y);
+            _hpBar.SetFill(safeFill);
+            _hpBar.Draw(y + 0.05f);
         }
         
         _effects.Draw(Entity.HeightOffset);

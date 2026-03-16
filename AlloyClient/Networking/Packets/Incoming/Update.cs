@@ -74,9 +74,9 @@ public class Update : IncomingPacket<Update> {
             if (props.IsPlayer) {
                 entity = new Player();
             }
-            // else if (props.IsEnemy) {
-            //    entity = new Enemy();
-            // }
+            else if (props.Class == "Merchant" || props.ObjectType == 0x01ca) {
+                entity = new Merchant();
+            }
             // else if (props.IsAlly) {
             //     entity = new Ally();
             // }

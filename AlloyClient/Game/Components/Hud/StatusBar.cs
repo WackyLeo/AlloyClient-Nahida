@@ -8,64 +8,89 @@ using AlloyClient.UiLib.Enums;
 namespace AlloyClient.Game.Components.Hud;
 
 public class StatusBar : Sprite {
-    private readonly int _width;
-    private readonly int _height;
+    private readonly int width;
+    private readonly int height;
 
-    private NineSliceRect _mainBar;
-    private NineSliceRect _backgroundBar;
-    private NineSliceRect _outlineBar;
-    private SimpleText _label;
-    private SimpleText _valueText;
-
+    private NineSliceRect mainBar;
+    private NineSliceRect backgroundBar;
+    private NineSliceRect outlineBar;
+    private SimpleText label;
+    private SimpleText valueText;
+    
+    public int CurrentHeight;
     public string labelString;
-    private bool _mouseOver;
+    public bool drawLabel;
+    private bool mouseOver;
 
     public StatusBar(int width, int height, uint color, uint backColor, uint outlineColor, string label) {
-        _width = width;
-        _height = height;
+        this.width = width;
+        this.height = height;
+        CurrentHeight = height;
+        
+        backgroundBar = new NineSliceRect(new NineSliceConfig { SliceData = SliceLibrary.StatusBar, CutX = 10, CutY = 10, Width = this.width, Height = this.height });
+        backgroundBar.SetColor(backColor);
+        AddChild(backgroundBar);
 
-        _backgroundBar = new NineSliceRect(new NineSliceConfig { SliceData = SliceLibrary.StatusBar, CutX = 10, CutY = 10, Width = _width, Height = _height });
-        _backgroundBar.SetColor(backColor);
-        AddChild(_backgroundBar);
-
-        _mainBar = new NineSliceRect(new NineSliceConfig { SliceData = SliceLibrary.StatusBar, CutX = 10, CutY = 10, Width = _width, Height = _height });
-        _mainBar.SetColor(color);
-        AddChild(_mainBar);
+        mainBar = new NineSliceRect(new NineSliceConfig { SliceData = SliceLibrary.StatusBar, CutX = 10, CutY = 10, Width = this.width, Height = this.height });
+        mainBar.SetColor(color);
+        AddChild(mainBar);
 
         labelString = label;
-        _label = new SimpleText(new TextConfig { Text = label, FontSize = 16, FontType = FontType.Bolder, X = 4, Y = _height / 2, OutlineThickness = 1, Color = 0xFFFFFF, OutlineColor = 0xFFFFFF, Anchor = UiAnchor.MiddleLeft });
-        AddChild(_label);
+        this.label = new SimpleText(new TextConfig { Text = label, FontSize = 16, FontType = FontType.Bolder, X = 4, Y = this.height / 2, OutlineThickness = 1, Color = 0xFFFFFF, OutlineColor = 0xFFFFFF, Anchor = UiAnchor.MiddleLeft });
+        AddChild(this.label);
         
-        _valueText = new SimpleText(new TextConfig { Text = "", FontSize = 16, FontType = FontType.Bold, Y = _height / 2, OutlineThickness = 1, Color = 0xFFFFFF, OutlineColor = 0xFFFFFF, Anchor = UiAnchor.MiddleLeft });
-        AddChild(_valueText);
+        valueText = new SimpleText(new TextConfig { Text = "", FontSize = 16, FontType = FontType.Bold, Y = this.height / 2, OutlineThickness = 1, Color = 0xFFFFFF, OutlineColor = 0xFFFFFF, Anchor = UiAnchor.MiddleLeft });
+        AddChild(valueText);
 
         AddEventListener(MouseEvent.MouseOver, OnMouseOver);
         AddEventListener(MouseEvent.MouseOut, OnMouseOut);
+
+        drawLabel = true;
     }
 
     public void Update(int val, int max, int boost = 0, int baseMax = -1, int level = -1) {
-        _mainBar.Resize((int)(_width * (val / (float)max)), _height);
+        if (max > 0)
+            mainBar.Resize((int)(width * Math.Clamp(val / (float)max, 0f, 1f)), CurrentHeight);
+        else
+            mainBar.Resize(width, CurrentHeight);
 
-        _valueText.Visible = false;
+        valueText.Visible = false;
 
-        if (_mouseOver || Settings.ToggleBarText)
+        if ((mouseOver || Settings.ToggleBarText) && drawLabel) 
             UpdateText(val, max, boost, baseMax, level);
     }
+    
+    public void SetSize(int w, int h) {
+        CurrentHeight = h;
 
-    public void UpdateLabel(string label)
-    {
-        if(_label != null)
-        {
-            RemoveChild(_label);
-        }
+        backgroundBar.Resize(w, h);
+        mainBar.Resize(w, h);
 
-        labelString = label;
-        _label = new SimpleText(new TextConfig { Text = label, FontSize = 16, FontType = FontType.Bolder, X = 4, Y = _height / 2, OutlineThickness = 1, Color = 0xFFFFFF, OutlineColor = 0xFFFFFF, Anchor = UiAnchor.MiddleLeft });
-        AddChild(_label);
+        if (label != null) label.Y = CurrentHeight / 2 + 1;
+        if (valueText != null) valueText.Y = CurrentHeight / 2 + 1;
+    }
+
+    public void UpdateLabel(string newLabel) {
+        if (label != null)
+            RemoveChild(label);
+
+        labelString = newLabel;
+        label = new SimpleText(new TextConfig {
+            Text = newLabel,
+            FontSize = 16,
+            FontType = FontType.Bolder,
+            X = 4,
+            Y = CurrentHeight / 2 + 1,
+            OutlineThickness = 1,
+            Color = 0xFFFFFF,
+            OutlineColor = 0xFFFFFF,
+            Anchor = UiAnchor.MiddleLeft
+        });
+        AddChild(label);
     }
 
     private void UpdateText(int val, int max, int boost, int baseMax, int level) {
-        _valueText.Visible = true;
+        valueText.Visible = true;
 
         var ltmt = "";
 
@@ -76,12 +101,12 @@ public class StatusBar : Sprite {
         }
 
         if (max > 0)
-            _valueText.SetText($"{val}/{max}" + ltmt);
+            valueText.SetText($"{val}/{max}" + ltmt);
         else
-            _valueText.SetText($"{val}");
-        _valueText.X = _width / 2 - _valueText.Width / 2;
+            valueText.SetText($"{val}");
+        valueText.X = width / 2 - valueText.Width / 2;
     }
 
-    private void OnMouseOver() => _mouseOver = true;
-    private void OnMouseOut() => _mouseOver = false;
+    private void OnMouseOver() => mouseOver = true;
+    private void OnMouseOut() => mouseOver = false;
 }

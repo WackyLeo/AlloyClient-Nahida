@@ -10,7 +10,6 @@ namespace AlloyClient.Game.Components.Hud;
 public sealed class HudView : Sprite {
     public const int Width = 240;
 
-
     private Minimap _minimap;
     private CharacterDetails _details;
     private CharacterBars _bars;
@@ -38,8 +37,8 @@ public sealed class HudView : Sprite {
         AddChild(_details);
 
         _bars = new CharacterBars();
-        _bars.X = 15;
-        _bars.Y = _details.Y + _details.Height + 5;
+        _bars.X = 10;
+        _bars.Y = _details.Y + _details.Height;
         AddChild(_bars);
         AddEventListener(Event.EnterFrame, OnFrameEnter);
     }
@@ -52,7 +51,7 @@ public sealed class HudView : Sprite {
 
         _equippedGrid = new EquippedGrid(Map.LocalPlayer);
         _equippedGrid.X = 12;
-        _equippedGrid.Y = _bars.Y + _bars.height * 3 + _bars.offset * 3;
+        _equippedGrid.Y = _bars.Y + CharacterBars.TotalHeight;
         AddChild(_equippedGrid);
 
         _tabStrip = new TabStrip(Map.LocalPlayer); //Inv + Backpack + StatView is handled under TabStrip.
