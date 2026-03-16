@@ -379,7 +379,8 @@ public class Player : Entity {
             var objProps = ObjectLibrary.TypeToObjectProps[projObjType];
             var angle = startAngle + MathHelper.DegreesToRadians(props.ArcGap) * i;
             var bId = isAbility ? GetBulletId2() : GetBulletId();
-            var dmg = MathUtils.RandomInt(projDesc.MinDamage, projDesc.MaxDamage);
+            var rawDmg = MathUtils.RandomInt(projDesc.MinDamage, projDesc.MaxDamage);
+            var dmg = (int)(rawDmg * (0.5f + (Attack / 50f))); 
 
             if (!props.ProjectilesDict.TryGetValue(projDesc.BulletType, out var projProps))
                 projProps = props.Projectiles[0];
@@ -614,8 +615,8 @@ public class Player : Entity {
 
     public int GetBulletId() {
         var ret = NextBulletId;
-        Log.Info($"GetBulletId: returning {ret}, next will be {(NextBulletId + 2) % 1024}");
-        NextBulletId = (NextBulletId + 2) % 1024;
+        Log.Info($"GetBulletId: returning {ret}, next will be {(NextBulletId + 1) % 1024}");
+        NextBulletId = (NextBulletId + 1) % 1024;
         return ret;
     }
     

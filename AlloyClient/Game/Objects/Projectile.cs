@@ -206,10 +206,15 @@ public sealed class Projectile {
         if (enemy == null || _hitEntities.Contains(enemy.ObjectId))
             return false;
 
+        enemy.Hp -= _damage; 
+        bool killed = enemy.Hp <= 0;
+
         Map.AddParticleEffect(new HitEffect(enemy, 0xFF0000));
         NotificationLayer.AddStatusText(enemy, $"-{_damage}", 0xFF0000, 1000, 0);
-        Map.PendingEnemyHit.AddHit((int)time, _bulletId, enemy.ObjectId, enemy.Hp <= _damage);
-        Logger.Info($"AddHit called: bulletId={_bulletId}, targetId={enemy.ObjectId}");
+    
+        Map.PendingEnemyHit.AddHit((int)time, _bulletId, enemy.ObjectId, killed);
+        Logger.Info($"AddHit called: bulletId={_bulletId}, targetId={enemy.ObjectId}, killed={killed}");
+    
         if (!_projDesc.MultiHit)
             return true;
 
