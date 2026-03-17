@@ -105,7 +105,7 @@ public sealed class ProjectileProperties {
         FixedRotationAngle = e.GetValue<float>("FixedRotationAngle", 0f);
 
         StaticFallAngle = e.GetValue<float>("StaticFallAngle", -10000f);
-        ProjDelayMs = e.GetValue<int>("ProjDelayMS", 0);
+        ProjDelayMs = e.GetValue<int>("ProjdelayMS", 0);
         Ricochet = e.GetValue<int>("Ricochet", 0);
 
         if (ParticleTrail) {

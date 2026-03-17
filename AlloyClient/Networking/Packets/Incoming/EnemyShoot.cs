@@ -82,7 +82,7 @@ public class EnemyShoot : IncomingPacket<EnemyShoot> {
             var startPos = StartingPositions[i];
             proj.Reset((BulletId + i) % bulletIdMod, Damage, Angle + AngleInc * i, en, objDesc, projDesc);
             proj.SetStartPosition(new Vector2(startPos.X, startPos.Y));
-            Map.AddProjectile(proj, projDesc.ProjDelayMs);
+            Map.AddProjectile(proj);
         }
 
         en.SetAttack(OwnerId, Angle + AngleInc * (NumShots - 1) / 2f);

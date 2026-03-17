@@ -325,8 +325,8 @@ public static class Map {
     }
 
     private static readonly List<(Projectile proj, double spawnAt)> PendingProjectiles = [];
-    public static void AddProjectile(Projectile proj, double delayMs = 0) {
-        proj.MarkActive(CurrentTime);
+    public static void AddProjectile(Projectile proj) {
+        //proj.MarkActive(CurrentTime);
         Projectiles.Add(proj);
         EntityStorage.Add(proj);
     }

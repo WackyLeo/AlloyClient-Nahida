@@ -402,10 +402,10 @@ public class Player : Entity {
 
             if (!props.ProjectilesDict.TryGetValue(projDesc.BulletType, out var projProps))
                 projProps = props.Projectiles[0];
-
+            
             var proj = ObjectPools.Projectiles.Pop();
             proj.Reset(bId, dmg, angle, this, objProps, projProps);
-            Map.AddProjectile(proj, projProps.ProjDelayMs);
+            Map.AddProjectile(proj);
 
             if (i == 0) {
                 shootPacket.Shots.Add(new ShootData {
