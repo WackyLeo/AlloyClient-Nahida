@@ -61,6 +61,12 @@ public sealed class ProjectileProperties {
     public readonly bool RayCast;
     public readonly bool CheckRayCast;
     
+    public readonly string SecondId;
+    public readonly int ArcAmount;
+    public readonly bool ArcBlade;
+    public readonly bool CircularAngle;
+    public readonly bool ForceHit;
+    
     public ProjectileProperties(XElement e) {
         BulletType = e.GetAttribute<int>("id");
         ObjectId = e.GetValue<string>("ObjectId");
@@ -122,5 +128,11 @@ public sealed class ProjectileProperties {
         BonusSize = e.GetValue<float>("BonusSize", 0f);
         RayCast = e.HasElement("RayCast");
         CheckRayCast = e.HasElement("CheckRC");
+        
+        SecondId = e.GetValue<string>("SecondID", null);
+        ArcAmount = e.GetValue<int>("ArcAmount", 0);
+        ArcBlade = e.HasElement("ArcBlade");
+        CircularAngle = e.HasElement("CircularAngle");
+        ForceHit = e.HasElement("ForceHit");
     }
 }

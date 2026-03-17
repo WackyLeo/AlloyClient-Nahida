@@ -136,14 +136,17 @@ public sealed class TextureData {
             }
         }
 
-        if (xml.GetElements("RandomTexture", out var elems)) {
-            RandomTextures = new TextureData[elems.Length];
-            for (var i = 0; i < elems.Length; i++) {
-                RandomTextures[i] = new TextureData(elems[i]);
+        var randomTextureNode = xml.Element("RandomTexture");
+        if (randomTextureNode != null) {
+            var texElems = System.Linq.Enumerable.ToArray(randomTextureNode.Elements("Texture"));
+            RandomTextures = new TextureData[texElems.Length];
+            for (var i = 0; i < texElems.Length; i++) {
+                var wrapper = new XElement("DummyWrapper", texElems[i]);
+                RandomTextures[i] = new TextureData(wrapper);
             }
         }
 
-        if (xml.GetElements("AltTexture", out elems)) {
+        if (xml.GetElements("AltTexture", out var elems)) {
             AltTextures = [];
             foreach (var e in elems) {
                 var id = e.GetAttribute("id", 0);

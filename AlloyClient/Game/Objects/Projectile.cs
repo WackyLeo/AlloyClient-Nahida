@@ -96,24 +96,28 @@ public sealed class Projectile {
     public void SetStartPosition(Vector2 pos) {
         _startPosition = pos;
         _position = pos;
-        RenderBaseType.SetPosition(pos.X, pos.Y);
+        
+        RenderBaseType.SetPosition(pos.X, pos.Y, 0.5f);
     }
     
     public AtlasData GetTexture(float curLifetime = 0) {
         var textureData = ObjectLibrary.TypeToTextureData[_objDesc.ObjectType];
     
-        if (!textureData.HasAnimationData || textureData.AnimatedTextures.FaceRight == null) 
-            return textureData.GetTexture();
-
-        var frames = textureData.AnimatedTextures.FaceRight;
-
         if (_projDesc.Animated && _projDesc.AnimationTime > 0) {
             float altAnim = (_bulletId % 2 == 0) ? _projDesc.AltAnimation : 0;
             int frameIndex = (int)((curLifetime + altAnim) / _projDesc.AnimationTime);
-            return frames[frameIndex % frames.Length];
+            
+            if (textureData.HasAnimationData && textureData.AnimatedTextures.FaceRight != null) {
+                var frames = textureData.AnimatedTextures.FaceRight;
+                return frames[frameIndex % frames.Length];
+            }
+            if (textureData.RandomTextures != null && textureData.RandomTextures.Length > 0) {
+                var randomSeq = textureData.RandomTextures;
+                return randomSeq[frameIndex % randomSeq.Length].GetTexture();
+            }
         }
-
-        return frames[0];
+        
+        return textureData.GetTexture();
     }
     
     public AtlasData GetTexture() {
@@ -153,9 +157,11 @@ public sealed class Projectile {
 
         if (_objDesc.Rotation != 0) {
             Rotation = elapsed / _objDesc.Rotation;
+        } else if (_projDesc.Orbiting) {
+            Rotation = _spinAngle + Camera.CameraAngle + _angleCorrection; 
         } else if (!_projDesc.NoRotation) {
             var direction = newPos - _position;
-            var angle = MathF.Atan2(direction.Y, direction.X);
+            var angle = direction.LengthSquared > 0.0001f ? MathF.Atan2(direction.Y, direction.X) : _angle;
             Rotation = angle + Camera.CameraAngle + _angleCorrection;
         }
 
@@ -167,12 +173,14 @@ public sealed class Projectile {
         else
             blocked = !MoveTo(newPos);
 
-        if (blocked || (doHitTest && HitTest(time)))
+        if (blocked || (doHitTest && HitTest(time))) {
+            //TriggerSplit(time);
             return false;
+        }
 
         if (!blocked) {
             _position = newPos;
-            RenderBaseType.SetPosition(newPos.X, newPos.Y);
+            RenderBaseType.SetPosition(newPos.X, newPos.Y, 0.5f);
             RenderBaseType.SetRotation(Rotation);
             RenderBaseType.SetTexture(GetTexture(curLifetime));
         }
@@ -208,7 +216,7 @@ public sealed class Projectile {
         }
 
         _position = pos;
-        RenderBaseType.SetPosition(pos.X, pos.Y);
+        RenderBaseType.SetPosition(pos.X, pos.Y, 0.5f);
         return true;
     }
     
@@ -236,49 +244,69 @@ public sealed class Projectile {
             return false;
         }
 
-        var enemy = EntityUtils.GetClosestEnemy(_position, 0.5f);
+        var enemy = EntityUtils.GetClosestEnemy(_position, hitRadius);
         if (enemy == null || _hitEntities.Contains(enemy.ObjectId))
             return false;
 
-        if (_ricochetsLeft > 0) {
-            _ricochetsLeft--;
-            var chainTarget = GetChainTarget(enemy);
-                
-            if (chainTarget != null) {
-                _startPosition = _position;
-                var dx = chainTarget.Position.X - _position.X;
-                var dy = chainTarget.Position.Y - _position.Y;
-                _angle = MathF.Atan2(dy, dx);
+        float hitRadiusSqr = hitRadius * hitRadius;
+        bool hitSomething = false;
+
+        foreach (var kvp in Map.Entities) {
+            var go = kvp.Value;
+            
+            if (go.Properties == null) continue;
+            if (_damagePlayers && !go.Properties.IsPlayer) continue;
+            if (!_damagePlayers && !go.Properties.IsEnemy) continue;
+            if (_hitEntities.Contains(go.ObjectId)) continue;
+
+            var distSqr = (go.Position - _position).LengthSquared;
+            if (distSqr > hitRadiusSqr) continue;
+
+            if (_ricochetsLeft > 0) {
+                _ricochetsLeft--;
+                var chainTarget = GetChainTarget(go);
                     
-                _startTime = time;
-                _hitEntities.Clear();
-            } else {
-                Clear = true;
+                if (chainTarget != null) {
+                    _startPosition = _position;
+                    var dx = chainTarget.Position.X - _position.X;
+                    var dy = chainTarget.Position.Y - _position.Y;
+                    _angle = MathF.Atan2(dy, dx);
+                        
+                    _startTime = time;
+                    _hitEntities.Clear();
+                } else {
+                    Clear = true;
+                }
+                return false;
             }
+            
+            int actualDamage = _damage;
+            if (!_projDesc.ArmorPiercing) {
+                int defReduction = go.Defense; 
+                actualDamage = Math.Max(actualDamage - defReduction, (int)(actualDamage * 0.15f));
+            }
+            
+            go.Hp -= actualDamage; 
+            bool killed = go.Hp <= 0;
 
-            return false;
-        }
+            Map.AddParticleEffect(new HitEffect(go, 0xFF0000));
+            NotificationLayer.AddStatusText(go, $"-{_damage}", 0xFF0000, 1000, 0);
         
-        int actualDamage = _damage;
-        if (!_projDesc.ArmorPiercing) {
-            int defReduction = enemy.Defense; 
-            actualDamage = Math.Max(actualDamage - defReduction, (int)(actualDamage * 0.15f));
+            if (_damagePlayers) {
+                Map.PendingPlayerHit.AddHit(_bulletId, _ownerId);
+            } else {
+                Map.PendingEnemyHit.AddHit((int)time, _bulletId, go.ObjectId, killed);
+            }
+            
+            _hitEntities.Add(go.ObjectId);
+            hitSomething = true;
+
+            if (!_projDesc.MultiHit) {
+                return true; 
+            }
         }
-        
-        enemy.Hp -= actualDamage; 
-        bool killed = enemy.Hp <= 0;
 
-        Map.AddParticleEffect(new HitEffect(enemy, 0xFF0000));
-        NotificationLayer.AddStatusText(enemy, $"-{_damage}", 0xFF0000, 1000, 0);
-    
-        Map.PendingEnemyHit.AddHit((int)time, _bulletId, enemy.ObjectId, killed);
-        Logger.Info($"AddHit called: bulletId={_bulletId}, targetId={enemy.ObjectId}, killed={killed}");
-    
-        if (!_projDesc.MultiHit)
-            return true;
-
-        _hitEntities.Add(enemy.ObjectId);
-        return false;
+        return !hitSomething && !_projDesc.MultiHit;
     }
 
     private Vector2 PositionAt(float curLifetime) {
@@ -435,5 +463,37 @@ public sealed class Projectile {
             }
         }
         return closest;
+    }
+    
+    private void TriggerSplit(double time) {
+        if (string.IsNullOrEmpty(_projDesc.SecondId)) return;
+        
+        if (!ObjectLibrary.IdToObjectType.TryGetValue(_projDesc.SecondId, out var secondType)) return;
+        if (!ObjectLibrary.TypeToObjectProps.TryGetValue(secondType, out var secondObjDesc)) return;
+        if (!ObjectLibrary.TypeToItem.TryGetValue(secondType, out var itemDesc)) return;
+        
+        var enumerator = secondObjDesc.Projectiles.GetEnumerator();
+        if (!enumerator.MoveNext()) return;
+        var secondProjDesc = enumerator.Current;
+        if (!Map.Entities.TryGetValue(_ownerId, out var owner)) return;
+
+        int amount = _projDesc.ArcAmount > 0 ? _projDesc.ArcAmount : 1;
+        float arcGap = itemDesc.ArcGap * MathF.PI / 180f;
+        float angleStep = _projDesc.CircularAngle ? (MathF.PI * 2f / amount) : arcGap;
+        float startAngle = _angle - (angleStep * (amount - 1) / 2f);
+
+        for (int i = 0; i < amount; i++) {
+            float shootAngle = startAngle + (angleStep * i);
+            
+            var p = new Projectile();
+            
+            int newBulletId = (owner is Player player) ? player.NextBulletId++ : Random.Shared.Next(100, 10000);
+            p.Reset(newBulletId, secondProjDesc.MaxDamage, shootAngle, owner, secondObjDesc, secondProjDesc);
+            
+            p.SetStartPosition(_position); 
+            p.MarkActive(time);
+            
+            Map.AddProjectile(p);
+        }
     }
 }

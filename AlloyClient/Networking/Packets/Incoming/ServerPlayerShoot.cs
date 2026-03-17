@@ -1,9 +1,13 @@
-﻿using AlloyClient.Networking.Structs.DataObjects;
+﻿using AlloyClient.Assets.Libraries;
+using AlloyClient.Game;
+using AlloyClient.Game.Objects;
+using AlloyClient.Networking.Structs.DataObjects;
+using OpenTK.Mathematics;
 
 namespace AlloyClient.Networking.Packets.Incoming;
 
 public class ServerPlayerShoot : IncomingPacket<ServerPlayerShoot> {
-    public byte BulletId;
+    public int BulletId;
     public int OwnerId;
     public int ContainerType;
     public Position StartingPos;
@@ -22,7 +26,7 @@ public class ServerPlayerShoot : IncomingPacket<ServerPlayerShoot> {
     }
 
     public override void Read(NetworkReader reader) {
-        BulletId = reader.ReadByte();
+        BulletId = reader.ReadInt32();
         OwnerId = reader.ReadInt32();
         ContainerType = reader.ReadInt32();
         StartingPos.Read(reader);
@@ -31,6 +35,20 @@ public class ServerPlayerShoot : IncomingPacket<ServerPlayerShoot> {
     }
 
     public override void Handle() {
+        if (!Map.Entities.TryGetValue(OwnerId, out var owner)) return;
+        if (!ObjectLibrary.TypeToObjectProps.TryGetValue((ushort)ContainerType, out var objDesc)) return;
+        
+        var enumerator = objDesc.Projectiles.GetEnumerator();
+        if (!enumerator.MoveNext()) return;
+        var projDesc = enumerator.Current;
+
+        var proj = new Projectile();
+        proj.Reset(BulletId, Damage, Angle, owner, objDesc, projDesc);
+        
+        proj.SetStartPosition(new Vector2(StartingPos.X, StartingPos.Y));
+        proj.MarkActive(Map.CurrentTime);
+        
+        Map.AddProjectile(proj);
     }
 
     public override string ToString() {
