@@ -52,6 +52,8 @@ public sealed class Projectile {
     private bool _checkRayCasted;
     private bool _rayCastHitDone;
     
+    private int _ricochetsLeft;
+    
     public void Reset(int id, int dmg, float angle, Entity entity, ObjectProperties objDesc, ProjectileProperties projDesc) {
         _bulletId = id;
         _damage = dmg;
@@ -83,7 +85,8 @@ public sealed class Projectile {
                 _startSpinAngle += _projDesc.FixedRotationAngle * MathF.PI / 180f;
         }
         _spinAngle = 0f;
-
+        _ricochetsLeft = _projDesc.Ricochet;
+        
         _hitEntities.Clear();
         RenderBaseType = new TypeProjectile();
         RenderBaseType.SetSize(Size);
@@ -95,7 +98,24 @@ public sealed class Projectile {
         _position = pos;
         RenderBaseType.SetPosition(pos.X, pos.Y);
     }
+    
+    public AtlasData GetTexture(float curLifetime = 0) {
+        var textureData = ObjectLibrary.TypeToTextureData[_objDesc.ObjectType];
+    
+        if (!textureData.HasAnimationData || textureData.AnimatedTextures.FaceRight == null) 
+            return textureData.GetTexture();
 
+        var frames = textureData.AnimatedTextures.FaceRight;
+
+        if (_projDesc.Animated && _projDesc.AnimationTime > 0) {
+            float altAnim = (_bulletId % 2 == 0) ? _projDesc.AltAnimation : 0;
+            int frameIndex = (int)((curLifetime + altAnim) / _projDesc.AnimationTime);
+            return frames[frameIndex % frames.Length];
+        }
+
+        return frames[0];
+    }
+    
     public AtlasData GetTexture() {
         var textureData = ObjectLibrary.TypeToTextureData[_objDesc.ObjectType];
         return textureData.HasAnimationData ? textureData.AnimatedTextures.FaceRight[0] : textureData.GetTexture();
@@ -154,6 +174,7 @@ public sealed class Projectile {
             _position = newPos;
             RenderBaseType.SetPosition(newPos.X, newPos.Y);
             RenderBaseType.SetRotation(Rotation);
+            RenderBaseType.SetTexture(GetTexture(curLifetime));
         }
 
         if (_projDesc.ParticleTrail && doHitTest) {
@@ -197,16 +218,17 @@ public sealed class Projectile {
     
     private bool HitTest(double time) {
         _lastHitTest = time;
-
+        float hitRadius = 0.5f + _projDesc.BonusSize;
+        
         if (_damagePlayers) {
-            var target = EntityUtils.GetClosestPlayer(_position, 0.5f);
+            var target = EntityUtils.GetClosestPlayer(_position, hitRadius);
             if (target == null || _hitEntities.Contains(target.ObjectId))
                 return false;
 
             Map.AddParticleEffect(new HitEffect(target, 0xFF0000));
             NotificationLayer.AddStatusText(target, $"-{_damage}", 0xFF0000, 1000, 0);
             Map.PendingPlayerHit.AddHit(_bulletId, _ownerId);
-
+            
             if (!_projDesc.MultiHit)
                 return true;
 
@@ -218,7 +240,32 @@ public sealed class Projectile {
         if (enemy == null || _hitEntities.Contains(enemy.ObjectId))
             return false;
 
-        enemy.Hp -= _damage; 
+        if (_ricochetsLeft > 0) {
+            _ricochetsLeft--;
+            var chainTarget = GetChainTarget(enemy);
+                
+            if (chainTarget != null) {
+                _startPosition = _position;
+                var dx = chainTarget.Position.X - _position.X;
+                var dy = chainTarget.Position.Y - _position.Y;
+                _angle = MathF.Atan2(dy, dx);
+                    
+                _startTime = time;
+                _hitEntities.Clear();
+            } else {
+                Clear = true;
+            }
+
+            return false;
+        }
+        
+        int actualDamage = _damage;
+        if (!_projDesc.ArmorPiercing) {
+            int defReduction = enemy.Defense; 
+            actualDamage = Math.Max(actualDamage - defReduction, (int)(actualDamage * 0.15f));
+        }
+        
+        enemy.Hp -= actualDamage; 
         bool killed = enemy.Hp <= 0;
 
         Map.AddParticleEffect(new HitEffect(enemy, 0xFF0000));
@@ -360,8 +407,33 @@ public sealed class Projectile {
                     Map.PendingEnemyHit.AddHit((int)time, _bulletId, enemy.ObjectId, enemy.Hp <= _damage);
                     if (!_projDesc.MultiHit) return;
                     _hitEntities.Add(enemy.ObjectId);
+                    
+                    Map.AddParticleEffect(new HitEffect(enemy, 0xFF0000));
+                    NotificationLayer.AddStatusText(enemy, $"-{_damage}", 0xFF0000, 1000, 0);
                 }
             }
         }
+    }
+    
+    private Entity GetChainTarget(Entity currentTarget) {
+        Entity closest = null;
+        float closestDistSqr = float.MaxValue;
+        
+        float maxChainDistSqr = (_projDesc.Ricochet * 2f) * (_projDesc.Ricochet * 2f); 
+
+        foreach (var kvp in Map.Entities) {
+            var go = kvp.Value;
+            if (go == currentTarget || go.Properties == null) continue;
+            if (_damagePlayers && !go.Properties.IsPlayer) continue;
+            if (!_damagePlayers && !go.Properties.IsEnemy) continue;
+            
+            var distSqr = (go.Position - _position).LengthSquared;
+            
+            if (distSqr <= maxChainDistSqr && distSqr < closestDistSqr) {
+                closestDistSqr = distSqr;
+                closest = go;
+            }
+        }
+        return closest;
     }
 }
