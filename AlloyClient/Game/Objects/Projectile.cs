@@ -49,6 +49,9 @@ public sealed class Projectile {
     
     private bool _rayCasted;
     private bool _rayCastFailed;
+    private bool _checkRayCasted;
+    private bool _rayCastHitDone;
+    
     public void Reset(int id, int dmg, float angle, Entity entity, ObjectProperties objDesc, ProjectileProperties projDesc) {
         _bulletId = id;
         _damage = dmg;
@@ -57,6 +60,10 @@ public sealed class Projectile {
         _damagePlayers = entity is not Player;
         _objDesc = objDesc;
         _projDesc = projDesc;
+        _rayCasted = false;
+        _checkRayCasted = false;
+        _rayCastHitDone = false;
+        _rayCastFailed = false;
         Clear = false;
 
         Size = _projDesc.Size > 0 ? _projDesc.Size : 100;
@@ -98,10 +105,10 @@ public sealed class Projectile {
         if (Clear) return false;
 
         var elapsed = (float)(time - _startTime);
-        var curLifetime = elapsed - _projDesc.ProjDelayMs;
-        if (_projDesc.CheckRayCast && !_rayCasted) {
+    
+        if (_projDesc.CheckRayCast && !_checkRayCasted) {
             _rayCastFailed = !RayCastCheck();
-            _rayCasted = true;
+            _checkRayCasted = true;
         }
         if (_rayCastFailed) return false;
 
@@ -109,15 +116,16 @@ public sealed class Projectile {
             RenderBaseType.SetVisibility(false);
             return true;
         }
+
+        var curLifetime = elapsed - _projDesc.ProjDelayMs;
+    
         if (curLifetime > _projDesc.LifetimeMs) return false;
-        if (_projDesc.RayCast && !_rayCasted) {
-            _rayCasted = true;
+
+        if (_projDesc.RayCast && !_rayCastHitDone) {
+            _rayCastHitDone = true;
             RayCastHit(time);
             return false;
         }
-
-        if (curLifetime > _projDesc.LifetimeMs)
-            return false;
 
         UpdateVisibility(matrix);
 
@@ -182,7 +190,11 @@ public sealed class Projectile {
         RenderBaseType.SetPosition(pos.X, pos.Y);
         return true;
     }
-
+    
+    public void MarkActive(double time) {
+        _startTime = time;
+    }
+    
     private bool HitTest(double time) {
         _lastHitTest = time;
 
@@ -314,40 +326,42 @@ public sealed class Projectile {
     return true;
 }
 
-private void RayCastHit(double time) {
-    for (var t = 0; t <= _projDesc.LifetimeMs; t += 50) {
-        var pos = PositionAt(t);
+    private void RayCastHit(double time) {
+        var texture = GetTexture();
+    
+        for (var t = 0; t <= _projDesc.LifetimeMs; t += 50) {
+            var pos = PositionAt(t);
 
-        var tile = Map.GetTile(pos);
-        if (tile == null || tile.Type == 0xFF) {
-            if (_damagePlayers)
-            break;
-        }
-
-        if (tile.OccupiedObject != null && !_projDesc.PassAll) {
-            var obj = tile.OccupiedObject.Properties;
-            if (obj.EnemyOccupySquare || (!_projDesc.PassesCover && obj.OccupySquare))
-                break;
-        }
-        
-        Map.AddParticleEffect(new SparkEffect(100, 0x00D100, 500, 0.5f, 0, 0, pos.X, pos.Y));
-
-        if (_damagePlayers) {
-            var target = EntityUtils.GetClosestPlayer(pos, 0.5f);
-            if (target != null && !_hitEntities.Contains(target.ObjectId)) {
-                Map.PendingPlayerHit.AddHit(_bulletId, _ownerId);
-                if (!_projDesc.MultiHit) return;
-                _hitEntities.Add(target.ObjectId);
+            var tile = Map.GetTile(pos);
+            if (tile == null || tile.Type == 0xFF) {
+                if (_damagePlayers) break;
+                else break;
             }
-        } else {
-            var enemy = EntityUtils.GetClosestEnemy(pos, 0.5f);
-            if (enemy != null && !_hitEntities.Contains(enemy.ObjectId)) {
-                Map.PendingEnemyHit.AddHit((int)time, _bulletId, enemy.ObjectId, enemy.Hp <= _damage);
-                Logger.Info($"AddHit called: bulletId={_bulletId}, targetId={enemy.ObjectId}");
-                if (!_projDesc.MultiHit) return;
-                _hitEntities.Add(enemy.ObjectId);
+
+            if (tile.OccupiedObject != null && !_projDesc.PassAll) {
+                var obj = tile.OccupiedObject.Properties;
+                if (obj.EnemyOccupySquare || (!_projDesc.PassesCover && obj.OccupySquare))
+                    break;
+            }
+
+            var angle = t == 0 ? _angle : MathF.Atan2(pos.Y - _startPosition.Y, pos.X - _startPosition.X);
+            Map.AddParticleEffect(new RayCastParticle(texture, pos, angle, _angleCorrection, Size));
+
+            if (_damagePlayers) {
+                var target = EntityUtils.GetClosestPlayer(pos, 0.5f);
+                if (target != null && !_hitEntities.Contains(target.ObjectId)) {
+                    Map.PendingPlayerHit.AddHit(_bulletId, _ownerId);
+                    if (!_projDesc.MultiHit) return;
+                    _hitEntities.Add(target.ObjectId);
+                }
+            } else {
+                var enemy = EntityUtils.GetClosestEnemy(pos, 0.5f);
+                if (enemy != null && !_hitEntities.Contains(enemy.ObjectId)) {
+                    Map.PendingEnemyHit.AddHit((int)time, _bulletId, enemy.ObjectId, enemy.Hp <= _damage);
+                    if (!_projDesc.MultiHit) return;
+                    _hitEntities.Add(enemy.ObjectId);
+                }
             }
         }
     }
-}
 }

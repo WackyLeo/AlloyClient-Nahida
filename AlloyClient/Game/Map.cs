@@ -105,7 +105,17 @@ public static class Map {
             ParticleGenerators[i] = ParticleGenerators[ParticleGenCount];
             ParticleGenerators[ParticleGenCount] = null;
         }
-        
+
+        for (var i = PendingProjectiles.Count - 1; i >= 0; i--) {
+            var (proj, spawnAt) = PendingProjectiles[i];
+            if (time >= spawnAt) {
+                proj.MarkActive(time);
+                Projectiles.Add(proj);
+                EntityStorage.Add(proj);
+                PendingProjectiles.RemoveAt(i);
+            }
+        }
+
         for (var i = Projectiles.Count - 1; i >= 0; i--) {
             var proj = Projectiles[i];
             if (proj.Update(time, dt, matrix))
@@ -204,6 +214,11 @@ public static class Map {
         
         Render.StartDrawEntity();
 
+        for (var i = 0; i < ParticleGenCount; i++) {
+            if (ParticleGenerators[i] is RayCastParticle rcp)
+                rcp.Draw();
+        }
+        
         if (EntityStorage.TryGetValue(ModelType.PbObject, out var entities)) {
             entities.Sort();
 
@@ -309,7 +324,9 @@ public static class Map {
         en.OnRemovedFromMap();
     }
 
-    public static void AddProjectile(Projectile proj) {
+    private static readonly List<(Projectile proj, double spawnAt)> PendingProjectiles = [];
+    public static void AddProjectile(Projectile proj, double delayMs = 0) {
+        proj.MarkActive(CurrentTime);
         Projectiles.Add(proj);
         EntityStorage.Add(proj);
     }
@@ -351,7 +368,8 @@ public static class Map {
         EntityStorage.Clear();
         
         Projectiles.Clear();
-
+        PendingProjectiles.Clear();
+        
         LocalPlayerId = 0;
         LocalPlayer = null;
 

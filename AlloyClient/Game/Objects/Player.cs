@@ -405,7 +405,7 @@ public class Player : Entity {
 
             var proj = ObjectPools.Projectiles.Pop();
             proj.Reset(bId, dmg, angle, this, objProps, projProps);
-            Map.AddProjectile(proj);
+            Map.AddProjectile(proj, projProps.ProjDelayMs);
 
             if (i == 0) {
                 shootPacket.Shots.Add(new ShootData {
