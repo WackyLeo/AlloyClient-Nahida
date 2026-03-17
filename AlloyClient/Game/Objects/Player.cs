@@ -90,6 +90,13 @@ public class Player : Entity {
     public int MagicStackCount;
 
     public ushort Skin;
+    
+    // Cosmetic's
+    public ushort Cloth1;
+    public ushort Cloth2;
+    public ushort LootGlyphID1;
+    public ushort GlyphID1;
+    public ushort GlyphID2;
 
     public int PartyId;
 
@@ -308,6 +315,21 @@ public class Player : Entity {
                     break;
                 case StatsType.Restoration:
                     Restoration = stat.Value;
+                    break;
+                case StatsType.Cloth1:
+                    Cloth1 = (ushort)stat.Value;
+                    break;
+                case StatsType.Cloth2:
+                    Cloth2 = (ushort)stat.Value;
+                    break;
+                case StatsType.LootGlyphId1:
+                    LootGlyphID1 = (ushort)stat.Value;
+                    break;
+                case StatsType.GlyphId1:
+                    GlyphID1 = (ushort)stat.Value;
+                    break;
+                case StatsType.GlyphId2:
+                    GlyphID2 = (ushort)stat.Value;
                     break;
             }
         }

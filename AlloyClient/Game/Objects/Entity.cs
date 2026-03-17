@@ -57,6 +57,7 @@ public class Entity {
     public int Texture2Id;
 
     public int GlowColor;
+    public ushort AltItemID;
 
     public int MaxHp;
     public int Hp;
@@ -378,6 +379,22 @@ public class Entity {
                 case StatsType.AltTextureIndex:
                     SetAltTexture(stat.Value);
                     break;
+                case StatsType.AltItemId:
+                    AltItemID = (ushort)stat.Value;
+                    
+                    if (stat.Value <= 0) {
+                        return;
+                    }
+                    
+                    if (!ObjectLibrary.TypeToTextureData.TryGetValue(AltItemID, out var textureData)) {
+                        textureData = ObjectLibrary.TypeToTextureData[ObjectLibrary.FallbackType];
+                    }
+                    
+                    TextureData = textureData;
+                    Texture = TextureData.Texture;
+                    RenderBaseType?.SetTexture(Texture);
+                    break;
+                
                 case StatsType.BackPack0:
                 case StatsType.BackPack1:
                 case StatsType.BackPack2:

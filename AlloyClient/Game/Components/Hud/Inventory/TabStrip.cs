@@ -16,7 +16,8 @@ namespace AlloyClient.Game.Components.Hud.Inventory
             Inventory,
             StatsView,
             Backpack,
-            PetInfo
+            Cosmetics,
+            Admin
         }
 
         private readonly uint TabColor = 2368034;
@@ -33,10 +34,14 @@ namespace AlloyClient.Game.Components.Hud.Inventory
         private readonly IconButton InventoryTabButton;
         private readonly IconButton BackpackTabButton;
         private readonly IconButton StatsViewTabButton;
+        private readonly IconButton CosmeticTabButton;
+        private readonly IconButton AdminTabButton;
 
         private readonly CutEdgeRect InventoryTab;
         private readonly CutEdgeRect BackpackTab;
         private readonly CutEdgeRect StatsViewTab;
+        private readonly CutEdgeRect CosmeticTab;
+        private readonly CutEdgeRect AdminTab;
 
         private InventoryGrid _inventoryGrid;
         private InventoryGrid _backpackPanel;
@@ -66,6 +71,11 @@ namespace AlloyClient.Game.Components.Hud.Inventory
                 AddTab(TabTypes.Backpack); 
             }
             
+            //AddTab(TabTypes.Cosmetics);
+            
+            /*if (false) {
+                AddTab(TabTypes.Admin); 
+            }*/
             RemoveChildren(); //Remove All Panels
             _owner.InventoryUpdate.RemoveAll(); //Remove InventoryUpdate
 
@@ -85,7 +95,9 @@ namespace AlloyClient.Game.Components.Hud.Inventory
                         invTab = StatsViewTab;
                         invTabButton = StatsViewTabButton;
                         break;
-                    case TabTypes.PetInfo:
+                    case TabTypes.Cosmetics:
+                        break;
+                    case TabTypes.Admin:
                         break;
                 }
 
