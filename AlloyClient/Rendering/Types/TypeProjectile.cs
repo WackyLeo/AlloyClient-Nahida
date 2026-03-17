@@ -2,8 +2,6 @@
 using AlloyClient.Assets;
 using AlloyClient.Engine.Common;
 using AlloyClient.Rendering.VertexData;
-using Common;
-using Common.Structs;
 using OpenTK.Mathematics;
 
 namespace AlloyClient.Rendering.Types;
@@ -53,19 +51,5 @@ public sealed class TypeProjectile : RenderBase {
 
     public override void DrawShadow() {
         Render.DrawShadow(new ShadowData(Position.Xy, 0.5f, Color.Black));
-    }
-    
-    public override void SetTexture(AtlasData texture, bool attackFrame) {
-        UV = texture.ToVector4();
-        
-        var padW = 1.0f + AtlasConfig.Padding * 3 / texture.RawW();
-        var padH = 1.0f + AtlasConfig.Padding * 3 / texture.RawH();
-
-        var widthScale  = 0.75f * padW;
-        var heightScale = 0.75f * padH;
-
-        var padY = heightScale * (0.5f - AtlasConfig.Padding / texture.RawH());
-
-        Scale = new Vector4(widthScale, heightScale, 0f, -padY);
     }
 }
