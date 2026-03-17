@@ -380,12 +380,11 @@ public class Entity {
                     SetAltTexture(stat.Value);
                     break;
                 case StatsType.AltItemId:
-                    AltItemID = (ushort)stat.Value;
-                    
                     if (stat.Value <= 0) {
-                        return;
+                        break;
                     }
                     
+                    AltItemID = (ushort)stat.Value;
                     if (!ObjectLibrary.TypeToTextureData.TryGetValue(AltItemID, out var textureData)) {
                         textureData = ObjectLibrary.TypeToTextureData[ObjectLibrary.FallbackType];
                     }
