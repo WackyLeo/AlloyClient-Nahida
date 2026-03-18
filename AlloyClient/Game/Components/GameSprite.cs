@@ -5,6 +5,7 @@ using AlloyClient.Ui.Chat;
 using AlloyClient.UiLib.Core;
 using AlloyClient.Game.Components.Hud.Chat;
 using AlloyClient.Ui.Components.Elements;
+using AlloyClient.Ui.InWorld;
 
 namespace AlloyClient.Game.Components;
 
@@ -21,6 +22,7 @@ public sealed class GameSprite : Sprite {
         AddChild(Hud = new HudView());
         AddChild(_chat= new ChatBox());
         AddChild(new DebugStats());
+        AddChild(new NameplateLayer());
 
         Map.GameSprite = this;
         

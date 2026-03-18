@@ -46,6 +46,7 @@ public sealed class Projectile {
     private readonly HashSet<int> _hitEntities = [];
     public RenderBase RenderBaseType;
     private double _lastHitTest;
+    public Entity _owner;
     
     private bool _rayCasted;
     private bool _rayCastFailed;
@@ -59,6 +60,7 @@ public sealed class Projectile {
         _damage = dmg;
         _angle = angle;
         _ownerId = entity.ObjectId;
+        _owner = entity;
         _damagePlayers = entity is not Player;
         _objDesc = objDesc;
         _projDesc = projDesc;
@@ -157,7 +159,7 @@ public sealed class Projectile {
 
         if (_objDesc.Rotation != 0) {
             Rotation = elapsed / _objDesc.Rotation;
-        } else if (_projDesc.Orbiting) {
+        } else if (_projDesc.Orbiting || _projDesc.ForceOrbiting) {
             Rotation = _spinAngle + Camera.CameraAngle + _angleCorrection; 
         } else if (!_projDesc.NoRotation) {
             var direction = newPos - _position;
@@ -280,14 +282,20 @@ public sealed class Projectile {
                 return false;
             }
             
-            int actualDamage = _damage;
-            if (!_projDesc.ArmorPiercing) {
-                int defReduction = go.Defense; 
-                actualDamage = Math.Max(actualDamage - defReduction, (int)(actualDamage * 0.15f));
+            if (enemy.HasConditionEffect(ConditionEffects.Invincible) ||
+                enemy.HasConditionEffect(ConditionEffects.Invisible) ||
+                enemy.HasConditionEffect(ConditionEffects.Stasis) ||
+                enemy.HasConditionEffect(ConditionEffects.Paused)) {
+                return false;
             }
             
-            go.Hp -= actualDamage; 
-            bool killed = go.Hp <= 0;
+            int actualDamage = _damage;
+            if (!_projDesc.ArmorPiercing) {
+                actualDamage = DamageWithDefense(_damage, go.Defense, _projDesc.ArmorPiercing, enemy.ConditionEffects);
+            }
+            
+            //go.Hp -= actualDamage; 
+            bool killed = go.Hp - actualDamage <= 0;
 
             Map.AddParticleEffect(new HitEffect(go, 0xFF0000));
             NotificationLayer.AddStatusText(go, $"-{_damage}", 0xFF0000, 1000, 0);
@@ -369,7 +377,20 @@ public sealed class Projectile {
             }
         }
 
-        if (_projDesc.Orbiting) {
+        if (_projDesc.ForceOrbiting && _owner != null) {
+            _spinDistance = curLifetime * (_projDesc.RadiusIncreaseSpeed / 200f) + _projDesc.StartRotationRadius;
+            if (_spinDistance > _projDesc.MaxRotationRadius && _projDesc.MaxRotationRadius > 0)
+                _spinDistance = _projDesc.MaxRotationRadius;
+
+            if ((_bulletId % 2 == 0 || _projDesc.OnlyClockwise) && !_projDesc.OnlyCounterClockwise)
+                _spinAngle = curLifetime * (_projDesc.RotationSpeed / 200f) + _startSpinAngle;
+            else
+                _spinAngle = -(curLifetime * (_projDesc.RotationSpeed / 200f)) + _startSpinAngle;
+
+            pos.X = _owner.Position.X + (_spinDistance * MathF.Cos(_spinAngle));
+            pos.Y = _owner.Position.Y + (_spinDistance* MathF.Sin(_spinAngle));
+        }
+        else if (_projDesc.Orbiting) {
             _spinDistance = curLifetime * (_projDesc.RadiusIncreaseSpeed / 200f) + _projDesc.StartRotationRadius;
             if (_spinDistance > _projDesc.MaxRotationRadius && _projDesc.MaxRotationRadius > 0)
                 _spinDistance = _projDesc.MaxRotationRadius;
@@ -384,6 +405,42 @@ public sealed class Projectile {
         }
 
         return pos;
+    }
+
+    int DamageWithDefense(int damage, int defense, bool nodef, ConditionEffects condition, int damageMulti = 0, bool isPlayer = false) {
+        if ((condition & ConditionEffects.Invulnerable) != 0) {
+            return 0;
+        }
+        
+        if (nodef || (condition & ConditionEffects.ArmorBroken) != 0) {
+            defense = 0;
+        } 
+        else if ((condition & ConditionEffects.Armored) != 0) {
+            defense = defense * 2;
+        }
+
+        float limit = damage * 0.15f; // Magic Number
+        int ret = 0;
+
+        if (damage - defense < limit) {
+            ret = (int)limit;
+        } else {
+            ret = damage - defense;
+        }
+        
+        if ((condition & ConditionEffects.Exposed) != 0) {
+            ret += 20;
+        }
+        if ((condition & ConditionEffects.Petrify) != 0) {
+            ret = (int)(ret * 0.9f);
+        }
+        if ((condition & ConditionEffects.Curse) != 0) {
+            ret = (int)(ret * 1.2f);
+        }
+        if ((condition & ConditionEffects.Protected) != 0) {
+            ret = (int)(ret * (isPlayer ? 0.5f : 025f));
+        }
+        return ret;
     }
     
     private bool RayCastCheck() {

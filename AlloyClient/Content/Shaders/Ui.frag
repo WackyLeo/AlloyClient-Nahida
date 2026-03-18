@@ -40,6 +40,7 @@ const float IdTitleBackground =6.0;
 const float IdTitleGraphic = 7.0;
 const float IdMinimap = 8.0;
 const float IdEllipse = 9.0;
+const float IdHpBar = 10.0;
 
 vec4 unpackColor(uint color) {
     return vec4(
@@ -99,31 +100,48 @@ float GetOpacityFromDistance(float signedDistance, vec2 Jdx, vec2 Jdy) {
     return smoothstep(-scaledDistanceLimit, scaledDistanceLimit, signedDistance);
 }
 
+vec4 RenderHpBar() {
+    float w = inp.Extra1.x;
+    float h = inp.Extra1.y;
+    float p = inp.Extra1.z; 
+
+    float totalW = w + p * 2.0;
+    float totalH = h + p * 2.0;
+    float px = inp.UVCoords.x * totalW;
+    float py = inp.UVCoords.y * totalH;
+
+    float dx = max(0.0, max(p - px, px - (p + w)));
+    float dy = max(0.0, max(p - py, py - (p + h)));
+    float dist = max(dx, dy);
+
+    if (dist == 0.0) return unpackColor(inp.Color);
+
+    float outlineWidth = 1.0;
+    if (dist <= outlineWidth) return vec4(0.0, 0.0, 0.0, 1.0);
+    discard;
+}
+
 vec4 RenderText() {
     vec4 mtsdf = texture(TextTexture, inp.UVCoords);
     float dist = median(mtsdf.r, mtsdf.g, mtsdf.b) - 0.5;
     float pxRange = screenPxRange(inp.UVCoords);
 
     float bodyDist = dist * pxRange;
-    float glowDist = mtsdf.a;
-    float glowSize = inp.Extra1.x / PixelRange;
-    float bodyAlpha;
-    float glowAlpha;
+    float bodyAlpha = clamp(bodyDist + 0.5, 0.0, 1.0);
 
-    if (inp.Extra1.y == TextTypeSmall) {
-        vec2 pixelCoord = inp.UVCoords * TextTextureSize;
-        vec2 Jdx = dFdx(pixelCoord);
-        vec2 Jdy = dFdy(pixelCoord);
-        bodyAlpha = GetOpacityFromDistance(bodyDist, Jdx, Jdy);
-        glowAlpha = GetOpacityFromDistance(glowDist, Jdx, Jdy) * glowSize;
-    } else {
-        bodyAlpha = clamp(bodyDist + 0.5f, 0.0f, 1.0f);
-        glowAlpha = glowDist * glowSize;
-    }
+    float outlineThickness = clamp(inp.Extra1.x, 0.0, 4.0);
+    float strokeAlpha = clamp(bodyDist + outlineThickness + 0.5, 0.0, 1.0);
 
-    vec4 color = mix(unpackColor(inp.Override), unpackColor(inp.Color), bodyAlpha);
-    float alpha = bodyAlpha + glowAlpha;
-    return vec4(color.rgb, alpha);
+
+    float shadowAlpha = smoothstep(0.0, 0.8, mtsdf.a) * min(outlineThickness * 0.5, 1.0);
+    float totalBgAlpha = max(strokeAlpha, shadowAlpha);
+
+    vec4 outlineColor = unpackColor(inp.Override);
+    vec4 textColor = unpackColor(inp.Color);
+
+    vec4 finalColor = mix(outlineColor, textColor, bodyAlpha);
+
+    return vec4(finalColor.rgb, clamp(totalBgAlpha, 0.0, 1.0));
 }
 
 float samp(vec2 uv, vec2 dx, vec2 dy) {
@@ -278,6 +296,8 @@ void main() {
         pixel = RenderMinimap();
     } else if (type == IdEllipse) {
         pixel = RenderEllipse();
+    }  if (type == IdHpBar) {
+        pixel = RenderHpBar();
     }
 
     if (color.a > 0 && type != IdColor && type != IdText && type != IdEllipse)

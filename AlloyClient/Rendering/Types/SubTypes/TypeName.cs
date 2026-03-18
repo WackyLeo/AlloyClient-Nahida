@@ -46,16 +46,16 @@ public class TypeName : SubRenderBase {
         var len = Name.Length;
         for (var i = 0; i < len; i++) {
             var c = Name[i];
-            if (!font.Glyphs.TryGetValue(c, out var glyph))
-                continue;
+            if (!font.Glyphs.TryGetValue(c, out var glyph)) continue;
 
             var pos = glyph.Position;
             var w = (pos.X1 - pos.X0) / 2.0f * size;
             var h = (pos.Y0 - pos.Y1) / 2.0f * size;
             
             var cx = cursorX + w;
-            var cy = _height - (pos.Y0 + pos.Y1) / 2.0f * size;
+            var cy = (pos.Y0 + pos.Y1) / 2.0f * size; 
             _glyphs[i] = new GlyphData(glyph.UV.ToVector4(), w, h, cx, cy);
+            
 
             if (i < len - 1) {
                 font.Kernings.TryGetValue((c, Name[i + 1]), out var kern);
@@ -65,9 +65,9 @@ public class TypeName : SubRenderBase {
         }
         for (var index = 0; index < _glyphs.Length; index++)
             _glyphs[index].Center(cursorX / 2f);
-
+        
         Rotation = new Vector4(0, 1, 1, -1);
-        Color = new Color(0xFC, 0xDF, 0, 1);
+        Color = new Color(0xFC, 0xDF, 0, 255);
     }
     
     public override void Draw(float yOffset) {

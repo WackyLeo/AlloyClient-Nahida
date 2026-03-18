@@ -2,6 +2,7 @@
 using AlloyClient.Assets;
 using AlloyClient.Engine.Common;
 using AlloyClient.Game.Objects;
+using AlloyClient.Game.Objects.Util;
 using AlloyClient.Rendering.Types.SubTypes;
 using AlloyClient.Rendering.VertexData;
 using Common;
@@ -18,18 +19,15 @@ public sealed class TypeGameObject : RenderBase {
     public override bool HasShadow {
         get => true;
     }
-
-    private readonly TypeName _name;
-
-    private readonly TypeHpBar _hpBar;
+    
+    //private readonly TypeHpBar _hpBar;
     private readonly TypeEffects _effects;
 
     public TypeGameObject(Entity entity) {
         Entity = entity;
         SetTexture(entity.GetTexture());
         Extra = new ExtraData(RenderConfig.TypeGameObject, RenderConfig.Shade);
-        _name = new TypeName(this, entity);
-        _hpBar = new TypeHpBar(this, entity);
+        //_hpBar = new TypeHpBar(this, entity);
         _effects = new TypeEffects(this, entity);
 
         Color = Color.Black;
@@ -47,15 +45,13 @@ public sealed class TypeGameObject : RenderBase {
 
     public override void SetDepth(float depth) {
         Extra.SortId = depth;
-        _name.SetDepth(depth);
-        _hpBar.SetDepth(depth);
+        //_hpBar.SetDepth(depth);
         _effects.SetDepth(depth);
     }
     
     public override void SetAlpha(float alpha) {
         Extra.Alpha = alpha;
-        _name.SetAlpha(alpha);
-        _hpBar.SetAlpha(alpha);
+        //_hpBar.SetAlpha(alpha);
         _effects.SetAlpha(alpha);
     }
 
@@ -74,13 +70,20 @@ public sealed class TypeGameObject : RenderBase {
         
         if (Entity.Properties.Static) return;
         
+        if (Entity.HasConditionEffect(ConditionEffects.Invincible) ||
+            Entity.HasConditionEffect(ConditionEffects.Invisible) ||
+            Entity.HasConditionEffect(ConditionEffects.Stasis) ||
+            Entity.HasConditionEffect(ConditionEffects.Paused)) {
+            return;
+        }
+        
         var y = 0.1f;
         float fill = 1f * Entity.Hp / Entity.MaxHp;
         float safeFill = Math.Clamp(fill, 0.0f, 1.0f);
         
         if (Entity.MaxHp != 0) {
-            _hpBar.SetFill(safeFill);
-            _hpBar.Draw(y + 0.05f);
+           // _hpBar.SetFill(safeFill);
+            //_hpBar.Draw(y + 0.05f);
         }
         
         _effects.Draw(Entity.HeightOffset);

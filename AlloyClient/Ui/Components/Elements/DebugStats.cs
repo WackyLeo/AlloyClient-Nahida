@@ -11,7 +11,7 @@ using AlloyClient.Utils;
 namespace AlloyClient.Ui.Components.Elements;
 
 public class DebugStats : Sprite {
-    private const int Outline = 3;
+    private const float Outline = 0.5f;
 
     private readonly SimpleText _frameTimeTimer = new (new TextConfig {Text = "Frame time over the last 30 seconds", X = 2, FontSize = 16, FontType = FontType.Bold, OutlineThickness = Outline, Anchor = UiAnchor.LeftTop });
     private readonly SimpleText _avgFrameTime = new (new TextConfig {Text = "Avg: 0 ms", X = 8, FontSize = 16, FontType = FontType.Bold, OutlineThickness = Outline, Anchor = UiAnchor.LeftTop });

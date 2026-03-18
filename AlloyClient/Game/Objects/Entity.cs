@@ -60,7 +60,9 @@ public class Entity {
     public ushort AltItemID;
 
     public int MaxHp;
+    
     public int Hp;
+    
     public int Defense;
 
     public int Size = 100;
@@ -70,7 +72,7 @@ public class Entity {
     public ItemDesc[] Equipment = new ItemDesc[20];
 
     public ConditionEffects ConditionEffects = 0;
-
+    
     public int ConnectType;
 
     public int PlayerHost;

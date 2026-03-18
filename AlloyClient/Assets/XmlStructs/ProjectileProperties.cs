@@ -23,6 +23,7 @@ public sealed class ProjectileProperties {
     public readonly bool Asyncrone;
     public readonly bool NoAlt;
     public readonly bool Orbiting;
+    public readonly bool ForceOrbiting;
     public readonly bool OnlyClockwise;
     public readonly bool OnlyCounterClockwise;
     public readonly bool DynamicRotationAngle;
@@ -88,6 +89,7 @@ public sealed class ProjectileProperties {
         Asyncrone = e.HasElement("Asyncrone");
         NoAlt = e.HasElement("NoAlt");
         Orbiting = e.HasElement("Orbiting");
+        ForceOrbiting = e.HasElement("ForceOrbit");
         OnlyClockwise = e.HasElement("OnlyClockwise");
         OnlyCounterClockwise = e.HasElement("OnlyCounterClockwise");
         DynamicRotationAngle = e.HasElement("DynamicRotationAngle");

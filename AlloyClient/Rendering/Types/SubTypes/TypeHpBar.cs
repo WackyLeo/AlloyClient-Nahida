@@ -11,7 +11,7 @@ public class TypeHpBar : SubRenderBase {
     }
 
     private Color _bgColor = Color.FromHexRGB(0x111111);
-    private Vector4 _bgScale = new(0.72f, 0.12f, 0, 0);
+    private Vector4 _bgScale = new(0.8f, 0.12f, 0, 0);
 
     private static readonly Color HighFill = Color.FromHexRGB(0x10FF00);
     private static readonly Color MedFill = Color.FromHexRGB(0xFF8010);
@@ -22,7 +22,7 @@ public class TypeHpBar : SubRenderBase {
         Entity = entity;
 
         UV = new Vector4();
-        Scale = new Vector4(0.68f, 0.08f, 0, 0);
+        Scale = new Vector4(0.76f, 0.08f, 0, 0);
         Rotation = new Vector4(0, 1, 1, -1);
         Extra = new ExtraData(RenderConfig.TypeBar, RenderConfig.NoShade);
     }
@@ -34,8 +34,8 @@ public class TypeHpBar : SubRenderBase {
         
         Color = percent < 0.5f ? percent >= 0.2f ? MedFill : LowFill : HighFill;
         
-        Scale.Z = 0.68f * percent - 0.68f;
-        Scale.X = 0.68f * percent;
+        Scale.Z = 0.76f * percent - 0.76f;
+        Scale.X = 0.76f * percent;
     }
     
     public override void Draw(float yOffset) {

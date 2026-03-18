@@ -49,7 +49,7 @@ public class TierText : Sprite
             FontType = FontType.Bold,
             Text = text,
             OutlineColor = 0,
-            OutlineThickness = 2
+            OutlineThickness = 0.5f
         });
         Tag.Color = c;
         AddChild(Tag);

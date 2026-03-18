@@ -25,7 +25,7 @@ public class TypeEffects : SubRenderBase {
 
     public override void Draw(float yOffset) {
         var effects = Entity.ConditionEffects & ~ConditionEffectUtil.IconlessEffects;
-        if (effects == ConditionEffects.None) return;
+        if (effects == 0) return;
 
         var pos   = Parent.Position;
         var count = System.Numerics.BitOperations.PopCount((ulong)effects);

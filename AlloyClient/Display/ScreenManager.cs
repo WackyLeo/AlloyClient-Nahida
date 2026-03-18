@@ -70,8 +70,9 @@ public sealed class ScreenManager : Sprite {
     }
 
     private void OnKeyUp(KeyboardEvent args) {
-        if ((args.Key == Key.Return && args.Alt) || args.Key == Key.F11)
+        if (args.Key == Key.F11) {
             ToggleFullscreen();
+        }
     }
 
     private static void ToggleFullscreen() {

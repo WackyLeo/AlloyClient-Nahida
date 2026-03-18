@@ -6,7 +6,6 @@ using AlloyClient.UiLib.BuiltIn;
 using AlloyClient.UiLib.Core;
 using AlloyClient.UiLib.Enums;
 using OpenTK.Mathematics;
-using AlloyClient.Utils;
 
 namespace AlloyClient.Ui.Chat;
 
@@ -15,7 +14,6 @@ public record struct SpeechData(Entity Owner, string Text, string Recipient);
 public sealed class SpeechBubble : Sprite {
 
     private double _lifetime = 5000;
-    
     private readonly Entity _owner;
 
     public SpeechBubble(SpeechData data) {
@@ -23,25 +21,15 @@ public sealed class SpeechBubble : Sprite {
         var type = SpeechColors.Default;
         
         switch (data.Recipient) {
-            case "*Guild*":
-                type = SpeechColors.Guild;
-                break;
-            case "*Party*":
-                type = SpeechColors.Party;
-                break;
+            case "*Guild*": type = SpeechColors.Guild; break;
+            case "*Party*": type = SpeechColors.Party; break;
             default: {
-                if (!string.IsNullOrEmpty(data.Recipient)) {
-                    type = SpeechColors.Tell;
-                    break;
-                }
-
-                if (_owner.Properties.IsEnemy)
-                    type = SpeechColors.Enemy; 
+                if (!string.IsNullOrEmpty(data.Recipient)) { type = SpeechColors.Tell; break; }
+                if (_owner.Properties.IsEnemy) type = SpeechColors.Enemy; 
                 break;
             }
         }
 
-        // colors = (background, outline, text)
         var colors = type switch {
             SpeechColors.Enemy => (0x561F1Cu, 0xFC8642u, 0xCDC0BFu),
             SpeechColors.Tell => (0x260AB6u, 0x00F0FFu, 0xD3CCF7u),
@@ -70,29 +58,31 @@ public sealed class SpeechBubble : Sprite {
     }
 
     private void OnFrameEnter() {
+        if (_owner == null || !Map.Entities.ContainsKey(_owner.ObjectId)) 
+        {
+            Parent?.RemoveChild(this);
+            return;
+        }
+
         var gameTime = Stage.GameTime;
-        if (_owner == null) return;
-        if ((_lifetime -= gameTime.ElapsedMs) <= 0) Parent.RemoveChild(this);
+        if ((_lifetime -= gameTime.ElapsedMs) <= 0) 
+        {
+            Parent?.RemoveChild(this);
+            return;
+        }
 
         Scale = new Vector2(Settings.CameraZoom);
         
-        var w = Camera.VisibleTileRadius.X;
-        var h = Camera.VisibleTileRadius.Y;
-        
-        var s = MathF.Sin(-Settings.CameraAngle);
-        var c = MathF.Cos(-Settings.CameraAngle);
+        var matrix = Camera.WorldMatrix * Camera.ViewMatrix * Camera.ProjectionMatrix;
+        var worldPos = new Vector3(_owner.Position.X, _owner.Position.Y, _owner.Z);
+        var ndc = Vector3.TransformPerspective(worldPos, matrix);
 
-        var x = _owner.Position.X - Camera.Position.X;
-        var y = _owner.Position.Y + Camera.Position.Y;
-            
-        var x1 = x * c - y * s;
-        var y1 = x * s + y * c;
+        float screenX = ((ndc.X + 1.0f) / 2.0f) * Settings.ScreenWidth;
+        float screenY = ((1.0f - ndc.Y) / 2.0f) * Settings.ScreenHeight;
 
-        var newX = MathUtils.Map(x1, -w, w, 0f, Settings.ScreenWidth - Camera.HudOffset);
-        var newY = MathUtils.Map(y1, -h, h, 0f, Settings.ScreenHeight);
-        var offset = _owner.HeightOffset / (h + h) * Settings.ScreenHeight;
+        float extraPixelOffset = -40f * Settings.CameraZoom;
 
-        X = (int)newX;
-        Y = (int)newY + (int)offset;
+        X = (int)MathF.Round(screenX);
+        Y = (int)MathF.Round(screenY + extraPixelOffset);
     }
 }

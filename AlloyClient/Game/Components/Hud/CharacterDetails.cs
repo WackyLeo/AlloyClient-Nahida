@@ -23,8 +23,8 @@ public sealed class CharacterDetails : Sprite {
             X = 40,
             Y = 20,
             Color = 0xdadada,
-            OutlineThickness = 0,
-            OutlineColor = 0,
+            OutlineThickness = 0.5f,
+            OutlineColor = 0xcfcfcf,
             Anchor = UiAnchor.MiddleLeft
         });
         AddChild(_name);

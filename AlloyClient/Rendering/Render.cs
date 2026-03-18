@@ -60,10 +60,6 @@ public static partial class Render {
         
         _shaderObject = ContentReader.LoadShader("Shaders/Object", ObjectDefines);
         _shaderObject.SetValue("GameTexture", atlas);
-        
-        _shaderObject.SetValue("PixelRange", UiRender.MyriadPro.PixelRange);
-        _shaderObject.SetValue("TextTextureSize", new Vector2(UiRender.MyriadPro.Atlas.Width, UiRender.MyriadPro.Atlas.Height));
-        _shaderObject.SetValue("TextTexture", UiRender.MyriadPro.Sampler);
 
         _shaderParticle = ContentReader.LoadShader("Shaders/Particle");
         _shaderParticle.SetValue("GameTexture", atlas);
@@ -115,7 +111,7 @@ public static partial class Render {
         _shaderObject.SetValue("ViewMatrix", Camera.ViewMatrix);
         _shaderObject.SetValue("ProjMatrix", Camera.ProjectionMatrix);
         _shaderObject.SetValue("BillMatrix", Camera.BillboardMatrix);
-        _shaderObject.SetValue("Zoom", Settings.CameraZoom);
+        //_shaderObject.SetValue("Zoom", Settings.CameraZoom);
         
         _shaderParticle.SetValue("WorldMatrix", Camera.WorldMatrix);
         _shaderParticle.SetValue("ViewMatrix", Camera.ViewMatrix);

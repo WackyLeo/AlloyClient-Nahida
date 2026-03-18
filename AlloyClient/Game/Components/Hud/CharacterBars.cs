@@ -18,12 +18,12 @@ public class CharacterBars : Sprite {
     private readonly StatusBar[] _allBars;
 
     public CharacterBars() {
-        _expBar = new StatusBar(BarWidth, 1, 5931045,  5526612, 0xFFFFFF, "Lvl X");
-        _fameBar = new StatusBar(BarWidth, 1, 14835456, 5526612, 0xFFFFFF, "Fame");
-        _hpBar = new StatusBar(BarWidth, 1, 14693428, 5526612, 0xFFFFFF, "HP");
-        _shieldBar = new StatusBar(BarWidth, 1, 0x00C9DD, 5526612, 0xFFFFFF, "Shield");
-        _restorationBar = new StatusBar(BarWidth, RestorationFixedHeight, 0x800000, 5526612, 0xFFFFFF, "");
-        _mpBar = new StatusBar(BarWidth, 1, 6325472,  5526612, 0xFFFFFF, "MP");
+        _expBar = new StatusBar(BarWidth, 1, 5931045,  5526612, 0x676767, "Lvl X");
+        _fameBar = new StatusBar(BarWidth, 1, 14835456, 5526612, 0x676767, "Fame");
+        _hpBar = new StatusBar(BarWidth, 1, 14693428, 5526612, 0x676767, "HP");
+        _shieldBar = new StatusBar(BarWidth, 1, 0x00C9DD, 5526612, 0x676767, "Shield");
+        _restorationBar = new StatusBar(BarWidth, RestorationFixedHeight, 0x800000, 5526612, 0x676767, "");
+        _mpBar = new StatusBar(BarWidth, 1, 6325472,  5526612, 0x676767, "MP");
 
         _allBars = [_expBar, _fameBar, _hpBar, _shieldBar, _restorationBar, _mpBar];
 

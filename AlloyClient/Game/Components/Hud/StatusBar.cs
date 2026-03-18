@@ -36,10 +36,10 @@ public class StatusBar : Sprite {
         AddChild(mainBar);
 
         labelString = label;
-        this.label = new SimpleText(new TextConfig { Text = label, FontSize = 16, FontType = FontType.Bolder, X = 4, Y = this.height / 2, OutlineThickness = 1, Color = 0xFFFFFF, OutlineColor = 0xFFFFFF, Anchor = UiAnchor.MiddleLeft });
+        this.label = new SimpleText(new TextConfig { Text = label, FontSize = 16, FontType = FontType.Bolder, X = 4, Y = this.height / 2, OutlineThickness = 0f, Color = 0xFFFFFF, OutlineColor = outlineColor, Anchor = UiAnchor.MiddleLeft });
         AddChild(this.label);
         
-        valueText = new SimpleText(new TextConfig { Text = "", FontSize = 16, FontType = FontType.Bold, Y = this.height / 2, OutlineThickness = 1, Color = 0xFFFFFF, OutlineColor = 0xFFFFFF, Anchor = UiAnchor.MiddleLeft });
+        valueText = new SimpleText(new TextConfig { Text = "", FontSize = 16, FontType = FontType.Bold, Y = this.height / 2, OutlineThickness = 0f, Color = 0xFFFFFF, OutlineColor = outlineColor, Anchor = UiAnchor.MiddleLeft });
         AddChild(valueText);
 
         AddEventListener(MouseEvent.MouseOver, OnMouseOver);

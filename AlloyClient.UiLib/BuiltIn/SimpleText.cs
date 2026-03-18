@@ -91,7 +91,7 @@ public sealed class SimpleText : Sprite {
         var idx = 0;
         for (var i = 0; i < len; i++) {
             var c = Text[i];
-            if (c == ' ') { // Track last space
+            if (c == ' ') {
                 lastSpaceIndex = i;
             }
             
@@ -110,6 +110,10 @@ public sealed class SimpleText : Sprite {
                         continue;
                     }
 
+                    if (VertexData.Length < idx * 4 + 3) {
+                        continue;
+                    }
+                    
                     var uv = glyph.UV;
                     var pos = glyph.Position;
                     
