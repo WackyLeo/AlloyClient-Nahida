@@ -44,16 +44,12 @@ public class Atlas {
         return new AtlasData();
 
     }
-
     public AnimationAtlasData GetAnimationAtlasData(string lookup, int index) {
-        if (lookup != null) {
-            var b = _atlasMapAnimation.TryGetValue(lookup, out var list);
-            if (b && list.Length >= 1 && list.Length > index) {
+        if (lookup != null && _atlasMapAnimation.TryGetValue(lookup, out var list)) {
+            if (list.Length > index) {
                 return list[index];
             }
         }
-
-        //Console.WriteLine($"Unable to lookup atlas[AnimationAtlasData]: {lookup} - {index}");
         return new AnimationAtlasData();
     }
 

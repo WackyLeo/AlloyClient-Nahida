@@ -58,7 +58,6 @@
     <Image name="lostHallsObjects16x16"      w="16" h="16">EmbeddedAssets_lostHallsObjects16x16.png</Image>
     <Image name="epicHiveObjects8x8"         w="8"  h="8" >EmbeddedAssets_epicHiveObjects8x8Embed_.png</Image>
     <Image name="epicHiveObjects16x16"       w="16" h="16">EmbeddedAssets_epicHiveObjects16x16Embed_.png</Image>
-
     <Image name="SR32x32objects1"            w="32" h="32">SRAssets_SR32x32objects1Embed_.png</Image>
     <Image name="Divinities"                 w="16" h="16">SRAssets_DivinitiesEmbed_.png</Image>
     <Image name="Totems"                     w="16" h="16">SRAssets_TotemsEmbed_.png</Image>
@@ -84,7 +83,6 @@
     <Image name="Zeppy"                      w="8"  h="8" >SRAssets_Zeppy8Embed_.png</Image>
     <Image name="WinterObjects8"             w="8"  h="8" >SRAssets_WinterObjects8Embed_.png</Image>
     <Image name="LunarInvasion8"             w="8"  h="8" >SRAssets_LunarInvasionEmbed_.png</Image>
-
     <Animated name="chars8x8rBeach"          w="8"  h="8" >EmbeddedAssets_chars8x8rBeachEmbed_.png</Animated>
     <Animated name="chars8x8dBeach"          w="8"  h="8" >EmbeddedAssets_chars8x8dBeachEmbed_.png</Animated>
     <Animated name="chars8x8rLow1"           w="8"  h="8" >EmbeddedAssets_chars8x8rLow1Embed_.png</Animated>
@@ -105,7 +103,7 @@
     <Animated name="chars16x16dEncounters2"  w="16" h="16">EmbeddedAssets_chars16x16dEncounters2Embed_.png</Animated>
     <Animated name="chars16x16rEncounters"   w="16" h="16">EmbeddedAssets_chars16x16rEncountersEmbed_.png</Animated>
     <Animated name="players"                 w="8"  h="8"  group="Full">EmbeddedAssets_playersEmbed_.png</Animated>
-    <Animated name="playerskins"             w="8"  h="8"  group="Full">EmbeddedAssets_playersSkinsEmbed_.png</Animated>
+    <!-- <Animated name="playerskins"             w="8"  h="8"  group="Full">EmbeddedAssets_playersSkinsEmbed_.png</Animated> -->
     <Animated name="playerskins16"           w="16" h="16" group="Full">EmbeddedAssets_playersSkins16Embed_.png</Animated>
     <Animated name="chars8x8rPets1"          w="8"  h="8" >EmbeddedAssets_chars8x8rPets1Embed_.png</Animated>
     <Animated name="chars8x8rPets2"          w="8"  h="8" >EmbeddedAssets_chars8x8rPets2Embed_.png</Animated>
@@ -125,7 +123,6 @@
     <Animated name="lostHallsChars16x16"     w="16" h="16">EmbeddedAssets_lostHallsChars16x16.png</Animated>
     <Animated name="epicHiveChars8x8"        w="8"  h="8" >EmbeddedAssets_epicHiveChars8x8Embed_.png</Animated>
     <Animated name="epicHiveChars16x16"      w="16" h="16">EmbeddedAssets_epicHiveChars16x16Embed_.png</Animated>
-
     <Animated name="prodSkins16"             w="16" h="16">SRAssets_ProdSkins16Embed.png</Animated>
     <Animated name="prodMasks16"             w="16" h="16">SRAssets_ProdMasks16Embed_.png</Animated>
     <Animated name="Feroziumenemies8x8"      w="8"  h="8" >SRAssets_Feroziumenemies8x8Embed_.png</Animated>
@@ -145,7 +142,6 @@
     <Animated name="SR16x16enemies2"         w="16" h="16">SRAssets_SR16x16enemies2Embed_.png</Animated>
     <Animated name="zombieSkins"             w="8"  h="8" >SRAssets_zombieSkinsEmbed_.png</Animated>
     <Animated name="bunnySkin"               w="8"  h="8" >SRAssets_bunnySkin_.png</Animated>
-
     <Image name="SRAssets"                w="8"  h="8" >SRRandom.png</Image>
     <Image name="SummerObjects16"         w="16" h="16">SummerObjects16.png</Image>
     <Image name="PaintStaff"              w="8"  h="8" >PaintStaff.png</Image>
@@ -194,8 +190,7 @@
     <Image name="SR16x16objects1"         w="16" h="16">Ica16Obj1.png</Image>
     <Image name="IcaTiered"               w="8"  h="8" >Icatiered.png</Image>
     <Image name="HaloC"                   w="8"  h="8" >HaloC.png</Image>
-
-    <Image name="Torbjorn"                w="8"  h="8" >Torbjorn.png</Image>
+    <Image name="Torbjorn"                w="8"  h="8" >Torbjorn.png</Image> 
     <Image name="partySkin"               w="8"  h="8" >PartySkin.png</Image>
     <Image name="partySkin"               w="8"  h="8" >ReindeerSkin.png</Image>
     <Image name="santaSkin"               w="16" h="16">SantaSkin.png</Image>

@@ -24,7 +24,7 @@ public sealed class CharacterDetails : Sprite {
             Y = 20,
             Color = 0xdadada,
             OutlineThickness = 0.5f,
-            OutlineColor = 0xcfcfcf,
+            OutlineColor = 0,
             Anchor = UiAnchor.MiddleLeft
         });
         AddChild(_name);
