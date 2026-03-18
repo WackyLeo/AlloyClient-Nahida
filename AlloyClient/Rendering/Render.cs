@@ -89,6 +89,12 @@ public static partial class Render {
         _entityData = new VertexObject[BufferSize];
         _entityDataBuffer = new StorageBuffer<VertexObject>(BufferSize);
         
+        
+        _shaderObject.SetValue("PixelRange", UiRender.MyriadPro.PixelRange);
+        _shaderObject.SetValue("TextTextureSize", new Vector2(UiRender.MyriadPro.Atlas.Width, UiRender.MyriadPro.Atlas.Height));
+        _shaderObject.SetValue("TextTexture", UiRender.MyriadPro.Sampler);
+        
+        
         BuildParticleBuffers();
     }
     

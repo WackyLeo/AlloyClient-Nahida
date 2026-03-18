@@ -94,8 +94,8 @@ public partial class Sprite : DisplayContainer {
     public Color ColorSecondary = Color.Transparent;
     
     public ColorTransform ColorTransformation = new(1f, 1f, 1f, 1f);
-    
-    protected Vector4 Extra1 = Vector4.Zero;
+
+    public Vector4 Extra1 = Vector4.Zero;
     
     protected Vector4 Extra2 = Vector4.Zero;
     

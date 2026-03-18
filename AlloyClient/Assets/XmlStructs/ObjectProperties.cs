@@ -47,6 +47,7 @@ public class ObjectProperties {
     
     public readonly ushort PlayerClassType;
     public readonly bool Skin;
+    public readonly bool ShowName;
 
     public readonly bool Container;
     public readonly bool LockedPortal;
@@ -73,6 +74,7 @@ public class ObjectProperties {
         ArcGap = e.GetValue("ArcGap", 11.25f);
 
         Class = e.GetValue<string>("Class");
+        ShowName = e.HasElement("ShowName");
         Model = e.GetValue<string>("Model");
         Effect = e.GetValue<string>("Effect");
         Rotation = e.GetValue<float>("Rotation");

@@ -92,6 +92,12 @@ public struct VertexUi {
         Color = color;
     }
     
+    public VertexUi(Vector2 pos, Vector2 uv, uint color) {
+        Position = pos;
+        UV = uv;
+        Color = new Color(color);
+    }
+    
     public VertexUi(Vector2 pos, Vector2 uv) {
         Position = pos;
         UV = uv;
@@ -103,7 +109,13 @@ public struct VertexUi {
         UV = new Vector2(0f);
         Color = color;
     }
-
+    
+    public VertexUi(Vector2 pos, uint color) {
+        Position = pos;
+        UV = new Vector2(0f);
+        Color = new Color(color);
+    }
+    
     public VertexUi(Vector2 pos) {
         Position = pos;
         UV = new Vector2(0f);

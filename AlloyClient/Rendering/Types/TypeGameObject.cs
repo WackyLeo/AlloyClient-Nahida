@@ -12,46 +12,42 @@ namespace AlloyClient.Rendering.Types;
 
 public sealed class TypeGameObject : RenderBase {
     
-    public override ModelType ModelType {
-        get => ModelType.PbObject;
-    }
+    public override ModelType ModelType => ModelType.PbObject;
+    public override bool HasShadow => true;
 
-    public override bool HasShadow {
-        get => true;
-    }
-    
-    //private readonly TypeHpBar _hpBar;
+    private readonly TypeName _name;
+    private readonly TypeHpBar _hpBar;
     private readonly TypeEffects _effects;
 
     public TypeGameObject(Entity entity) {
         Entity = entity;
         SetTexture(entity.GetTexture());
         Extra = new ExtraData(RenderConfig.TypeGameObject, RenderConfig.Shade);
-        //_hpBar = new TypeHpBar(this, entity);
+        
+        _name = new TypeName(this, entity);
+        _hpBar = new TypeHpBar(this, entity);
         _effects = new TypeEffects(this, entity);
 
         Color = Color.Black;
     }
     
     public override void SetPosition(float x, float y, float z = 0) {
-        Position.X = x;
-        Position.Y = y;
-        Position.Z = z;
+        Position.X = x; Position.Y = y; Position.Z = z;
     }
     
-    public override void SetVisibility(bool visible) {
-        Visible = visible;
-    }
+    public override void SetVisibility(bool visible) => Visible = visible;
 
     public override void SetDepth(float depth) {
         Extra.SortId = depth;
-        //_hpBar.SetDepth(depth);
+        _name.SetDepth(depth);
+        _hpBar.SetDepth(depth);
         _effects.SetDepth(depth);
     }
     
     public override void SetAlpha(float alpha) {
         Extra.Alpha = alpha;
-        //_hpBar.SetAlpha(alpha);
+        _name.SetAlpha(alpha);
+        _hpBar.SetAlpha(alpha);
         _effects.SetAlpha(alpha);
     }
 
@@ -78,12 +74,14 @@ public sealed class TypeGameObject : RenderBase {
         }
         
         var y = 0.1f;
-        float fill = 1f * Entity.Hp / Entity.MaxHp;
-        float safeFill = Math.Clamp(fill, 0.0f, 1.0f);
+
+        if (Entity.Properties.ShowName) {
+            _name.Draw(y);
+            y += _name.Height;
+        }
         
         if (Entity.MaxHp != 0) {
-           // _hpBar.SetFill(safeFill);
-            //_hpBar.Draw(y + 0.05f);
+            _hpBar.Draw(y + 0.05f);
         }
         
         _effects.Draw(Entity.HeightOffset);
