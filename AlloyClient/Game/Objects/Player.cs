@@ -133,55 +133,78 @@ public class Player : Entity {
     }
 
     private void HandleRelativeMovement(double time, double dt) {
+        if (float.IsNaN(Position.X) || float.IsNaN(Position.Y)) {
+            MoveTo(0, 0); 
+        }
+
+        float physicsDt = (float)Math.Clamp(dt, 0.0001, 33.3333);
         float angle = Settings.CameraAngle;
 
         if (Rotate != 0) {
-            angle = (float) (angle + dt * Settings.RotateSpeed * Rotate);
+            angle = (float)(angle + physicsDt * Settings.RotateSpeed * Rotate);
             Settings.CameraAngle = (angle % MathHelper.TwoPi + MathHelper.TwoPi) % MathHelper.TwoPi;
         }
         
         var moveSpeed = GetMoveSpeed();
-        var moveVectorAngle = MathF.Atan2(RelativeMoveVector.Y, RelativeMoveVector.X);
+        var baseSlideAmount = Tile?.GroundProperties?.SlideAmount ?? 0f;
+        bool isMoving = RelativeMoveVector.X != 0 || RelativeMoveVector.Y != 0;
+        Vector2 targetVelocity = Vector2.Zero;
 
-        if (RelativeMoveVector.X != 0 || RelativeMoveVector.Y != 0) {
-            if (Tile.GroundProperties.SlideAmount > 0) {
-                var slideVector = new Vector2(
-                    moveSpeed * MathF.Cos(angle + moveVectorAngle),
-                    moveSpeed * MathF.Sin(angle + moveVectorAngle)
-                );
+        if (isMoving) {
+            var moveVectorAngle = MathF.Atan2(RelativeMoveVector.Y, RelativeMoveVector.X);
+            targetVelocity = new Vector2(
+                moveSpeed * MathF.Cos(angle + moveVectorAngle),
+                moveSpeed * MathF.Sin(angle + moveVectorAngle)
+            );
+        }
 
-                var slideLen = slideVector.LengthFast;
-                slideVector *= (1f - Tile.GroundProperties.SlideAmount);
-                MovementVector *= Tile.GroundProperties.SlideAmount;
+        if (baseSlideAmount > 0) {
+            var safeSlideAmount = Math.Min(0.99f, baseSlideAmount);
+            var frictionMultiplier = MathF.Pow(safeSlideAmount, physicsDt / 16.666666f);
 
-                if (MovementVector.LengthFast < slideLen) {
-                    MovementVector += slideVector;
+            if (float.IsNaN(frictionMultiplier) || float.IsInfinity(frictionMultiplier)) {
+                frictionMultiplier = 0.95f; 
+            }
+
+            if (isMoving) {
+                Vector2 newVel = (MovementVector * frictionMultiplier) + (targetVelocity * (1f - frictionMultiplier));
+                if (!float.IsNaN(newVel.X) && !float.IsInfinity(newVel.X)) {
+                    MovementVector = newVel;
+                }
+            } else {
+                MovementVector *= frictionMultiplier;
+                if (MovementVector.LengthSquared < 0.000001f) {
+                    MovementVector = Vector2.Zero;
                 }
             }
-            else {
-                MovementVector.X = moveSpeed * MathF.Cos(angle + moveVectorAngle);
-                MovementVector.Y = moveSpeed * MathF.Sin(angle + moveVectorAngle);
-            }
+        } else {
+            MovementVector = targetVelocity;
         }
-        else if (MovementVector.LengthFast > 0.00012f && Tile.GroundProperties.SlideAmount > 0) {
-            MovementVector *= Tile.GroundProperties.SlideAmount;
-        }
-        else {
-            MovementVector.X = 0;
-            MovementVector.Y = 0;
-        }
-
-        if (Tile.GroundProperties.Push) {
+        
+        if (Tile?.GroundProperties?.Push == true) {
             MovementVector.X -= Tile.GroundProperties.Animate.DeltaX / 1000f;
             MovementVector.Y -= Tile.GroundProperties.Animate.DeltaY / 1000f;
         }
 
-        if (TextureData.HasAnimationData && this == Map.LocalPlayer) {
+        if (float.IsNaN(MovementVector.X) || float.IsNaN(MovementVector.Y)) {
+            MovementVector = Vector2.Zero;
+        } 
+        else if (MovementVector.LengthSquared > 400f) { 
+            MovementVector = MovementVector.Normalized() * 20f;
+        }
+
+        if (TextureData != null && TextureData.HasAnimationData && this == Map.LocalPlayer) {
             AnimateCharacter(time);
         }
 
-        WalkTo((float) (Position.X + dt * MovementVector.X), (float) (Position.Y + dt * MovementVector.Y));
-        RenderBaseType.SetPosition(Position.X, Position.Y, Z);
+        double nextX = Position.X + (double)physicsDt * MovementVector.X;
+        double nextY = Position.Y + (double)physicsDt * MovementVector.Y;
+
+        if (!double.IsNaN(nextX) && !double.IsNaN(nextY)) {
+            WalkTo((float)nextX, (float)nextY);
+        }
+
+        RenderBaseType?.SetPosition(Position.X, Position.Y, Z);
     }
 
     public override bool Update(double time, double dt) {
@@ -467,7 +490,9 @@ public class Player : Entity {
         result.X = Position.X;
         result.Y = Position.Y;
 
-        var stepSize = MoveThreshold / Math.Max(Math.Abs(dX), Math.Abs(dY));
+        var maxDiff = Math.Max(Math.Abs(dX), Math.Abs(dY));
+        var stepSize = MoveThreshold / maxDiff;
+
         var d = 0.0f;
         var done = false;
 
@@ -494,7 +519,11 @@ public class Player : Entity {
 
         float nextXBorder = 0;
         float nextYBorder = 0;
-
+        
+        if (Tile?.GroundProperties?.SlideAmount > 0) {
+            Log.Warn($"[BOUNCE] at ({x:F2}, {y:F2}) xCross: {xCross} yCross: {yCross}");
+        }
+        
         if (xCross) {
             nextXBorder = x > Position.X ? (int) (x * 2) / 2f : (int) (Position.X * 2) / 2f;
 

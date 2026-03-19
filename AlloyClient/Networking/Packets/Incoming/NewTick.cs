@@ -41,8 +41,6 @@ public class NewTick : IncomingPacket<NewTick> {
     }
 
     public override void Handle() {
-        var isLocalPlayer = false;
-
         if (Map.LocalPlayer != null)
         {
             var move = Move.CreatePacket();
@@ -61,8 +59,11 @@ public class NewTick : IncomingPacket<NewTick> {
             Map.FlushPlayerHits();
         }
 
-        for (int i = 0; i < ObjectStatsCount; i++)
-            ProcessObjectStats(_statsBuffer[i], isLocalPlayer);
+        for (int i = 0; i < ObjectStatsCount; i++) {
+            var stats = _statsBuffer[i];
+            bool isMe = (Map.LocalPlayer != null && stats.Id == Map.LocalPlayer.ObjectId);
+            ProcessObjectStats(stats, isMe);
+        }
     }
 
     private void ProcessObjectStats(ObjectStats stats, bool isPlayer) {
