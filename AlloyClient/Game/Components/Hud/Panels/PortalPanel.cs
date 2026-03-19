@@ -31,36 +31,38 @@ public class PortalPanel : Panel {
         }
 
         var name = new SimpleText(new TextConfig {
-            X = Width / 2,
+            X = Panel.PanelWidth / 2,
             Y = 16,
             Text = txt,
             FontSize = 22,
             FontType = FontType.Bold,
             OutlineColor = 0xFFFFFF,
-            Anchor = UiAnchor.MiddleTop
+            Anchor = UiAnchor.MiddleTop,
+            MaxWidth = Panel.PanelWidth - 16,
+            Glow = 0
         });
         AddChild(name);
-        
+
         _fullText = new SimpleText(new TextConfig {
-            X = Width / 2,
-            Y = name.Height + 50,
+            X = Panel.PanelWidth / 2,
+            Y = 56,
             Text = _locked ? "Locked" : "Full",
             FontSize = 20,
             FontType = FontType.Bold,
             OutlineColor = 0xFF0000,
             Color = 0xFF0000,
-            Anchor = UiAnchor.MiddleTop
+            Anchor = UiAnchor.MiddleTop,
+            Glow = 0
         });
-        _fullText.Y = name.Height + 10;
 
         _enterButton = new TextButton(new TextButtonConfig {
             Text = "Enter",
             FontSize = 20,
             OnClicked = OnInteractKey,
             FontType = FontType.Bold,
-            X = Width / 2,
-            Y = name.Height + 50,
-            Anchor = UiAnchor.MiddleTop
+            X = Panel.PanelWidth / 2,
+            Y = 56,
+            Anchor = UiAnchor.MiddleTop 
         });
         AddChild(_enterButton);
         

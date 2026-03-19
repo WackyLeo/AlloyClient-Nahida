@@ -59,9 +59,11 @@ vec4 GetGameObject() {
         if (color.a < 0.1 || vsInput.Extra.Alpha < 1.0) discard;
         return color;
     }
-
+    
     if (color.a >= 0.1) {
-        if (vsInput.Extra.Alpha < 1.0) return color;
+        if (vsInput.Extra.Alpha < 1.0) {
+            return vec4(color.rgb, color.a * vsInput.Extra.Alpha);
+        }
         discard;
     }
 
@@ -102,11 +104,11 @@ vec4 GetGameObject() {
         if (foundOpaquePixel) { hitRadius = r; break; }
     }
 
-    if (hitRadius <= 1) return vec4(vsInput.Color.rgb, 1.0);
+    if (hitRadius <= 1) return vec4(vsInput.Color.rgb, vsInput.Extra.Alpha);
 
     if (minDist <= float(maxRadius)) {
         float distNorm = clamp((minDist - 1.0) / float(maxRadius - 1), 0.0, 1.0);
-        float glowAlpha = pow(1.0 - distNorm, 1.75) * 0.55;
+        float glowAlpha = pow(1.0 - distNorm, 1.75) * 0.55 * vsInput.Extra.Alpha;
         if (glowAlpha > 0.01) return vec4(vsInput.Color.rgb, glowAlpha);
     }
     discard;

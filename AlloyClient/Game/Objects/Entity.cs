@@ -112,6 +112,8 @@ public class Entity {
 
     public ParticleEffect Effect;
     
+    public float Alpha = 1.0f;
+    
     // Merchant Specific
 
     public int merchandiseType_;
@@ -147,7 +149,15 @@ public class Entity {
 
         RenderBaseType = GetRenderType(type);
     }
+    
+    public void SetTransparency(float alpha) {
+        Alpha = Math.Clamp(alpha, 0f, 1f);
 
+        if (RenderBaseType != null) {
+            RenderBaseType.Extra.Alpha = Alpha;
+        }
+    }
+    
     public Color GetDominateColor() {
         if (RenderBaseType is TypeWall) return TextureData.TopTexture.DominantColor;
         return TextureData.DominantColor;
@@ -349,7 +359,7 @@ public class Entity {
                     break;
                 case StatsType.Effects:
                     ConditionEffects = (ConditionEffects)stat.Value;
-                    RenderBaseType.Extra.Alpha = HasConditionEffect(ConditionEffects.Invisible) ? 0.5f : 1;
+                    SetTransparency(HasConditionEffect(ConditionEffects.Invisible) ? 0.5f : 1.0f);
                     break;
                 case StatsType.Name:
                     if (Name != stat.Text) {

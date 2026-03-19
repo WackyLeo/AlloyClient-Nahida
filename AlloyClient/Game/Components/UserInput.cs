@@ -16,13 +16,15 @@ namespace AlloyClient.Game.Components;
 public sealed class UserInput : Sprite {
 
     private static Vector2 _mousePosition;
+    public static Vector2 MousePosition => _mousePosition;
     
     private static bool _windowFocus;
 
     private static bool _manualFocus = true;
 
     private bool _mouseDown;
-
+    private bool _specialKeyDown;
+    
     private bool _autoFire;
 
     private int _rotateRight;
@@ -42,6 +44,7 @@ public sealed class UserInput : Sprite {
         Stage.AddEventListener(KeyboardEvent.KeyDown, OnKeyDown);
         Stage.AddEventListener(KeyboardEvent.KeyUp, OnKeyUp);
         
+        Stage.AddEventListener(MouseEvent.RightDown, OnRightDown);
         Stage.AddEventListener(MouseEvent.LeftDown,OnLeftDown);
         Stage.AddEventListener(MouseEvent.LeftUp, OnLeftUp);
         Stage.AddEventListener(MouseEvent.ScrollVertical, OnScroll);
@@ -54,6 +57,7 @@ public sealed class UserInput : Sprite {
         Stage.RemoveEventListener(KeyboardEvent.KeyDown, OnKeyDown);
         Stage.RemoveEventListener(KeyboardEvent.KeyUp, OnKeyUp);
         
+        Stage.RemoveEventListener(MouseEvent.RightDown, OnRightDown);
         Stage.RemoveEventListener(MouseEvent.LeftDown,OnLeftDown);
         Stage.RemoveEventListener(MouseEvent.LeftUp, OnLeftUp);
         Stage.RemoveEventListener(MouseEvent.ScrollVertical, OnScroll);
@@ -71,16 +75,32 @@ public sealed class UserInput : Sprite {
     private void OnLeftDown(MouseEvent args) {
         if (args.Coords.X > Settings.ScreenWidth - HudView.Width * Stage.ScreenScale.X) return;
         _mouseDown = true;
+        
+        if (args.ShiftKey && Map.LocalPlayer != null) {
+            var pos = Camera.ScreenToWorld(_mousePosition);
+            Map.LocalPlayer.UseAltWeapon(pos.X, pos.Y, 1);
+            return;
+        }
+
+        _mouseDown = true;
     }
 
     private void OnLeftUp() => _mouseDown = false;
     
+    private void OnRightDown(MouseEvent args) {
+        if (IsInputDisabled() || Map.LocalPlayer == null) return;
+        var pos = Camera.ScreenToWorld(_mousePosition);
+        Map.LocalPlayer.TryReload(pos.X, pos.Y);
+    }
+    
     private void OnMouseMove(MouseEvent args) => _mousePosition = new Vector2(args.Coords.X, args.Coords.Y);
+
 
     public void ClearInput() {
         ClearMovement();
         _autoFire = false;
         _mouseDown = false;
+        _specialKeyDown = false;
     }
     
     public void ClearMovement() {
@@ -166,18 +186,15 @@ public sealed class UserInput : Sprite {
                 _autoFire = !_autoFire;
                 break;
             case true when Settings.Special.CheckValue(key): {
-                /*
-                var pos = Camera.ScreenToWorld(_mousePosition);
-                var dX = pos.X - Map.LocalPlayer.Position.X;
-                var dY = pos.Y - Map.LocalPlayer.Position.Y;
-                var angle = MathF.Atan2(dY, dX);
-        
-                Map.LocalPlayer.Shoot(angle, Stage.GameTime, true);
-                */
-                
-                // todo
-            }
-                break;
+                if (!_specialKeyDown) {
+                    var pos = Camera.ScreenToWorld(_mousePosition);
+                    bool success = Map.LocalPlayer.UseAltWeapon(pos.X, pos.Y, 1); // 1 = START_USE
+                    if (success) {
+                        _specialKeyDown = true;
+                        Map.LocalPlayer.AutoAbilityToggle(true);
+                    }
+                }
+            } break;
             case true when Settings.Escape.CheckValue(key):
                 if (Map.Name == "Nexus" || Client.IsReconnecting)
                     break;
@@ -276,8 +293,14 @@ public sealed class UserInput : Sprite {
             case true when Settings.MoveRight.CheckValue(key):
                 _moveRight = 0;
                 break;
-            case true when Settings.Special.CheckValue(key):
-                //TODO: abilities
+            case true when Settings.Special.CheckValue(key): {
+                if (_specialKeyDown) {
+                    _specialKeyDown = false;
+                    Map.LocalPlayer.AutoAbilityToggle(false);
+                    var pos = Camera.ScreenToWorld(_mousePosition);
+                    Map.LocalPlayer.UseAltWeapon(pos.X, pos.Y, 2); // 2 = END_USE
+                }
+            }
                 break;
         }
         

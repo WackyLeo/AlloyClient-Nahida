@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using AlloyClient.Assets.Libraries;
+using AlloyClient.Game.Components;
 using AlloyClient.Game.Objects.Enums;
 using AlloyClient.Game.Objects.Util;
 using AlloyClient.Networking;
@@ -26,7 +27,8 @@ public class Player : Entity {
     private const float MaxAttackFreq = 0.008f;
     
     private static readonly Logger Log = new(nameof(Player));
-    
+
+    public int UpdateRadius = 20;
     public Vector2 RelativeMoveVector;
     public float MovementMultiplier = 1;
     public float Rotate;
@@ -100,6 +102,12 @@ public class Player : Entity {
     public int SpeedLimit = 20;
     public bool LimitSpeed;
     public bool IFrame;
+    public bool AutoAbility;
+    public int NextAltAttack;
+    public int LastAltAttack;
+    public int Ammo;
+    public int MaxAmmo;
+    public int ReloadCooldown;
     
     public int PartyId;
 
@@ -215,6 +223,12 @@ public class Player : Entity {
                 IFrame = false;
             }
         }
+        
+        if (AutoAbility) {
+            var target = Camera.ScreenToWorld(UserInput.MousePosition);
+            UseAltWeapon(target.X, target.Y, 4);
+        }
+        
         if (ObjectId == Map.LocalPlayerId) {
             HandleRelativeMovement(time, dt);
             OnMove();
@@ -224,7 +238,103 @@ public class Player : Entity {
         Effect?.Update(time, dt);
         return true;
     }
+    
+    public void AutoAbilityToggle(bool toggle) {
+        AutoAbility = toggle;
+    }
 
+    public void TryReload(float mouseX, float mouseY) {
+        if (Ammo >= MaxAmmo) {
+            UseAltWeapon(mouseX, mouseY, 5);
+        } else {
+            int curTime = (int)Main.GameTime.TotalMs;
+            var item = Equipment[0];
+            if (item == null) return;
+
+            if (curTime > ReloadCooldown + 2000) {
+                // SoundEffectLibrary.play("Weapon_Reload");
+                var pkt = UseItem.CreatePacket();
+                pkt.Time = curTime;
+                pkt.SlotObject = new ObjectSlot {
+                    ObjectId = ObjectId,
+                    SlotId = 0,
+                    ObjectType = item.ObjectType
+                };
+                pkt.ItemUsePos = new Position { X = 0, Y = 0 };
+                pkt.UseType = 1;
+                Client.QueuePacket(pkt);
+            }
+        }
+    }
+    
+    public bool UseAltWeapon(float mouseX, float mouseY, byte useType) {
+        if (Map.LocalPlayer == null || HasConditionEffect(ConditionEffects.Paused)) {
+            return false;
+        }
+
+        var ability = Equipment[1];
+        if (ability == null) return false;
+
+        float range = 25f;
+        var xDiff = Position.X - mouseX;
+        var yDiff = Position.Y - mouseY;
+        var dist = MathF.Sqrt(xDiff * xDiff + yDiff * yDiff);
+        var angle = MathF.Atan2(-yDiff, -xDiff);
+        
+        var targetX = mouseX;
+        var targetY = mouseY;
+        
+        if (dist > range) {
+            targetX = Position.X + MathF.Cos(angle) * range;
+            targetY = Position.Y + MathF.Sin(angle) * range;
+        }
+
+        int time = (int)Main.GameTime.TotalMs;
+
+        if (useType == 1 || useType == 4 || useType == 5) { 
+            if (time < NextAltAttack) {
+                return false;
+            }
+
+            int mpCost = ability.MpCost;
+            if (Mp < mpCost && !HasConditionEffect(ConditionEffects.Silenced)) {
+                // SoundEffectLibrary.play("no_mana");
+                return false;
+            }
+
+            int cooldown = (int)(ability.Cooldown * 1000f);
+            if (cooldown <= 0) cooldown = 550;
+
+            LastAltAttack = time;
+            NextAltAttack = time + cooldown;
+
+            var pkt = UseItem.CreatePacket();
+            pkt.Time = time;
+            pkt.SlotObject = new ObjectSlot {
+                ObjectId = ObjectId,
+                SlotId = 1,
+                ObjectType = ability.ObjectType
+            };
+            pkt.ItemUsePos = new Position { X = targetX, Y = targetY };
+            pkt.UseType = useType;
+            Client.QueuePacket(pkt);
+        } 
+        else {
+            var pkt = UseItem.CreatePacket();
+            pkt.Time = time;
+            pkt.SlotObject = new ObjectSlot {
+                ObjectId = ObjectId,
+                SlotId = 1,
+                ObjectType = ability.ObjectType
+            };
+            pkt.ItemUsePos = new Position { X = targetX, Y = targetY };
+            pkt.UseType = useType;
+            Client.QueuePacket(pkt);
+        }
+
+        return true;
+    }
+    
     public override void UpdateStats(StatData[] statData, int offset, int count) {
         base.UpdateStats(statData, offset, count);
 

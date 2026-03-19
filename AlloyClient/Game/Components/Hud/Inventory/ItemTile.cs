@@ -411,6 +411,7 @@ public sealed class ItemTile : Sprite {
         packet.ItemUsePos.X = itemUsePosX;
         packet.ItemUsePos.Y = itemUsePosY;
         packet.UseType = useType;
+        packet.ProjId = Map.LocalPlayer.ReadServerId();
 
         Client.QueuePacket(packet);
     }

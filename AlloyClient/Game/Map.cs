@@ -5,6 +5,7 @@ using AlloyClient.Assets;
 using AlloyClient.Game.Components;
 using AlloyClient.Game.Components.Hud;
 using AlloyClient.Game.Objects;
+using AlloyClient.Game.Objects.Util;
 using AlloyClient.Networking;
 using AlloyClient.Networking.Packets.Outgoing;
 using AlloyClient.Networking.Structs.DataObjects;
@@ -17,6 +18,7 @@ using AlloyClient.Utils;
 using Common;
 using OpenTK.Graphics.OpenGL;
 using OpenTK.Mathematics;
+using TileData = AlloyClient.Rendering.VertexData.TileData;
 
 namespace AlloyClient.Game;
 
@@ -24,9 +26,7 @@ public static class Map {
     public const int TileRenderDistance = 20;
 
     public static GameTime LastGameTime;
-
     public static GameSprite GameSprite;
-
     public static double CurrentTime;
 
     public static int Width;
@@ -58,7 +58,8 @@ public static class Map {
     public static int LastTickId;
 
     public static Signal<Player> OnPlayerUpdate = new();
-
+    
+    public static bool TilesDirty = true;
     private static int _particleCount;
     private static readonly ParticleData[] Particles = new ParticleData[30000];
     private static readonly List<int> EntitiesToRemove = [];
@@ -85,15 +86,36 @@ public static class Map {
         var fullMatrix = Camera.WorldMatrix * Camera.ViewMatrix * Camera.ProjectionMatrix;
         var matrix = new DepthMatrix(fullMatrix);
         
+        bool hasDarkness = LocalPlayer?.HasConditionEffect(ConditionEffects.Darkness) ?? false;
+        float darknessRadiusSq = 36f;
+        
         foreach (var (objectId, entity) in Entities) {
             if (!entity.Update(time, dt)) {
                 EntitiesToRemove.Add(objectId);
             }
+        
             entity.UpdateVisibility(ref fullMatrix);
+
+            bool allowTransparency = (entity.RenderBaseType is TypeGameObject) || (entity.RenderBaseType is TypePlayer);
+            if (allowTransparency) {
+                if (hasDarkness && entity != LocalPlayer && !Players.ContainsKey(objectId)) {
+                    if ((entity.Position - LocalPlayer.Position).LengthSquared > darknessRadiusSq) {
+                        entity.RenderBaseType.Visible = false; 
+                    }
+                }
+
+                if (entity.HasConditionEffect(ConditionEffects.Invisible)) {
+                    entity.RenderBaseType.SetAlpha(0.5f);
+                } else {
+                    entity.RenderBaseType.SetAlpha(1.0f);
+                }
+            }
         }
 
-        foreach (var id in EntitiesToRemove)
+        foreach (var id in EntitiesToRemove) {
             RemoveEntity(id);
+        }
+        
         EntitiesToRemove.Clear();
 
         for (var i = ParticleGenCount - 1; i >= 0; i--) {
@@ -144,14 +166,22 @@ public static class Map {
 
         #region Tile
         var pos = Vector2.Floor(LocalPlayer.Position);
-        if (pos != _lastPosition) {
+        if (pos != _lastPosition || TilesDirty) {
             _lastPosition = pos;
-            VisibleTopTiles.Clear(); 
+            TilesDirty = false;
+            
+            VisibleTopTiles.Clear();
+            
+            int updateRadius = LocalPlayer.HasConditionEffect(ConditionEffects.Darkness) ? 6 : TileRenderDistance;
+            if (LocalPlayer.UpdateRadius != updateRadius) {
+                LocalPlayer.UpdateRadius = updateRadius;
+                TilesDirty = true;
+            }
             
             Render.StartNewDrawTile();
-            for (var x = -TileRenderDistance; x < TileRenderDistance; x++) {
-                for (var y = -TileRenderDistance; y < TileRenderDistance; y++) {
-                    if (x * x + y * y >= TileRenderDistance * TileRenderDistance) continue;
+            for (var x = -LocalPlayer.UpdateRadius; x < LocalPlayer.UpdateRadius; x++) {
+                for (var y = -LocalPlayer.UpdateRadius; y < LocalPlayer.UpdateRadius; y++) {
+                    if (x * x + y * y >= LocalPlayer.UpdateRadius * LocalPlayer.UpdateRadius) continue;
 
                     var tile = GetTile(x + (int) LocalPlayer.Position.X, y + (int) LocalPlayer.Position.Y);
                     if (tile != null && tile.Type != 0xFF) {
@@ -295,7 +325,7 @@ public static class Map {
         if (tile == null) {
             return;
         }
-
+        TilesDirty = true;
         tile.SetType(type);
     }
 

@@ -5,6 +5,7 @@ namespace AlloyClient.Networking.Packets.Outgoing;
 public class UseItem : OutgoingPacket<UseItem> {
 
     public int Time;
+    public int ProjId;
     public ObjectSlot SlotObject;
     public Position ItemUsePos;
     public byte UseType;
@@ -16,6 +17,7 @@ public class UseItem : OutgoingPacket<UseItem> {
         ItemUsePos.Reset();
         UseType = 0;
         Time = 0;
+        ProjId = 0;
     }
 
     public override void Write(NetworkWriter writer) {
@@ -23,10 +25,11 @@ public class UseItem : OutgoingPacket<UseItem> {
         SlotObject.Write(writer);
         ItemUsePos.Write(writer);
         writer.Write(UseType);
+        writer.Write(ProjId);
     }
 
     public override string ToString() {
         return
-            $"SlotObject: {SlotObject}, ItemUsePos: {ItemUsePos}, UseType: {UseType}, Time: {Time}";
+            $"SlotObject: {SlotObject}, ItemUsePos: {ItemUsePos}, UseType: {UseType}, Time: {Time}, ProjId: {ProjId}";
     }
 }
