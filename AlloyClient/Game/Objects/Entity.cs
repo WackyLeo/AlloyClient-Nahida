@@ -24,7 +24,7 @@ namespace AlloyClient.Game.Objects;
 public class Entity {
     private static readonly Logger Log = new(nameof(Entity));
 
-    public const float AttackPeriod = 300;
+    public static float AttackPeriod = 300;
 
     public int ObjectId;
     public ushort Type;
@@ -487,6 +487,25 @@ public class Entity {
     }
 
     private void SetAltTexture(int index) {
+        if (!ObjectLibrary.TypeToTextureData.TryGetValue(Type, out var baseTextureData)) {
+            return;
+        }
+        if (index == 0) {
+            TextureData = baseTextureData;
+        } 
+        else {
+            if (baseTextureData.GetAltTexture(index, out var altData)) {
+                TextureData = altData;
+            } else {
+                TextureData = baseTextureData; 
+            }
+        }
+        if (TextureData.HasAnimationData && TextureData.AnimatedTextures.FaceRight != null && TextureData.AnimatedTextures.FaceRight.Length > 0) {
+            Texture = TextureData.AnimatedTextures.FaceRight[0];
+        } else {
+            Texture = TextureData.GetTexture(random: true);
+        }
+        RenderBaseType?.SetTexture(Texture);
     }
 
     public void OnAddedToMap(Position position) {

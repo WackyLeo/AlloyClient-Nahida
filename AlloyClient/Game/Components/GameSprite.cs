@@ -12,6 +12,7 @@ public sealed class GameSprite : Sprite {
 
     public readonly UserInput UserInput;
     public readonly HudView Hud;
+    private readonly CurrencyView _currencyView;
     private readonly ChatBox _chat;
 
     public GameSprite() {
@@ -19,7 +20,8 @@ public sealed class GameSprite : Sprite {
         AddChild(new ChatLayer());
         AddChild(new NotificationLayer());
         AddChild(Hud = new HudView());
-        AddChild(_chat= new ChatBox());
+        AddChild(_currencyView = new CurrencyView());
+        AddChild(_chat = new ChatBox());
         AddChild(new DebugStats());
 
         Map.GameSprite = this;
@@ -57,6 +59,10 @@ public sealed class GameSprite : Sprite {
         Hud.Y = height / 2;
         Hud.Scale = Stage.ScreenScale;
 
+        _currencyView.X = (int)(width - HudView.Width * Stage.ScreenScale.X - 25);
+        _currencyView.Y = 15;
+        _currencyView.Scale = Stage.ScreenScale;
+        
         _chat.X = 0;
         _chat.Y = height;
         _chat.Scale = Stage.ScreenScale;

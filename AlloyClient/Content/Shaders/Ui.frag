@@ -133,7 +133,7 @@ vec4 RenderText() {
     float strokeAlpha = clamp(bodyDist + outlineThickness + 0.5, 0.0, 1.0);
 
 
-    float shadowAlpha = smoothstep(0.0, 0.8, mtsdf.a) * min(outlineThickness * 0.5, 1.0);
+    float shadowAlpha = smoothstep(0.0, 0.8, mtsdf.a) * inp.Extra1.z;
     float totalBgAlpha = max(strokeAlpha, shadowAlpha);
 
     vec4 outlineColor = unpackColor(inp.Override);
@@ -162,26 +162,26 @@ vec4 RenderOutline() {
         return color;
     }
 
-    if (inp.Extra1.w == -1 && inp.Extra2.z == -1){ // Outline and glow disabled
+    if (inp.Extra1.w == -1 && inp.Extra2.z == -1){
         discard;
     }
 
+    vec2 spriteMin = vec2(inp.Extra2.x, inp.Extra1.y);
+    vec2 spriteMax = vec2(inp.Extra2.x + inp.Extra2.y, inp.Extra1.y + inp.Extra1.z);
+
     vec4 outlineColor = unpackColor(inp.Override);
-    float scale = min(4, inp.Extra2.y / 60.0); // Extra2.y is the texture height 
-    
+    float scale = min(4, inp.Extra2.w / 60.0);
+
     vec2 texSize = vec2(textureSize(GameAtlasTexture, 0));
     ivec2 currentTexel = ivec2(uv * texSize);
 
     float pxW = length(dx);
     float pxH = length(dy);
-    float invPxW = 1.0 / pxW;
-    float invPxH = 1.0 / pxH;
     vec2 invPx = vec2(1.0 / pxW, 1.0 / pxH);
 
     float outlineSize = floor(max(1, scale));
     float glowSize = max(6, 6.0 * scale);
 
-    // Base directions (unit steps in screen space), scaled by i in the loop
     vec2 dirs[8] = vec2[](
     -dx - dy, -dy, dx - dy, dx,
     dx + dy,  dy, -dx + dy, -dx
@@ -193,16 +193,16 @@ vec4 RenderOutline() {
     for (float i = 1; i <= glowSize && outlineAlpha == 0.0; i++) {
         for (int j = 0; j < 8; j++) {
             vec2 sampleUV = uv + dirs[j] * i;
+
+            if (sampleUV.x < spriteMin.x || sampleUV.x > spriteMax.x ||
+            sampleUV.y < spriteMin.y || sampleUV.y > spriteMax.y) {
+                continue;
+            }
+
             ivec2 neighborTexel = ivec2(sampleUV * texSize);
-            if (neighborTexel == currentTexel){
-                continue;
-            }
+            if (neighborTexel == currentTexel) continue;
+            if (texelFetch(GameAtlasTexture, neighborTexel, 0).a == 0) continue;
 
-            if (texelFetch(GameAtlasTexture, neighborTexel, 0).a == 0){
-                continue;
-            }
-
-            // Distance from fragment to nearest point on solid texel
             vec2 nearestPoint = clamp(uv, vec2(neighborTexel) / texSize, vec2(neighborTexel + ivec2(1)) / texSize);
             vec2 distPx = abs(uv - nearestPoint) * invPx;
 
@@ -265,8 +265,7 @@ vec4 RenderEllipse() {
 
 void main() {
     vec4 pixel = vec4(0);
-
-
+    
     //TODO: replace pos1 with gl_FragCoord and send screen coords in scissor instead
     if (inp.Position1.x < inp.Scissor.x || inp.Position1.x > inp.Scissor.z || inp.Position1.y < inp.Scissor.w || inp.Position1.y > inp.Scissor.y) {
         discard;

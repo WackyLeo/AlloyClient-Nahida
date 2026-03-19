@@ -80,17 +80,18 @@ public static class TextureHelper
                 return new AtlasData();
 
             flipped = sec is 0 or 7;
+            bool isSide = sec is 0 or 3 or 4 or 7;
 
-            idx = Math.Max(0, Math.Min(0.99999f, idx));
             var i = action switch
             {
                 AnimationType.Attack => 4 + (int)(idx * 2),
-                AnimationType.Walk => (int)(idx * 2) == 0 ? 1 : 0,
+
+                AnimationType.Walk => isSide
+                    ? (int)(idx * 2) % 2 
+                    : new[] { 0, 1, 0, 2 }[(int)(idx * 4) % 4],
                 _ => 0
             };
-
-            i = Math.Min(i, frames.Length - 1);
-
+            
             attackFrame = i == 5;
             return frames[i];
         }

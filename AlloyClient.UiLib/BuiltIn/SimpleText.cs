@@ -14,6 +14,7 @@ public struct TextConfig {
     public int Y = 0;
     public int MaxWidth = -1;
     public float OutlineThickness = 0;
+    public float Glow = 0.5f;
     public uint Color = 0xFFFFFF;
     public uint OutlineColor = 0x0;
     public float Alpha = 1.0f;
@@ -30,7 +31,7 @@ public sealed class SimpleText : Sprite {
     }
     
     public string Text { get; private set; }
-    
+    private float _glow;
     private float _fontScale;
     private float _outlineThickness;
     private float _lineWrapStart;
@@ -43,7 +44,7 @@ public sealed class SimpleText : Sprite {
         } else {
             Text = config.Text;
         }
-        
+        _glow = config.Glow;
         _fontScale = config.FontSize;
         _font = UiRender.GetFont(config.FontType);
         _maxWidth = config.MaxWidth;
@@ -161,6 +162,7 @@ public sealed class SimpleText : Sprite {
         
         Extra1.X = _outlineThickness;
         Extra1.Y = (int) (_fontScale < 16 ? RenderType.Small : RenderType.Normal);
+        Extra1.Z = _glow;
     }
 
     private void Rebuild() {

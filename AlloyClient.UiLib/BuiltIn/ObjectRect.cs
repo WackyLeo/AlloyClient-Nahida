@@ -65,7 +65,7 @@ public class ObjectRect : Sprite {
         SetGraphicsBuffer();
         
         Extra1 = new Vector4(_texture.V + _texture.H * 0.4f, _texture.V, _texture.H, _outline ? 1f : -1f);
-        Extra2 = new Vector4(_width, _height, _glow ? 1f : -1f, 0);
+        Extra2 = new Vector4(_texture.U, _texture.W, _glow ? 1f : -1f, _height);
     }
     
     public void ChangeTexture(TextureInfo info) {

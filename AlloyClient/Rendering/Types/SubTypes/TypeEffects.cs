@@ -43,11 +43,13 @@ public class TypeEffects : SubRenderBase {
                 continue;
             }
             
-            var wx = num * c - yOffset * s;
-            var wy = num * s + yOffset * c;
+            var wx = num * c;
+            var wy = num * s;
 
             var p = new Vector3(pos.X - wx, pos.Y + wy, pos.Z);
-            var sc = new Vector4(Size, Size, 0, yOffset);
+        
+            float lift = 0.15f;
+            var sc = new Vector4(Size, Size, 0, yOffset - lift);
 
             Render.DrawEntity(new VertexObject(p, icons[0], sc, Rotation, Extra.Data, Color.Black));
             num -= Size * 1.35f;

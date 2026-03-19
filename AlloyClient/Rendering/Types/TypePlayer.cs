@@ -51,7 +51,10 @@ public sealed class TypePlayer : RenderBase {
         _effects.SetAlpha(alpha);
     }
 
-    public override void SetName(string name) { }
+    public override void SetName(string name) {
+        _typeName.Name = name;
+        _typeName.SetTextures();
+    }
 
     public override void Draw() {
         var s = MathF.Sin(-Entity.Rotation);
@@ -61,16 +64,15 @@ public sealed class TypePlayer : RenderBase {
         Rotation = new Vector4(s, c, k, f);
         
         Entity.HeightOffset = -0.5f * Scale.Y * k + Scale.W * k;
-        
         Render.DrawEntity(new VertexObject(Position, UV, Scale, Rotation, Extra.Data, Color));
-        var y = 0.1f;
+        var y = 0.125f;
         
         if (_player != Map.LocalPlayer) {
             _typeName.Draw(y);
-            y += _typeName.Height;
+            y += _typeName.Height / 1.5f;
         } 
         
-        _hpBar.Draw(y + 0.05f);
+        _hpBar.Draw(y + 0.075f);
         _effects.Draw(Entity.HeightOffset);
     }
 

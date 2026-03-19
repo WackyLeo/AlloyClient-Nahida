@@ -62,17 +62,23 @@ public class EnemyShoot : IncomingPacket<EnemyShoot> {
             return;
 
         ushort type;
-        ProjectileProperties projDesc;
-        ObjectProperties objDesc;
-        try {
-            type = ObjectLibrary.IdToObjectType[en.Properties.Projectiles[BulletType].ObjectId];
+        ProjectileProperties projDesc = null;
+        ObjectProperties objDesc = null;
+
+        if (en.Properties.Projectiles != null && BulletType < en.Properties.Projectiles.Count) {
             projDesc = en.Properties.Projectiles[BulletType];
-            objDesc = ObjectLibrary.TypeToObjectProps[type];
-        } catch {
-            Logger.Error($"Projectile '{BulletType}' out of range on '{en.Properties.DisplayName}'", "EnemyShoot");
-            type = ObjectLibrary.IdToObjectType[en.Properties.ProjectilesDict[BulletType].ObjectId];
-            projDesc = en.Properties.ProjectilesDict[BulletType];
-            objDesc = ObjectLibrary.TypeToObjectProps[type];
+        } 
+        else if (en.Properties.ProjectilesDict != null && en.Properties.ProjectilesDict.TryGetValue(BulletType, out var dictProj)) {
+            projDesc = dictProj;
+        }
+        if (projDesc == null) {
+            Logger.Error($"Projectile '{BulletType}' missing on '{en.Properties.DisplayName}'. Skipping shot.", "EnemyShoot");
+            return; 
+        }
+        if (!ObjectLibrary.IdToObjectType.TryGetValue(projDesc.ObjectId, out type) ||
+            !ObjectLibrary.TypeToObjectProps.TryGetValue(type, out objDesc)) {
+            Logger.Error($"Failed to find Object properties for projectile '{projDesc.ObjectId}'", "EnemyShoot");
+            return;
         }
 
         var bulletIdMod = LargeStorage ? 4096 : 256;

@@ -35,7 +35,7 @@ public static class Camera {
         Position = new Vector3(0f, 0f, 12);
 
         WorldMatrix = Matrix4.CreateRotationX(MathHelper.DegreesToRadians(180));
-        ViewMatrix = new Matrix4();
+        ViewMatrix = Matrix4.Identity;
         BillboardMatrix = Matrix4.Identity;
 
         var halfWidth = Settings.ScreenWidth.Value;

@@ -74,7 +74,7 @@ public sealed class ItemTile : Sprite {
             _slotDetail.Visible = true;
         }
 
-        _slotId = new SimpleText(new TextConfig {Text = "", X = Size / 2, Y = Size / 2, FontSize = 32, FontType = FontType.Bold, Color = 0x363636, OutlineColor = 0x363636, Anchor = UiAnchor.Middle});
+        _slotId = new SimpleText(new TextConfig {Text = "", X = Size / 2, Y = Size / 2, FontSize = 32, FontType = FontType.Bold, Color = 0x363636, OutlineColor = 0x363636, Anchor = UiAnchor.Middle, Glow = 0});
         _slotId.Visible = false;
         AddChild(_slotId);
 
@@ -85,7 +85,15 @@ public sealed class ItemTile : Sprite {
         _sprite = new ObjectRect(new ObjectRectConfig {Texture = TextureHelper.FromGameAtlas(0x0096), Width = Size, Height = Size});
         AddChild(_sprite);
 
-        _tierText = new SimpleText(new TextConfig {FontSize = 16, FontType = FontType.Bold, Text = "", OutlineThickness = 0.33f});
+        _tierText = new SimpleText(new TextConfig {
+            FontSize = 16, 
+            FontType = FontType.Bold, 
+            Text = "", 
+            OutlineThickness = 0.5f,
+            Glow = 1.5f,
+            OutlineColor = 0x000000
+        });
+        
         _tierText.Visible = false;
         _tierText.SetAnchor(UiAnchor.RightBottom);
         _tierText.X = Size - 2;
