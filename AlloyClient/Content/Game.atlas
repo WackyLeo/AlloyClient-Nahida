@@ -41,7 +41,6 @@
     <Image name="innerP2_mask"               w="4"  h="4" >EmbeddedAssets_innerP2MaskEmbed_.png</Image>
     <Image name="d1lofiObjBig"               w="16" h="16">EmbeddedAssets_d1LofiObjBigEmbed_.png</Image>
     <Image name="d2LofiObjEmbed"             w="8"  h="8" >EmbeddedAssets_d2LofiObjEmbed_.png</Image>
-    <Image name="d2LofiObjBigEmbed"          w="16" h="16">EmbeddedAssets_d2LofiObjBigEmbed_.png</Image>
     <Image name="d3LofiObjEmbed"             w="8"  h="8" >EmbeddedAssets_d3LofiObjEmbed_.png</Image>
     <Image name="d3LofiObjEmbed16"           w="16" h="16">EmbeddedAssets_d3LofiObjEmbed_.png</Image>
     <Image name="d3LofiObjBigEmbed"          w="16" h="16">EmbeddedAssets_d3LofiObjBigEmbed_.png</Image>
@@ -109,8 +108,6 @@
     <Animated name="chars8x8rPets2"          w="8"  h="8" >EmbeddedAssets_chars8x8rPets2Embed_.png</Animated>
     <Animated name="petsDivine"              w="16" h="16">EmbeddedAssets_petsDivineEmbed_.png</Animated>
     <Animated name="d1chars16x16r"           w="16" h="16">EmbeddedAssets_d1Chars16x16rEmbed_.png</Animated>
-    <Animated name="d2Chars8x8rEmbed"        w="8"  h="8" >EmbeddedAssets_d2Chars8x8rEmbed_.png</Animated>
-    <Animated name="d2Chars16x16rEmbed"      w="16" h="16">EmbeddedAssets_d2Chars16x16rEmbed_.png</Animated>
     <Animated name="d3Chars8x8rEmbed"        w="8"  h="8" >EmbeddedAssets_d3Chars8x8rEmbed_.png</Animated>
     <Animated name="d3Chars16x16rEmbed"      w="16" h="16">EmbeddedAssets_d3Chars16x16rEmbed_.png</Animated>
     <Animated name="mountainTempleChars8x8"  w="8"  h="8" >EmbeddedAssets_mountainTempleChars8x8Embed_.png</Animated>
