@@ -17,12 +17,17 @@ public static partial class Render {
     private static int _modelCount;
     private static int _entityCount;
     private static ModelType _entityModel;
-
+   
     #region Render Tile
+    
+    public static int GroundTileCount;
+    public static int TopTileCount;
 
     public static void StartNewDrawTile() {
         LastDrawCountTiles = 0;
         _tileCount = 0;
+        GroundTileCount = 0;
+        TopTileCount = 0;
     }
 
     public static void DrawNewTile(TileData data) {
@@ -30,19 +35,37 @@ public static partial class Render {
         _tileCount++;
     }
 
+    public static void SaveGroundCount() {
+        GroundTileCount = _tileCount;
+    }
+
+    public static void SaveTopCount() {
+        TopTileCount = _tileCount - GroundTileCount;
+    }
+
     public static void EndNewDrawTile() {
         _tileBuffer.SetData(_tileData.AsSpan(0, _tileCount));
     }
 
-    public static void DrawTiles() {
-        LastDrawCountTiles = _tileCount;
+    public static void DrawGroundTiles() {
+        if (GroundTileCount == 0) return;
+        LastDrawCountTiles = GroundTileCount;
         
         _defaultVao.Bind();
-        
         _shaderGround.Apply();
         _tileBuffer.BindToIndex(0);
         
-        GL.DrawArrays(PrimitiveType.Triangles, 0, _tileCount * 6);
+        GL.DrawArrays(PrimitiveType.Triangles, 0, GroundTileCount * 6);
+    }
+
+    public static void DrawTopTiles() {
+        if (TopTileCount == 0) return;
+        
+        _defaultVao.Bind();
+        _shaderGround.Apply();
+        _tileBuffer.BindToIndex(0);
+        
+        GL.DrawArrays(PrimitiveType.Triangles, GroundTileCount * 6, TopTileCount * 6);
     }
 
     #endregion
@@ -119,7 +142,6 @@ public static partial class Render {
     }
 
     #endregion
-    
     
     #region Render Entity
 

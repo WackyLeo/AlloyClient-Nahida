@@ -18,7 +18,7 @@ public class TypeName : SubRenderBase {
     public TypeName(RenderBase parent, Entity entity) {
         Parent = parent;
         Entity = entity;
-        Name = entity is Player player ? player.Name : entity.Properties.DisplayName;
+        Name = entity.Name;
 
         if (string.IsNullOrEmpty(Name)) Name = "Default";
         
@@ -57,7 +57,7 @@ public class TypeName : SubRenderBase {
             _glyphs[index].Center(cursorX / 2f);
         
         Rotation = new Vector4(0, 1, 1, -1);
-        Color = new Color(252, 223, 0, 255); 
+        Color = Entity is Player ? new Color(252, 223, 0, 255) : new Color(255, 255, 255, 255); 
     }
     
     public override void Draw(float yOffset) {

@@ -1,28 +1,21 @@
 ﻿#version 460 core
 
-#define TileBuffer 
+#define TileBuffer
 
 uniform mat4 WorldMatrix;
 uniform mat4 ViewMatrix;
 uniform mat4 ProjMatrix;
 uniform float GameTime;
+uniform float TileElevation;
 
 const vec2 tilePos[6] = vec2[6](
-    vec2(0, 1),
-    vec2(1, 1),
-    vec2(0, 0),
-    vec2(0, 0),
-    vec2(1, 1),
-    vec2(1, 0)
+vec2(0, 1), vec2(1, 1), vec2(0, 0),
+vec2(0, 0), vec2(1, 1), vec2(1, 0)
 );
 
 const vec2 tileUV[6] = vec2[6](
-    vec2(0.0, 1.0),
-    vec2(1.0, 1.0),
-    vec2(0.0, 0.0),
-    vec2(0.0, 0.0),
-    vec2(1.0, 1.0),
-    vec2(1.0, 0.0)
+vec2(0.0, 1.0), vec2(1.0, 1.0), vec2(0.0, 0.0),
+vec2(0.0, 0.0), vec2(1.0, 1.0), vec2(1.0, 0.0)
 );
 
 struct InstanceData {
@@ -46,10 +39,10 @@ out GROUND_OUTPUT {
 void main() {
     int instanceId = gl_VertexID / 6;
     int verId = gl_VertexID % 6;
-    
-    InstanceData data = instanceBuffer.data[instanceId];
 
-    vec4 inputPosition = vec4(tilePos[verId], 0, 1);
+    InstanceData data = instanceBuffer.data[instanceId];
+    vec4 inputPosition = vec4(tilePos[verId], TileElevation, 1.0);
+
     inputPosition.xy = (inputPosition.xy - 0.5) * 1.002 + 0.5;
     inputPosition.xy += data.Position.xy;
     gl_Position = inputPosition * WorldMatrix * ViewMatrix * ProjMatrix;

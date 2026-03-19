@@ -50,7 +50,7 @@ public class KeyCodeBox : Sprite {
         AddChild(_background);
 
         _char = new SimpleText(new TextConfig {
-            Text = CharCodes[(int)Toolkit.Keyboard.GetKeyFromScancode(_keyCode)], FontSize = 25, FontType = FontType.Bold, X = BoxWidth / 2, Y = BoxHeight / 2, OutlineThickness = 2, Anchor = UiAnchor.Middle
+            Text = CharCodes[(int)Toolkit.Keyboard.GetKeyFromScancode(_keyCode)], FontSize = 25, FontType = FontType.Bold, X = BoxWidth / 2, Y = BoxHeight / 2, OutlineThickness = 0.5f, Glow = 0, Anchor = UiAnchor.Middle
         });
         AddChild(_char);
 

@@ -124,4 +124,8 @@ public static partial class Render {
         _shaderParticle.SetValue("ProjMatrix", Camera.ProjectionMatrix);
         _shaderParticle.SetValue("BillMatrix", Camera.BillboardMatrix);
     }
+    
+    public static void SetTileElevation(float elevation) {
+        _shaderGround.SetValue("TileElevation", elevation);
+    }
 }

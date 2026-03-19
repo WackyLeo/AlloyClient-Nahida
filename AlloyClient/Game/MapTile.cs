@@ -36,7 +36,8 @@ public class MapTile(int x, int y) {
     public ushort Type = DefaultTile;
     public GroundProperties GroundProperties = GroundLibrary.TypeToGroundProps[DefaultTile];
     public TextureData TextureData = GroundLibrary.TypeToTextureData[DefaultTile];
-
+    public bool HasTop => GroundProperties.TopTD != null;
+    
     public Entity OccupiedObject { 
         get;
         set => SetMinimapColor(field = value);
@@ -46,7 +47,7 @@ public class MapTile(int x, int y) {
 
     private Color _color;
     private TileData _data;
-
+    private TileData _topData;
     private void SetMinimapColor(Entity entity) {
         if (entity != null && entity.Properties.Static && entity.Properties.OccupySquare && !entity.Properties.NoMiniMap) {
             MinimapTexture.UncoverTile(X, Y, entity.GetDominateColor());
@@ -61,7 +62,13 @@ public class MapTile(int x, int y) {
             Render.DrawNewTile(data.Value);
         }
     }
-
+    
+    public void DrawTop() {
+        if (HasTop) {
+            Render.DrawNewTile(_topData);
+        }
+    }
+    
     public void SetType(ushort type) {
         Type = type;
         GroundProperties = GroundLibrary.TypeToGroundProps[type];
@@ -93,8 +100,26 @@ public class MapTile(int x, int y) {
                 break;
         }
         
-        // can be shrunk down to 48 bytes by making posOff vec4short & animate vec4h
         _data = new TileData(new Vector4(X, Y, offx, offy), texture.ToVector4(), animate, new Vector4(-1));
+        if (HasTop) {
+            var topTexture = GroundProperties.TopTD.GetTexture(out _, true);
+            topTexture.RemovePadding();
+
+            var topAnimateProp = GroundProperties.TopAnimate;
+            var topAnimate = new Vector4(0);
+            switch (topAnimateProp.Type) {
+                case GroundAnimate.State.Wave:
+                    topAnimate.X = topAnimateProp.DeltaX;
+                    topAnimate.Y = topAnimateProp.DeltaY;
+                    break;
+                case GroundAnimate.State.Flow:
+                    topAnimate.Z = topAnimateProp.DeltaX;
+                    topAnimate.W = topAnimateProp.DeltaY;
+                    break;
+            }
+
+            _topData = new TileData(new Vector4(X, Y, offx, offy), topTexture.ToVector4(), topAnimate, new Vector4(-1));
+        }
 
         SetEdgeBlends();
         UpdateCorners();

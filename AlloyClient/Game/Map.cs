@@ -62,6 +62,7 @@ public static class Map {
     private static int _particleCount;
     private static readonly ParticleData[] Particles = new ParticleData[30000];
     private static readonly List<int> EntitiesToRemove = [];
+    private static readonly List<MapTile> VisibleTopTiles = [];
     public static void InitMap(int width, int height, string name, string display, int diff, uint seed, int background, bool allowTp, bool showDisplays) {
         Width = width;
         Height = height;
@@ -142,27 +143,35 @@ public static class Map {
         Render.SetShaderParams(gameTime);
 
         #region Tile
-        if (LocalPlayer == null) return;
         var pos = Vector2.Floor(LocalPlayer.Position);
         if (pos != _lastPosition) {
             _lastPosition = pos;
+            VisibleTopTiles.Clear(); 
             
             Render.StartNewDrawTile();
-
             for (var x = -TileRenderDistance; x < TileRenderDistance; x++) {
                 for (var y = -TileRenderDistance; y < TileRenderDistance; y++) {
                     if (x * x + y * y >= TileRenderDistance * TileRenderDistance) continue;
 
                     var tile = GetTile(x + (int) LocalPlayer.Position.X, y + (int) LocalPlayer.Position.Y);
-                    if (tile != null && tile.Type != 0xFF)
+                    if (tile != null && tile.Type != 0xFF) {
                         tile.DrawTile();
+                        if (tile.HasTop) {
+                            VisibleTopTiles.Add(tile);
+                        }
+                    }
                 }
             }
-
-            Render.EndNewDrawTile();
+            Render.SaveGroundCount();
+            foreach (var topTile in VisibleTopTiles) {
+                topTile.DrawTop();
+            }
+            Render.SaveTopCount();
+            Render.EndNewDrawTile(); 
         }
 
-        Render.DrawTiles();
+        Render.SetTileElevation(0f);
+        Render.DrawGroundTiles(); 
 
         #endregion
 
@@ -189,11 +198,10 @@ public static class Map {
         #endregion
         
         GL.Enable(EnableCap.CullFace);
-
         #region Entities
         
         Render.StartDrawModel();
-
+        
         foreach (var kvp in EntityStorage) {
             if (kvp.Key == ModelType.Null || kvp.Key == ModelType.PbObject) continue;
 
@@ -209,11 +217,10 @@ public static class Map {
 
             Render.FlushBufferModel();
         }
-        
         GL.Disable(EnableCap.CullFace);
         
+        
         Render.StartDrawEntity();
-
         for (var i = 0; i < ParticleGenCount; i++) {
             if (ParticleGenerators[i] is RayCastParticle rcp)
                 rcp.Draw();
@@ -234,9 +241,18 @@ public static class Map {
 
         #endregion
 
+        #region Top Tiles
+        
+        if (VisibleTopTiles.Count > 0) {
+            GL.Enable(EnableCap.DepthTest);
+            Render.SetTileElevation(1f);
+            Render.DrawTopTiles(); 
+        }
+
+        #endregion
 
     }
-    
+  
     public static void FlushEnemyHits() {
         if (PendingEnemyHit.Stack > 0) {
             Client.QueuePacket(PendingEnemyHit);

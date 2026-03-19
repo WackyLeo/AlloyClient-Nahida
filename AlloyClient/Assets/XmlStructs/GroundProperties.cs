@@ -24,24 +24,52 @@ public class GroundProperties {
     public readonly bool Sinking;
     public readonly bool RandomOffset;
 
+
+    public readonly bool HasEdge;
+    public readonly TextureData EdgeTD;
+    public readonly TextureData CornerTD;
+    public readonly TextureData InnerCornerTD;
+    public readonly bool SameTypeEdgeMode;
+    public readonly TextureData TopTD;
+    public readonly GroundAnimate TopAnimate;
+
     public GroundProperties(XElement e) {
         ObjectType = e.GetAttribute<ushort>("type");
         ObjectId = e.GetAttribute<string>("id");
         
-        NoWalk = e.GetValue<bool>("NoWalk");
+        NoWalk = e.HasElement("NoWalk"); 
         MinDamage = e.GetValue("MinDamage", 0);
         MaxDamage = e.GetValue("MaxDamage", 0);
         Push = e.HasElement("Push");
         Animate = e.HasElement("Animate") ? new GroundAnimate(e.Element("Animate")) : new GroundAnimate();
-        BlendPriority = e.GetValue<int>("BlendPriority");
+        BlendPriority = e.GetValue("BlendPriority", -1);
         CompositePriority = e.GetValue<int>("CompositePriority");
         Speed = e.GetValue("Speed", 1f);
-        SlideAmount = e.GetValue<float>("SlideAmount");
+        SlideAmount = e.GetValue<float>("SlideAmount", 0.0f);
         XOffset = e.GetValue("XOffset", 0f);
         YOffset = e.GetValue("YOffset", 0f);
-        Sink = e.GetValue<bool>("Sink");
-        Sinking = e.GetValue<bool>("Sinking");
+        Sink = e.HasElement("Sink");
+        Sinking = e.HasElement("Sinking");
         RandomOffset = e.HasElement("RandomOffset");
+
+        if (e.HasElement("Edge")) {
+            HasEdge = true;
+            EdgeTD = new TextureData(e.Element("Edge"));
+            
+            if (e.HasElement("Corner")) {
+                CornerTD = new TextureData(e.Element("Corner"));
+            }
+            if (e.HasElement("InnerCorner")) {
+                InnerCornerTD = new TextureData(e.Element("InnerCorner"));
+            }
+        }
+
+        SameTypeEdgeMode = e.HasElement("SameTypeEdgeMode");
+
+        if (e.HasElement("Top")) {
+            TopTD = new TextureData(e.Element("Top"));
+            TopAnimate = e.HasElement("TopAnimate") ? new GroundAnimate(e.Element("TopAnimate")) : new GroundAnimate();
+        }
     }
 }
 

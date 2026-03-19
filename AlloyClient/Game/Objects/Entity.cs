@@ -490,7 +490,7 @@ public class Entity {
         if (!ObjectLibrary.TypeToTextureData.TryGetValue(Type, out var baseTextureData)) {
             return;
         }
-        if (index == 0) {
+        if (index == 0 || index == -1) {
             TextureData = baseTextureData;
         } 
         else {

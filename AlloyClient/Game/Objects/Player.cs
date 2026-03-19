@@ -95,6 +95,12 @@ public class Player : Entity {
     public ushort GlyphID1;
     public ushort GlyphID2;
 
+    // Dash
+    public int DashTimer;
+    public int SpeedLimit = 20;
+    public bool LimitSpeed;
+    public bool IFrame;
+    
     public int PartyId;
 
     public int LdBoosted;
@@ -135,57 +141,60 @@ public class Player : Entity {
         }
         
         var moveSpeed = GetMoveSpeed();
-            var moveVectorAngle = MathF.Atan2(RelativeMoveVector.Y, RelativeMoveVector.X);
+        var moveVectorAngle = MathF.Atan2(RelativeMoveVector.Y, RelativeMoveVector.X);
 
-            // TODO: Madness debuffs and dashes
-            if (RelativeMoveVector.X != 0 || RelativeMoveVector.Y != 0) {
-                if (Tile.GroundProperties.SlideAmount > 0) {
-                    var slideVector = new Vector2 {
-                        X = moveSpeed * MathF.Cos(angle + moveVectorAngle),
-                        Y = moveSpeed * MathF.Sin(angle + moveVectorAngle)
-                    };
+        if (RelativeMoveVector.X != 0 || RelativeMoveVector.Y != 0) {
+            if (Tile.GroundProperties.SlideAmount > 0) {
+                var slideVector = new Vector2(
+                    moveSpeed * MathF.Cos(angle + moveVectorAngle),
+                    moveSpeed * MathF.Sin(angle + moveVectorAngle)
+                );
 
-                    //TODO: double check monogame to make sure its the same thing
-                    //var slideLen = slideVector.Length();
-                    var slideLen = slideVector.LengthFast;
-                    slideVector *= -1 * (Tile.GroundProperties.SlideAmount - 1);
-                    MovementVector *= Tile.GroundProperties.SlideAmount;
-
-                    if (MovementVector.LengthFast < slideLen) {
-                        MovementVector += slideVector;
-                    }
-                }
-                else {
-                    MovementVector.X = moveSpeed * MathF.Cos(angle + moveVectorAngle);
-                    MovementVector.Y = moveSpeed * MathF.Sin(angle + moveVectorAngle);
-                }
-            }
-            else if (MovementVector.LengthFast > 0.00012 && Tile.GroundProperties.SlideAmount > 0) {
+                var slideLen = slideVector.LengthFast;
+                slideVector *= (1f - Tile.GroundProperties.SlideAmount);
                 MovementVector *= Tile.GroundProperties.SlideAmount;
+
+                if (MovementVector.LengthFast < slideLen) {
+                    MovementVector += slideVector;
+                }
             }
             else {
-                MovementVector.X = 0;
-                MovementVector.Y = 0;
+                MovementVector.X = moveSpeed * MathF.Cos(angle + moveVectorAngle);
+                MovementVector.Y = moveSpeed * MathF.Sin(angle + moveVectorAngle);
             }
+        }
+        else if (MovementVector.LengthFast > 0.00012f && Tile.GroundProperties.SlideAmount > 0) {
+            MovementVector *= Tile.GroundProperties.SlideAmount;
+        }
+        else {
+            MovementVector.X = 0;
+            MovementVector.Y = 0;
+        }
 
-            // TODO: Push tiles
-            // if (Tile.GroundProperties.Push) {
-            //     MovementVector.X = MovementVector.X - Tile.GroundProperties.Animate.Dx / 1000;
-            //     MovementVector.Y = MovementVector.Y - Tile.GroundProperties.Animate.Dy / 1000;
-            // }
+        if (Tile.GroundProperties.Push) {
+            MovementVector.X -= Tile.GroundProperties.Animate.DeltaX / 1000f;
+            MovementVector.Y -= Tile.GroundProperties.Animate.DeltaY / 1000f;
+        }
 
-            if (TextureData.HasAnimationData && this == Map.LocalPlayer) {
-                AnimateCharacter(time);
-            }
+        if (TextureData.HasAnimationData && this == Map.LocalPlayer) {
+            AnimateCharacter(time);
+        }
 
-            WalkTo((float) (Position.X + dt * MovementVector.X), (float) (Position.Y + dt * MovementVector.Y));
-            RenderBaseType.SetPosition(Position.X, Position.Y, Z);
-        
+        WalkTo((float) (Position.X + dt * MovementVector.X), (float) (Position.Y + dt * MovementVector.Y));
+        RenderBaseType.SetPosition(Position.X, Position.Y, Z);
     }
 
     public override bool Update(double time, double dt) {
+        if (DashTimer > 0) {
+            DashTimer -= (int)dt;
+            if (DashTimer <= 0) {
+                DashTimer = 0;
+                IFrame = false;
+            }
+        }
         if (ObjectId == Map.LocalPlayerId) {
             HandleRelativeMovement(time, dt);
+            OnMove();
         } else if (!base.Update(time, dt)) {
             return false;
         }
@@ -447,11 +456,6 @@ public class Player : Entity {
     private Vector2 ModifyMove(float x, float y) {
         var result = new Vector2();
 
-        // if (para and statis dont move) {
-        //     result.X = X;
-        //     result.Y = Y;
-        // }
-
         var dX = x - Position.X;
         var dY = y - Position.Y;
 
@@ -480,10 +484,6 @@ public class Player : Entity {
         return result;
     }
 
-    // Try to keep it as close to the original as possible?
-    // Don't wanna mess with it too much.
-    // ReSharper disable PossibleLossOfFraction
-    // ReSharper disable CompareOfFloatsByEqualityOperator
     private Vector2 ModifyStep(float x, float y) {
         var xCross = Position.X % 0.5f == 0 && x != Position.X || (int) (Position.X / 0.5f) != (int) (x / 0.5f);
         var yCross = Position.Y % 0.5f == 0 && y != Position.Y || (int) (Position.Y / 0.5f) != (int) (y / 0.5f);
@@ -511,6 +511,7 @@ public class Player : Entity {
             }
         }
 
+        // Bouncing on Ice logic! (Identical to AS3)
         if (!xCross) {
             if (Tile.GroundProperties.SlideAmount == 0) {
                 return new Vector2(x, nextYBorder);
@@ -537,22 +538,12 @@ public class Player : Entity {
         var yBorderDist = y > Position.Y ? y - nextYBorder : nextYBorder - y;
 
         if (xBorderDist > yBorderDist) {
-            if (IsValidPosition(x, nextYBorder)) {
-                return new Vector2(x, nextYBorder);
-            }
-
-            if (IsValidPosition(nextXBorder, y)) {
-                return new Vector2(nextXBorder, y);
-            }
+            if (IsValidPosition(x, nextYBorder)) return new Vector2(x, nextYBorder);
+            if (IsValidPosition(nextXBorder, y)) return new Vector2(nextXBorder, y);
         }
         else {
-            if (IsValidPosition(nextXBorder, y)) {
-                return new Vector2(nextXBorder, y);
-            }
-
-            if (IsValidPosition(x, nextYBorder)) {
-                return new Vector2(x, nextYBorder);
-            }
+            if (IsValidPosition(nextXBorder, y)) return new Vector2(nextXBorder, y);
+            if (IsValidPosition(x, nextYBorder)) return new Vector2(x, nextYBorder);
         }
 
         return new Vector2(nextXBorder, nextYBorder);
@@ -618,33 +609,27 @@ public class Player : Entity {
         Rotate = rotate;
         RelativeMoveVector.X = relMoveVecX;
         RelativeMoveVector.Y = relMoveVecY;
-
-        if (false) {
-            // Confused
-            var temp = RelativeMoveVector.X;
-            RelativeMoveVector.X = -RelativeMoveVector.Y;
-            RelativeMoveVector.Y = -temp;
-            Rotate = -Rotate;
-        }
     }
 
     private float GetMoveSpeed() {
-        if (false) {
-            // Slowed
+        if (HasConditionEffect(ConditionEffects.Slowed)) {
             return MinMoveSpeed * MovementMultiplier;
         }
-
+        
+        if (DashTimer > 0) {
+            return 0.06f; 
+        }
+        
         var speed = Focused ? FocusedSpeed : Speed;
-        var moveSpeed = MinMoveSpeed + speed / 75 * (MaxMoveSpeed - MinMoveSpeed);
-
-        if (false || false) {
-            // Speedy or NinjaSpeedy
-            moveSpeed *= 1.5f;
+        
+        if (LimitSpeed) {
+            speed = (SpeedLimit <= speed && SpeedLimit >= 0) ? SpeedLimit : speed;
         }
 
-        if (false) {
-            // Bunny Speedy
-            moveSpeed *= 1.2f;
+        var moveSpeed = MinMoveSpeed + speed / 75f * (MaxMoveSpeed - MinMoveSpeed);
+        
+        if (HasConditionEffect(ConditionEffects.Speedy) || HasConditionEffect(ConditionEffects.NinjaSpeedy)) {
+            moveSpeed *= 1.5f;
         }
 
         return moveSpeed * MovementMultiplier;
@@ -688,28 +673,11 @@ public class Player : Entity {
     public void OnMove() {
         var tile = Map.GetTile((int) Position.X, (int) Position.Y);
 
-        if (tile == null) {
-            return;
-        }
-
-        // if (tile.GroundProperties.Interactive) {
-        //     var activateGround = ActivateGround.CreatePacket();
-        //     activateGround.X = tile.X;
-        //     activateGround.Y = tile.Y;
-        //     Client.QueuePacket(activateGround);
-        // }
-        //
-        // var interactiveObject = Map.GetInteractiveObject((int) Position.X, (int) Position.Y);
-        // if (interactiveObject != null) {
-        //     var objectInteract = ObjectInteract.CreatePacket();
-        //     objectInteract.ObjectId = interactiveObject.ObjectId;
-        //     Client.QueuePacket(objectInteract);
-        // }
+        if (tile == null) return;
 
         const float maxSinkLevel = 18;
 
         if (tile.GroundProperties is { Sinking: true }) {
-            // TODO: IMPORTANT! PHARAOH"S CURSE FORCE SINK NEEDS TO BE IMPLEMENTED
             SinkLevel = (int) MathF.Min(SinkLevel + 1, maxSinkLevel);
             MovementMultiplier = 0.1f + (1 - SinkLevel / maxSinkLevel) * (tile.GroundProperties.Speed - 0.1f);
         }

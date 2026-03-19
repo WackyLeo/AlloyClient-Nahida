@@ -172,8 +172,7 @@ namespace AlloyClient.Game.Components.Hud.Inventory
 
             string[] IndexName = { "ATK" , "DEF", "SPD", "DEX" , "VIT" , "WIS"};
             int[] IndexValue = { p.Attack, p.Defense, p.Speed, p.Dexterity, p.Vitality, p.Wisdom};
-
-
+            
             for (int i = 0; i < IndexValue.Length; i++) 
             {
                 bool even = (i == 0 || i == 2 || i == 4);
@@ -189,8 +188,8 @@ namespace AlloyClient.Game.Components.Hud.Inventory
                     OutlineThickness = 0, 
                     Color = 0xFFFFFF, 
                     OutlineColor = 0xFFFFFF, 
-                    Anchor = UiAnchor.
-                    MiddleLeft 
+                    Glow = 0,
+                    Anchor = UiAnchor.MiddleLeft 
                 });
 
                 AddChild(StatName);
