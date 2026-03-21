@@ -742,4 +742,15 @@
         <Z>0.4</Z>
         <Flying/>
     </Object>
+    <Object type="0xCFC" id="Empty Item Preview">
+        <Class>Equipment</Class>
+        <Item />
+        <Texture>
+            <File>HaloC</File>
+            <Index>0xf5</Index>
+        </Texture>
+        <SlotType>10</SlotType>
+        <Description></Description>
+        <BagType>9</BagType>
+    </Object>
 </Objects>

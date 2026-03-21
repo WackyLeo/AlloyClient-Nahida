@@ -257,8 +257,10 @@ public class Entity {
         var dx = Position.X - Camera.Position.X;
         var dy = Position.Y + Camera.Position.Y;
         var distanceSquared = dx * dx + dy * dy;
-        const int playerSightRadiusSquared = Map.TileRenderDistance * Map.TileRenderDistance;
-        RenderBaseType.SetVisibility(distanceSquared <= playerSightRadiusSquared);
+        int playerSightRadiusSquared = Map.LocalPlayer.UpdateRadius * Map.LocalPlayer.UpdateRadius ;
+
+        bool visible = distanceSquared <= playerSightRadiusSquared;
+        RenderBaseType.SetVisibility(visible);
         
         //TODO: double check mg to make sure
         //var sort = Vector3.Transform(new Vector3(Position.X, Position.Y, 0), matrix).Y;

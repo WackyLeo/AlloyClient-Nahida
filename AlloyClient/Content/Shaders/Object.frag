@@ -1,4 +1,5 @@
 ﻿#version 460 core
+precision highp float;
 
 struct extra {
     float Type;

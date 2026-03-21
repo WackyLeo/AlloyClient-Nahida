@@ -89,6 +89,12 @@ public static class Map {
         bool hasDarkness = LocalPlayer?.HasConditionEffect(ConditionEffects.Darkness) ?? false;
         float darknessRadiusSq = 36f;
         
+        int updateRadius = hasDarkness ? 6 : TileRenderDistance;
+        if (LocalPlayer != null && LocalPlayer.UpdateRadius != updateRadius) {
+            LocalPlayer.UpdateRadius = updateRadius;
+            TilesDirty = true;
+        }
+        
         foreach (var (objectId, entity) in Entities) {
             if (!entity.Update(time, dt)) {
                 EntitiesToRemove.Add(objectId);
@@ -172,12 +178,6 @@ public static class Map {
             
             VisibleTopTiles.Clear();
             
-            int updateRadius = LocalPlayer.HasConditionEffect(ConditionEffects.Darkness) ? 6 : TileRenderDistance;
-            if (LocalPlayer.UpdateRadius != updateRadius) {
-                LocalPlayer.UpdateRadius = updateRadius;
-                TilesDirty = true;
-            }
-            
             Render.StartNewDrawTile();
             for (var x = -LocalPlayer.UpdateRadius; x < LocalPlayer.UpdateRadius; x++) {
                 for (var y = -LocalPlayer.UpdateRadius; y < LocalPlayer.UpdateRadius; y++) {
@@ -228,6 +228,7 @@ public static class Map {
         #endregion
         
         GL.Enable(EnableCap.CullFace);
+        
         #region Entities
         
         Render.StartDrawModel();
@@ -238,6 +239,8 @@ public static class Map {
             Render.SetEntityModel(kvp.Key);
 
             foreach (var entity in kvp.Value) {
+                
+                
                 if (entity.Visible) {
                     entity.Draw();
                     Render.LastDrawCountEntities++;
@@ -248,7 +251,6 @@ public static class Map {
             Render.FlushBufferModel();
         }
         GL.Disable(EnableCap.CullFace);
-        
         
         Render.StartDrawEntity();
         for (var i = 0; i < ParticleGenCount; i++) {

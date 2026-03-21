@@ -204,6 +204,7 @@ public class Main {
         
         GL.Enable(EnableCap.Blend);
         GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
+        GL.Disable(EnableCap.FramebufferSrgb);
         
         while (true) {
             var elapsedMs = sw.Elapsed.TotalMilliseconds;   
