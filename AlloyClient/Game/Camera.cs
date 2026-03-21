@@ -104,11 +104,17 @@ public static class Camera {
         var direction = far - near;
         direction.Normalize();
 
-        var z = -near.Z / direction.Z; // Optional z value
+        var z = -near.Z / direction.Z; 
         var pos = near + direction * z;
         return pos;
     }
 
+    public static Vector2 WorldToDebug2D(Vector3 worldPos) {
+        float shiftX = -worldPos.Z * MathF.Sin(CameraAngle);
+        float shiftY = -worldPos.Z * MathF.Cos(CameraAngle);
+        return new Vector2(worldPos.X + shiftX, worldPos.Y + shiftY);
+    }
+    
     //public static Vector3 WorldToScreen(Vector3 worldPosition, Viewport viewport) {
     //    return viewport.Project(worldPosition, ProjectionMatrix, ViewMatrix, WorldMatrix);
     //}

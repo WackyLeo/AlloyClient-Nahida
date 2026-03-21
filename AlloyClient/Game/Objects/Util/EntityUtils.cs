@@ -71,9 +71,10 @@ public static class EntityUtils {
         foreach (var entity in entities) {
             if (entity is not Player)
                 continue;
-            
-            var dist = CalculateDistance(position, entity.Position);
-            
+        
+            var projPos = Camera.WorldToDebug2D(new Vector3(entity.Position.X, entity.Position.Y, 0.5f));
+            var dist = CalculateDistance(position, projPos);
+        
             if (dist > radius || dist >= enDist)
                 continue;
             en = entity;
@@ -82,7 +83,6 @@ public static class EntityUtils {
 
         return en;
     }
-    
     public static Entity GetClosestEnemy(Vector2 position, float radius) {
         var entities = Map.Entities.Values;
         Entity en = null;
@@ -91,9 +91,10 @@ public static class EntityUtils {
         foreach (var entity in entities) {
             if (!entity.Properties.IsEnemy)
                 continue;
-            
-            var dist = CalculateDistance(position, entity.Position);
-            
+        
+            var projPos = Camera.WorldToDebug2D(new Vector3(entity.Position.X, entity.Position.Y, 0.5f));
+            var dist = CalculateDistance(position, projPos);
+        
             if (dist > radius || dist >= enDist)
                 continue;
             en = entity;

@@ -112,9 +112,8 @@ public class CharacterBars : Sprite {
             bar.SetSize(BarWidth, barH);
             currentY += barH;
 
-            // Snap restoration flush under HP, before the gap to MP
             if (hasResto && bar == _hpBar) {
-                _restorationBar.Y = _hpBar.Y + barH - 3; // use barH directly, not CurrentHeight
+                _restorationBar.Y = _hpBar.Y + barH - 3; 
                 _restorationBar.SetSize(BarWidth, RestorationFixedHeight);
                 currentY += 3;
             }

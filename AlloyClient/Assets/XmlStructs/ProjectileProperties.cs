@@ -54,6 +54,10 @@ public sealed class ProjectileProperties {
     public readonly int ParticleTrailLifetime;
     public readonly float ParticleTrailIntensity;
 
+    public readonly int RCLifetimeMs;
+    public readonly int RCSpeed;
+    public readonly bool ReturnRayCast;
+    
     public readonly bool DynamicAngle; 
     public readonly bool Animated;
     public readonly int AnimationTime;
@@ -122,6 +126,10 @@ public sealed class ProjectileProperties {
             ParticleTrailLifetime = attr.GetAttribute("lifetimeMS", 600);
             ParticleTrailIntensity = attr.GetAttribute("intensity", 0.3f);
         }
+        
+        RCLifetimeMs = e.GetValue<int>("RCLifetimeMS", 0);
+        RCSpeed = e.GetValue<int>("RCSpeed", 0);
+        ReturnRayCast = e.HasElement("ReturnRC");
         
         DynamicAngle = e.HasElement("DynamicAngle");
         Animated = e.HasElement("Animated");

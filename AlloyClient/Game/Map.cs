@@ -87,9 +87,9 @@ public static class Map {
         var matrix = new DepthMatrix(fullMatrix);
         
         bool hasDarkness = LocalPlayer?.HasConditionEffect(ConditionEffects.Darkness) ?? false;
-        float darknessRadiusSq = 36f;
+        float darknessRadiusSq = 49f;
         
-        int updateRadius = hasDarkness ? 6 : TileRenderDistance;
+        int updateRadius = hasDarkness ? 7 : TileRenderDistance;
         if (LocalPlayer != null && LocalPlayer.UpdateRadius != updateRadius) {
             LocalPlayer.UpdateRadius = updateRadius;
             TilesDirty = true;
@@ -162,12 +162,36 @@ public static class Map {
 
     public static void Draw(GameTime gameTime) {
         if (LocalPlayer == null) return;
-
+        
         GL.Disable(EnableCap.DepthTest);
         GL.Disable(EnableCap.CullFace);
 
         LastGameTime = gameTime;
 
+        if (Render.DebugEnabled) {
+            // Enemy hit circles
+            foreach (var (_, entity) in Entities) {
+                if (entity.Properties == null) continue;
+                if (entity.Properties.IsEnemy) {
+                    var ePos = Camera.WorldToDebug2D(new Vector3(entity.Position.X, entity.Position.Y, 0.5f));
+                    Render.DebugCircle(ePos, 0.25f, new Vector3(1f, 0.5f, 0f), 0.03f);
+                }
+                if (entity.Properties.IsPlayer) {
+                    var ePos = Camera.WorldToDebug2D(new Vector3(entity.Position.X, entity.Position.Y, 0.5f));
+                    Render.DebugCircle(ePos, 0.25f, new Vector3(0f, 0.5f, 1f), 0.03f);
+                }
+            }
+    
+            // Local player position cross
+            if (LocalPlayer != null) {
+                var lpPos = Camera.WorldToDebug2D(new Vector3(LocalPlayer.Position.X, LocalPlayer.Position.Y, LocalPlayer.Z));
+                Render.DebugLine(
+                    lpPos - new Vector2(0.3f, 0),
+                    lpPos + new Vector2(0.3f, 0),
+                    new Vector3(1, 1, 0), 0.03f);
+            }
+        }
+        
         Render.SetShaderParams(gameTime);
 
         #region Tile
@@ -282,7 +306,10 @@ public static class Map {
         }
 
         #endregion
-
+        
+        
+        var vp = Camera.WorldMatrix * Camera.ViewMatrix * Camera.ProjectionMatrix;
+        Render.FlushDebug(vp);
     }
   
     public static void FlushEnemyHits() {

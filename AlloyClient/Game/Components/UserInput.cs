@@ -3,8 +3,10 @@ using AlloyClient.Game.Components.Hud;
 using AlloyClient.Game.Components.Hud.Chat;
 using AlloyClient.Game.Components.Hud.Panels;
 using AlloyClient.Game.Components.Options;
+using AlloyClient.Game.Objects.Util;
 using AlloyClient.Networking;
 using AlloyClient.Networking.Packets.Outgoing;
+using AlloyClient.Rendering;
 using AlloyClient.State;
 using AlloyClient.UiLib.Core;
 using Common;
@@ -123,8 +125,15 @@ public sealed class UserInput : Sprite {
         var dY = pos.Y - Map.LocalPlayer.Position.Y;
         var angle = MathF.Atan2(dY, dX);
         
-        Map.LocalPlayer.Shoot(angle, Stage.GameTime, false);
-    }
+        if (Map.LocalPlayer.HasConditionEffect(ConditionEffects.Unstable)) {
+            float variance = 180f;
+            if (Random.Shared.NextSingle() * 5 < 1) {
+                variance = 720f;
+            }
+            angle += (float)((Random.Shared.NextDouble() * variance) - variance / 2f) / 360f * MathF.PI;
+        }
+        
+        Map.LocalPlayer.Shoot(angle, Stage.GameTime, false);    }
 
     private void SetPlayerMovement() {
         if (Map.LocalPlayer == null) return;
@@ -216,6 +225,7 @@ public sealed class UserInput : Sprite {
                 break;
             // Inventory //
             case true when Settings.InvOne.CheckValue(key):
+                Render.DebugEnabled = !Render.DebugEnabled;
                 break;
             case true when Settings.InvTwo.CheckValue(key):
                 break;
@@ -301,7 +311,7 @@ public sealed class UserInput : Sprite {
                     Map.LocalPlayer.UseAltWeapon(pos.X, pos.Y, 2); // 2 = END_USE
                 }
             }
-                break;
+            break;
         }
         
         SetPlayerMovement();

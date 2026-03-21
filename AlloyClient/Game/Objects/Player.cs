@@ -11,6 +11,7 @@ using AlloyClient.Networking.Structs.DataObjects;
 using AlloyClient.Rendering;
 using AlloyClient.Rendering.Types;
 using AlloyClient.State;
+using AlloyClient.UiLib.Core;
 using AlloyClient.Utils;
 using Common;
 using Common.Structs;
@@ -268,14 +269,12 @@ public class Player : Entity {
     }
     
     public bool UseAltWeapon(float mouseX, float mouseY, byte useType) {
-        if (Map.LocalPlayer == null || HasConditionEffect(ConditionEffects.Paused)) {
-            return false;
-        }
+        if (Map.LocalPlayer == null || HasConditionEffect(ConditionEffects.Paused)) return false;
 
         var ability = Equipment[1];
         if (ability == null) return false;
 
-        float range = 25f;
+        float range = 25f; 
         var xDiff = Position.X - mouseX;
         var yDiff = Position.Y - mouseY;
         var dist = MathF.Sqrt(xDiff * xDiff + yDiff * yDiff);
@@ -289,44 +288,112 @@ public class Player : Entity {
             targetY = Position.Y + MathF.Sin(angle) * range;
         }
 
+        bool shoot = false;
+        bool teleport = false;
+        bool dash = false;
+        bool isMultiPhase = ability.MpEndCost > 0;
+
+        if (ability.ActivateEffects != null) {
+            foreach (var effect in ability.ActivateEffects) {
+                if (effect.Effect == "Teleport") teleport = true;
+                if (effect.Effect == "Shoot") shoot = true;
+                if (effect.Effect == "AutoShoot") shoot = true;
+                if (effect.Effect == "Dash") dash = true;
+                if (effect.Effect != "AutoShoot" && useType == 4) { 
+                    return false;
+                }
+            }
+        }
+
+        if (teleport && !IsValidPosition(targetX, targetY)) return false;
+
         int time = (int)Main.GameTime.TotalMs;
 
-        if (useType == 1 || useType == 4 || useType == 5) { 
-            if (time < NextAltAttack) {
-                return false;
-            }
+        if (useType == 1 || useType == 4 || (useType == 5 && isMultiPhase)) { 
+            if (time < NextAltAttack) return false;
 
-            int mpCost = ability.MpCost;
-            if (Mp < mpCost && !HasConditionEffect(ConditionEffects.Silenced)) {
-                // SoundEffectLibrary.play("no_mana");
+            int mpCheck = (isMultiPhase && ability.SlotType == 25) ? ability.MpEndCost : ability.MpCost;
+            bool xorCondition = !(isMultiPhase ^ (useType == 5)); 
+            
+            if (((mpCheck != 0 && mpCheck > Mp) && xorCondition) || HasConditionEffect(ConditionEffects.Silenced)) {
                 return false;
             }
 
             int cooldown = (int)(ability.Cooldown * 1000f);
             if (cooldown <= 0) cooldown = 550;
 
-            LastAltAttack = time;
-            NextAltAttack = time + cooldown;
+            if (isMultiPhase && ability.SlotType == 25) {
+                if (useType == 5) {
+                    LastAltAttack = time;
+                    NextAltAttack = time + cooldown;
+                }
+            } else {
+                NextAltAttack = time + cooldown;
+                LastAltAttack = time;
+            }
 
             var pkt = UseItem.CreatePacket();
             pkt.Time = time;
-            pkt.SlotObject = new ObjectSlot {
-                ObjectId = ObjectId,
-                SlotId = 1,
-                ObjectType = ability.ObjectType
-            };
+            pkt.SlotObject = new ObjectSlot { ObjectId = ObjectId, SlotId = 1, ObjectType = ability.ObjectType };
             pkt.ItemUsePos = new Position { X = targetX, Y = targetY };
             pkt.UseType = useType;
             Client.QueuePacket(pkt);
+
+            if (dash) {
+                DashTimer = 100;
+                IFrame = true;
+            }
+
+            if (shoot && (!(isMultiPhase && useType != 5) || (isMultiPhase && useType == 5))) {
+                if (useType == 5 && Mp < ability.MpEndCost) return false;
+
+                var props = ObjectLibrary.TypeToObjectProps[ability.ObjectType];
+                var shootPacket = PlayerShoot.CreatePacket();
+
+                var arc = MathHelper.DegreesToRadians(props.ArcGap) * (props.NumProjectiles - 1);
+                var startAngle = angle - arc / 2;
+
+                var startCount = ability.StartCount;
+                var nextCount = ability.NextCount;
+                var projTypeIndex = 0;
+
+                for (int i = 0; i < props.NumProjectiles; i++) {
+                    var projDesc = ability.AllProjectiles[projTypeIndex % ability.AllProjectiles.Length];
+                    var projObjType = ObjectLibrary.IdToObjectType[projDesc.ObjectId];
+                    var objProps = ObjectLibrary.TypeToObjectProps[projObjType];
+                    var projAngle = startAngle + MathHelper.DegreesToRadians(props.ArcGap) * i;
+                    var bId = GetBulletId2(); 
+
+                    var rawDmg = MathUtils.RandomInt(projDesc.MinDamage, projDesc.MaxDamage);
+                    var dmg = (int)(rawDmg * (0.5f + (Attack / 50f))); 
+
+                    if (!props.ProjectilesDict.TryGetValue(projDesc.BulletType, out var projPropsInfo))
+                        projPropsInfo = props.Projectiles[0];
+                    
+                    var proj = ObjectPools.Projectiles.Pop();
+                    proj.Reset(bId, dmg, projAngle, this, objProps, projPropsInfo);
+                    Map.AddProjectile(proj);
+
+                    if (i == 0) {
+                        shootPacket.Shots.Add(new ShootData {
+                            Time = time,
+                            BulletId = bId,
+                            ItemType = ability.ObjectType,
+                            StartingPos = new Position { X = Position.X, Y = Position.Y },
+                            Angle = projAngle
+                        });
+                    }
+                    
+                    startCount++;
+                    if (startCount % nextCount == 0) projTypeIndex++;
+                }
+                Client.QueuePacket(shootPacket);
+            }
         } 
-        else {
+        else if (isMultiPhase) {
             var pkt = UseItem.CreatePacket();
             pkt.Time = time;
-            pkt.SlotObject = new ObjectSlot {
-                ObjectId = ObjectId,
-                SlotId = 1,
-                ObjectType = ability.ObjectType
-            };
+            pkt.SlotObject = new ObjectSlot { ObjectId = ObjectId, SlotId = 1, ObjectType = ability.ObjectType };
             pkt.ItemUsePos = new Position { X = targetX, Y = targetY };
             pkt.UseType = useType;
             Client.QueuePacket(pkt);
@@ -528,17 +595,14 @@ public class Player : Entity {
     }
 
     public void Shoot(float attackAngle, GameTime gameTime, bool isAbility) {
-        if (HasConditionEffect(ConditionEffects.Stunned) || HasConditionEffect(ConditionEffects.Paused))
-            return;
-        
+        if (HasConditionEffect(ConditionEffects.Stunned) || HasConditionEffect(ConditionEffects.Paused)) return;
         var item = Equipment[0];
-        if (item == null)
-            return;
-        var temp = AttackFrequency();
+        if (item == null) return;
         
+        var temp = AttackFrequency();
         AttackPeriod = 1 / temp * (1 / item.RateOfFire);
-        if (gameTime.TotalMs < AttackStart + AttackPeriod)
-            return;
+        if (gameTime.TotalMs < AttackStart + AttackPeriod) return;
+        
         AttackAngle = attackAngle;
         AttackStart = gameTime.TotalMs;
         
@@ -557,7 +621,7 @@ public class Player : Entity {
             var projObjType = ObjectLibrary.IdToObjectType[projDesc.ObjectId];
             var objProps = ObjectLibrary.TypeToObjectProps[projObjType];
             var angle = startAngle + MathHelper.DegreesToRadians(props.ArcGap) * i;
-            var bId = isAbility ? GetBulletId2() : GetBulletId();
+            var bId = GetBulletId();
             var rawDmg = MathUtils.RandomInt(projDesc.MinDamage, projDesc.MaxDamage);
             var dmg = (int)(rawDmg * (0.5f + (Attack / 50f))); 
 
@@ -579,13 +643,11 @@ public class Player : Entity {
             }
             
             startCount++;
-            if (startCount % nextCount == 0)
-                projTypeIndex++;
+            if (startCount % nextCount == 0) projTypeIndex++;
         }
-
         Client.QueuePacket(shootPacket);
     }
-    
+
     private Vector2 ModifyMove(float x, float y) {
         var result = new Vector2();
 

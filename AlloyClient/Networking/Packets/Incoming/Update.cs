@@ -62,6 +62,9 @@ public class Update : IncomingPacket<Update> {
         for (int i = 0; i < TileCount; i++)
             Map.SetTileData(Tiles[i].X, Tiles[i].Y, Tiles[i].Type);
 
+        for (int i = 0; i < DropCount; i++)
+            Map.RemoveEntity(Drops[i]);
+        
         for (int i = 0; i < NewObjCount; i++) {
             var newObj = NewObjs[i];
             Entity entity;
@@ -77,9 +80,6 @@ public class Update : IncomingPacket<Update> {
             else if (props.Class == "Merchant" || props.ObjectType == 0x01ca) {
                 entity = new Merchant();
             }
-            // else if (props.IsAlly) {
-            //     entity = new Ally();
-            // }
             else {
                 entity = new Entity();
             }

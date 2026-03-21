@@ -18,7 +18,7 @@ public static class ConditionEffectUtil {
     public static readonly ConditionEffect[] Effects = [
         new("Dead",             ConditionEffects.Dead,              null),
         new("Quiet",            ConditionEffects.Quiet,             [32]),
-        new("Weak",             ConditionEffects.Weak,              [34, 35, 36, 37]),
+        new("Weak",             ConditionEffects.Weak,              [34]),
         new("Slowed",           ConditionEffects.Slowed,            [1]),
         new("Sick",             ConditionEffects.Sick,              [39]),
         new("Dazed",            ConditionEffects.Dazed,             [44]),

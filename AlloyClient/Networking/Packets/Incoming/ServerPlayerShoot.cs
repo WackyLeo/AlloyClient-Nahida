@@ -36,14 +36,17 @@ public class ServerPlayerShoot : IncomingPacket<ServerPlayerShoot> {
 
     public override void Handle() {
         if (!Map.Entities.TryGetValue(OwnerId, out var owner)) return;
-        if (!ObjectLibrary.TypeToObjectProps.TryGetValue((ushort)ContainerType, out var objDesc)) return;
+        if (!ObjectLibrary.TypeToObjectProps.TryGetValue((ushort)ContainerType, out var itemDesc)) return;
         
-        var enumerator = objDesc.Projectiles.GetEnumerator();
+        var enumerator = itemDesc.Projectiles.GetEnumerator();
         if (!enumerator.MoveNext()) return;
         var projDesc = enumerator.Current;
 
-        var proj = new Projectile();
-        proj.Reset(BulletId, Damage, Angle, owner, objDesc, projDesc);
+        if (!ObjectLibrary.IdToObjectType.TryGetValue(projDesc.ObjectId, out var projObjType)) return;
+        if (!ObjectLibrary.TypeToObjectProps.TryGetValue(projObjType, out var projObjDesc)) return;
+
+        var proj = ObjectPools.Projectiles.Pop();
+        proj.Reset(BulletId, Damage, Angle, owner, projObjDesc, projDesc);
         
         proj.SetStartPosition(new Vector2(StartingPos.X, StartingPos.Y));
         proj.MarkActive(Map.CurrentTime);

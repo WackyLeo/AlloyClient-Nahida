@@ -52,6 +52,10 @@ public sealed class TypeProjectile : RenderBase {
     }
 
     public override void DrawShadow() {
+        if (InvisProj) {
+            return;
+        }
+        
         Render.DrawShadow(new ShadowData(Position.Xy, 0.5f, Color.Black));
     }
     

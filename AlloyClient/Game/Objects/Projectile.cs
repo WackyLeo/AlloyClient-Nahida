@@ -38,6 +38,8 @@ public sealed class Projectile {
     private float _startSpinAngle;
     private float _spinDistance;
     private float _accel;
+    private Vector2 _savePos;
+    private int _projDelayMs;
     
     public float Rotation;
     public int Size;
@@ -54,6 +56,8 @@ public sealed class Projectile {
     private bool _rayCastHitDone;
     
     private int _ricochetsLeft;
+    private float _addLifetime = 0;
+    private float _lifetime;
     
     public void Reset(int id, int dmg, float angle, Entity entity, ObjectProperties objDesc, ProjectileProperties projDesc) {
         _bulletId = id;
@@ -69,7 +73,11 @@ public sealed class Projectile {
         _rayCastHitDone = false;
         _rayCastFailed = false;
         Clear = false;
-
+        _savePos = Vector2.Zero;
+        _lifetime = _projDesc.LifetimeMs;
+        _addLifetime = 0;
+        _projDelayMs = _projDesc.ProjDelayMs;
+        
         Size = _projDesc.Size > 0 ? _projDesc.Size : 100;
 
         _startTime = Main.GameTime.TotalMs;
@@ -100,6 +108,10 @@ public sealed class Projectile {
         _position = pos;
         
         RenderBaseType.SetPosition(pos.X, pos.Y, 0.5f);
+    }
+    
+    public void AddProjDelay(int ms) {
+        _projDelayMs += ms;
     }
     
     public AtlasData GetTexture(float curLifetime = 0) {
@@ -138,15 +150,15 @@ public sealed class Projectile {
         }
         if (_rayCastFailed) return false;
 
-        if (elapsed < _projDesc.ProjDelayMs) {
+        if (elapsed < _projDelayMs) {
             RenderBaseType.SetVisibility(false);
             return true;
         }
 
-        var curLifetime = elapsed - _projDesc.ProjDelayMs;
+        var curLifetime = elapsed - _projDelayMs;
     
-        if (curLifetime > _projDesc.LifetimeMs) return false;
-
+        if (curLifetime > _lifetime) return false;
+        
         if (_projDesc.RayCast && !_rayCastHitDone) {
             _rayCastHitDone = true;
             RayCastHit(time);
@@ -154,19 +166,38 @@ public sealed class Projectile {
         }
 
         UpdateVisibility(matrix);
-
-        var newPos = PositionAt(curLifetime);
-
+        if (_damage == 0) {
+            RenderBaseType.SetVisibility(false);
+            RenderBaseType.InvisProj = true; 
+        }
+        
+        var newPos = PositionAt(curLifetime + _addLifetime);
+        
         if (_objDesc.Rotation != 0) {
             Rotation = elapsed / _objDesc.Rotation;
-        } else if (_projDesc.Orbiting || _projDesc.ForceOrbiting) {
-            Rotation = _spinAngle + Camera.CameraAngle + _angleCorrection; 
+        } else if (_projDesc.ForceOrbiting || _projDesc.Orbiting) {
+            Rotation = _spinAngle + Camera.CameraAngle + _angleCorrection;
+        }  else if (_projDesc.DynamicAngle) {
+            if (_projDesc.Orbiting || _projDesc.ForceOrbiting) {
+                Rotation = _spinAngle + Camera.CameraAngle + _angleCorrection;
+            } else {
+                if (_savePos == Vector2.Zero) {
+                    _savePos = PositionAt(curLifetime - 20f);
+                }
+                Rotation = -MathF.Atan2(newPos.X - _savePos.X, newPos.Y - _savePos.Y) 
+                           + (_objDesc.Rotation != 0 ? elapsed / _objDesc.Rotation : 0f)
+                           + Camera.CameraAngle
+                           + _angleCorrection
+                           + (2f * MathF.PI / 4f);
+                
+                _savePos = _position;
+            }
         } else if (!_projDesc.NoRotation) {
             var direction = newPos - _position;
-            var angle = direction.LengthSquared > 0.0001f ? MathF.Atan2(direction.Y, direction.X) : _angle;
+            var angle = direction.LengthSquared > 0.000001f ? MathF.Atan2(direction.Y, direction.X) : _angle;
             Rotation = angle + Camera.CameraAngle + _angleCorrection;
         }
-
+        
         var doHitTest = time - _lastHitTest >= HitTestDelayMs;
 
         bool blocked;
@@ -179,7 +210,7 @@ public sealed class Projectile {
             //TriggerSplit(time);
             return false;
         }
-
+        
         if (!blocked) {
             _position = newPos;
             RenderBaseType.SetPosition(newPos.X, newPos.Y, 0.5f);
@@ -187,6 +218,22 @@ public sealed class Projectile {
             RenderBaseType.SetTexture(GetTexture(curLifetime));
         }
 
+        //Render.DebugCircle(_position, 0.25f + _projDesc.BonusSize, new Vector3(0, 1, 0), 0.05f);
+        //float worldAngle = Rotation - Camera.CameraAngle;
+        //Render.DebugArrow(_position, worldAngle, 1f, new Vector3(1, 0, 0), 0.05f);
+        
+        // Projectile debug + hit pos
+        
+        if (_damage > 0) {
+            var hitPos = Camera.WorldToDebug2D(new Vector3(_position.X, _position.Y, 0.5f));
+    
+            if (Render.DebugEnabled) {
+                Render.DebugCircle(hitPos, 0.25f + _projDesc.BonusSize, new Vector3(0, 1, 0), 0.05f);
+                float worldAngle = Rotation - Camera.CameraAngle;
+                Render.DebugArrow(hitPos, worldAngle, 1f, new Vector3(1, 0, 0), 0.05f);
+            }
+        }
+        
         if (_projDesc.ParticleTrail && doHitTest) {
             Map.AddParticleEffect(new SparkEffect(100, _projDesc.ParticleTrailColor, _projDesc.ParticleTrailLifetime, 0.5f,
                 MathUtils.RandomPlusMinus(3), MathUtils.RandomPlusMinus(3), newPos.X, newPos.Y));
@@ -229,9 +276,10 @@ public sealed class Projectile {
     private bool HitTest(double time) {
         _lastHitTest = time;
         float hitRadius = 0.5f + _projDesc.BonusSize;
+        var checkPos = Camera.WorldToDebug2D(new Vector3(_position.X, _position.Y, 0.5f));
         
         if (_damagePlayers) {
-            var target = EntityUtils.GetClosestPlayer(_position, hitRadius);
+            var target = EntityUtils.GetClosestPlayer(checkPos, hitRadius);
             if (target == null || _hitEntities.Contains(target.ObjectId))
                 return false;
 
@@ -246,7 +294,7 @@ public sealed class Projectile {
             return false;
         }
 
-        var enemy = EntityUtils.GetClosestEnemy(_position, hitRadius);
+        var enemy = EntityUtils.GetClosestEnemy(checkPos, hitRadius);
         if (enemy == null || _hitEntities.Contains(enemy.ObjectId))
             return false;
 
@@ -260,8 +308,10 @@ public sealed class Projectile {
             if (_damagePlayers && !go.Properties.IsPlayer) continue;
             if (!_damagePlayers && !go.Properties.IsEnemy) continue;
             if (_hitEntities.Contains(go.ObjectId)) continue;
-
-            var distSqr = (go.Position - _position).LengthSquared;
+            
+            var goPos = Camera.WorldToDebug2D(new Vector3(go.Position.X, go.Position.Y, 0.5f));
+            var distSqr = (goPos - checkPos).LengthSquared;
+            
             if (distSqr > hitRadiusSqr) continue;
 
             if (_ricochetsLeft > 0) {
@@ -283,27 +333,25 @@ public sealed class Projectile {
             }
             
             if (enemy.HasConditionEffect(ConditionEffects.Invincible) ||
-                enemy.HasConditionEffect(ConditionEffects.Invisible) ||
                 enemy.HasConditionEffect(ConditionEffects.Stasis) ||
                 enemy.HasConditionEffect(ConditionEffects.Paused)) {
                 return false;
             }
             
-            int actualDamage = _damage;
-            if (!_projDesc.ArmorPiercing) {
-                actualDamage = DamageWithDefense(_damage, go.Defense, _projDesc.ArmorPiercing, enemy.ConditionEffects);
-            }
+            int actualDamage = DamageWithDefense(_damage, go.Defense, _projDesc.ArmorPiercing, enemy);
             
             //go.Hp -= actualDamage; 
             bool killed = go.Hp - actualDamage <= 0;
 
-            Map.AddParticleEffect(new HitEffect(go, 0xFF0000));
-            NotificationLayer.AddStatusText(go, $"-{_damage}", 0xFF0000, 1000, 0);
+            if (actualDamage > 0) {
+                Map.AddParticleEffect(new HitEffect(go, 0xFF0000));
+                NotificationLayer.AddStatusText(go, $"-{actualDamage}", 0xFF0000, 1000, 0);   
+            }
         
             if (_damagePlayers) {
                 Map.PendingPlayerHit.AddHit(_bulletId, _ownerId);
             } else {
-                Map.PendingEnemyHit.AddHit((int)time, _bulletId, go.ObjectId, killed);
+                Map.PendingEnemyHit.AddHit((int)time, _bulletId, go.ObjectId, false);
             }
             
             _hitEntities.Add(go.ObjectId);
@@ -407,15 +455,15 @@ public sealed class Projectile {
         return pos;
     }
 
-    int DamageWithDefense(int damage, int defense, bool nodef, ConditionEffects condition, int damageMulti = 0, bool isPlayer = false) {
-        if ((condition & ConditionEffects.Invulnerable) != 0) {
+    int DamageWithDefense(int damage, int defense, bool nodef, Entity entity, int damageMulti = 0, bool isPlayer = false) {
+        if (entity.HasConditionEffect(ConditionEffects.Invulnerable)) {
             return 0;
         }
         
-        if (nodef || (condition & ConditionEffects.ArmorBroken) != 0) {
+        if (nodef || entity.HasConditionEffect(ConditionEffects.ArmorBroken)) {
             defense = 0;
         } 
-        else if ((condition & ConditionEffects.Armored) != 0) {
+        else if (entity.HasConditionEffect(ConditionEffects.Armored)) {
             defense = defense * 2;
         }
 
@@ -428,35 +476,61 @@ public sealed class Projectile {
             ret = damage - defense;
         }
         
-        if ((condition & ConditionEffects.Exposed) != 0) {
+        if (entity.HasConditionEffect(ConditionEffects.Exposed)) {
             ret += 20;
         }
-        if ((condition & ConditionEffects.Petrify) != 0) {
+        if (entity.HasConditionEffect(ConditionEffects.Petrify)) {
             ret = (int)(ret * 0.9f);
         }
-        if ((condition & ConditionEffects.Curse) != 0) {
+        if (entity.HasConditionEffect(ConditionEffects.Curse)) {
             ret = (int)(ret * 1.2f);
         }
-        if ((condition & ConditionEffects.Protected) != 0) {
-            ret = (int)(ret * (isPlayer ? 0.5f : 025f));
+        if (entity.HasConditionEffect(ConditionEffects.Protected)) {
+            ret = (int)(ret * (isPlayer ? 0.5f : 0.25f));
         }
         return ret;
     }
     
     private bool RayCastCheck() {
-    for (var t = 0; t <= _projDesc.LifetimeMs + _projDesc.ProjDelayMs; t += 25) {
-        var pos = PositionAt(t);
-        var tile = Map.GetTile(pos);
-        if (tile == null || tile.Type == 0xFF)
-            return false;
-        if (tile.OccupiedObject != null && !_projDesc.PassAll) {
-            var obj = tile.OccupiedObject.Properties;
-            if (obj.EnemyOccupySquare || (!_projDesc.PassesCover && obj.OccupySquare))
+        var life = _projDesc.RCSpeed > 0 ? _projDesc.RCLifetimeMs : _lifetime + _projDelayMs;
+
+        for (var t = 0; t <= life; t += 25) {
+            Vector2 pos;
+            if (_projDesc.RCSpeed > 0)
+                pos = PositionAtRayCastLine(t);
+            else
+                pos = PositionAt(t);
+
+            var tile = Map.GetTile(pos);
+            if (tile == null || tile.Type == 0xFF)
                 return false;
+
+            if (tile.OccupiedObject != null && !_projDesc.PassAll) {
+                var obj = tile.OccupiedObject.Properties;
+                if (!obj.IsEnemy && !obj.IsPlayer &&
+                    (obj.EnemyOccupySquare || (!_projDesc.PassesCover && obj.OccupySquare))) {
+                    if (_projDesc.ReturnRayCast) {
+                        var trimmed = _lifetime - (t - 25);
+                        _projDelayMs -= (int)(trimmed * (_projDelayMs / _projDesc.LifetimeMs));
+                        _addLifetime = trimmed;
+                        _lifetime -= trimmed;
+                        return true;
+                    }
+                    return false;
+                }
+            }
         }
+        return true;
     }
-    return true;
-}
+
+    private Vector2 PositionAtRayCastLine(float t) {
+        var pos = _startPosition;
+        var speed = _projDesc.RCSpeed;
+        var dist = t * (speed / 10000f);
+        pos.X += dist * MathF.Cos(_angle);
+        pos.Y += dist * MathF.Sin(_angle);
+        return pos;
+    }
 
     private void RayCastHit(double time) {
         var texture = GetTexture();
@@ -477,22 +551,25 @@ public sealed class Projectile {
             }
 
             var angle = t == 0 ? _angle : MathF.Atan2(pos.Y - _startPosition.Y, pos.X - _startPosition.X);
+            var projPos = Camera.WorldToDebug2D(new Vector3(pos.X, pos.Y, 0.5f));
+            
             Map.AddParticleEffect(new RayCastParticle(texture, pos, angle, _angleCorrection, Size));
-
             if (_damagePlayers) {
-                var target = EntityUtils.GetClosestPlayer(pos, 0.5f);
+                var target = EntityUtils.GetClosestPlayer(projPos, 0.5f);
                 if (target != null && !_hitEntities.Contains(target.ObjectId)) {
+                    Map.AddParticleEffect(new HitEffect(target, 0xFF0000));
+                    NotificationLayer.AddStatusText(target, $"-{_damage}", 0xFF0000, 1000, 0);
                     Map.PendingPlayerHit.AddHit(_bulletId, _ownerId);
                     if (!_projDesc.MultiHit) return;
                     _hitEntities.Add(target.ObjectId);
                 }
             } else {
-                var enemy = EntityUtils.GetClosestEnemy(pos, 0.5f);
+                var enemy = EntityUtils.GetClosestEnemy(projPos, 0.5f);
                 if (enemy != null && !_hitEntities.Contains(enemy.ObjectId)) {
                     Map.PendingEnemyHit.AddHit((int)time, _bulletId, enemy.ObjectId, enemy.Hp <= _damage);
                     if (!_projDesc.MultiHit) return;
                     _hitEntities.Add(enemy.ObjectId);
-                    
+        
                     Map.AddParticleEffect(new HitEffect(enemy, 0xFF0000));
                     NotificationLayer.AddStatusText(enemy, $"-{_damage}", 0xFF0000, 1000, 0);
                 }
@@ -553,4 +630,7 @@ public sealed class Projectile {
             Map.AddProjectile(p);
         }
     }
+    
+    // Debuggin Tools
+    
 }

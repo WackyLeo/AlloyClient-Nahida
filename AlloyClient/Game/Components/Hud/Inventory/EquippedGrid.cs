@@ -31,6 +31,11 @@ public sealed class EquippedGrid : Sprite {
             AddChild(slot);
             _tileSlots[i] = slot;
         }
+        
+        var _cooldown = new CooldownOverlay(owner);
+        _cooldown.X = 1 * (49 + 4) + 4; 
+        _cooldown.Y = 3;
+        AddChild(_cooldown);
     }
     
     public EquippedGrid(ItemDesc[] items, List<int> slotTypes) {

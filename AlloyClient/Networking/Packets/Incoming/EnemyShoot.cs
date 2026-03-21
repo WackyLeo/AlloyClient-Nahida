@@ -88,6 +88,7 @@ public class EnemyShoot : IncomingPacket<EnemyShoot> {
             var startPos = StartingPositions[i];
             proj.Reset((BulletId + i) % bulletIdMod, Damage, Angle + AngleInc * i, en, objDesc, projDesc);
             proj.SetStartPosition(new Vector2(startPos.X, startPos.Y));
+            proj.AddProjDelay(100);
             Map.AddProjectile(proj);
         }
 

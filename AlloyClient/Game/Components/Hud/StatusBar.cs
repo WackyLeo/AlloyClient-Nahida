@@ -36,7 +36,7 @@ public class StatusBar : Sprite {
         AddChild(mainBar);
 
         labelString = label;
-        this.label = new SimpleText(new TextConfig { Text = label, FontSize = 16, FontType = FontType.Bolder, X = 4, Y = this.height / 2, OutlineThickness = 0f, Color = 0xFFFFFF, OutlineColor = outlineColor, Anchor = UiAnchor.MiddleLeft });
+        this.label = new SimpleText(new TextConfig { Text = label, FontSize = 16, FontType = FontType.Bolder, X = 4, Y = this.height / 2, OutlineThickness = 0f, Color = 0xFFFFFF, Glow = 0, OutlineColor = outlineColor, Anchor = UiAnchor.MiddleLeft });
         AddChild(this.label);
         
         valueText = new SimpleText(new TextConfig { Text = "", FontSize = 16, FontType = FontType.Bold, Y = this.height / 2, OutlineThickness = 0f, Color = 0xFFFFFF, OutlineColor = outlineColor, Anchor = UiAnchor.MiddleLeft });
@@ -80,9 +80,10 @@ public class StatusBar : Sprite {
             FontType = FontType.Bolder,
             X = 4,
             Y = CurrentHeight / 2 + 1,
-            OutlineThickness = 1,
+            OutlineThickness = 0,
             Color = 0xFFFFFF,
-            OutlineColor = 0xFFFFFF,
+            OutlineColor = 0x000000,
+            Glow = 0,
             Anchor = UiAnchor.MiddleLeft
         });
         AddChild(label);

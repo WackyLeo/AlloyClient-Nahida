@@ -58,17 +58,20 @@ public class Entity {
 
     public int GlowColor;
     public ushort AltItemID;
-
+    private int _lastAltTex = 0;
+    
     public int MaxHp;
-    
     public int Hp;
-    
     public int Defense;
-
     public int Size = 100;
-
     public int Level;
 
+    public int AnimationMin = -1;
+    public int AnimationMax = -1;
+    public int AnimationSpeed = 0;
+    private int _animationMinOld = -1;
+    private double _animationStart = 0;
+    
     public ItemDesc[] Equipment = new ItemDesc[20];
 
     public ConditionEffects ConditionEffects = 0;
@@ -210,49 +213,51 @@ public class Entity {
     }
 
     public virtual bool Update(double time, double dt) {
-        if (Settings.MovementInterpolation) {
-            var dx = TickPosition.X - Position.X;
-            var dy = TickPosition.Y - Position.Y;
-            var distSqr = dx * dx + dy * dy;
-
-            if (distSqr > 0.0001) {
-                var tickDt = dt * 0.004;
-                var pX = tickDt * TickPosition.X + (1 - tickDt) * Position.X;
-                var pY = tickDt * TickPosition.Y + (1 - tickDt) * Position.Y;
+        if (MovementVector is not {X: 0, Y: 0}) {
+            if (LastTickId >= Map.LastTickId) {
+                var tickDt = time - LastTickUpdateTime;
+                var pX = PositionAtTick.X + tickDt * MovementVector.X;
+                var pY = PositionAtTick.Y + tickDt * MovementVector.Y;
                 MoveTo((float) pX, (float) pY);
             } else {
                 MovementVector.X = 0;
                 MovementVector.Y = 0;
+                MoveTo(TickPosition.X, TickPosition.Y);
             }
         } else {
-            if (MovementVector is not {X: 0, Y: 0}) {
-                if (LastTickId >= Map.LastTickId) {
-                    var tickDt = time - LastTickUpdateTime;
-                    var pX = PositionAtTick.X + tickDt * MovementVector.X;
-                    var pY = PositionAtTick.Y + tickDt * MovementVector.Y;
-                    MoveTo((float) pX, (float) pY);
-                } else {
-                    MovementVector.X = 0;
-                    MovementVector.Y = 0;
-                    MoveTo(TickPosition.X, TickPosition.Y);
-                }
-            } else {
-                MovementVector.X = 0;
-                MovementVector.Y = 0;
-            }
+            MovementVector.X = 0;
+            MovementVector.Y = 0;
         }
 
         // add wall support here at some point
         if (TextureData.HasAnimationData) {
             AnimateCharacter(time);
         }
-
+        
+        if (AnimationSpeed > 0) {
+            if (_animationMinOld != AnimationMin) {
+                _animationStart = time;
+                _animationMinOld = AnimationMin;
+            }
+            ClientAnimation(time);
+        }
+        
         Effect?.Update(time, dt);
-
         RenderBaseType.SetPosition(Position.X, Position.Y, Z);
         return true;
     }
-
+    
+    private void ClientAnimation(double time) {
+        if (AnimationMax <= 0) return;
+    
+        var frame = (int)(Math.Floor((time - _animationStart) / AnimationSpeed) % AnimationMax) + AnimationMin;
+    
+        if (frame == _lastAltTex) return;
+        _lastAltTex = frame;
+    
+        SetAltTexture(frame);
+    }
+    
     public void UpdateVisibility(ref Matrix4 matrix) {
         var dx = Position.X - Camera.Position.X;
         var dy = Position.Y + Camera.Position.Y;
@@ -436,6 +441,15 @@ public class Entity {
                     break;
                 case StatsType.PortalUsable:
                     PortalUsable = stat.Value != 0;
+                    break;
+                case StatsType.AltTextureMin:
+                    AnimationMin = stat.Value;
+                    break;
+                case StatsType.AltTextureMax:
+                    AnimationMax = stat.Value;
+                    break;
+                case StatsType.AnimationSpeed:
+                    AnimationSpeed = stat.Value;
                     break;
             }
         }

@@ -1,32 +1,79 @@
-﻿namespace AlloyClient.Networking.Packets.Incoming;
+﻿using AlloyClient.Assets.Libraries;
+using AlloyClient.Game;
+using AlloyClient.Game.Objects;
+
+namespace AlloyClient.Networking.Packets.Incoming;
 
 public class AllyShoot : IncomingPacket<AllyShoot> {
 
-    public byte BulletId;
+    public int Size;
     public int OwnerId;
-    public ushort ContainerType;
-    public float Angle;
+    public int[] TimeDiff;
+    public int[] BulletIds;
+    public ushort[] ContainerTypes;
+    public float[] Angles;
+    public int[] ProjIds;
 
-    public override PacketId PacketId => PacketId.Unknown;
+    public override PacketId PacketId => PacketId.AllyShoot;
 
     public override void Reset() {
-        BulletId = 0;
+        Size = 0;
         OwnerId = 0;
-        ContainerType = 0;
-        Angle = 0;
+        TimeDiff = null;
+        BulletIds = null;
+        ContainerTypes = null;
+        Angles = null;
+        ProjIds = null;
     }
 
     public override void Read(NetworkReader reader) {
-        BulletId = reader.ReadByte();
+        Size = reader.ReadInt32();
         OwnerId = reader.ReadInt32();
-        ContainerType = reader.ReadUInt16();
-        Angle = reader.ReadSingle();
+        TimeDiff = new int[Size];
+        BulletIds = new int[Size];
+        ContainerTypes = new ushort[Size];
+        Angles = new float[Size];
+        ProjIds = new int[Size];
+
+        for (int i = 0; i < Size; i++) {
+            TimeDiff[i] = reader.ReadInt32();
+            BulletIds[i] = reader.ReadInt32();
+            ContainerTypes[i] = reader.ReadUInt16();
+            Angles[i] = reader.ReadSingle();
+            ProjIds[i] = reader.ReadInt32();
+        }
     }
 
     public override void Handle() {
+        if (!Map.Entities.TryGetValue(OwnerId, out var owner) || owner is not Player player)
+            return;
+
+        for (int i = 0; i < Size; i++) {
+            var containerType = ContainerTypes[i];
+            var bulletType = (byte)(ProjIds[i] & 0xFF);
+
+            if (!ObjectLibrary.TypeToObjectProps.TryGetValue(containerType, out var objProps))
+                continue;
+
+            if (!objProps.ProjectilesDict.TryGetValue(bulletType, out var projProps))
+                if (objProps.Projectiles == null || objProps.Projectiles.Count == 0) continue;
+                else projProps = objProps.Projectiles[0];
+
+            if (!ObjectLibrary.IdToObjectType.TryGetValue(projProps.ObjectId, out var projObjType) ||
+                !ObjectLibrary.TypeToObjectProps.TryGetValue(projObjType, out var projObjDesc))
+                continue;
+
+            var proj = ObjectPools.Projectiles.Pop();
+            proj.Reset(BulletIds[i], 0, Angles[i], player, projObjDesc, projProps);
+            proj.SetStartPosition(player.Position);
+            proj.AddProjDelay(TimeDiff[i]);
+            Map.AddProjectile(proj);
+
+            player.SetAttack(containerType, Angles[i]);
+        }
     }
 
     public override string ToString() {
-        return $"OwnerId: {OwnerId}, BulletId: {BulletId}, ContainerType: {ContainerType}, Angle: {Angle}";
+        return $"Size: {Size}, OwnerId: {OwnerId}, TimeDiff: {TimeDiff}, BulletIds: {BulletIds}, ContainerTypes: {ContainerTypes}, Angles: {Angles}, ProjIds: {ProjIds}";
     }
 }

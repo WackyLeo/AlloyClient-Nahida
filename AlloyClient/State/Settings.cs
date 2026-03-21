@@ -106,7 +106,7 @@ public static class Settings {
 
     public static ValueSetting<PacketLogLevel> PacketLogging = PacketLogLevel.Off;
 
-    public static ValueSetting<bool> MovementInterpolation = true;
+    public static ValueSetting<bool> MovementInterpolation = false;
 
     public static ValueSetting<float> CameraAngle = 0f;
     public static ValueSetting<float> CameraZoom = 1;

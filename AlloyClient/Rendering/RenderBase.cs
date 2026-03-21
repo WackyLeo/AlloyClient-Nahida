@@ -20,6 +20,8 @@
 
         public float Size;
 
+        public bool InvisProj = false;
+
         protected internal Entity Entity;
         
         public Vector3 Position = Vector3.Zero;
@@ -66,8 +68,10 @@
         public void SetSize(float size) => Size = size;
 
         public abstract void Draw();
-        
-        public virtual void DrawShadow() { }
+
+        public virtual void DrawShadow() {
+            
+        }
 
         public int CompareTo(RenderBase other) {
             if (Extra.SortId < other.Extra.SortId) {
