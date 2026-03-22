@@ -105,9 +105,7 @@ public static class Settings {
     #region VALUES
 
     public static ValueSetting<PacketLogLevel> PacketLogging = PacketLogLevel.Off;
-
-    public static ValueSetting<bool> MovementInterpolation = false;
-
+    
     public static ValueSetting<float> CameraAngle = 0f;
     public static ValueSetting<float> CameraZoom = 1;
 
@@ -223,9 +221,7 @@ public static class Settings {
         #endregion
 
         #region VALUES
-
-        MovementInterpolation.SetValue(true);
-
+        
         CameraAngle.SetValue(0f);
         CameraZoom.SetValue(1);
 

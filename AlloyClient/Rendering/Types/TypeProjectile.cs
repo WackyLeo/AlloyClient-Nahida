@@ -52,7 +52,7 @@ public sealed class TypeProjectile : RenderBase {
     }
 
     public override void DrawShadow() {
-        if (InvisProj) {
+        if (InvisProj || !Visible) {
             return;
         }
         

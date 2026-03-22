@@ -41,20 +41,21 @@ public class NewTick : IncomingPacket<NewTick> {
     }
 
     public override void Handle() {
-        if (Map.LocalPlayer != null)
-        {
+        Map.LastTickId = TickId;
+        double now = Main.GameTime.TotalMs;
+        
+        if (Map.LocalPlayer != null) {
             var move = Move.CreatePacket();
             move.ObjectId = Map.LocalPlayer.ObjectId;
             move.TickId = TickId;
-            move.Time = (int)Main.GameTime.TotalMs;
-            move.NewPosition = new Position
-            {
+            move.Time = (int)now;
+            move.NewPosition = new Position {
                 X = Map.LocalPlayer.Position.X,
                 Y = Map.LocalPlayer.Position.Y
             };
             move.Records = Array.Empty<TimedPosition>();
             Client.QueuePacket(move);
-            
+
             Map.FlushEnemyHits();
             Map.FlushPlayerHits();
         }
@@ -62,18 +63,18 @@ public class NewTick : IncomingPacket<NewTick> {
         for (int i = 0; i < ObjectStatsCount; i++) {
             var stats = _statsBuffer[i];
             bool isMe = (Map.LocalPlayer != null && stats.Id == Map.LocalPlayer.ObjectId);
-            ProcessObjectStats(stats, isMe);
+            ProcessObjectStats(stats, isMe, now);
         }
     }
 
-    private void ProcessObjectStats(ObjectStats stats, bool isPlayer) {
+    private void ProcessObjectStats(ObjectStats stats, bool isPlayer, double now) {
         if (!Map.Entities.TryGetValue(stats.Id, out var en)) {
             Logger.Warn($"[NewTick] Unable to lookup id: {stats.Id}");
             return;
         }
-        en.UpdateStats(Structs.DataObjects.ObjectStats.StatsPool, stats.StatOffset, stats.StatCount);
 
-        en.OnTickPosition(stats.Position.X, stats.Position.Y, 0, 0, isPlayer);
+        en.UpdateStats(Structs.DataObjects.ObjectStats.StatsPool, stats.StatOffset, stats.StatCount);
+        en.OnTickPosition(stats.Position.X, stats.Position.Y, TickTime, TickId, isPlayer, now);
     }
 
     public override string ToString() {

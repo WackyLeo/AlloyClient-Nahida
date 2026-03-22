@@ -22,7 +22,7 @@ public class Goto : IncomingPacket<Goto> {
 
     public override void Handle() {
         if (ObjectId == Map.LocalPlayer.ObjectId) {
-            Map.LocalPlayer.MoveTo(Pos.X, Pos.Y);
+            Map.LocalPlayer.MoveTo(Pos.X, Pos.Y, true);
             Map.LocalPlayer.TickPosition.X = Pos.X;
             Map.LocalPlayer.TickPosition.Y = Pos.Y;
             Map.LocalPlayer.PositionAtTick.X = Pos.X;

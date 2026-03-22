@@ -218,11 +218,11 @@ public class Entity {
                 var tickDt = time - LastTickUpdateTime;
                 var pX = PositionAtTick.X + tickDt * MovementVector.X;
                 var pY = PositionAtTick.Y + tickDt * MovementVector.Y;
-                MoveTo((float) pX, (float) pY);
+                MoveTo((float) pX, (float) pY, false);
             } else {
                 MovementVector.X = 0;
                 MovementVector.Y = 0;
-                MoveTo(TickPosition.X, TickPosition.Y);
+                MoveTo(TickPosition.X, TickPosition.Y, false);
             }
         } else {
             MovementVector.X = 0;
@@ -273,14 +273,14 @@ public class Entity {
         RenderBaseType.SetDepth(0.5f + 0.4f * sort + Jitter);
     }
 
-    public bool MoveTo(float x, float y) {
+    public bool MoveTo(float x, float y, bool isPlayer) {
         var tile = Map.GetTile((int)x, (int)y);
 
         if (tile == null) {
             return false;
         }
         
-        if (tile.OccupiedObject != null && tile.OccupiedObject.Properties.OccupySquare) {
+        if (isPlayer && tile.OccupiedObject != null && tile.OccupiedObject.Properties.OccupySquare) {
             return false;
         }
 
@@ -300,19 +300,20 @@ public class Entity {
         return true;
     }
 
-    public void OnTickPosition(float x, float y, double tickTime, int tickId, bool isPlayer) {
-        if (!Settings.MovementInterpolation && LastTickId < Map.LastTickId && !isPlayer) {
-            MoveTo(TickPosition.X, TickPosition.Y);
+    public void OnTickPosition(float x, float y, double tickTime, int tickId, bool isPlayer, double now) {
+        if (!isPlayer && LastTickId < Map.LastTickId) {
+            MoveTo(TickPosition.X, TickPosition.Y, false);
         }
-
+    
         TickPosition.X = x;
         TickPosition.Y = y;
         LastTickId = tickId;
-        LastTickUpdateTime = tickTime;
+        LastTickUpdateTime = now;
+    
         PositionAtTick.X = Position.X;
         PositionAtTick.Y = Position.Y;
 
-        if (!isPlayer) {
+        if (!isPlayer && tickTime > 0) {
             MovementVector.X = (float)((TickPosition.X - PositionAtTick.X) / tickTime);
             MovementVector.Y = (float)((TickPosition.Y - PositionAtTick.Y) / tickTime);
         }
@@ -538,7 +539,7 @@ public class Entity {
         PositionAtTick = Position;
         TickPosition = Position;
 
-        if (!MoveTo(position.X, position.Y))
+        if (!MoveTo(position.X, position.Y, false))
         {
             Log.Error($"Failed to add entity {ObjectId} (type=0x{Type:X4}) to map at ({position.X}, {position.Y}). Map size: {Map.Width}x{Map.Height}, tiles null: {Map._tiles == null}");
         }

@@ -143,7 +143,7 @@ public class Player : Entity {
 
     private void HandleRelativeMovement(double time, double dt) {
         if (float.IsNaN(Position.X) || float.IsNaN(Position.Y)) {
-            MoveTo(0, 0); 
+            MoveTo(0, 0, true); 
         }
 
         float physicsDt = (float)Math.Clamp(dt, 0.0001, 33.3333);
@@ -576,7 +576,7 @@ public class Player : Entity {
 
     private void WalkTo(float x, float y) {
         var pos = ModifyMove(x, y);
-        MoveTo(pos.X, pos.Y);
+        MoveTo(pos.X, pos.Y, true);
 
         Camera.Update(pos.X, pos.Y);
     }

@@ -93,7 +93,7 @@ public class Update : IncomingPacket<Update> {
             entity.SetPos(newObj.Position.X, newObj.Position.Y);
 
             entity.UpdateStats(ObjectDef.StatsPool, newObj.StatOffset, newObj.StatCount);
-            entity.OnTickPosition(newObj.Position.X, newObj.Position.Y, 0, 0, props.IsPlayer);
+            entity.OnTickPosition(newObj.Position.X, newObj.Position.Y, 0, 0, props.IsPlayer, Map.LastGameTime.TotalMs);
 
             if (newObj.Id == Map.LocalPlayerId) {
                 Map.OnLocalPlayerCreated(entity);

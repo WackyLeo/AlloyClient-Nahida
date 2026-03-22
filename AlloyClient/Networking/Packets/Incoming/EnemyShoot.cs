@@ -82,7 +82,7 @@ public class EnemyShoot : IncomingPacket<EnemyShoot> {
         }
 
         var bulletIdMod = LargeStorage ? 4096 : 256;
-
+        
         for (var i = 0; i < NumShots; i++) {
             var proj = ObjectPools.Projectiles.Pop();
             var startPos = StartingPositions[i];
