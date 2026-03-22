@@ -6,6 +6,7 @@ using AlloyClient.Networking.Packets.Outgoing;
 using AlloyClient.Networking.Structs.DataObjects;
 using AlloyClient.Utils;
 using Common;
+using OpenTK.Mathematics;
 
 namespace AlloyClient.Networking.Packets.Incoming;
 
@@ -64,7 +65,7 @@ public class Update : IncomingPacket<Update> {
 
         for (int i = 0; i < DropCount; i++)
             Map.RemoveEntity(Drops[i]);
-        
+    
         for (int i = 0; i < NewObjCount; i++) {
             var newObj = NewObjs[i];
             Entity entity;
@@ -91,17 +92,18 @@ public class Update : IncomingPacket<Update> {
             Map.AddEntity(entity, newObj.Position);
 
             entity.SetPos(newObj.Position.X, newObj.Position.Y);
-
             entity.UpdateStats(ObjectDef.StatsPool, newObj.StatOffset, newObj.StatCount);
-            entity.OnTickPosition(newObj.Position.X, newObj.Position.Y, 0, 0, props.IsPlayer, Map.LastGameTime.TotalMs);
 
+            entity.TickPosition = new Vector2(newObj.Position.X, newObj.Position.Y);
+            entity.PositionAtTick = new Vector2(newObj.Position.X, newObj.Position.Y);
+            entity.LastTickId = Map.LastTickId;
+            entity.LastTickUpdateTime = Map.LastGameTime.TotalMs;
+            entity.MovementVector = Vector2.Zero;
+            
             if (newObj.Id == Map.LocalPlayerId) {
                 Map.OnLocalPlayerCreated(entity);
             }
         }
-
-        for (int i = 0; i < DropCount; i++)
-            Map.RemoveEntity(Drops[i]);
     }
 
     public override string ToString() {
