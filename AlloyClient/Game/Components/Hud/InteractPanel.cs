@@ -26,7 +26,9 @@ public sealed class InteractPanel : Sprite {
         if (_overridePanel != null)
             RemoveChild(_overridePanel);
 
-        _currentPanel.Visible = false;
+        if (_currentPanel != null)
+            _currentPanel.Visible = false;
+        
         _overridePanel = panel;
         AddChild(_overridePanel);
     }
@@ -41,14 +43,12 @@ public sealed class InteractPanel : Sprite {
         if (obj == null) {
             _currentObject = null;
             SetPanel(_partyPanel);
-            return;
+        } else if (obj != _currentObject || _currentPanel == null) {
+            _currentObject = obj;
+            SetPanel(GetInteractPanel(_currentObject));
         }
 
-        if (obj == _currentObject && _currentPanel != null)
-            return;
-        
-        _currentObject = obj;
-        SetPanel(GetInteractPanel(_currentObject));
+        _partyPanel.Refresh(); 
     }
 
     private void SetPanel(Panel panel) {

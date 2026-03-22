@@ -143,9 +143,13 @@ public partial class Sprite : DisplayContainer {
         //TODO: maybe move these out into the client rather than being built in
         if (TooltipMode) {
             (tx, ty) = MouseInput.GetMousePosition().ToPair();
-            (_anchorX, _anchorY) = InternalUtils.GetAnchorOffset(tx < UiRender.Screen.X / 2 ? UiAnchor.LeftBottom : UiAnchor.RightBottom, (int)ContentWidth, (int)ContentHeight);
-            tx += (int) (_anchorX * Parent._trueScale.X);
-            ty += (int) (_anchorY * Parent._trueScale.Y);
+            (_anchorX, _anchorY) = InternalUtils.GetAnchorOffset(
+                tx < UiRender.Screen.X / 2 ? UiAnchor.LeftBottom : UiAnchor.RightBottom, 
+                (int)ContentWidth, 
+                (int)ContentHeight
+            );
+            tx += (int)(_anchorX * ts.X); 
+            ty += (int)(_anchorY * ts.Y);
         } else if (_isDragging) {
             var pos = MouseInput.GetMousePosition();
             (tx, ty) = pos.ToPair();

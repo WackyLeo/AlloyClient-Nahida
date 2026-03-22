@@ -1,5 +1,172 @@
-﻿namespace AlloyClient.Game.Components.Hud.Panels;
+﻿using System;
+using AlloyClient.Engine.Common;
+using AlloyClient.Game;
+using AlloyClient.Game.Objects;
+using AlloyClient.Ui.Components.Tooltips;
+using AlloyClient.UiLib.BuiltIn;
+using AlloyClient.UiLib.Core;
+using AlloyClient.UiLib.Enums;
+using AlloyClient.Utils;
+using AlloyClient.Display;
+using Common;
+
+namespace AlloyClient.Game.Components.Hud.Panels;
 
 public sealed class PartyPanel : Panel {
+
+    private const int NumMembers = 6;
+    private const int SlotWidth = 100;
+    private const int SlotHeight = 32;
+    private const int Cols = 2;
+
+    private static readonly MemberSlot[] _slots = new MemberSlot[NumMembers];
+
+    public PartyPanel() {
+        for (var i = 0; i < NumMembers; i++) {
+            var col = i % Cols;
+            var row = i / Cols;
+            var slot = new MemberSlot();
+            slot.Root.X = col * SlotWidth;
+            slot.Root.Y = row * SlotHeight;
+            _slots[i] = slot;
+            AddChild(slot.Root);
+        }
+    }
     
+    public void Refresh() {
+        var members = PartyData.PartyMembers;
+        for (var i = 0; i < NumMembers; i++) {
+            Player player = null;
+            if (i < members.Count && members[i] != null) {
+                player = members[i].Player;
+            }
+            
+            _slots[i].SetPlayer(player);
+            _slots[i].Refresh();
+        }
+    }
+
+    private sealed class MemberSlot {
+        private Player _player;
+        private readonly SimpleText _nameText;
+        private readonly ColorRect _hpBarBg;
+        private readonly ColorRect _hpBar;
+        private readonly ObjectRect _portrait;
+        private double _lowHealthStart;
+        
+        public readonly Sprite Root;
+        private PlayerToolTip _tooltip;
+
+        private const int PortraitSize = 32;
+        private const int BarHeight = 8;
+        private const int BarWidth = 66;
+
+        public MemberSlot() {
+            Root = new Sprite();
+            
+            Root.MouseEnabled = true;
+            Root.AddEventListener(MouseEvent.MouseOver, OnMouseOver);
+            Root.AddEventListener(MouseEvent.MouseOut, OnMouseOut);
+
+            _portrait = new ObjectRect(new ObjectRectConfig { 
+                Width = PortraitSize, 
+                Height = PortraitSize,
+                OutlineEnabled = true,
+                GlowEnabled = true
+            });
+            Root.AddChild(_portrait);
+
+            _nameText = new SimpleText(new TextConfig {
+                FontSize = 16,
+                Color = 0xFFFFFFFFu,
+                OutlineColor = 0xFF000000u,
+                OutlineThickness = 0.5f,
+                FontType = FontType.Bold,
+            }) { X = PortraitSize + 2, Y = 2 };
+            Root.AddChild(_nameText);
+
+            _hpBarBg = new ColorRect(new ColorRectConfig { Width = BarWidth, Height = BarHeight, Color = 0xFF222222u });
+            _hpBarBg.X = PortraitSize + 2;
+            _hpBarBg.Y = SlotHeight - BarHeight - 4;
+            Root.AddChild(_hpBarBg);
+
+            _hpBar = new ColorRect(new ColorRectConfig { Width = BarWidth, Height = BarHeight, Color = 0xFF00FF00u });
+            _hpBar.X = PortraitSize + 2;
+            _hpBar.Y = SlotHeight - BarHeight - 4;
+            Root.AddChild(_hpBar);
+
+            Root.Visible = false;
+        }
+
+        private void OnMouseOver() {
+            if (_player == null) return;
+            _tooltip = new PlayerToolTip(_player);
+            TooltipManager.AddTooltip(_tooltip);
+        }
+
+        private void OnMouseOut() {
+            if (_tooltip != null) {
+                TooltipManager.RemoveTooltip(_tooltip);
+                _tooltip = null;
+            }
+        }
+
+        public void SetPlayer(Player player) {
+            _player = player;
+            Root.Visible = player != null;
+        }
+
+        public void Refresh() {
+            if (_player == null) {
+                Root.Visible = false;
+                if (_tooltip != null) OnMouseOut();
+                return;
+            }
+
+            Root.Visible = true;
+            _nameText.SetText(_player.Name ?? "");
+            _portrait.ChangeTexture(TextureHelper.Create(_player.Texture, TextureType.GameAtlas));
+
+            if (_player.Hp < _player.MaxHp * 0.2f) {
+                if (_lowHealthStart == 0) _lowHealthStart = Stage.GameTime.TotalMs;
+                var intensity = (float)(Math.Abs(Math.Sin(_lowHealthStart / 200.0)) * 10) / 10f;
+                var offset = (int)(intensity * 128);
+                Root.Color = new Color((uint)((255 << 24) | (Math.Min(255, 255 + offset) << 16) | (Math.Max(0, 255 - offset) << 8) | Math.Max(0, 255 - offset)));
+            } else {
+                _lowHealthStart = 0;
+                Root.Color = Color.White;
+            }
+
+            float hpRatio = _player.MaxHp > 0 ? Math.Clamp((float)_player.Hp / _player.MaxHp, 0f, 1f) : 0f;
+            var barColor = hpRatio > 0.5f
+                ? LerpColor(0xFF00FF00u, 0xFFFFFF00u, 1f - (hpRatio - 0.5f) * 2f)
+                : LerpColor(0xFFFFFF00u, 0xFFFF0000u, 1f - hpRatio * 2f);
+
+            _hpBar.Resize((int)Math.Max(1, BarWidth * hpRatio), BarHeight);
+            _hpBar.SetColor(barColor);
+        }
+
+        private static uint LerpColor(uint a, uint b, float t) {
+            t = Math.Clamp(t, 0f, 1f);
+            var aa = (a >> 24) & 0xFF; var ar = (a >> 16) & 0xFF; var ag = (a >> 8) & 0xFF; var ab = a & 0xFF;
+            var ba = (b >> 24) & 0xFF; var br = (b >> 16) & 0xFF; var bg = (b >> 8) & 0xFF; var bb = b & 0xFF;
+            return (((aa + (uint)((ba - aa) * t)) << 24) | ((ar + (uint)((br - ar) * t)) << 16) | ((ag + (uint)((bg - ag) * t)) << 8) | (ab + (uint)((bb - ab) * t)));
+        }
+    }
+
+    private class PlayerToolTip : Tooltip {
+        public PlayerToolTip(Player player) : base(120, 50) {
+            var nameText = new SimpleText(EquipmentToolTip.SimpleConfig(player.Name, 16, FontType.Bold, 0xFFFFFFFFu, 0xFF000000u, 0.5f, 100));
+            nameText.X = 10;
+            nameText.Y = 10;
+            AddChild(nameText);
+            
+            var fameText = new SimpleText(EquipmentToolTip.SimpleConfig($"Fame: {player.Fame}", 14, FontType.Normal, 0xFFDDDDDDu, 0xFF000000u, 0.5f, 100));
+            fameText.X = 10;
+            fameText.Y = 28;
+            AddChild(fameText);
+            
+            DrawSprite();
+        }
+    }
 }

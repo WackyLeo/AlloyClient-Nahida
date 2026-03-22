@@ -5,144 +5,241 @@ using AlloyClient.Ui.Components.Elements;
 using AlloyClient.UiLib.BuiltIn;
 using AlloyClient.UiLib.Enums;
 using AlloyClient.Utils;
-using Common;
 
 namespace AlloyClient.Ui.Components.Tooltips;
 
 public sealed class EquipmentToolTip : Tooltip 
 {
-    private ItemDesc _itemDesc;
+    private readonly ItemDesc _itemDesc;
+    private int _currentY;
 
-    private ObjectRect Icon;
-    private TierText TierTag;
-    private SimpleText TitleText;
-    private SimpleText DescText;
+    private const uint ColorDefault = 0xB3B3B3;
+    private const uint ColorWhite = 0xFFFFFF;
+    private const uint ColorGreen = 0x00FF00;
+    private const uint ColorRed = 0xFF0000;
+    private const uint ColorKhaki = 0xE8E873;
+    private const uint ColorGold = 0xFCDF00;
 
-    private SimpleText DamageText;
-    private SimpleText StatsText;
-    private string statsText;
-    public EquipmentToolTip(ItemDesc itemDesc) : base(220, 100)
+    public EquipmentToolTip(ItemDesc itemDesc) : base(260, 100)
     {
-        Logger.Info("We got called");
         _itemDesc = itemDesc;
-        AddIcon();
-        AddTitle();
-        AddTierTag();
+        _currentY = 10;
+
+        AddHeader();
         AddDescription();
-        AddStatBonus();
-        Position();
+        AddLineBreak();
+        AddCombatStats();
+        AddActivateEffects();
+        AddEquipStats();
+        AddLineBreak();
+        AddRestrictions();
+        AddTribute();
+
+        ToolHeight = _currentY + 12;
         DrawSprite();
     }
 
-    private void AddIcon()
+private void AddHeader()
     {
         ushort obj = _itemDesc.ObjectType;
-        Icon = new ObjectRect(new ObjectRectConfig
-        {
+        var icon = new ObjectRect(new ObjectRectConfig {
             Texture = TextureHelper.FromGameAtlas(obj <= 0 ? (ushort)0x0096 : obj),
-            Width = 40,
-            Height = 40
+            Width = 36,
+            Height = 36
         });
-        AddChild(Icon);
-    }
+        icon.X = 10;
+        icon.Y = 10;
+        AddChild(icon);
 
-    private void AddTitle()
-    {
-        TitleText = new SimpleText(SimpleConfig(_itemDesc.ObjectId, 16, FontType.Bold, maxWidth: 204));
-        TitleText.SetAnchor(UiAnchor.MiddleLeft);
-        AddChild(TitleText);
-    }
+        var title = AddTextLine(
+            _itemDesc.DisplayName ?? _itemDesc.ObjectId,
+            ColorWhite,
+            FontType.Bold,
+            18,
+            62,
+            _currentY + 8,
+            150
+        );
+        
+        if (!_itemDesc.Consumable && _itemDesc.SlotType != 10) {
+            ushort divIcon = 0;
+            if (!string.IsNullOrEmpty(_itemDesc.Divinity)) {
+                switch (_itemDesc.Divinity) {
+                    case "Azamoth": divIcon = 4568; break;
+                    case "Serleon": divIcon = 4569; break;
+                    case "Arcanios": divIcon = 4570; break;
+                    case "Celeste": divIcon = 4571; break;
+                    case "Singigna": divIcon = 4572; break;
+                    case "Neracia": divIcon = 4573; break;
+                    case "Siera": divIcon = 4574; break;
+                    case "Paradox": divIcon = 3058; break;
+                }
+            }
 
-    private void AddTierTag()
-    {
-        if(_itemDesc.Consumable || _itemDesc.SlotType == 10)
-        {
-            return; 
+            if (divIcon != 0) {
+                var divinityIcon = new ObjectRect(new ObjectRectConfig {
+                    Texture = TextureHelper.FromGameAtlas(divIcon),
+                    Width = 36,
+                    Height = 36,
+                    OutlineEnabled = true, 
+                    GlowEnabled = true
+                });
+                
+                divinityIcon.X = ToolWidth - divinityIcon.Width - 10;
+                divinityIcon.Y = 10; 
+                AddChild(divinityIcon);
+            }
+            
+            var tierTag = new TierText(_itemDesc);
+            tierTag.SetAnchor(UiAnchor.RightTop);
+            
+            tierTag.X = ToolWidth - 16;
+            tierTag.Y = _currentY + 12; 
+            AddChild(tierTag);
         }
 
-        TierTag = new TierText(_itemDesc);
-        TierTag.SetAnchor(UiAnchor.MiddleRight);
-        AddChild(TierTag);
+        _currentY = Math.Max(_currentY + title.Height, 10 + 44) + 4; 
     }
-    
+
     private void AddDescription()
     {
-        DescText = new SimpleText(SimpleConfig(_itemDesc.Description, 14, FontType.Normal, 0xaaaaaa, 0x0, 0.5f, 204));
-        AddChild(DescText);
+        if (string.IsNullOrEmpty(_itemDesc.Description)) return;
+        AddTextLine(_itemDesc.Description, ColorDefault, FontType.Bold, 14, 12, null, ToolWidth - 24, 0.0f);
     }
 
-    private void AddStatBonus() //Yes this is kinda awful, im going to do make tooltips soon
+    private void AddLineBreak()
     {
-        statsText = "";
-        if (_itemDesc.StatBoosts != null)
+        _currentY += 6;
+        var line = new ColorRect(new ColorRectConfig { Width = ToolWidth - 24, Height = 2, Color = 0xFF111111u });
+        line.X = 12;
+        line.Y = _currentY;
+        AddChild(line);
+        _currentY += 8;
+    }
+
+    private void AddCombatStats()
+    {
+        if (_itemDesc.NumProjectiles > 1) 
+            AddTextLine("Projectile 1", ColorDefault, FontType.Bold, 14);
+
+        if (_itemDesc.AllProjectiles != null && _itemDesc.AllProjectiles.Length > 0)
         {
+            var proj = _itemDesc.AllProjectiles[0];
+            
+            string dmgStr = proj.MinDamage == proj.MaxDamage ? $"{proj.MinDamage}" : $"{proj.MinDamage} - {proj.MaxDamage}";
+            AddSplitRow("Damage: ", dmgStr, ColorRed);
+            
+            float range = (proj.Speed * proj.LifetimeMS) / 10000f;
+            AddSplitRow("Range: ", $"{MathF.Round(range, 1):0.0}", ColorRed);
+
+            AddSplitRow("Rate of Fire: ", $"{MathF.Round(_itemDesc.RateOfFire * 100)}%", ColorGold);
+
+            if (proj.MultiHit) AddTextLine("Shots hit multiple targets", ColorKhaki, FontType.Bold, 14);
+            if (proj.PassesCover) AddTextLine("Shots pass through obstacles", ColorKhaki, FontType.Bold, 14);
+            if (proj.ArmorPiercing) AddTextLine("Armor Piercing", ColorKhaki, FontType.Bold, 14);
+        }
+        
+        if (_itemDesc.MpCost > 0) AddSplitRow("MP Cost: ", $"{_itemDesc.MpCost}", ColorWhite);
+        if (_itemDesc.MpEndCost > 0) AddSplitRow("MP Drain: ", $"{_itemDesc.MpEndCost} / sec", ColorWhite);
+        if (_itemDesc.MpCost > 0) AddSplitRow("Cooldown: ", $"{_itemDesc.Cooldown} Seconds", ColorWhite);
+    }
+
+    private void AddActivateEffects()
+    {
+        if (_itemDesc.ActivateEffects == null) return;
+
+        foreach (var act in _itemDesc.ActivateEffects)
+        {
+            switch (act.Effect)
+            {
+                case "Heal": AddTextLine($"+{act.Amount} HP", ColorGreen, FontType.Bold, 14); break;
+                case "Magic": AddTextLine($"+{act.Amount} MP", ColorGreen, FontType.Bold, 14); break;
+                case "HealNova": AddTextLine($"Party Heal: +{act.Amount} HP within {act.Radius} sqrs", ColorGreen, FontType.Bold, 14); break;
+                case "Teleport": AddTextLine("Teleport to cursor", ColorDefault, FontType.Bold, 14); break;
+                case "StatBoostSelf": AddTextLine($"Increase {StatsUtil.FromId(act.Stats)} by {act.Amount} for {act.DurationSec} secs", ColorGreen, FontType.Bold, 14); break;
+                case "StatBoostAura": AddTextLine($"Party: Increase {StatsUtil.FromId(act.Stats)} by {act.Amount} for {act.DurationSec} secs", ColorGreen, FontType.Bold, 14); break;
+                case "ConditionEffectSelf": AddTextLine($"{act.ConditionEffect} on self for {act.DurationSec} secs", ColorDefault, FontType.Bold, 14); break;
+                case "ConditionEffectAura": AddTextLine($"Party: {act.ConditionEffect} for {act.DurationSec} secs within {act.Radius} sqrs", ColorDefault, FontType.Bold, 14); break;
+                case "Decoy": AddTextLine($"Decoy for {act.DurationSec} secs", ColorDefault, FontType.Bold, 14); break;
+            }
+        }
+    }
+
+    private void AddEquipStats()
+    {
+        if (_itemDesc.StatBoosts != null && _itemDesc.StatBoosts.Length > 0)
+        {
+            AddTextLine("On Equip:", ColorDefault, FontType.Bold, 14);
             foreach (var stat in _itemDesc.StatBoosts)
             {
-                /*Logger.Debug(stat.ToString());
-                Logger.Debug(stat.Amount.ToString());
-                Logger.Debug(stat.Stat.ToString());*/
-                statsText += $"\n{StatsUtil.FromId(stat.Stat)}: {stat.Amount}";
+                string prefix = stat.Amount >= 0 ? "+" : "";
+                uint color = stat.Amount >= 0 ? ColorGreen : ColorRed;
+                AddTextLine($"{prefix}{stat.Amount} {StatsUtil.FromId(stat.Stat)}", color, FontType.Bold, 14);
             }
         }
-        /*if (Item.Activate != null)
+        
+        if (_itemDesc.FameBonus > 0)
         {
-            foreach (var Activate in Item.Activate)
-            {
-                //Logger.Debug(stat.ToString());
-                //Logger.Debug(stat.Amount.ToString());
-                //Logger.Debug(stat.Stat.ToString());
-                statsText += $"\n{Activate.EffectName}: {Activate.DurationMS}";
+            AddSplitRow("Fame Bonus: ", $"{_itemDesc.FameBonus}%", ColorGreen);
+        }
+    }
+
+    private void AddRestrictions()
+    {
+        if (_itemDesc.Soulbound) AddTextLine("Soulbound", ColorDefault, FontType.Bold, 14);
+
+        if (_itemDesc.SlotType != 0 && _itemDesc.SlotType != 10) 
+        {
+            AddTextLine("Must be equipped to use", ColorDefault, FontType.Bold, 14);
+            AddTextLine("Double-Click to equip", ColorDefault, FontType.Bold, 14);
+            
+            string usableClass = string.IsNullOrEmpty(_itemDesc.Class) ? "Any" : _itemDesc.Class;
+            AddTextLine($"Usable by: {usableClass}", ColorDefault, FontType.Bold, 14); 
+        }
+    }
+
+    private void AddTribute()
+    {
+        if (_itemDesc.TributePoints > 0)
+        {
+            _currentY += 4;
+            AddSplitRow("Sacrificial Value: ", $"{_itemDesc.TributePoints}", ColorGreen);
+            
+            if (!string.IsNullOrEmpty(_itemDesc.Divinity)) {
+                AddTextLine($"({_itemDesc.Divinity})", ColorGreen, FontType.Bold, 14);
             }
-        }*/
-        if (_itemDesc.FameBonus != 0)
-        {
-            statsText += $"\nFame: {_itemDesc.FameBonus}%";
-        }
-        if (statsText != "")
-        {
-            StatsText = new SimpleText(SimpleConfig(statsText, 14, FontType.Normal, 0xaaaaaa, 0x0, 0.5f, 204));
-            AddChild(StatsText);
         }
     }
 
-    private void Position()
+    private SimpleText AddTextLine(string text, uint color, FontType font, int fontSize, int xOffset = 12, int? yOverride = null, int maxWidth = 320, float glow = 0.5f)
     {
-        Icon.X = Icon.Y = 5;
-        TitleText.X = Icon.X + Icon.Width + 3;
-        TitleText.Y = Icon.Height / 2 + TitleText.Height / 2;
-        if(TierTag != null)
-        {
-            TierTag.X = ToolWidth - 15;
-            TierTag.Y = Icon.Height / 2 + TierTag.Height / 2;
-        }
-        DescText.X = 8;
-        DescText.Y = Icon.Y + Icon.Width + 3;
-        if (StatsText != null)
-        {
-            StatsText.X = 8;
-            StatsText.Y = DescText.Y + DescText.Height + 3;
-        }
+        var config = SimpleConfig(text, fontSize, font, color, 0x000000, 0f, maxWidth, glow);
+        config.X = xOffset;
+        config.Y = yOverride ?? _currentY;
+        
+        var st = new SimpleText(config);
+        AddChild(st);
+
+        if (yOverride == null) _currentY += Math.Max(st.Height, fontSize + 4) + 2;
+        return st;
     }
 
-    public override void DrawSprite()
+    private void AddSplitRow(string label, string value, uint valueColor)
     {
-        ToolHeight = Height + 10;
-        base.DrawSprite();
+        var lbl = new SimpleText(SimpleConfig(label, 14, FontType.Bold, ColorDefault, thickness: 0f, glow: 1f)); 
+        lbl.X = 12;
+        lbl.Y = _currentY;
+        AddChild(lbl);
+
+        var val = new SimpleText(SimpleConfig(value, 14, FontType.Bold, valueColor, thickness: 0f, glow: 1f));
+        val.X = 12 + lbl.Width + 2; 
+        val.Y = _currentY;
+        AddChild(val);
+
+        _currentY += Math.Max(lbl.Height, val.Height) + 2;
     }
 
-    public static float Round(float number, int decimalPlaces = 1)
-    {
-        float exp = MathF.Pow(10, decimalPlaces);
-        if (decimalPlaces > 0) {
-            number = (int)(number * exp) / exp;
-        }
-        else if (decimalPlaces == 0) {
-            number = (int)number;
-        }
-
-        return number;
-    }
-    public static TextConfig SimpleConfig(string text = "", int size = 12, FontType type = FontType.Normal, uint color = 0xffffff, uint outline = 0x0, float thickness = 1f, int maxWidth = 220)
+    public static TextConfig SimpleConfig(string text = "", int size = 14, FontType type = FontType.Bold, uint color = 0xFFFFFFFFu, uint outline = 0xFF000000u, float thickness = 1f, int maxWidth = 320, float glow = 0.5f)
     {
         return new TextConfig()
         {
@@ -153,6 +250,7 @@ public sealed class EquipmentToolTip : Tooltip
             OutlineColor = outline,
             OutlineThickness = thickness,
             MaxWidth = maxWidth,
+            Glow = glow
         };
     }
 }

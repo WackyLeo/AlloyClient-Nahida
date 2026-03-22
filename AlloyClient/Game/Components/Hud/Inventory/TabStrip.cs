@@ -204,6 +204,7 @@ namespace AlloyClient.Game.Components.Hud.Inventory
                     OutlineThickness = 0, 
                     Color = 0xFFC800, 
                     OutlineColor = 0xFFFFFF, 
+                    Glow = 0,
                     Anchor = UiAnchor.MiddleLeft 
                 });
 

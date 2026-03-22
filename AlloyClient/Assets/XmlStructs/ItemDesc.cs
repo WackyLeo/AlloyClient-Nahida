@@ -47,6 +47,7 @@ public class ItemDesc {
     public readonly bool UnHoly;
     public readonly bool Ferozium;
     public readonly bool ST;
+    public readonly string Divinity;
     public readonly ProjectileDesc[] AllProjectiles;
     
     public readonly StatBoostDesc[] StatBoosts;
@@ -98,6 +99,7 @@ public class ItemDesc {
         UnHoly = xml.HasElement("Unholy");
         Ferozium = xml.HasElement("Ferozium");
         ST = xml.HasElement("setType");
+        Divinity = xml.GetValue<string>("Divinity");
         
         NextCount = xml.GetValue<int>("NextCount", 99999);
         AllProjectiles = xml.Elements("Projectile")
