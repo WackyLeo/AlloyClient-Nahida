@@ -47,15 +47,21 @@ public static partial class Render {
         _tileBuffer.SetData(_tileData.AsSpan(0, _tileCount));
     }
 
-    public static void DrawGroundTiles() {
-        if (GroundTileCount == 0) return;
-        LastDrawCountTiles = GroundTileCount;
-        
+    public static void DrawGroundTilesBase() {
+        if (BlendTileStart == 0) return;
         _defaultVao.Bind();
         _shaderGround.Apply();
         _tileBuffer.BindToIndex(0);
-        
-        GL.DrawArrays(PrimitiveType.Triangles, 0, GroundTileCount * 6);
+        GL.DrawArrays(PrimitiveType.Triangles, 0, BlendTileStart * 6);
+    }
+    
+    public static void DrawGroundTileBlends() {
+        var blendCount = GroundTileCount - BlendTileStart;
+        if (blendCount == 0) return;
+        _defaultVao.Bind();
+        _shaderGround.Apply();
+        _tileBuffer.BindToIndex(0);
+        GL.DrawArrays(PrimitiveType.Triangles, BlendTileStart * 6, blendCount * 6);
     }
 
     public static void DrawTopTiles() {
@@ -188,4 +194,23 @@ public static partial class Render {
     }
 
     #endregion
+    
+    public static void StartDrawGroundObjects() {
+        _groundObjectCount = 0;
+    }
+
+    public static void DrawGroundObject(TileData data) {
+        _groundObjectData[_groundObjectCount] = data;
+        _groundObjectCount++;
+    }
+
+    public static void FlushGroundObjects() {
+        if (_groundObjectCount == 0) return;
+        _groundObjectBuffer.SetData(_groundObjectData.AsSpan(0, _groundObjectCount));
+        _defaultVao.Bind();
+        _shaderGroundObject.Apply();
+        _groundObjectBuffer.BindToIndex(0);
+        GL.DrawArrays(PrimitiveType.Triangles, 0, _groundObjectCount * 6);
+        _groundObjectCount = 0;
+    }
 }

@@ -32,7 +32,8 @@ public class MapTile(int x, int y) {
     
     public readonly int X = x;
     public readonly int Y = y;
-
+    
+    public double LastDamage;
     public ushort Type = DefaultTile;
     public GroundProperties GroundProperties = GroundLibrary.TypeToGroundProps[DefaultTile];
     public TextureData TextureData = GroundLibrary.TypeToTextureData[DefaultTile];
@@ -55,7 +56,17 @@ public class MapTile(int x, int y) {
             MinimapTexture.UncoverTile(X, Y, _color);
         }
     }
+    
+    public void DrawTileBase() {
+        Render.DrawNewTile(_data);
+    }
 
+    public void DrawTileBlends() {
+        foreach (var data in _blends) {
+            Render.DrawNewTile(data.Value);
+        }
+    }
+    
     public void DrawTile() {
         Render.DrawNewTile(_data);
         foreach (var data in _blends) {

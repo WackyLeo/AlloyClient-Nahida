@@ -8,9 +8,11 @@ using AlloyClient.Networking;
 using AlloyClient.Networking.Enums;
 using AlloyClient.Networking.Packets.Outgoing;
 using AlloyClient.Networking.Structs.DataObjects;
+using AlloyClient.ParticleEffects;
 using AlloyClient.Rendering;
 using AlloyClient.Rendering.Types;
 using AlloyClient.State;
+using AlloyClient.Ui.Character;
 using AlloyClient.UiLib.Core;
 using AlloyClient.Utils;
 using Common;
@@ -83,7 +85,8 @@ public class Player : Entity {
 
     public string Guild;
     public int GuildRank;
-
+    public List<Player> PartyMembers { get; } = new();
+    
     public int OxygenBar;
 
     public int HealthStackCount;
@@ -233,6 +236,29 @@ public class Player : Entity {
         if (ObjectId == Map.LocalPlayerId) {
             HandleRelativeMovement(time, dt);
             OnMove();
+            
+            if (Tile != null && Tile.GroundProperties.MaxDamage > 0) {
+                var now = Main.GameTime.TotalMs;
+                if (now > Tile.LastDamage + 500
+                    && !HasConditionEffect(ConditionEffects.Invincible)
+                    && !HasConditionEffect(ConditionEffects.Invulnerable)
+                    && !IFrame
+                    && (Tile.OccupiedObject == null || !Tile.OccupiedObject.Properties.ProtectFromGroundDamage)) 
+                {
+
+                    var dmg = MathUtils.RandomInt(Tile.GroundProperties.MinDamage, Tile.GroundProperties.MaxDamage);
+                    //Hp -= dmg;
+                    Tile.LastDamage = now;
+
+                    var pkt = GroundDamage.CreatePacket();
+                    pkt.Time = (int)now;
+                    pkt.Position = new Position { X = Position.X, Y = Position.Y };
+                    Client.QueuePacket(pkt);
+                    
+                    Map.AddParticleEffect(new HitEffect(this, 0xFF0000));
+                    NotificationLayer.AddStatusText(this, $"-{dmg}", 0xFF0000, 1000, 0);
+                }
+            }
         } else if (!base.Update(time, dt)) {
             return false;
         }
@@ -536,6 +562,16 @@ public class Player : Entity {
                     break;
                 case StatsType.GlyphId2:
                     GlyphID2 = (ushort)stat.Value;
+                    break;
+                case StatsType.PartyId:
+                    PartyId = stat.Value;
+                    PartyMembers.Clear();
+                    if (PartyId != 0) {
+                        foreach (var (_, p) in Map.Players) {
+                            if (p != this && p.PartyId == PartyId)
+                                PartyMembers.Add(p);
+                        }
+                    }
                     break;
             }
         }
@@ -872,19 +908,19 @@ public class Player : Entity {
     }
 
     public void OnMove() {
-        var tile = Map.GetTile((int) Position.X, (int) Position.Y);
-
-        if (tile == null) return;
-
-        const float maxSinkLevel = 18;
-
-        if (tile.GroundProperties is { Sinking: true }) {
-            SinkLevel = (int) MathF.Min(SinkLevel + 1, maxSinkLevel);
-            MovementMultiplier = 0.1f + (1 - SinkLevel / maxSinkLevel) * (tile.GroundProperties.Speed - 0.1f);
+        var tile = Map.GetTile((int)Position.X, (int)Position.Y);
+        if (tile == null) {
+            return;
         }
-        else {
+
+        const float maxSinkLevel = 18f;
+        bool protectedFromSink = tile.OccupiedObject?.Properties.ProtectFromSink == true;
+        if (!protectedFromSink && tile.GroundProperties.Sinking) {
+            SinkLevel = (int)MathF.Min(SinkLevel + 1, maxSinkLevel);
+        } else {
             SinkLevel = 0;
-            MovementMultiplier = tile.GroundProperties.Speed;
         }
+        
+        MovementMultiplier = tile.GroundProperties.Speed;
     }
 }

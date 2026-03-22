@@ -7,6 +7,7 @@ using AlloyClient.State;
 using AlloyClient.UiLib;
 using Common;
 using Common.ContentReaders;
+using OpenTK.Graphics.OpenGL.Compatibility;
 using OpenTK.Mathematics;
 
 namespace AlloyClient.Rendering;
@@ -22,13 +23,15 @@ public static partial class Render {
     private static readonly (string, string)[] ShadowDefines = [("ShadowBuffer", $"{ShadowBufferSize}")];
     private static readonly (string, string)[] ObjectDefines = [("ObjectBuffer", $"{BufferSize}")];
     
+    
     // Shaders
     private static Shader _shaderGround;
     private static Shader _shaderShadow;
     private static Shader _shaderModel;
     private static Shader _shaderObject;
     private static Shader _shaderParticle;
-    
+    private static Shader _shaderGroundObject;
+
     // Vertex Objects
     private static VertexArrayObject _defaultVao;
     private static VertexArrayObject _modelVao;
@@ -49,6 +52,10 @@ public static partial class Render {
     private static VertexObject[] _entityData;
     private static StorageBuffer<VertexObject> _entityDataBuffer;
     
+    private static TileData[] _groundObjectData;
+    private static StorageBuffer<TileData> _groundObjectBuffer;
+    private static int _groundObjectCount;
+    public static int BlendTileStart;
     public static unsafe void FirstTimeInit(Sampler atlas) {
         // Shaders
         _shaderGround = ContentReader.LoadShader("Shaders/Ground", TileDefines);
@@ -65,11 +72,17 @@ public static partial class Render {
         _shaderParticle = ContentReader.LoadShader("Shaders/Particle");
         _shaderParticle.SetValue("GameTexture", atlas);
         
+        _shaderGroundObject = ContentReader.LoadShader("Shaders/GroundObject", TileDefines);
+        _shaderGroundObject.SetValue("GameTexture", atlas);
+        
         _defaultVao = new VertexArrayObject();
         
         _tileData = new TileData[TileBufferSize];
         _tileBuffer = new StorageBuffer<TileData>(_tileData.Length);
-
+        
+        _groundObjectData = new TileData[TileBufferSize];
+        _groundObjectBuffer = new StorageBuffer<TileData>(_groundObjectData.Length);
+        
         _shadowData = new ShadowData[ShadowBufferSize];
         _shadowBuffer = new UniformBuffer(_shadowData.Length * sizeof(ShadowData));
         
@@ -124,9 +137,27 @@ public static partial class Render {
         _shaderParticle.SetValue("ViewMatrix", Camera.ViewMatrix);
         _shaderParticle.SetValue("ProjMatrix", Camera.ProjectionMatrix);
         _shaderParticle.SetValue("BillMatrix", Camera.BillboardMatrix);
+        
+        _shaderGroundObject.SetValue("WorldMatrix", Camera.WorldMatrix);
+        _shaderGroundObject.SetValue("ViewMatrix", Camera.ViewMatrix);
+        _shaderGroundObject.SetValue("ProjMatrix", Camera.ProjectionMatrix);
+        _shaderGroundObject.SetValue("GameTime", (float)(gameTime.TotalMs / 1000.0f));
     }
     
     public static void SetTileElevation(float elevation) {
         _shaderGround.SetValue("TileElevation", elevation);
+    }
+    
+    public static void SaveBlendStart() {
+        BlendTileStart = _tileCount;
+    }
+
+    public static void DrawBlendTiles() {
+        var blendCount = GroundTileCount - BlendTileStart;
+        if (blendCount == 0) return;
+        _defaultVao.Bind();
+        _shaderGround.Apply();
+        _tileBuffer.BindToIndex(0);
+        GL.DrawArrays(PrimitiveType.Triangles, BlendTileStart * 6, blendCount * 6);
     }
 }

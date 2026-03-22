@@ -70,11 +70,12 @@ public sealed class TypeGameObject : RenderBase {
         var f = Entity.Flipped ? 1f : -1f;
         Rotation = new Vector4(s, c, k, f);
         
-        Entity.HeightOffset = -1 * Scale.Y * k + Scale.W * k;
-        
+        Entity.HeightOffset = Scale.Y * k + Scale.W * k;
         Render.DrawEntity(new VertexObject(Position, UV, Scale, Rotation, Extra.Data, Color));
         
-        _lootPreview?.Draw(Entity.HeightOffset);
+        var y = 0.1f;
+
+        _lootPreview?.Draw(-Entity.HeightOffset - 0.7f);
 
         if (Entity.Properties.Static) return;
         
@@ -85,8 +86,6 @@ public sealed class TypeGameObject : RenderBase {
             return;
         }
         
-        var y = 0.1f;
-
         if (Entity.Properties.ShowName) {
             _name.Draw(y);
             y += _name.Height;
@@ -96,7 +95,7 @@ public sealed class TypeGameObject : RenderBase {
             _hpBar.Draw(y + 0.05f);
         }
         
-        _effects.Draw(Entity.HeightOffset);
+        _effects.Draw(-Entity.HeightOffset * 2);
     }
 
     public override void DrawShadow() {

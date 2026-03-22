@@ -203,30 +203,48 @@ public static class Map {
             VisibleTopTiles.Clear();
             
             Render.StartNewDrawTile();
+
             for (var x = -LocalPlayer.UpdateRadius; x < LocalPlayer.UpdateRadius; x++) {
                 for (var y = -LocalPlayer.UpdateRadius; y < LocalPlayer.UpdateRadius; y++) {
                     if (x * x + y * y >= LocalPlayer.UpdateRadius * LocalPlayer.UpdateRadius) continue;
-
-                    var tile = GetTile(x + (int) LocalPlayer.Position.X, y + (int) LocalPlayer.Position.Y);
+                    var tile = GetTile(x + (int)LocalPlayer.Position.X, y + (int)LocalPlayer.Position.Y);
                     if (tile != null && tile.Type != 0xFF) {
-                        tile.DrawTile();
-                        if (tile.HasTop) {
-                            VisibleTopTiles.Add(tile);
-                        }
+                        tile.DrawTileBase();
+                        if (tile.HasTop) VisibleTopTiles.Add(tile);
                     }
                 }
             }
-            Render.SaveGroundCount();
-            foreach (var topTile in VisibleTopTiles) {
-                topTile.DrawTop();
+
+            Render.SaveBlendStart(); 
+
+            for (var x = -LocalPlayer.UpdateRadius; x < LocalPlayer.UpdateRadius; x++) {
+                for (var y = -LocalPlayer.UpdateRadius; y < LocalPlayer.UpdateRadius; y++) {
+                    if (x * x + y * y >= LocalPlayer.UpdateRadius * LocalPlayer.UpdateRadius) continue;
+                    var tile = GetTile(x + (int)LocalPlayer.Position.X, y + (int)LocalPlayer.Position.Y);
+                    if (tile != null && tile.Type != 0xFF) {
+                        tile.DrawTileBlends();
+                    }
+                }
             }
+
+            Render.SaveGroundCount();
+            foreach (var topTile in VisibleTopTiles) topTile.DrawTop();
             Render.SaveTopCount();
-            Render.EndNewDrawTile(); 
+            Render.EndNewDrawTile();
         }
 
         Render.SetTileElevation(0f);
-        Render.DrawGroundTiles(); 
+        Render.DrawGroundTilesBase(); 
 
+        if (EntityStorage.TryGetValue(ModelType.PbGroundObject, out var groundObjects)) {
+            Render.StartDrawGroundObjects();
+            foreach (var obj in groundObjects) {
+                if (obj.Visible) obj.Draw();
+            }
+            Render.FlushGroundObjects();
+        }
+
+        Render.DrawGroundTileBlends();
         #endregion
 
         #region Shadows

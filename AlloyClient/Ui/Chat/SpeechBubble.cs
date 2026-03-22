@@ -72,16 +72,19 @@ public sealed class SpeechBubble : Sprite {
         }
 
         Scale = new Vector2(Settings.CameraZoom);
-        
+
+        var k = _owner.Size / 100f;
+        var spriteTop = (_owner.RenderBaseType?.Scale.Y ?? 0.5f) * k;
+
         var matrix = Camera.WorldMatrix * Camera.ViewMatrix * Camera.ProjectionMatrix;
-        var worldPos = new Vector3(_owner.Position.X, _owner.Position.Y, _owner.Z);
+        var worldPos = new Vector3(_owner.Position.X, _owner.Position.Y, _owner.Z + spriteTop);
         var ndc = Vector3.TransformPerspective(worldPos, matrix);
 
         float screenX = ((ndc.X + 1.0f) / 2.0f) * Settings.ScreenWidth;
         float screenY = ((1.0f - ndc.Y) / 2.0f) * Settings.ScreenHeight;
 
-        float extraPixelOffset = -40f * Settings.CameraZoom;
-
+        float extraPixelOffset = -4f * Settings.CameraZoom;
+        
         X = (int)MathF.Round(screenX);
         Y = (int)MathF.Round(screenY + extraPixelOffset);
     }

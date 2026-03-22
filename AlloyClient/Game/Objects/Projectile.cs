@@ -567,11 +567,10 @@ public sealed class Projectile {
                 var enemy = EntityUtils.GetClosestEnemy(projPos, 0.5f);
                 if (enemy != null && !_hitEntities.Contains(enemy.ObjectId)) {
                     Map.PendingEnemyHit.AddHit((int)time, _bulletId, enemy.ObjectId, enemy.Hp <= _damage);
-                    if (!_projDesc.MultiHit) return;
-                    _hitEntities.Add(enemy.ObjectId);
-        
                     Map.AddParticleEffect(new HitEffect(enemy, 0xFF0000));
                     NotificationLayer.AddStatusText(enemy, $"-{_damage}", 0xFF0000, 1000, 0);
+                    if (!_projDesc.MultiHit) return;
+                    _hitEntities.Add(enemy.ObjectId);
                 }
             }
         }
