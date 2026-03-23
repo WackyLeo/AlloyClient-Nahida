@@ -74,7 +74,7 @@ public static partial class ModelData {
             ModelType = ModelType.PbWall
         };
         return mesh;
-    }
+    } 
     
     private static MeshData DoubleWall() {
         var mesh = new MeshData {

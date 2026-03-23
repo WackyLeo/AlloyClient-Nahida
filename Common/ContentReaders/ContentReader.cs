@@ -3,14 +3,15 @@
 namespace Common.ContentReaders;
 
 public static class ContentReader {
-
     private static string _folder;
 
     public static void Init(string folder) {
         _folder = folder;
     }
-    
-    public static Texture LoadTexture(string imagePath) => new Texture(Path.Combine(_folder, imagePath));
+
+    public static Texture LoadTexture(string imagePath) {
+        return new Texture(Path.Combine(_folder, imagePath));
+    }
 
     public static Atlas LoadAtlas(string path) {
         using var reader = new BinaryReader(new MemoryStream(File.ReadAllBytes(Path.Combine(_folder, path))));
@@ -25,7 +26,4 @@ public static class ContentReader {
     public static Shader LoadShader(string path, (string, string)[] defines = null) {
         return new Shader(Path.Combine(_folder, path), defines);
     }
-
-    // LoadAtlas and LoadTexture from a http responce
-
 }

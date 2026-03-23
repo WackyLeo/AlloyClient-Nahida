@@ -16,7 +16,6 @@ using AlloyClient.UiLib.Data;
 using AlloyClient.UiLib.Enums;
 using AlloyClient.UiLib.Extra;
 using AlloyClient.UiLib.Signals;
-using AlloyClient.Utils;
 using Common;
 using Common.ContentReaders;
 using OpenTK.Graphics;
@@ -28,26 +27,29 @@ namespace AlloyClient;
 
 public class Main {
     private static readonly Logger Log = new(typeof(Main));
-
     public static readonly SingleSignal<GraphicsOptions> GraphicsMode = new();
 
     public static Main GameInstance;
+
     public static Atlas Atlas;
     public static Atlas UiAtlas;
 
-    public readonly WindowHandle Window;
     public readonly OpenGLContextHandle Context;
+    public readonly WindowHandle Window;
 
+    private bool _running = true;
     private double _targetFrameTime;
 
     public Main() {
         GameInstance = this;
 
+        // Initialize ToolkitOptions
         var options = new ToolkitOptions {
             Logger = null
         };
         Toolkit.Init(options);
-        
+
+        // Minimum OpenGL Version guarding
         var version = new Version(4, 6);
         if (!MinimumVersionCheck(version))
             return;
@@ -57,19 +59,22 @@ public class Main {
         };
         Window = Toolkit.Window.Create(hints);
         Context = Toolkit.OpenGL.CreateFromWindow(Window);
-        
+
+        // Initialize context and bindings
         Toolkit.OpenGL.SetCurrentContext(Context);
         GLLoader.LoadBindings(Toolkit.OpenGL.GetBindingsContext(Context));
 
         EnableDebugOutput();
-
         EventQueue.EventRaised += HandleEvents;
-        
+
         Initialize();
         LoadContent();
     }
 
+    public static GameTime GameTime { get; private set; }
+
     private void Initialize() {
+        // More OpenGL & Toolkit Initialisation
         GL.Viewport(0, 0, Settings.ScreenWidth, Settings.ScreenHeight);
         Toolkit.Window.SetClientSize(Window, new Vector2i(Settings.ScreenWidth, Settings.ScreenHeight));
         Toolkit.Window.SetTitle(Window, "Ica's Client");
@@ -79,58 +84,54 @@ public class Main {
         Toolkit.Window.SetMode(Window, mode);
 
         switch (mode) {
+            case WindowMode.Hidden:
+            case WindowMode.Minimized:
+            case WindowMode.Normal:
+            case WindowMode.Maximized:
+                var display = Toolkit.Window.GetDisplay(Window);
+                Toolkit.Display.GetResolution(display, out var width, out var height);
+                Toolkit.Window.SetClientPosition(Window,
+                                                 new Vector2i(width / 2 - Settings.ScreenWidth / 2,
+                                                              height / 2 - Settings.ScreenHeight / 2));
+                break;
+            case WindowMode.ExclusiveFullscreen:
             case WindowMode.WindowedFullscreen:
                 Toolkit.Window.SetPosition(Window, Vector2i.Zero);
                 break;
-            default:
-                var display = Toolkit.Window.GetDisplay(Window);
-                Toolkit.Display.GetResolution(display, out var width, out var height);
-                Toolkit.Window.SetClientPosition(Window, new Vector2i(width / 2 - Settings.ScreenWidth / 2, height / 2 - Settings.ScreenHeight / 2));
-                break;
+                ;
         }
-        
+
         GraphicsMode.Set(SetGraphicOptions);
     }
-    
+
     [SuppressMessage("ReSharper.DPA", "DPA0003: Excessive memory allocations in LOH")]
     private void LoadContent() {
         ContentReader.Init(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Content"));
-        
-        // We're going to need to request textures here
-
-        // We're going to need to request sheets here too
-
 
         Atlas = ContentReader.LoadAtlas("Game.atlas");
         UiAtlas = ContentReader.LoadAtlas("Ui.atlas");
 
-
         MinimapTexture.Init(out var mapTexture);
 
-      
-        var titleBackground = ContentReader.LoadTexture("TitleScreen/TitleScreenBackground.png");
         var titleGraphic = ContentReader.LoadTexture("TitleScreen/TitleScreenGraphic.png");
-
+        var titleLogo = ContentReader.LoadTexture("TitleScreen/TitleScreenLogo.png");
         var font = new BitmapFamily(ContentReader.LoadFont("Fonts/MyriadPro/MyriadPro.msdf"));
-        
+
         // Set texture units
         var gameAtlasSampler = new Sampler(Atlas.Texture, 0);
         var uiAtlasSampler = new Sampler(UiAtlas.Texture, 1);
         var uiAtlasLinear = new Sampler(UiAtlas.Texture, TextureFilter.Linear, 2);
         var mapTextureSampler = new Sampler(mapTexture, 3);
-        var titleBackgroundSampler = new Sampler(titleBackground, 4);
-        var titleGraphicSampler = new Sampler(titleGraphic, 5);
+        var titleGraphicSampler = new Sampler(titleGraphic, 4);
+        var titleLogoSampler = new Sampler(titleLogo, 5);
         font.Sampler.Bind(6);
-        
-        ModelData.Load();
-        // AssetParser.LoadAssets();
 
+        ModelData.Load();
         var settings = new UiSettings {
             DefaultScreen = new Vector2i(Settings.DefaultScreenWidth, Settings.DefaultScreenHeight),
             Screen = new Vector2i(Settings.ScreenWidth, Settings.ScreenHeight)
         };
-        
-        
+
 
         //UiRender needs to be loaded first so Render can pull font data from it
         UiRender.ConfigureAndLoad(settings, out var stage);
@@ -139,18 +140,17 @@ public class Main {
         UiRender.RegisterTexture(TextureType.UiAtlas, uiAtlasSampler);
         UiRender.RegisterTexture(TextureType.UiAtlasLinear, uiAtlasLinear);
         UiRender.RegisterTexture(TextureType.Minimap, mapTextureSampler);
-        UiRender.RegisterTexture(TextureType.TitleBackground, titleBackgroundSampler);
         UiRender.RegisterTexture(TextureType.TitleGraphic, titleGraphicSampler);
-        
+        UiRender.RegisterTexture(TextureType.TitleLogo, titleLogoSampler);
+
 
         Render.FirstTimeInit(gameAtlasSampler);
 
         SliceLibrary.Load();
-        
+
         DisplayManager.Init(stage);
-       
+
         ScreenManager.FadeToScreen(new LoadingScreen(), Easing.SineInOut, 1000, 0x0);
-        //ScreenManager.SetScreen(new TestScreen());
     }
 
     private void Update(GameTime gameTime) {
@@ -185,55 +185,46 @@ public class Main {
                 break;
             default:
                 throw new Exception();
-            
         }
     }
-    
-    private bool _running = true;
 
     public void Run() {
         if (Window == null || Context == null) return;
-        
+
         var sw = Stopwatch.StartNew();
         var totalMs = 0d;
-        
+
         GL.ClearColor(0f, 0f, 0f, 1.0f);
-        
+
         GL.Disable(EnableCap.StencilTest);
         GL.CullFace(TriangleFace.Front);
-        
+
         GL.Enable(EnableCap.Blend);
         GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
         GL.Disable(EnableCap.FramebufferSrgb);
-        
+
         while (true) {
-            var elapsedMs = sw.Elapsed.TotalMilliseconds;   
-            
+            var elapsedMs = sw.Elapsed.TotalMilliseconds;
             if (elapsedMs < _targetFrameTime) continue;
-            
+
             sw.Restart();
-            
             Toolkit.Window.ProcessEvents(false);
-            
             if (!_running) break;
 
             totalMs += elapsedMs;
-
             GameTime = new GameTime(totalMs, elapsedMs);
-            
             Update(new GameTime(totalMs, elapsedMs));
-            
+
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
-            
             Draw(new GameTime(totalMs, elapsedMs));
-            
+
             Toolkit.OpenGL.SwapBuffers(Context);
-            
+
             var timeToNextUpdate = _targetFrameTime - elapsedMs * 1000d;
             if (timeToNextUpdate > 0) OpenTK.Core.Utils.AccurateSleep(0, 1);
         }
     }
-    
+
     private void HandleEvents(PalHandle handle, PlatformEventType type, EventArgs args) {
         switch (args) {
             case CloseEventArgs:
@@ -251,19 +242,21 @@ public class Main {
         _running = false;
     }
 
-    public static double GetTime() => GameTime.TotalMs;
-    
-    public static GameTime GameTime { get; private set; }
-    
+    public static double GetTime() {
+        return GameTime.TotalMs;
+    }
+
     [Conditional("DEBUG")]
     private static void EnableDebugOutput() {
         GL.DebugMessageCallback(OnDebugMessage, nint.Zero);
-        GL.DebugMessageControl(DebugSource.DebugSourceApi, DebugType.DebugTypeOther, DebugSeverity.DontCare, 1, [131185], false);
+        GL.DebugMessageControl(DebugSource.DebugSourceApi, DebugType.DebugTypeOther, DebugSeverity.DontCare, 1,
+                               [131185], false);
         GL.Enable(EnableCap.DebugOutput);
         GL.Enable(EnableCap.DebugOutputSynchronous);
     }
-    
-    private static void OnDebugMessage(DebugSource source, DebugType type, uint id, DebugSeverity severity, int length, nint pmessage, nint userParam) {
+
+    private static void OnDebugMessage(DebugSource source, DebugType type, uint id, DebugSeverity severity, int length,
+                                       nint pmessage, nint userParam) {
         var message = Marshal.PtrToStringAnsi(pmessage, length);
         Console.WriteLine("[{0} source={1} type={2} id={3}] {4}", severity, source, type, id, message);
     }
@@ -272,7 +265,7 @@ public class Main {
         var hints = new OpenGLGraphicsApiHints {
             Version = version
         };
-        
+
         var window = Toolkit.Window.Create(hints);
         OpenGLContextHandle context = null;
         var pass = true;
@@ -280,12 +273,12 @@ public class Main {
         try {
             context = Toolkit.OpenGL.CreateFromWindow(window);
         } catch {
-            Toolkit.Dialog.ShowMessageBox(window, "OpenGL creation failure", $"Client requires a minimum opengl version of {version.Major}.{version.Minor}", MessageBoxType.Information);
+            Toolkit.Dialog.ShowMessageBox(window, "OpenGL creation failure",
+                                          $"Client requires a minimum opengl version of {version.Major}.{version.Minor}",
+                                          MessageBoxType.Information);
             pass = false;
         } finally {
-            if (pass) {
-                Toolkit.OpenGL.DestroyContext(context!);
-            }
+            if (pass) Toolkit.OpenGL.DestroyContext(context!);
             Toolkit.Window.Destroy(window);
         }
 

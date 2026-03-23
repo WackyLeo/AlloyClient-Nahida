@@ -23,9 +23,8 @@ uniform float PixelRange;
 uniform vec2 TextTextureSize;
 uniform sampler2D TextTexture;
 
-uniform sampler2D TitleBackgroundTexture;
 uniform sampler2D TitleGraphicTexture;
-
+uniform sampler2D TitleLogoTexture;
 
 const float TextTypeNormal = 0.0;
 const float TextTypeSmall = 1.0;
@@ -36,8 +35,8 @@ const float IdUiAtlas = 2.0;
 const float IdUiAtlasLinear = 3.0;
 const float IdUiSlice = 4.0;
 const float IdText = 5.0;
-const float IdTitleBackground =6.0;
-const float IdTitleGraphic = 7.0;
+const float IdTitleGraphic = 6.0;
+const float IdTitleLogo = 7.0;
 const float IdMinimap = 8.0;
 const float IdEllipse = 9.0;
 const float IdHpBar = 10.0;
@@ -287,10 +286,10 @@ void main() {
         pixel = slice();
     } else if (type == IdText) {
         pixel = RenderText();
-    } else if (type == IdTitleBackground) {
-        pixel = RenderNoOutline(TitleBackgroundTexture);
     } else if (type == IdTitleGraphic) {
         pixel = RenderNoOutline(TitleGraphicTexture);
+    } else if (type == IdTitleLogo) {
+        pixel = RenderNoOutline(TitleLogoTexture);
     } else if (type == IdMinimap) {
         pixel = RenderMinimap();
     } else if (type == IdEllipse) {

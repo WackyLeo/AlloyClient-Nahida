@@ -22,10 +22,10 @@ public enum TextureType : byte {
     UiAtlasLinear = 3,
     UiSlice = 4,
     Text = 5,
-    TitleBackground = 6,
-    TitleGraphic = 7,
+    TitleGraphic = 6,
+    TitleLogo = 7,
     Minimap = 8,
-    Ellipse = 9,
+    Ellipse = 9
 }
 
 public enum CollisionType : byte {
@@ -33,7 +33,7 @@ public enum CollisionType : byte {
     Ellipse,
     Vertices,
     Custom,
-    CustomNoScale,
+    CustomNoScale
 }
 
 [Flags]
@@ -50,7 +50,7 @@ public enum CutEdges : uint {
     All = Top | Bottom
 }
 
-public enum FontType : int {
+public enum FontType {
     Normal = 0,
     Bold = 1,
     Bolder = 2

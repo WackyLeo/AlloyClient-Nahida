@@ -5,27 +5,34 @@ using AlloyClient.Ui.Components.Graphics;
 using AlloyClient.UiLib.BuiltIn;
 using AlloyClient.UiLib.Core;
 using AlloyClient.UiLib.Enums;
+using Common;
 
 namespace AlloyClient.Screens.Components;
 
 public abstract class TitleScreenBase : Screen {
-    
-    private readonly ColorRect _darken = new ColorRect(new ColorRectConfig { Width = Settings.DefaultScreenWidth, Height = Settings.DefaultScreenHeight, Color = 0x2B2B2B, Alpha = 0.8f });
-    
-    private readonly MusicButton _music = new MusicButton(new MusicButtonConfig { X = 7, Y = 7, Width = 32, Height = 32 });
+    private readonly ColorRect _darken = new(new ColorRectConfig {
+        Width = Settings.DefaultScreenWidth, Height = Settings.DefaultScreenHeight, Color = 0x2B2B2B, Alpha = 0.8f
+    });
+
+    private readonly MusicButton _music = new(new MusicButtonConfig { X = 7, Y = 7, Width = 32, Height = 32 });
 
     public readonly AccountOverlay Overlay;
-    
+
     protected TitleScreenBase(bool title = false) {
         var background = new ScreenGraphic(title);
         AddChild(background);
-        
-        if (!title) {
+
+        if (title) {
+            var logo = new LogoGraphic();
+            logo.X = Settings.DefaultScreenWidth / 2 - logo.Width / 2;
+            logo.X = Settings.DefaultScreenHeight / 2 - logo.Height / 2;
+            AddChild(logo);
+        } else {
             AddChild(_darken);
         }
-        
+
         AddChild(_music);
-        
+
         //Todo guild/stars
 
         Overlay = new AccountOverlay(title);
@@ -33,7 +40,7 @@ public abstract class TitleScreenBase : Screen {
         Overlay.Y = 10;
         Overlay.SetAnchor(UiAnchor.RightTop);
         AddChild(Overlay);
-        
+
         AddEventListener(Event.AddedToStage, OnStageEnter);
         AddEventListener(Event.RemovedFromStage, OnStageExit);
     }
@@ -45,6 +52,12 @@ public abstract class TitleScreenBase : Screen {
 
     private void OnStageExit() {
         Stage.RemoveEventListener(ResizeEvent.Resize, OnResize);
+    }
+
+    public override void Draw(GameTime gameTime) {
+        //Vector2 relativeMousePos = GetRelativeMousePosition();
+        //Logger.Info(relativeMousePos);
+        base.Draw(gameTime);
     }
 
     protected override void OnResize(ResizeEvent args) {

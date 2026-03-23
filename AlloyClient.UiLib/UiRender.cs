@@ -12,26 +12,24 @@ using OpenTK.Platform;
 namespace AlloyClient.UiLib;
 
 public class UiSettings {
-
     public required Vector2i DefaultScreen;
 
     public required Vector2i Screen;
 }
 
 public static class UiRender {
-
     internal static bool IsFocused = true;
 
     internal static Stage Stage;
-    
+
     internal static Vector2i DefaultScreen;
-    
+
     internal static Vector2i Screen;
-    
+
     public static int LastRenderCount = 0;
 
     public static BitmapFamily MyriadPro;
-    
+
     public static Matrix4 ViewMatrix = new(0f, 0f, 0f, 0f, 0f, 0f, 0f, 0f, 0f, 0f, -0.5f, 0f, -1f, 1f, 0.5f, 1f);
 
     internal static Shader UiShader;
@@ -41,18 +39,18 @@ public static class UiRender {
             stage = Stage;
             return;
         }
-        
+
         DefaultScreen = settings.DefaultScreen;
         Stage = stage = new Stage();
-        
+
         KeyboardInput.Register(Stage);
-        
+
         EventQueue.EventRaised += HandleEvents;
 
         UiShader = ContentReader.LoadShader("Shaders/Ui");
-        
+
         SpriteRender.Init();
-        
+
         OnResize(settings.Screen);
     }
 
@@ -67,17 +65,18 @@ public static class UiRender {
             case TextureType.UiAtlasLinear:
                 UiShader.SetValue("UiAtlasTextureLinear", sampler);
                 break;
-            case TextureType.TitleBackground:
-                UiShader.SetValue("TitleBackgroundTexture", sampler);
-                break;
             case TextureType.TitleGraphic:
                 UiShader.SetValue("TitleGraphicTexture", sampler);
+                break;
+            case TextureType.TitleLogo:
+                UiShader.SetValue("TitleLogoTexture", sampler);
                 break;
             case TextureType.Minimap:
                 UiShader.SetValue("MinimapTexture", sampler);
                 break;
             case TextureType.Text:
-                throw new ArgumentOutOfRangeException(nameof(textureId), textureId, "Text is handled through 'RegisterFont'");
+                throw new ArgumentOutOfRangeException(nameof(textureId), textureId,
+                                                      "Text is handled through 'RegisterFont'");
             default:
                 throw new ArgumentOutOfRangeException(nameof(textureId), textureId, "Type has no texture association");
         }
@@ -85,7 +84,7 @@ public static class UiRender {
 
     public static void RegisterFont(BitmapFamily font) {
         MyriadPro = font;
-        
+
         UiShader.SetValue("PixelRange", MyriadPro.PixelRange);
         UiShader.SetValue("TextTextureSize", new Vector2(MyriadPro.Atlas.Width, MyriadPro.Atlas.Height));
         UiShader.SetValue("TextTexture", MyriadPro.Sampler);
@@ -96,9 +95,9 @@ public static class UiRender {
             return;
 
         Screen = screen;
-        
+
         var ratio = MathF.Min((float)Screen.X / DefaultScreen.X, (float)Screen.Y / DefaultScreen.Y);
-        
+
         Stage.ScreenScale = new Vector2(ratio, ratio);
         Stage.SetSize(screen);
 
@@ -107,7 +106,7 @@ public static class UiRender {
 
         UiShader.Apply();
         UiShader.SetValue("ViewMatrix", ViewMatrix);
-        
+
         Stage.DispatchEvent(new ResizeEvent(ResizeEvent.Resize, Screen.X, Screen.Y));
     }
 
@@ -115,14 +114,14 @@ public static class UiRender {
         return MyriadPro.Fonts[type];
     }
 
-    private static void SetFocus(bool focus) => IsFocused = focus;
-    
+    private static void SetFocus(bool focus) {
+        IsFocused = focus;
+    }
+
     private static void HandleEvents(PalHandle handle, PlatformEventType type, EventArgs args) {
-        if (args is FocusEventArgs fea) {
-            SetFocus(fea.GotFocus);
-        }
+        if (args is FocusEventArgs fea) SetFocus(fea.GotFocus);
         if (!IsFocused) return;
-        
+
         switch (args) {
             case KeyDownEventArgs e:
                 KeyboardInput.SetKeyDown(e);
