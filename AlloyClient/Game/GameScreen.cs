@@ -25,7 +25,7 @@ public sealed class GameScreen : Screen {
     private static int _frameCount;
 
     public GameScreen() {
-        Client.Connect(Settings.GameServerAddress, Settings.SelectedGameServerPort);
+        Client.Connect(Settings.GameServerAddress, Settings.GameServerPort);
         GameSprite = new GameSprite();
         AddChild(GameSprite);
     }

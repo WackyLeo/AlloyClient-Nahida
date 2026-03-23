@@ -14,155 +14,43 @@ using OpenTK.Platform;
 namespace AlloyClient.State;
 
 public static class Settings {
-    private static readonly Logger Log = new(typeof(Settings));
+    // Account and setting options
+    private const string LocalFolderName = "AlloyClient";
 
-    public const string LocalFolderName = "AlloyClient";
-    public static readonly string LocalFolderPath;
-    
     private const string AccountFileName = "account.json";
-    public const string SettingsPath = "settings.json"; // Relative to application directory
+    private const string SettingsPath = "settings.json";
 
+    // App-Engine connection info
     public const string BuildVersion = "localhost";
-    public const string BuildLabel = $"OpenTK v{BuildVersion}";
+    public const string BuildLabel = $"Version {BuildVersion}";
 
-    public const string AppEngineAddress = "116.255.20.214";
-    //public const string AppEngineAddress = "135.125.181.109";
-    public const string AssetUrl = "https://domain-of-magica.github.io";
+    private const string AppEngineAddress = "135.125.181.109"; // 116.255.20.214
+    private const string AppEnginePort = "8080";               // 65001
 
-    public const string AppEnginePort = "65001";
-    //public const string AppEnginePort = "8080";
     public const string AppEngineUrl = $"http://{AppEngineAddress}:{AppEnginePort}";
-
     public const int AppEngineTimeout = 10000;
 
-    public const string GameServerAddress = "116.255.20.214";
-    //public const string GameServerAddress = "135.125.181.109";
-    
-    public const ushort GameServerPort = 2051;
-    //public const ushort GameServerPort = 26959;
+    // World-Engine connection info
+    public const string GameServerAddress = "135.125.181.109"; // 116.255.20.214
+    public const ushort GameServerPort = 26959;                // 2051
 
+    // Screen-Information
     public const int DefaultScreenWidth = 1280;
     public const int DefaultScreenHeight = 720;
 
     public const float MinCameraZoom = 0.5f;
     public const float MaxCameraZoom = 5;
-    
-    // ReSharper disable FieldCanBeMadeReadOnly.Global
-#pragma warning disable CA2211
-    #region HOTKEYS
-    
-    public static InputSetting Options = new();
 
-    
-    // Movement
-    public static InputSetting MoveUp = new();
-    public static InputSetting MoveDown = new();
-    public static InputSetting MoveLeft = new();
-    public static InputSetting MoveRight = new();
-
-    // Camera
-    public static  InputSetting RotateLeft = new();
-    public static InputSetting RotateRight = new();
-    public static InputSetting ResetCameraAngle = new();
-    public static InputSetting CenterPlayerKey = new();
-
-    // Key 
-    public static InputSetting AutoFire = new();
-    public static InputSetting Special = new();
-    public static InputSetting Interact = new();
-    public static  InputSetting Escape = new();
-
-    // Chat
-    public static InputSetting Chat = new();
-    public static InputSetting ChatCommand = new();
-    public static InputSetting TellKey = new();
-    public static InputSetting GuildChat = new();
-    public static InputSetting PartyChat = new();
-    public static InputSetting ChatHistoryUp = new();
-    public static InputSetting ChatHistoryDown = new();
-
-    // Inventory
-    public static InputSetting HealthPotion = new();
-    public static InputSetting MagicPotion = new();
-    public static InputSetting InvOne = new();
-    public static InputSetting InvTwo = new();
-    public static InputSetting InvThree = new();
-    public static InputSetting InvFour = new();
-    public static InputSetting InvFive = new();
-    public static InputSetting InvSix = new();
-    public static InputSetting InvSeven = new();
-    public static InputSetting InvEight = new();
-    
-    // Misc
-    public static InputSetting PerformanceStats = new();
-    public static InputSetting SwitchTabs = new();
-    public static InputSetting ResetMScale = new();
-    public static InputSetting SetBagPriority = new();
-    public static InputSetting FullscreenKey = new();
-    
-    #endregion
-
-    #region VALUES
-
-    public static ValueSetting<PacketLogLevel> PacketLogging = PacketLogLevel.Off;
-    
-    public static ValueSetting<float> CameraAngle = 0f;
-    public static ValueSetting<float> CameraZoom = 1;
-
-    public static ValueSetting<float> RotateSpeed = 0.003f;
-
-    public static ValueSetting<int> FpsCap = -1;
-    public static ValueSetting<bool> VSync = false;
-    public static ValueSetting<bool> Fullscreen = false;
-
-    public static ValueSetting<int> ScreenWidth = DefaultScreenWidth;
-    public static ValueSetting<int> ScreenHeight = DefaultScreenHeight;
-    public static ValueSetting<int> NonFullscreenWidth = DefaultScreenWidth;
-    public static ValueSetting<int> NonFullscreenHeight = DefaultScreenHeight;
-
-    public static ValueSetting<float> MusicVolume = 0.5f;
-    public static ValueSetting<float> SfxVolume = 0.5f;
-    public static ValueSetting<float> WeaponSfxVolume = 0.5f;
-    public static ValueSetting<float> LootSfxVolume = 0.5f;
-
-    public static ValueSetting<bool> PlayMusic = true;
-    public static ValueSetting<bool> PlaySfx = true;
-    public static ValueSetting<bool> PlayWeaponSfx = true;
-    public static ValueSetting<bool> PlayLootSfx = true;
-
-    public static ValueSetting<bool> ToggleLeftToMax = true;
-    public static ValueSetting<bool> ToggleBarText = true;
-
-    public static ValueSetting<bool> AllowRotation = true;
-
-    public static ValueSetting<bool> InventorySwap = true;
-
-    public static ValueSetting<int> ChatInclude = 0;
-    public static ValueSetting<bool> ChatVisible = true;
-    public static ValueSetting<float> ChatScaling = 0f;
-    public static ValueSetting<int> ChatHideList = 0;
-
-    public static ValueSetting<bool> EyeCandyParticles = true;
-    public static ValueSetting<bool> ReducedParticles = false;
-
-    public static ValueSetting<int> MaxRenderDistance = 20;
-
-    public static ValueSetting<float> MScale = 1;
-
-    public static ValueSetting<bool> CenterPlayer = true;
-
-    public static ValueSetting<ushort> SelectedGameServerPort = GameServerPort;
-    
-    #endregion
-    
-    // ReSharper restore FieldCanBeMadeReadOnly.Global
-#pragma warning restore CA2211
+    private static readonly Logger Log = new(typeof(Settings));
+    public static readonly string LocalFolderPath;
 
     private static readonly Dictionary<string, ISettingType> SettingTypes = [];
     public static readonly List<InputSetting> Inputs = [];
 
     static Settings() {
-        LocalFolderPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), LocalFolderName);
+        LocalFolderPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                                       LocalFolderName);
+
         Directory.CreateDirectory(LocalFolderPath);
     }
 
@@ -170,7 +58,7 @@ public static class Settings {
         PacketLogging.SetValue(PacketLogLevel.Off);
         Options.Set(Scancode.Escape);
 
-        #region  HOTKEYS
+        #region HOTKEYS
 
         // Movement
         MoveUp.Set(Scancode.W);
@@ -221,16 +109,20 @@ public static class Settings {
         #endregion
 
         #region VALUES
-        
+
+        // Camera Settings
         CameraAngle.SetValue(0f);
         CameraZoom.SetValue(1);
 
+        AllowRotation.SetValue(true);
         RotateSpeed.SetValue(0.003f);
 
+        // Screen Settings
         FpsCap.SetValue(-1);
         VSync.SetValue(false);
         Fullscreen.SetValue(false);
 
+        // Sounds Settings
         MusicVolume.SetValue(0.5f);
         SfxVolume.SetValue(0.5f);
         WeaponSfxVolume.SetValue(0.5f);
@@ -241,43 +133,36 @@ public static class Settings {
         PlayWeaponSfx.SetValue(true);
         PlayLootSfx.SetValue(true);
 
+        // Personal Preferences
         ToggleLeftToMax.SetValue(true);
         ToggleBarText.SetValue(true);
-
-        AllowRotation.SetValue(true);
-
         InventorySwap.SetValue(true);
+        CenterPlayer.SetValue(true);
 
+        // Chat Settings
         ChatInclude.SetValue(0);
         ChatVisible.SetValue(true);
         ChatScaling.SetValue(0f);
         ChatHideList.SetValue(0);
 
+        // Particle Settings
         EyeCandyParticles.SetValue(true);
         ReducedParticles.SetValue(false);
 
-        MaxRenderDistance.SetValue(20);
-
-        MScale.SetValue(1f);
-
-        CenterPlayer.SetValue(true);
-
-        SelectedGameServerPort.SetValue(GameServerPort);
-        
         #endregion
     }
 
     public static void LoadSettings() {
+        // Try to load the LocalAccount
         LoadLocalAccount();
 
-        try {
-            ResetToDefault();
-            TryLoadSettings();
-        } catch (Exception e) {
-            Log.Error($"Error loading settings: {e.Message}");
-            ResetToDefault();
-        }
-        
+        // Initialize settings to default
+        ResetToDefault();
+
+        // Try to load the saved settings
+        TryLoadSettings();
+
+        // Call Save settings here to update the list for new entry's
         SaveSettings();
     }
 
@@ -287,21 +172,23 @@ public static class Settings {
             return;
         }
 
-        var settingsFile = File.ReadAllText(SettingsPath);
+        // Load the settingsFile into txt then parse it through XML
+        var settingsContent = File.ReadAllText(SettingsPath);
         var settingsXml = new XmlDocument();
-        settingsXml.LoadXml(settingsFile);
 
+        settingsXml.LoadXml(settingsContent);
+
+        // Check for valid XML
         var settingsRoot = settingsXml.DocumentElement;
         if (settingsRoot == null) {
             Log.Warn("Settings file is empty.");
-            SaveSettings();
             return;
         }
 
+        // Iterate over each entry in the settings field rather than the XML
         foreach (var field in typeof(Settings).GetFields(BindingFlags.Public | BindingFlags.Static)) {
-            if (!typeof(ISettingType).IsAssignableFrom(field.FieldType)) {
-                continue;
-            }
+            // I guess it's safeguarding
+            if (!typeof(ISettingType).IsAssignableFrom(field.FieldType)) continue;
 
             var settingElem = settingsRoot[field.Name];
             if (settingElem == null) {
@@ -309,71 +196,141 @@ public static class Settings {
                 continue;
             }
 
-            var setting = (ISettingType) field.GetValue(null);
+            var setting = (ISettingType)field.GetValue(null);
             if (setting == null) {
                 Log.Warn($"Failed to get setting: {field.Name}");
                 continue;
             }
 
+            // Deserialize and parse the setting
             setting.Deserialize(settingElem.InnerText);
             field.SetValue(null, setting);
 
             SettingTypes[field.Name] = setting;
-            if (setting is InputSetting inputSetting) {
-                Inputs.Add(inputSetting);
-            }
+            if (setting is InputSetting inputSetting) Inputs.Add(inputSetting);
         }
 
         Log.Info("Settings loaded");
     }
 
     public static void SaveSettings() {
-        try {
-            var settingsDict = new Dictionary<string, string>();
-            foreach (var field in typeof(Settings).GetFields(BindingFlags.Public | BindingFlags.Static)) {
-                if (!typeof(ISettingType).IsAssignableFrom(field.FieldType)) {
-                    continue;
-                }
+        var settingsDict = new Dictionary<string, string>();
 
-                var setting = (ISettingType) field.GetValue(null);
+        // Iterate over each entry in the settings field rather than the XML
+        foreach (var field in typeof(Settings).GetFields(BindingFlags.Public | BindingFlags.Static)) {
+            // I guess it's safeguarding
+            if (!typeof(ISettingType).IsAssignableFrom(field.FieldType)) continue;
 
-                if (setting == null) {
-                    Log.Warn($"Failed to get setting: {field.Name}");
-                    continue;
-                }
-
-                settingsDict[field.Name] = setting.Serialize();
+            var setting = (ISettingType)field.GetValue(null);
+            if (setting == null) {
+                Log.Warn($"Failed to get setting: {field.Name}");
+                continue;
             }
 
-            var settingsXml = new XmlDocument();
-            var settingsRoot = settingsXml.CreateElement("Settings");
-            settingsXml.AppendChild(settingsRoot);
-
-            foreach (var (name, value) in settingsDict) {
-                var settingElem = settingsXml.CreateElement(name);
-                settingElem.InnerText = value;
-                settingsRoot.AppendChild(settingElem);
-            }
-
-            settingsXml.Save(SettingsPath);
-
-            Log.Info("Settings saved.");
-        } catch (Exception e) {
-            Log.Warn($"Failed to save settings: {e}");
+            // Save the setting to our vector
+            settingsDict[field.Name] = setting.Serialize();
         }
+
+        // Create a new setting XML
+        var settingsXml = new XmlDocument();
+        var settingsRoot = settingsXml.CreateElement("Settings");
+        settingsXml.AppendChild(settingsRoot);
+
+        // Loop and add out Vector's entries to the XML object
+        foreach (var (name, value) in settingsDict) {
+            var settingElem = settingsXml.CreateElement(name);
+            settingElem.InnerText = value;
+            settingsRoot.AppendChild(settingElem);
+        }
+
+        // Save the XML to a file
+        settingsXml.Save(SettingsPath);
+
+        Log.Info("Settings saved.");
     }
 
-    public static void SetWindowSize(int width, int height) {
-        ScreenWidth = width;
-        ScreenHeight = height;
+    private static void LoadLocalAccount() {
+        var filePath = Path.Combine(LocalFolderPath, AccountFileName);
+        if (!File.Exists(filePath)) {
+            Log.Debug("No local account data found");
+            return;
+        }
+
+        // Wrap the ReadAllText function in a try catch because C#
+        string fileContent;
+        try {
+            fileContent = File.ReadAllText(filePath);
+        } catch (Exception e) {
+            Log.Error($"Failed to read to file {AccountFileName}: {e.Message}");
+            return;
+        }
+
+        // Parse the fileContents into usable JSON
+        var jsonContent = JsonConvert.DeserializeObject<Dictionary<string, string>>(fileContent);
+        if (jsonContent == null) {
+            Log.Error("Failed to parse local account data");
+            return;
+        }
+
+        var loadedGuid = jsonContent.TryGetValue("GUID", out var guid) && !string.IsNullOrWhiteSpace(guid);
+        var loadedPass = jsonContent.TryGetValue("Password", out var password) && !string.IsNullOrWhiteSpace(password);
+
+        if (!loadedGuid || !loadedPass) {
+            Log.Error("Failed to parse account data, GUID or PASSWORD are incomplete");
+            return;
+        }
+
+        if (guid == string.Empty && password == string.Empty) {
+            Log.Debug("No local account data");
+            return;
+        }
+
+        // Verify the base64 encoding
+        var data = new byte[(password.Length * 3 + 3) / 4];
+        if (!Convert.TryFromBase64String(password, data.AsSpan(), out var count)) {
+            Log.Error("Invalid Base64 encoding on password");
+            return;
+        }
+
+        GlobalData.Add(new LoginData(guid, Encoding.UTF8.GetString(data.AsSpan(0, count))));
+    }
+
+    public static void SaveLocalAccount() {
+        // Initialize data to either a stored LoginData or Default
+        var data = GlobalData.Get<LoginData>() ?? LoginData.Default;
+
+        // Load in password bytes
+        var bytes = new byte[Encoding.UTF8.GetByteCount(data.Password.AsSpan())];
+        if (!Encoding.UTF8.TryGetBytes(data.Password.AsSpan(), bytes.AsSpan(), out var byteCount)) {
+            Log.Error("Failed to get password bytes");
+            return;
+        }
+
+        // Encode password
+        var chars = new char[4 * (data.Password.Length + 2) / 3];
+        if (!Convert.TryToBase64Chars(bytes.AsSpan(0, byteCount), chars.AsSpan(), out var charCount)) {
+            Log.Error("Failed to Base64 encode password");
+            return;
+        }
+
+        var guid = data.GUID;
+        var password = new string(chars.AsSpan(0, charCount));
+
+        var jsonString = JsonConvert.SerializeObject(new Dictionary<string, string>
+                                                         { { "GUID", guid }, { "Password", password } });
+
+        // Write the encoded password and email to the account.json 
+        try {
+            File.WriteAllText(Path.Combine(LocalFolderPath, AccountFileName), jsonString);
+        } catch (Exception e) {
+            Log.Error($"Failed to write to file {AccountFileName}: {e.Message}");
+        }
     }
 
     public static T GetSetting<T>(string settingKey) where T : ISettingType {
-        if (!SettingTypes.TryGetValue(settingKey, out var setting)) {
-            return default;
-        }
+        if (!SettingTypes.TryGetValue(settingKey, out var setting)) return default;
 
-        return (T) setting;
+        return (T)setting;
     }
 
     public static void SetSetting(string settingKey, ISettingType value) {
@@ -385,79 +342,112 @@ public static class Settings {
         setting.SetValue(value); // Makes sure we're updating the static field, no use of reflection :pray:
     }
     
-    public static void LoadLocalAccount() {
-        var filePath = Path.Combine(LocalFolderPath, AccountFileName);
-
-        if (!File.Exists(filePath)) {
-            Log.Debug("No local account data found");
-            return;
-        }
-
-        string text;
-        try {
-            text = File.ReadAllText(filePath);
-        } catch (Exception e) {
-            Log.Error($"Failed to read to file {AccountFileName}: {e.Message}");
-            return;
-        }
-        
-        var info = JsonConvert.DeserializeObject<Dictionary<string, string>>(text);
-
-        if (info == null) {
-            Log.Debug("Failed to parse local account data");
-            return;
-        }
-
-        var loadedGUID = info.TryGetValue("GUID", out var guid) && !string.IsNullOrWhiteSpace(guid);
-        var loadedPASSWORD = info.TryGetValue("Password", out var password) && !string.IsNullOrWhiteSpace(password);
-
-        // Log the stuff
-
-
-        if (guid == string.Empty && password == string.Empty) {
-            Log.Debug("No local account data");
-            return;
-        }
-
-        if (!loadedGUID || !loadedPASSWORD) {
-            Log.Debug("Incomplete/Invalid local account data");
-            return;
-        }
-
-        var data = new byte[(password.Length * 3 + 3) / 4];
-        
-        if (!Convert.TryFromBase64String(password, data.AsSpan(), out var count)) {
-            Log.Error("Invalid Base64 encoding on password");
-            return;
-        }
-
-        GlobalData.Add(new LoginData(guid, Encoding.UTF8.GetString(data.AsSpan(0, count))));
+    public static void SetWindowSize(int width, int height) {
+        ScreenWidth = width;
+        ScreenHeight = height;
     }
+#pragma warning disable CA2211
 
-    public static void SaveLocalAccount() {
-        var data = GlobalData.Get<LoginData>() ?? LoginData.Default;
-        
-        var bytes = new byte[Encoding.UTF8.GetByteCount(data.Password.AsSpan())];
-        if (!Encoding.UTF8.TryGetBytes(data.Password.AsSpan(), bytes.AsSpan(), out var byteCount)) {
-            Log.Error("Failed to get password bytes");
-            return;
-        }
+    #region HOTKEYS
 
-        var chars = new char[4 * (data.Password.Length + 2) / 3];
-        if (!Convert.TryToBase64Chars(bytes.AsSpan(0, byteCount), chars.AsSpan(), out var charCount)) {
-            Log.Error("Failed to Base64 encode password");
-            return;
-        }
+    // Movement
+    public static InputSetting Options = new();
+    public static InputSetting MoveUp = new();
+    public static InputSetting MoveDown = new();
+    public static InputSetting MoveLeft = new();
+    public static InputSetting MoveRight = new();
+    public static InputSetting RotateLeft = new();
+    public static InputSetting RotateRight = new();
 
-        var guid = data.GUID;
-        var password = new string(chars.AsSpan(0, charCount));
+    // Camera
+    public static InputSetting ResetCameraAngle = new();
+    public static InputSetting CenterPlayerKey = new();
 
-        var jsonString = JsonConvert.SerializeObject(new Dictionary<string, string>{{"GUID", guid}, {"password", password}});
+    // Key 
+    public static InputSetting AutoFire = new();
+    public static InputSetting Special = new();
+    public static InputSetting Interact = new();
+    public static InputSetting Escape = new();
 
-        try {
-            File.WriteAllText(Path.Combine(LocalFolderPath, AccountFileName), jsonString);
-        } catch (Exception e) {
-            Log.Error($"Failed to write to file {AccountFileName}: {e.Message}");
-        }
-    }
+    // Chat
+    public static InputSetting Chat = new();
+    public static InputSetting ChatCommand = new();
+    public static InputSetting TellKey = new();
+    public static InputSetting GuildChat = new();
+    public static InputSetting PartyChat = new();
+    public static InputSetting ChatHistoryUp = new();
+    public static InputSetting ChatHistoryDown = new();
+
+    // Inventory
+    public static InputSetting HealthPotion = new();
+    public static InputSetting MagicPotion = new();
+    public static InputSetting InvOne = new();
+    public static InputSetting InvTwo = new();
+    public static InputSetting InvThree = new();
+    public static InputSetting InvFour = new();
+    public static InputSetting InvFive = new();
+    public static InputSetting InvSix = new();
+    public static InputSetting InvSeven = new();
+    public static InputSetting InvEight = new();
+
+    // Misc
+    public static InputSetting PerformanceStats = new();
+    public static InputSetting SwitchTabs = new();
+    public static InputSetting ResetMScale = new();
+    public static InputSetting SetBagPriority = new();
+    public static InputSetting FullscreenKey = new();
+
+    // Dev
+
+    #endregion
+
+    #region VALUES
+
+    public static ValueSetting<PacketLogLevel> PacketLogging = PacketLogLevel.Off;
+
+    // Camera Settings
+    public static ValueSetting<float> CameraAngle = 0f;
+    public static ValueSetting<float> CameraZoom = 1;
+    public static ValueSetting<bool> AllowRotation = true;
+    public static ValueSetting<float> RotateSpeed = 0.003f;
+
+    // Screen Settings
+    public static ValueSetting<int> FpsCap = -1;
+    public static ValueSetting<bool> VSync = false;
+    public static ValueSetting<bool> Fullscreen = false;
+    public static ValueSetting<int> ScreenWidth = DefaultScreenWidth;
+    public static ValueSetting<int> ScreenHeight = DefaultScreenHeight;
+    public static ValueSetting<int> NonFullscreenWidth = DefaultScreenWidth;
+    public static ValueSetting<int> NonFullscreenHeight = DefaultScreenHeight;
+
+    // Sounds Settings
+    public static ValueSetting<float> MusicVolume = 0.5f;
+    public static ValueSetting<float> SfxVolume = 0.5f;
+    public static ValueSetting<float> WeaponSfxVolume = 0.5f;
+    public static ValueSetting<float> LootSfxVolume = 0.5f;
+
+    public static ValueSetting<bool> PlayMusic = true;
+    public static ValueSetting<bool> PlaySfx = true;
+    public static ValueSetting<bool> PlayWeaponSfx = true;
+    public static ValueSetting<bool> PlayLootSfx = true;
+
+    // Personal Preferences
+    public static ValueSetting<bool> ToggleLeftToMax = true;
+    public static ValueSetting<bool> ToggleBarText = true;
+    public static ValueSetting<bool> InventorySwap = true;
+    public static ValueSetting<bool> CenterPlayer = true;
+
+    // Chat Settings
+    public static ValueSetting<int> ChatInclude = 0;
+    public static ValueSetting<bool> ChatVisible = true;
+    public static ValueSetting<float> ChatScaling = 0f;
+    public static ValueSetting<int> ChatHideList = 0;
+
+    // Particle Settings
+    public static ValueSetting<bool> EyeCandyParticles = true;
+    public static ValueSetting<bool> ReducedParticles = false;
+
+    #endregion
+
+#pragma warning restore CA2211
 }

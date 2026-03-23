@@ -70,7 +70,7 @@ public static class SoundManager {
             return;
         }
 
-        CachedSoundEffects[name] = new SoundEffect($"{Settings.AssetUrl}/sfx/{name}.mp3");
+        CachedSoundEffects[name] = new SoundEffect($"{Settings.AppEngineUrl}/sfx/{name}.mp3");
     }
 }
 

@@ -108,7 +108,7 @@ public class ServersTitleScreen : TitleScreenBase {
     }
 
     private void BuildServerListUI(ServerListData data) {
-        var selectedServer = data.ServerList.FirstOrDefault(s => s.Port == Settings.SelectedGameServerPort);
+        var selectedServer = data.ServerList.FirstOrDefault(s => s.Port == Settings.GameServerPort);
         SelectServer(selectedServer ?? data.ServerList[0]);
 
         int leftX = _serverListContainer.Width / 4;
@@ -134,7 +134,7 @@ public class ServersTitleScreen : TitleScreenBase {
     private void SelectServer(ServerItem server) {
         // All GameServers would be hosted on the same IP because there's no
         // address property on ServerListItem(?) so only Port matters
-        Settings.SelectedGameServerPort.SetValue((ushort)server.Port);
+        /* Settings.GameServerPort.SetValue((ushort)server.Port);
 
         if (_selectedServerRect is not null) {
             _selectedServerRect.SetServer(server);
@@ -147,6 +147,6 @@ public class ServersTitleScreen : TitleScreenBase {
         selectedRect.Y = _selectedServerContainer.Height / 2;
         _selectedServerContainer.AddChild(selectedRect);
         
-        _selectedServerRect = selectedRect;
+        _selectedServerRect = selectedRect; */
     }
 }

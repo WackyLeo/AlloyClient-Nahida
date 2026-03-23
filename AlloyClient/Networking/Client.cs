@@ -10,9 +10,9 @@ using AlloyClient.Game;
 using AlloyClient.Networking.Packets;
 using AlloyClient.Networking.Packets.Outgoing;
 using AlloyClient.Screens;
+using AlloyClient.Sound;
 using AlloyClient.State;
 using AlloyClient.Utils;
-using AlloyClient.Models;
 using Common;
 
 namespace AlloyClient.Networking;
@@ -23,16 +23,16 @@ public enum ConnectionState {
 }
 
 public class SocketSendState {
-    public NetworkWriter Writer { get; private set; }
-    public MemoryStream Stream { get; private set; }
-    public byte[] SocketBuffer { get; private set; } = new byte[Client.SEND_BUFFER_SIZE];
-    public int LastValidIndex { get; set; } // End position of the packet that still fits within buffer size
-    public int Offset { get; set; }
-    
     public SocketSendState() {
         Stream = new MemoryStream();
-        Writer = new NetworkWriter(Stream, littleEndian: false);
+        Writer = new NetworkWriter(Stream, false);
     }
+
+    public NetworkWriter Writer { get; }
+    public MemoryStream Stream { get; }
+    public byte[] SocketBuffer { get; } = new byte[Client.SEND_BUFFER_SIZE];
+    public int LastValidIndex { get; set; } // End position of the packet that still fits within buffer size
+    public int Offset { get; set; }
 
     public int
         PacketBegin() // Returns the start of the packet bytes in the buffer. NEVER use this without locking the SocketSendState instance
@@ -42,8 +42,7 @@ public class SocketSendState {
         return begin;
     }
 
-    public void PacketEnd(int begin, PacketId pkt)
-    {
+    public void PacketEnd(int begin, PacketId pkt) {
         var length = (int)Stream.Position - begin;
         Stream.Position -= length;
         // Write length big-endian (network byte order)
@@ -80,7 +79,7 @@ public static class Client {
     public static readonly SocketSendState SendState = new();
 
     private static readonly byte[] _readBuffer = new byte[RECV_BUFFER_SIZE];
-    private static readonly NetworkReader _reader = new NetworkReader(new MemoryStream(_readBuffer), littleEndian: false);
+    private static readonly NetworkReader _reader = new(new MemoryStream(_readBuffer), false);
     private static readonly SocketAsyncEventArgs _send = new();
     private static readonly SocketAsyncEventArgs _receive = new();
     private static Socket _socket;
@@ -107,9 +106,9 @@ public static class Client {
 
         _tcp = new TcpClient();
         _tcp.NoDelay = true;
-        
+
         Log.Info($"Connecting to {ip}:{port}...");
-        while (true) {
+        while (true)
             try {
                 await _tcp.ConnectAsync(ip, port);
                 break;
@@ -124,12 +123,9 @@ public static class Client {
                 Log.Error(e.ToString());
                 return;
             }
-        }
 
         _socket = _tcp.Client;
-        if (_socket == null) {
-            return;
-        }
+        if (_socket == null) return;
 
         State = ConnectionState.Connected;
 
@@ -151,9 +147,7 @@ public static class Client {
         try {
             _receive.SetBuffer(_bytesRead, RECV_BUFFER_SIZE - _bytesRead);
 
-            if (!_socket.ReceiveAsync(_receive)) {
-                ProcessReceive(null, _receive);
-            }
+            if (!_socket.ReceiveAsync(_receive)) ProcessReceive(null, _receive);
         } catch {
             // ignored
         }
@@ -169,17 +163,14 @@ public static class Client {
         var error = args.SocketError;
         if (error != SocketError.Success && error != SocketError.IOPending) {
             string msg = null;
-            if (error != SocketError.ConnectionReset) {
-                msg = $"Receive SocketError.{error}";
-            }
+            if (error != SocketError.ConnectionReset) msg = $"Receive SocketError.{error}";
 
             Disconnect(msg);
             return;
         }
 
         var bytesReceived = args.BytesTransferred;
-        if (bytesReceived == 0)
-        {
+        if (bytesReceived == 0) {
             Disconnect("Remote host closed connection.");
             return;
         }
@@ -195,14 +186,14 @@ public static class Client {
 
             var length = _reader.ReadInt32(); // We always start reading from the beginning
             // Log.Debug($"Start: {start} Length: {length} BytesNotRead: {bytesNotRead} BytesRead: {_bytesRead}");
-            
+
             var read = Math.Min(length - _bytesRead, bytesNotRead); // Bytes read in this current iteration
             _bytesRead += read;
 
             if (_bytesRead < length) // This means we still have bytes to read that we haven't received in this call
             {
                 Buffer.BlockCopy(_readBuffer, start, _readBuffer, 0,
-                    _bytesRead); // Move this many bytes to the beginning of the buffer
+                                 _bytesRead); // Move this many bytes to the beginning of the buffer
                 break;
             }
 
@@ -216,7 +207,8 @@ public static class Client {
                 Log.Error(e.ToString());
             }
 
-            _reader.BaseStream.Seek(start + _bytesRead, SeekOrigin.Begin); // In case we failed processing, go to the end of the packet
+            _reader.BaseStream.Seek(start + _bytesRead,
+                                    SeekOrigin.Begin); // In case we failed processing, go to the end of the packet
             _bytesRead = 0;
 
             bytesNotRead -= read;
@@ -230,8 +222,7 @@ public static class Client {
     public static void Tick() {
         SendPendingPackets();
 
-        while (IncomingQueue.TryDequeue(out var packet))
-        {
+        while (IncomingQueue.TryDequeue(out var packet)) {
             Log.Info($"Processing incoming packet: {packet.GetType().Name}");
             PacketLogger.LogPacket(packet);
             packet.Handle();
@@ -240,15 +231,11 @@ public static class Client {
     }
 
     private static void SendPendingPackets() {
-        if (State == ConnectionState.Disconnected || _pendingSend) {
-            return;
-        }
+        if (State == ConnectionState.Disconnected || _pendingSend) return;
 
         int count;
         lock (SendState) {
-            if (SendState.LastValidIndex == 0) {
-                return;
-            }
+            if (SendState.LastValidIndex == 0) return;
 
             count = SendState.LastValidIndex - SendState.Offset;
 
@@ -281,9 +268,7 @@ public static class Client {
         _send.SetBuffer(0, count);
 
         try {
-            if (_socket != null && !_socket.SendAsync(_send)) {
-                ProcessSend(null, _send);
-            }
+            if (_socket != null && !_socket.SendAsync(_send)) ProcessSend(null, _send);
         } catch {
             // ignored
         }
@@ -298,9 +283,7 @@ public static class Client {
         var error = args.SocketError;
         if (error != SocketError.Success && error != SocketError.IOPending) {
             string msg = null;
-            if (error != SocketError.ConnectionReset) {
-                msg = $"Send SocketError.{error}";
-            }
+            if (error != SocketError.ConnectionReset) msg = $"Send SocketError.{error}";
 
             Disconnect(msg);
             return;
@@ -312,7 +295,7 @@ public static class Client {
     public static void QueuePacket(IOutgoingPacket pkt) {
         if (pkt.PacketId == PacketId.Unknown)
             return;
-        
+
         lock (SendState) {
             var begin = SendState.PacketBegin();
             pkt.Write(SendState.Writer);
@@ -323,7 +306,7 @@ public static class Client {
 
     public static void ReconnectToGame(int gameId, int keyTime, byte[] key) {
         IsReconnecting = true;
-    
+
         _tcp?.Close();
         _socket?.Close();
         State = ConnectionState.Disconnected;
@@ -333,7 +316,7 @@ public static class Client {
             await Task.Delay(0);
 
             _tcp = new TcpClient { NoDelay = true };
-            await _tcp.ConnectAsync(Settings.GameServerAddress, Settings.SelectedGameServerPort);
+            await _tcp.ConnectAsync(Settings.GameServerAddress, Settings.GameServerPort);
             _socket = _tcp.Client;
             State = ConnectionState.Connected;
             IsReconnecting = false;
@@ -363,21 +346,18 @@ public static class Client {
             _socket?.Close();
             _reader.BaseStream.Seek(0, SeekOrigin.Begin);
             Log.Info($"Disconnecting client {(message != null ? $"({message})" : "")}");
-            while (IncomingQueue.TryDequeue(out var pkt)) {
-                pkt.ReturnPacket();
-            }
+            while (IncomingQueue.TryDequeue(out var pkt)) pkt.ReturnPacket();
         }
 
         if (IsReconnecting) return;
 
-        Sound.Music.Stop();
+        Music.Stop();
         Map.Reset();
         ScreenManager.FadeTo(new CharacterListScreen());
     }
-    
 
-    private static void SendHello()
-    {
+
+    private static void SendHello() {
         var login = GlobalData.Get<LoginData>();
         var hello = Hello.CreatePacket();
         hello.BuildVersion = Settings.BuildVersion;

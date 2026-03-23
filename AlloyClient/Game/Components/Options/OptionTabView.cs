@@ -147,11 +147,6 @@ public class OptionTabView : Container {
             OnFullscreenToggle));
         _options.Add(new ChoiceOption<int>(Settings.FpsCap, ["30", "60", "90", "120", "144", "165", "240", "300", "360", "None"], [30, 60, 90, 120, 144, 165, 240, 300, 360, -1],
             "FPS Cap", "This allows you to choose a frame rate cap", OnFPSChange));
-        _options.Add(new ChoiceOption<int>(Settings.MaxRenderDistance, ["Low", "Medium", "High", "Max"], [15, 20, 25, 60], "Max Render Distance",
-            "Pick the maximum render distance of your client. Can improve performance greatly.", OnRenderDistanceChange));
-        _options.Add(new ChoiceOption<float>(Settings.MScale, ["100%", "90%", "80%", "70%", "60%", "50%", "200%", "150%"], [1f, 0.9f, 0.8f, 0.7f, 0.6f, 0.5f, 2f, 1.5f], "Zoom",
-            "Zooms your game in and out so you can see more or less things at once. You can also use the /mscale command or use Shift + Scroll. (Available options: 100%, 90%, 80%, 70%, 60%, 50%, 200%, 150%)",
-            OnMScaleChange));
         _options.Add(new ChoiceOption<bool>(Settings.VSync, OnOffLabels, OnOffValues, "VSync", "This toggles whether to have VSync enabled or not.", OnVSyncToggle));
     }
 
