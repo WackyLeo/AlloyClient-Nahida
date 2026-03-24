@@ -1,29 +1,27 @@
-﻿using System;
-using AlloyClient.Assets.Libraries;
+﻿using AlloyClient.Assets.Libraries;
 using AlloyClient.Assets.XmlStructs;
 using AlloyClient.Game;
 using AlloyClient.Game.Objects;
 using AlloyClient.Networking.Structs.DataObjects;
-using AlloyClient.Utils;
 using Common;
 using OpenTK.Mathematics;
 
 namespace AlloyClient.Networking.Packets.Incoming;
 
 public class EnemyShoot : IncomingPacket<EnemyShoot> {
-    public int BulletId;
-    public int OwnerId;
-    public int ContainerType;
-    public byte BulletType;
     public float Angle;
-    public short Damage;
-    public byte NumShots;
     public float AngleInc;
-    public Position[] StartingPositions;
+    public int BulletId;
+    public byte BulletType;
+    public int ContainerType;
+    public short Damage;
     public bool LargeStorage;
+    public byte NumShots;
     public float OrbitLine;
+    public int OwnerId;
+    public Position[] StartingPositions;
 
-   public override PacketId PacketId => PacketId.EnemyShoot;
+    public override PacketId PacketId => PacketId.EnemyShoot;
 
     public override void Reset() {
         BulletId = 0;
@@ -53,6 +51,7 @@ public class EnemyShoot : IncomingPacket<EnemyShoot> {
             StartingPositions[i] = new Position();
             StartingPositions[i].Read(reader);
         }
+
         LargeStorage = reader.ReadBoolean();
         OrbitLine = reader.ReadSingle();
     }
@@ -65,16 +64,17 @@ public class EnemyShoot : IncomingPacket<EnemyShoot> {
         ProjectileProperties projDesc = null;
         ObjectProperties objDesc = null;
 
-        if (en.Properties.Projectiles != null && BulletType < en.Properties.Projectiles.Count) {
+        if (en.Properties.Projectiles != null && BulletType < en.Properties.Projectiles.Count)
             projDesc = en.Properties.Projectiles[BulletType];
-        } 
-        else if (en.Properties.ProjectilesDict != null && en.Properties.ProjectilesDict.TryGetValue(BulletType, out var dictProj)) {
-            projDesc = dictProj;
-        }
+        else if (en.Properties.ProjectilesDict != null &&
+                 en.Properties.ProjectilesDict.TryGetValue(BulletType, out var dictProj)) projDesc = dictProj;
         if (projDesc == null) {
-            Logger.Error($"Projectile '{BulletType}' missing on '{en.Properties.DisplayName}'. Skipping shot.", "EnemyShoot");
-            return; 
+            Logger.Error($"Projectile '{BulletType}' missing on '{en.Properties.DisplayName}'. Skipping shot.",
+                         "EnemyShoot");
+            return;
         }
+
+        if (en.Hp < 0) return;
         if (!ObjectLibrary.IdToObjectType.TryGetValue(projDesc.ObjectId, out type) ||
             !ObjectLibrary.TypeToObjectProps.TryGetValue(type, out objDesc)) {
             Logger.Error($"Failed to find Object properties for projectile '{projDesc.ObjectId}'", "EnemyShoot");
@@ -82,7 +82,7 @@ public class EnemyShoot : IncomingPacket<EnemyShoot> {
         }
 
         var bulletIdMod = LargeStorage ? 4096 : 256;
-        
+
         for (var i = 0; i < NumShots; i++) {
             var proj = ObjectPools.Projectiles.Pop();
             var startPos = StartingPositions[i];
@@ -96,6 +96,7 @@ public class EnemyShoot : IncomingPacket<EnemyShoot> {
     }
 
     public override string ToString() {
-        return $"BulletId: {BulletId}, OwnerId: {OwnerId}, BulletType: {BulletType}, Angle: {Angle}, Damage: {Damage}, StartingPositions: {StartingPositions}, NumShots: {NumShots}, AngleInc: {AngleInc}";
+        return
+            $"BulletId: {BulletId}, OwnerId: {OwnerId}, BulletType: {BulletType}, Angle: {Angle}, Damage: {Damage}, StartingPositions: {StartingPositions}, NumShots: {NumShots}, AngleInc: {AngleInc}";
     }
 }

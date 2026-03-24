@@ -1,20 +1,18 @@
-﻿using AlloyClient.Game;
+﻿using System;
+using AlloyClient.Game;
 using AlloyClient.Networking.Packets.Outgoing;
 using AlloyClient.Networking.Structs.DataObjects;
-using AlloyClient.Utils;
 using Common;
-using System;
 
 namespace AlloyClient.Networking.Packets.Incoming;
 
 public class NewTick : IncomingPacket<NewTick> {
-    
-    public override PacketId PacketId => PacketId.NewTick;
-    
     private static ObjectStats[] _statsBuffer = new ObjectStats[256];
     public int ObjectStatsCount;
-    public int TickTime;
     public int TickId;
+    public int TickTime;
+
+    public override PacketId PacketId => PacketId.NewTick;
     public ObjectStats[] ObjectStats => _statsBuffer;
 
     public override void Reset() {
@@ -22,16 +20,15 @@ public class NewTick : IncomingPacket<NewTick> {
     }
 
     public override void Read(NetworkReader reader) {
-
         TickId = reader.ReadInt32();
         TickTime = reader.ReadInt32();
 
 
         Structs.DataObjects.ObjectStats.StatsPoolIndex = 0;
-      
+
         ObjectStatsCount = reader.ReadInt16();
         EnsureCapacity(ref _statsBuffer, ObjectStatsCount);
-        for (int i = 0; i < ObjectStatsCount; i++)
+        for (var i = 0; i < ObjectStatsCount; i++)
             _statsBuffer[i].Read(reader);
     }
 
@@ -42,8 +39,8 @@ public class NewTick : IncomingPacket<NewTick> {
 
     public override void Handle() {
         Map.LastTickId = TickId;
-        double now = Main.GameTime.TotalMs;
-        
+        var now = Main.GameTime.TotalMs;
+
         if (Map.LocalPlayer != null) {
             var move = Move.CreatePacket();
             move.ObjectId = Map.LocalPlayer.ObjectId;
@@ -60,16 +57,16 @@ public class NewTick : IncomingPacket<NewTick> {
             Map.FlushPlayerHits();
         }
 
-        for (int i = 0; i < ObjectStatsCount; i++) {
+        for (var i = 0; i < ObjectStatsCount; i++) {
             var stats = _statsBuffer[i];
-            bool isMe = (Map.LocalPlayer != null && stats.Id == Map.LocalPlayer.ObjectId);
+            var isMe = Map.LocalPlayer != null && stats.Id == Map.LocalPlayer.ObjectId;
             ProcessObjectStats(stats, isMe, now);
         }
     }
 
     private void ProcessObjectStats(ObjectStats stats, bool isPlayer, double now) {
         if (!Map.Entities.TryGetValue(stats.Id, out var en)) {
-            Logger.Warn($"[NewTick] Unable to lookup id: {stats.Id}");
+            Logger.Warn($"[NewTick] Unable to lookup id pos {stats.Position}: {stats.Id}");
             return;
         }
 

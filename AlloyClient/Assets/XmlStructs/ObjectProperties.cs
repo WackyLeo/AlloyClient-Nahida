@@ -5,57 +5,55 @@ using Common;
 
 namespace AlloyClient.Assets.XmlStructs;
 
-
 public class ObjectProperties {
-    public readonly ushort ObjectType;
-    public readonly string ObjectId;
-    
-    public readonly string DisplayId;
-    public readonly string DisplayName;
-    
-    public readonly List<ProjectileProperties> Projectiles;
-    public readonly Dictionary<int, ProjectileProperties> ProjectilesDict;
-    
-    public readonly PlayerProperties PlayerProperties;
-
-    public readonly string Class;
-    public readonly string Model;
-    public readonly string Effect;
-    public readonly float Rotation;
     public readonly float AngleCorrection;
-    public readonly int NumProjectiles;
     public readonly float ArcGap;
 
-    public readonly bool IsPlayer;
-    public readonly bool IsEnemy;
-    public readonly bool IsAlly;
-
-    public readonly bool EnemyOccupySquare;
-    public readonly bool OccupySquare;
-    public readonly bool FullOccupy;
-
-    public readonly bool Static;
-    public readonly bool NoMiniMap;
-    public readonly bool DrawOnGround;
-    public readonly bool ProtectFromGroundDamage;
-    public readonly bool ProtectFromSink;
-    
-    public readonly int RealSize;
-    public readonly int MinSize;
-    public readonly int MaxSize;
-    public readonly int SizeStep = 5;
-    
-    public readonly string Description;
-    
-    public readonly ushort PlayerClassType;
-    public readonly bool Skin;
-    public readonly bool ShowName;
+    public readonly string Class;
 
     public readonly bool Container;
-    public readonly bool LockedPortal;
-    
-    public readonly List<int> SlotTypes;
+
+    public readonly string Description;
+
+    public readonly string DisplayId;
+    public readonly string DisplayName;
+    public readonly bool DrawOnGround;
+    public readonly string Effect;
+
+    public readonly bool EnemyOccupySquare;
     public readonly List<ushort?> Equipment;
+    public readonly bool FullOccupy;
+    public readonly bool IsAlly;
+    public readonly bool IsEnemy;
+
+    public readonly bool IsPlayer;
+    public readonly bool LockedPortal;
+    public readonly int MaxSize;
+    public readonly int MinSize;
+    public readonly string Model;
+    public readonly bool NoMiniMap;
+    public readonly int NumProjectiles;
+    public readonly string ObjectId;
+    public readonly ushort ObjectType;
+    public readonly bool OccupySquare;
+
+    public readonly ushort PlayerClassType;
+    public readonly PlayerProperties PlayerProperties;
+
+    public readonly List<ProjectileProperties> Projectiles;
+    public readonly Dictionary<int, ProjectileProperties> ProjectilesDict;
+    public readonly bool ProtectFromGroundDamage;
+    public readonly bool ProtectFromSink;
+
+    public readonly int RealSize;
+    public readonly float Rotation;
+    public readonly bool ShowName;
+    public readonly int SizeStep = 5;
+    public readonly bool Skin;
+
+    public readonly List<int> SlotTypes;
+
+    public readonly bool Static;
 
     public ObjectProperties(XElement e) {
         ObjectType = e.GetAttribute<ushort>("type");
@@ -86,9 +84,7 @@ public class ObjectProperties {
         IsEnemy = e.GetValue<bool>("Enemy");
         IsAlly = e.GetValue<bool>("Ally");
 
-        if (IsPlayer) {
-            PlayerProperties = new PlayerProperties(e);
-        }
+        if (IsPlayer) PlayerProperties = new PlayerProperties(e);
 
         EnemyOccupySquare = e.GetValue<bool>("EnemyOccupySquare");
         OccupySquare = e.GetValue<bool>("OccupySquare");
@@ -98,9 +94,9 @@ public class ObjectProperties {
         NoMiniMap = e.GetValue<bool>("NoMiniMap");
         DrawOnGround = e.GetValue<bool>("DrawOnGround");
         ProtectFromGroundDamage = e.HasElement("ProtectFromGroundDamage");
-        ProtectFromSink  = e.HasElement("ProtectFromSink");
-        
-        RealSize = e.GetValue<int>("RealSize", -1);
+        ProtectFromSink = e.HasElement("ProtectFromSink");
+
+        RealSize = e.GetValue("RealSize", -1);
         MinSize = e.GetValue<int>("MinSize");
         MaxSize = e.GetValue<int>("MaxSize");
         SizeStep = e.GetValue("SizeStep", 5);
@@ -112,18 +108,16 @@ public class ObjectProperties {
 
         SlotTypes = [];
         var slotTypes = e.GetValue<string>("SlotTypes");
-        if (slotTypes != null) {
-            foreach (var slot in slotTypes.Split(',')) {
+        if (slotTypes != null)
+            foreach (var slot in slotTypes.Split(','))
                 SlotTypes.Add(int.Parse(slot));
-            }
-        }
 
         Container = e.HasElement("Container");
         LockedPortal = e.HasElement("LockedPortal");
 
         Equipment = new List<ushort?>();
         var equipment = e.GetValue<string>("Equipment");
-        if (equipment != null) {
+        if (equipment != null)
             foreach (var equip in equipment.Split(',')) {
                 var clean = equip.Replace(" ", "");
                 if (clean == "-1") {
@@ -134,19 +128,17 @@ public class ObjectProperties {
                 var objectType = Convert.ToUInt16(PadHexIfNeeded(clean), Common.Utils.GetBase(clean));
                 Equipment.Add(objectType);
             }
-        }
     }
-    
+
     private static string PadHexIfNeeded(string hexValue) {
         if (hexValue.StartsWith("0x", StringComparison.OrdinalIgnoreCase)) {
             hexValue = hexValue.Substring(2);
-        
-            if (hexValue.Length < 4) {
-                hexValue = hexValue.PadLeft(4, '0');
-            }
-        
+
+            if (hexValue.Length < 4) hexValue = hexValue.PadLeft(4, '0');
+
             return "0x" + hexValue;
         }
+
         return hexValue;
     }
 }

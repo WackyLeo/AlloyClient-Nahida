@@ -7,16 +7,15 @@ using AlloyClient.UiLib.Signals;
 namespace AlloyClient.Game.Components.Hud;
 
 public sealed class InteractPanel : Sprite {
-
     public static readonly SingleSignal<Panel> AddOverride = new();
+
+    private readonly PartyPanel _partyPanel = new();
 
     private Entity _currentObject;
 
     private Panel _currentPanel;
 
     private Panel _overridePanel;
-
-    private readonly PartyPanel _partyPanel = new();
 
     public InteractPanel() {
         AddOverride.Set(SetOverride);
@@ -28,11 +27,11 @@ public sealed class InteractPanel : Sprite {
 
         if (_currentPanel != null)
             _currentPanel.Visible = false;
-        
+
         _overridePanel = panel;
         AddChild(_overridePanel);
     }
-    
+
 
     public void Update() {
         if (_overridePanel != null)
@@ -48,7 +47,7 @@ public sealed class InteractPanel : Sprite {
             SetPanel(GetInteractPanel(_currentObject));
         }
 
-        _partyPanel.Refresh(); 
+        _partyPanel.Refresh();
     }
 
     private void SetPanel(Panel panel) {
@@ -57,15 +56,25 @@ public sealed class InteractPanel : Sprite {
 
         if (_currentPanel == null)
             return;
-        
+
         AddChild(_currentPanel);
     }
-    
+
     public static bool IsInteractiveObject(Entity entity) {
         return entity.Properties.Class switch {
             "Container" => true,
             "OneWayContainer" => true,
             "Portal" => true,
+            "Button" => true,
+            "TributeButton" => true,
+            "CurseButton" => true,
+            "CurseObject" => true,
+            "TributeObjectOption" => true,
+            "MarketNPC" => true,
+            "StorageNPC" => true,
+            "StorageBuyNPC" => true,
+            "WikiAlter" => true,
+            "Merchant" => true,
             _ => false
         };
     }
@@ -73,16 +82,16 @@ public sealed class InteractPanel : Sprite {
     private static Panel GetInteractPanel(Entity entity) {
         if (entity == null)
             return null;
-        
+
         return entity.Properties.Class switch {
             "Container" => new ContainerPanel(entity, false),
             "OneWayContainer" => new ContainerPanel(entity, true),
             "Portal" => new PortalPanel(entity),
             "Button" => null,
-            "TributeButton" => null,
+            "TributeButton" => new TributeButtonPanel(entity),
             "CurseButton" => null,
             "CurseObject" => null,
-            "TributeObjectOption" => null,
+            "TributeObjectOption" => new TributeOptionPanel(entity),
             "MarketNPC" => null,
             "StorageNPC" => null,
             "StorageBuyNPC" => null,

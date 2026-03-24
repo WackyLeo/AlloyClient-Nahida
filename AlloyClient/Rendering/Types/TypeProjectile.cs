@@ -9,25 +9,20 @@ using OpenTK.Mathematics;
 namespace AlloyClient.Rendering.Types;
 
 public sealed class TypeProjectile : RenderBase {
-    
-    public override ModelType ModelType {
-        get => ModelType.PbObject;
-    }
-
-    public override bool HasShadow {
-        get => true;
-    }
-
     public TypeProjectile() {
         Extra = new ExtraData(RenderConfig.TypeGameObject, RenderConfig.Shade);
     }
-    
+
+    public override ModelType ModelType => ModelType.PbObject;
+
+    public override bool HasShadow => true;
+
     public override void SetPosition(float x, float y, float z = 0) {
         Position.X = x;
         Position.Y = y;
         Position.Z = z;
     }
-    
+
     public override void SetVisibility(bool visible) {
         Visible = visible;
     }
@@ -35,38 +30,39 @@ public sealed class TypeProjectile : RenderBase {
     public override void SetDepth(float depth) {
         Extra.SortId = depth;
     }
-    
+
     public override void SetAlpha(float alpha) {
         Extra.Alpha = alpha;
     }
 
-    public override void SetName(string name) { }
+    public override void SetName(string name) {
+    }
 
     public override void Draw() {
         var s = MathF.Sin(-RotationAngle);
         var c = MathF.Cos(-RotationAngle);
         var k = Size / 100f;
         Rotation = new Vector4(s, c, k, -1f);
-        
+
         Render.DrawEntity(new VertexObject(Position, UV, Scale, Rotation, Extra.Data, Color));
     }
 
     public override void DrawShadow() {
-        if (InvisProj || !Visible) {
+        /*if (InvisProj || !Visible) {
             return;
-        }
-        
+        }*/
+
         Render.DrawShadow(new ShadowData(Position.Xy, 0.5f, Color.Black));
     }
-    
+
     public override void SetTexture(AtlasData texture, bool attackFrame) {
         UV = texture.ToVector4();
-        
+
         var padW = 1.0f + AtlasConfig.Padding * 3 / texture.RawW();
         var padH = 1.0f + AtlasConfig.Padding * 3 / texture.RawH();
-        var widthScale  = 0.75f * padW;
+        var widthScale = 0.75f * padW;
         var heightScale = 0.75f * padH;
-        
+
         Scale = new Vector4(widthScale, heightScale, 0f, 0f);
     }
 }

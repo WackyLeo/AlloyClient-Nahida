@@ -313,7 +313,7 @@ public static class Client {
         Reset();
 
         Task.Run(async () => {
-            await Task.Delay(0);
+            await Task.Delay(500);
 
             _tcp = new TcpClient { NoDelay = true };
             await _tcp.ConnectAsync(Settings.GameServerAddress, Settings.GameServerPort);

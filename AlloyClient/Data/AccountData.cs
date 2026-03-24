@@ -7,19 +7,20 @@ namespace AlloyClient.Data;
 public sealed class AccountData : IGlobalData {
     public readonly int AccountId;
 
-    public readonly int Rank;
-
-    public readonly string Name;
-
     public readonly bool Admin;
 
     public readonly string GuildName;
 
     public readonly int GuildRank;
 
+    public readonly string Name;
+
+    public readonly int Rank;
+
     public readonly AccountStats Stats;
 
     public AccountData(XElement xml) {
+        if (xml == null) return;
         AccountId = xml.GetValue("AccountId", -1);
         Rank = xml.GetValue("Rank", 0);
         Name = xml.GetValue("Name", "");
@@ -31,28 +32,27 @@ public sealed class AccountData : IGlobalData {
         }
 
         Admin = xml.HasElement("Admin");
-        
+
         Stats = new AccountStats(xml.Element("Stats"));
     }
 }
 
 public sealed class AccountStats {
-
     public readonly int BestCharacterFame;
 
-    public readonly int TotalFame;
-
-    public readonly int Fame;
-
-    public readonly int TotalCredits;
+    public readonly ClassStats[] ClassStats;
 
     public readonly int Credits;
 
-    public readonly int TotalGuildFame;
+    public readonly int Fame;
 
     public readonly int GuildFame;
 
-    public readonly ClassStats[] ClassStats;
+    public readonly int TotalCredits;
+
+    public readonly int TotalFame;
+
+    public readonly int TotalGuildFame;
 
 
     public AccountStats(XElement xml) {
@@ -65,19 +65,16 @@ public sealed class AccountStats {
         GuildFame = xml.GetValue("GuildFame", 0);
 
         var classStats = new List<ClassStats>();
-        foreach (var stats in xml.Elements("ClassStats")) {
-            classStats.Add(new ClassStats(stats));
-        }
+        foreach (var stats in xml.Elements("ClassStats")) classStats.Add(new ClassStats(stats));
 
         ClassStats = classStats.ToArray();
     }
 }
 
 public class ClassStats(XElement xml) {
-
-    public readonly int ObjectType = xml.GetValue("objectType", 0);
-
     public readonly int BestFame = xml.GetValue("BestFame", 0);
 
     public readonly int BestLevel = xml.GetValue("BestLevel", 0);
+
+    public readonly int ObjectType = xml.GetValue("objectType", 0);
 }

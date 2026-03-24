@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Threading;
 using AlloyClient.Assets;
 using AlloyClient.Game.Components;
 using AlloyClient.Game.Components.Hud;
@@ -14,11 +13,9 @@ using AlloyClient.Rendering;
 using AlloyClient.Rendering.Types;
 using AlloyClient.Rendering.VertexData;
 using AlloyClient.UiLib.Signals;
-using AlloyClient.Utils;
 using Common;
 using OpenTK.Graphics.OpenGL;
 using OpenTK.Mathematics;
-using TileData = AlloyClient.Rendering.VertexData.TileData;
 
 namespace AlloyClient.Game;
 
@@ -42,9 +39,12 @@ public static class Map {
     public static MapTile[,] _tiles;
     public static readonly RenderStorage EntityStorage = new();
     public static readonly Dictionary<int, Player> Players = new();
-    public static readonly Dictionary<int, Entity> Entities = new(); // todo: add players to separate dic for minimap prio
+
+    public static readonly Dictionary<int, Entity>
+        Entities = new(); // todo: add players to separate dic for minimap prio
+
     public static readonly Dictionary<int, Entity> InteractiveObjects = new();
-    
+
     public static readonly List<ParticleEffect> ParticleGenerators = [];
 
     public static int ParticleGenCount;
@@ -58,13 +58,19 @@ public static class Map {
     public static int LastTickId;
 
     public static Signal<Player> OnPlayerUpdate = new();
-    
+
     public static bool TilesDirty = true;
     private static int _particleCount;
     private static readonly ParticleData[] Particles = new ParticleData[30000];
     private static readonly List<int> EntitiesToRemove = [];
     private static readonly List<MapTile> VisibleTopTiles = [];
-    public static void InitMap(int width, int height, string name, string display, int diff, uint seed, int background, bool allowTp, bool showDisplays) {
+
+    private static Vector2 _lastPosition = Vector2.Zero;
+
+    private static readonly List<(Projectile proj, double spawnAt)> PendingProjectiles = [];
+
+    public static void InitMap(int width, int height, string name, string display, int diff, uint seed, int background,
+                               bool allowTp, bool showDisplays) {
         Width = width;
         Height = height;
         Name = name;
@@ -76,7 +82,7 @@ public static class Map {
         ShowDisplays = showDisplays;
 
         _tiles = new MapTile[width + 1, height + 1];
-        
+
         Minimap.OnNewMap.Dispatch(width, height);
     }
 
@@ -85,50 +91,41 @@ public static class Map {
         _particleCount = 0;
         var fullMatrix = Camera.WorldMatrix * Camera.ViewMatrix * Camera.ProjectionMatrix;
         var matrix = new DepthMatrix(fullMatrix);
-        
-        bool hasDarkness = LocalPlayer?.HasConditionEffect(ConditionEffects.Darkness) ?? false;
-        float darknessRadiusSq = 49f;
-        
-        int updateRadius = hasDarkness ? 7 : TileRenderDistance;
+
+        var hasDarkness = LocalPlayer?.HasConditionEffect(ConditionEffects.Darkness) ?? false;
+        var darknessRadiusSq = 49f;
+
+        var updateRadius = hasDarkness ? 7 : TileRenderDistance;
         if (LocalPlayer != null && LocalPlayer.UpdateRadius != updateRadius) {
             LocalPlayer.UpdateRadius = updateRadius;
             TilesDirty = true;
         }
-        
+
         foreach (var (objectId, entity) in Entities) {
-            if (!entity.Update(time, dt)) {
-                EntitiesToRemove.Add(objectId);
-            }
-        
+            if (!entity.Update(time, dt)) EntitiesToRemove.Add(objectId);
+
             entity.UpdateVisibility(ref fullMatrix);
 
-            bool allowTransparency = (entity.RenderBaseType is TypeGameObject) || (entity.RenderBaseType is TypePlayer);
+            var allowTransparency = entity.RenderBaseType is TypeGameObject || entity.RenderBaseType is TypePlayer;
             if (allowTransparency) {
-                if (hasDarkness && entity != LocalPlayer && !Players.ContainsKey(objectId)) {
-                    if ((entity.Position - LocalPlayer.Position).LengthSquared > darknessRadiusSq) {
-                        entity.RenderBaseType.Visible = false; 
-                    }
-                }
+                if (hasDarkness && entity != LocalPlayer && !Players.ContainsKey(objectId))
+                    if ((entity.Position - LocalPlayer.Position).LengthSquared > darknessRadiusSq)
+                        entity.RenderBaseType.Visible = false;
 
-                if (entity.HasConditionEffect(ConditionEffects.Invisible)) {
+                if (entity.HasConditionEffect(ConditionEffects.Invisible))
                     entity.RenderBaseType.SetAlpha(0.5f);
-                } else {
+                else
                     entity.RenderBaseType.SetAlpha(1.0f);
-                }
             }
         }
 
-        foreach (var id in EntitiesToRemove) {
-            RemoveEntity(id);
-        }
-        
+        foreach (var id in EntitiesToRemove) RemoveEntity(id);
+
         EntitiesToRemove.Clear();
 
         for (var i = ParticleGenCount - 1; i >= 0; i--) {
             var gen = ParticleGenerators[i];
-            if (gen.Update(time, dt)) {
-                continue;
-            }
+            if (gen.Update(time, dt)) continue;
 
             ParticleGenCount--;
             ParticleGenerators[i] = ParticleGenerators[ParticleGenCount];
@@ -157,12 +154,10 @@ public static class Map {
             Projectiles.RemoveAt(idx);
         }
     }
-    
-    private static Vector2 _lastPosition = Vector2.Zero;
 
     public static void Draw(GameTime gameTime) {
         if (LocalPlayer == null) return;
-        
+
         GL.Disable(EnableCap.DepthTest);
         GL.Disable(EnableCap.CullFace);
 
@@ -176,32 +171,35 @@ public static class Map {
                     var ePos = Camera.WorldToDebug2D(new Vector3(entity.Position.X, entity.Position.Y, 0.5f));
                     Render.DebugCircle(ePos, 0.25f, new Vector3(1f, 0.5f, 0f), 0.03f);
                 }
+
                 if (entity.Properties.IsPlayer) {
                     var ePos = Camera.WorldToDebug2D(new Vector3(entity.Position.X, entity.Position.Y, 0.5f));
                     Render.DebugCircle(ePos, 0.25f, new Vector3(0f, 0.5f, 1f), 0.03f);
                 }
             }
-    
+
             // Local player position cross
             if (LocalPlayer != null) {
-                var lpPos = Camera.WorldToDebug2D(new Vector3(LocalPlayer.Position.X, LocalPlayer.Position.Y, LocalPlayer.Z));
+                var lpPos = Camera.WorldToDebug2D(new Vector3(LocalPlayer.Position.X, LocalPlayer.Position.Y,
+                                                              LocalPlayer.Z));
                 Render.DebugLine(
-                    lpPos - new Vector2(0.3f, 0),
-                    lpPos + new Vector2(0.3f, 0),
-                    new Vector3(1, 1, 0), 0.03f);
+                                 lpPos - new Vector2(0.3f, 0),
+                                 lpPos + new Vector2(0.3f, 0),
+                                 new Vector3(1, 1, 0), 0.03f);
             }
         }
-        
+
         Render.SetShaderParams(gameTime);
 
         #region Tile
+
         var pos = Vector2.Floor(LocalPlayer.Position);
         if (pos != _lastPosition || TilesDirty) {
             _lastPosition = pos;
             TilesDirty = false;
-            
+
             VisibleTopTiles.Clear();
-            
+
             Render.StartNewDrawTile();
 
             for (var x = -LocalPlayer.UpdateRadius; x < LocalPlayer.UpdateRadius; x++) {
@@ -215,15 +213,13 @@ public static class Map {
                 }
             }
 
-            Render.SaveBlendStart(); 
+            Render.SaveBlendStart();
 
             for (var x = -LocalPlayer.UpdateRadius; x < LocalPlayer.UpdateRadius; x++) {
                 for (var y = -LocalPlayer.UpdateRadius; y < LocalPlayer.UpdateRadius; y++) {
                     if (x * x + y * y >= LocalPlayer.UpdateRadius * LocalPlayer.UpdateRadius) continue;
                     var tile = GetTile(x + (int)LocalPlayer.Position.X, y + (int)LocalPlayer.Position.Y);
-                    if (tile != null && tile.Type != 0xFF) {
-                        tile.DrawTileBlends();
-                    }
+                    if (tile != null && tile.Type != 0xFF) tile.DrawTileBlends();
                 }
             }
 
@@ -234,17 +230,18 @@ public static class Map {
         }
 
         Render.SetTileElevation(0f);
-        Render.DrawGroundTilesBase(); 
+        Render.DrawGroundTilesBase();
 
         if (EntityStorage.TryGetValue(ModelType.PbGroundObject, out var groundObjects)) {
             Render.StartDrawGroundObjects();
-            foreach (var obj in groundObjects) {
-                if (obj.Visible) obj.Draw();
-            }
+            foreach (var obj in groundObjects)
+                if (obj.Visible)
+                    obj.Draw();
             Render.FlushGroundObjects();
         }
 
         Render.DrawGroundTileBlends();
+
         #endregion
 
         #region Shadows
@@ -252,9 +249,7 @@ public static class Map {
         if (EntityStorage.TryGetValue(ModelType.PbObject, out var go)) {
             Render.StartDrawShadow();
 
-            foreach (var type in go) {
-                type.DrawShadow();
-            }
+            foreach (var type in go) type.DrawShadow();
 
             Render.EndShadowDraw();
         }
@@ -268,47 +263,42 @@ public static class Map {
         Render.DrawParticles(Particles, _particleCount);
 
         #endregion
-        
+
         GL.Enable(EnableCap.CullFace);
-        
+
         #region Entities
-        
+
         Render.StartDrawModel();
-        
+
         foreach (var kvp in EntityStorage) {
             if (kvp.Key == ModelType.Null || kvp.Key == ModelType.PbObject) continue;
 
             Render.SetEntityModel(kvp.Key);
 
-            foreach (var entity in kvp.Value) {
-                
-                
+            foreach (var entity in kvp.Value)
                 if (entity.Visible) {
                     entity.Draw();
                     Render.LastDrawCountEntities++;
                 }
 
-            }
-
             Render.FlushBufferModel();
         }
+
         GL.Disable(EnableCap.CullFace);
-        
+
         Render.StartDrawEntity();
-        for (var i = 0; i < ParticleGenCount; i++) {
+        for (var i = 0; i < ParticleGenCount; i++)
             if (ParticleGenerators[i] is RayCastParticle rcp)
                 rcp.Draw();
-        }
-        
+
         if (EntityStorage.TryGetValue(ModelType.PbObject, out var entities)) {
             entities.Sort();
 
-            foreach (var type in entities) {
+            foreach (var type in entities)
                 if (type.Visible) {
                     type.Draw();
                     Render.LastDrawCountEntities++;
                 }
-            }
 
             Render.FlushBufferEntity();
         }
@@ -316,47 +306,45 @@ public static class Map {
         #endregion
 
         #region Top Tiles
-        
+
         if (VisibleTopTiles.Count > 0) {
             GL.Enable(EnableCap.DepthTest);
             Render.SetTileElevation(1f);
-            Render.DrawTopTiles(); 
+            Render.DrawTopTiles();
         }
 
         #endregion
-        
-        
+
+
         var vp = Camera.WorldMatrix * Camera.ViewMatrix * Camera.ProjectionMatrix;
         Render.FlushDebug(vp);
     }
-  
+
     public static void FlushEnemyHits() {
         if (PendingEnemyHit.Stack > 0) {
             Client.QueuePacket(PendingEnemyHit);
             PendingEnemyHit = EnemyHit.CreatePacket();
         }
     }
-    
+
     public static void FlushPlayerHits() {
         if (PendingPlayerHit.Stack > 0) {
             Client.QueuePacket(PendingPlayerHit);
             PendingPlayerHit = PlayerHit.CreatePacket();
         }
     }
-    
-    public static MapTile GetTile(Vector2 position) => GetTile((int)position.X, (int)position.Y);
+
+    public static MapTile GetTile(Vector2 position) {
+        return GetTile((int)position.X, (int)position.Y);
+    }
 
     public static MapTile GetTile(int x, int y) {
-        if (x < 0 || x > Width || y < 0 || y > Height) {
-            return null;
-        }
+        if (x < 0 || x > Width || y < 0 || y > Height) return null;
 
         try {
             var tile = _tiles[x, y];
 
-            if (tile != null) {
-                return tile;
-            }
+            if (tile != null) return tile;
 
             tile = new MapTile(x, y);
             _tiles[x, y] = tile;
@@ -369,20 +357,17 @@ public static class Map {
 
     public static void SetTileData(int x, int y, ushort type) {
         var tile = GetTile(x, y);
-        if (tile == null) {
-            return;
-        }
+        if (tile == null) return;
         TilesDirty = true;
         tile.SetType(type);
     }
 
     public static void AddParticleEffect(ParticleEffect effect) {
-        if (ParticleGenCount == ParticleGenerators.Count) {
+        if (ParticleGenCount == ParticleGenerators.Count)
             ParticleGenerators.Add(effect);
-        } else {
+        else
             ParticleGenerators[ParticleGenCount] = effect;
-        }
-        
+
         ParticleGenCount++;
     }
 
@@ -393,12 +378,12 @@ public static class Map {
         EntityStorage.Add(en);
 
         if (en is Player p) {
-            if(p.ObjectId != LocalPlayerId)
+            if (p.ObjectId != LocalPlayerId)
                 Players.TryAdd(p.ObjectId, p);
             p.Ignored = PartyData.IgnoredPlayers.Contains(p.AccountId);
             p.Locked = PartyData.LockedPlayers.Contains(p.AccountId);
         }
-            
+
 
         if (InteractPanel.IsInteractiveObject(en))
             InteractiveObjects.TryAdd(en.ObjectId, en);
@@ -407,7 +392,7 @@ public static class Map {
     }
 
     public static void RemoveEntity(int id) {
-        if (!Entities.Remove(id, out var en)) 
+        if (!Entities.Remove(id, out var en))
             return;
 
         Players.Remove(id);
@@ -417,7 +402,6 @@ public static class Map {
         en.OnRemovedFromMap();
     }
 
-    private static readonly List<(Projectile proj, double spawnAt)> PendingProjectiles = [];
     public static void AddProjectile(Projectile proj) {
         //proj.MarkActive(CurrentTime);
         Projectiles.Add(proj);
@@ -429,7 +413,7 @@ public static class Map {
             count = Particles.Length - _particleCount;
 
         if (count < 1) return;
-        
+
         Array.Copy(particles, 0, Particles, _particleCount, count);
         _particleCount += count;
     }
@@ -454,15 +438,15 @@ public static class Map {
         ShowDisplays = false;
 
         PartyData.Clear();
-        
+
         Entities.Clear();
         Players.Clear();
         InteractiveObjects.Clear();
         EntityStorage.Clear();
-        
+
         Projectiles.Clear();
         PendingProjectiles.Clear();
-        
+
         LocalPlayerId = 0;
         LocalPlayer = null;
 
@@ -492,9 +476,7 @@ public static class Map {
 public class RenderStorage : Dictionary<ModelType, List<RenderBase>> {
     public void Add(Entity entity) {
         var type = entity.RenderBaseType;
-        if (!ContainsKey(type.ModelType)) {
-            base[type.ModelType] = [];
-        }
+        if (!ContainsKey(type.ModelType)) base[type.ModelType] = [];
 
         base[type.ModelType].Add(type);
 
@@ -504,54 +486,40 @@ public class RenderStorage : Dictionary<ModelType, List<RenderBase>> {
                 break;
         }
     }
-    
+
     public void Add(Projectile proj) {
         var type = proj.RenderBaseType;
-        if (!ContainsKey(type.ModelType)) {
-            base[type.ModelType] = [];
-        }
+        if (!ContainsKey(type.ModelType)) base[type.ModelType] = [];
 
         base[type.ModelType].Add(type);
     }
 
     private void Add(RenderBase type) {
-        if (type == null) {
-            return;
-        }
+        if (type == null) return;
 
-        if (!ContainsKey(type.ModelType)) {
-            base[type.ModelType] = [];
-        }
+        if (!ContainsKey(type.ModelType)) base[type.ModelType] = [];
 
         base[type.ModelType].Add(type);
     }
 
     public void Remove(Entity entity) {
         var type = entity.RenderBaseType;
-        if (!ContainsKey(type.ModelType)) {
-            return;
-        }
+        if (!ContainsKey(type.ModelType)) return;
 
         base[type.ModelType].Remove(type);
 
-        if (type is TypeWall w) {
-            Remove(w.Top);
-        }
+        if (type is TypeWall w) Remove(w.Top);
     }
-    
+
     public void Remove(Projectile proj) {
         var type = proj.RenderBaseType;
-        if (!ContainsKey(type.ModelType)) {
-            return;
-        }
+        if (!ContainsKey(type.ModelType)) return;
 
         base[type.ModelType].Remove(type);
     }
 
     private void Remove(RenderBase type) {
-        if (!ContainsKey(type.ModelType)) {
-            return;
-        }
+        if (!ContainsKey(type.ModelType)) return;
 
         base[type.ModelType].Remove(type);
     }
