@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics.CodeAnalysis;
+using System.Net.Mime;
 using System.Xml.Linq;
 using Common;
 using Common.Structs;
@@ -161,6 +162,9 @@ public static class AtlasBuilder {
             throw new Exception($"Skipping image <{sheet.Lookup}>, cutHeight <{cutHeight}> not a multiple of {image.Height}");
         }
 
+        if (image.Height % 128 != 0) {
+            Logger.Info($"image <{sheet.Lookup}>, {image.Height / 128}");
+        }
         var cutSize = cutWidth * cutHeight;
         var len = image.Width * image.Height / cutSize;
         var rectList = new StbRectPack.stbrp_rect[len];
