@@ -88,21 +88,12 @@ public sealed class TextureData {
             var atlasData = Main.Atlas.GetAtlasData(file, index);
             
             if (atlasData.W == 0 && atlasData.H == 0) {
-                
-                var t1 = Main.Atlas.GetAtlasData("lofiObj", 44);
-                var t2 = Main.Atlas.GetAtlasData("lofiObj2", 44);
-                var t3 = Main.Atlas.GetAtlasData("lofiObj3", 44);
-                //Log.Debug($"lofiObj[44]: {t1.U},{t1.V},{t1.W},{t1.H}");
-                //Log.Debug($"lofiObj2[44]: {t2.U},{t2.V},{t2.W},{t2.H}");
-                //Log.Debug($"lofiObj3[44]: {t3.U},{t3.V},{t3.W},{t3.H}");
-                
                 if (SpriteSheetLibrary.TryGetSprite(file, index, out var sheetData)) {
                     Texture = sheetData;
                     var entry = SpriteSheetLibrary.GetEntry(file);
                     OverrideTexture = entry?.Texture;
                 } else {
                     Texture = atlasData;
-                    //Log.Warn($"Texture '{file}'[{index}] not found in atlas or sheet library.");
                 }
             } else {
                 Texture = atlasData;
