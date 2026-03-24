@@ -24,7 +24,7 @@ public static class Settings {
     public const string BuildVersion = "localhost";
     public const string BuildLabel = $"Version {BuildVersion}";
 
-    private const string AppEngineAddress = "135.125.181.109"; // 116.255.20.214
+    private const string AppEngineAddress = "135.125.181.109"; // 135.125.181.109
     private const string AppEnginePort = "8080";               // 65001
 
     public const string AppEngineUrl = $"http://{AppEngineAddress}:{AppEnginePort}";

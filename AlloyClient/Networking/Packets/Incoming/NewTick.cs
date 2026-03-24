@@ -62,6 +62,13 @@ public class NewTick : IncomingPacket<NewTick> {
             var isMe = Map.LocalPlayer != null && stats.Id == Map.LocalPlayer.ObjectId;
             ProcessObjectStats(stats, isMe, now);
         }
+        
+        if (Map.LocalPlayer != null && Map.LocalPlayer.PendingShots.Count > 0) {
+            var shootPkt = PlayerShoot.CreatePacket();
+            shootPkt.Shots.AddRange(Map.LocalPlayer.PendingShots);
+            Client.QueuePacket(shootPkt);
+            Map.LocalPlayer.PendingShots.Clear(); 
+        }
     }
 
     private void ProcessObjectStats(ObjectStats stats, bool isPlayer, double now) {

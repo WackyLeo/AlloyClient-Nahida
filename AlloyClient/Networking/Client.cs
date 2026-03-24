@@ -137,84 +137,60 @@ public static class Client {
     }
 
     private static void StartReceive() {
-        if (State == ConnectionState.Disconnected || !_socket.Connected) {
-            Disconnect("Unknown");
-            return;
-        }
+        if (State == ConnectionState.Disconnected || !_socket.Connected) return;
 
         // Some exceptions from the SAEA.SetBuffer method and from the Socket.ReceiveAsync() method
         // can't be avoided in certain situations, so a try-catch block is required.
         try {
             _receive.SetBuffer(_bytesRead, RECV_BUFFER_SIZE - _bytesRead);
-
             if (!_socket.ReceiveAsync(_receive)) ProcessReceive(null, _receive);
+            
         } catch {
             // ignored
         }
     }
 
     private static void ProcessReceive(object sender, SocketAsyncEventArgs args) {
-        if (State == ConnectionState.Disconnected || !_socket.Connected) {
-            Disconnect("Unknown");
-            return;
-        }
+        if (State == ConnectionState.Disconnected || !_socket.Connected) { Disconnect("Unknown Error"); return; }
+        if (args.SocketError != SocketError.Success) { Disconnect($"Socket Error: {args.SocketError}"); return; }
+        if (args.BytesTransferred == 0) { Disconnect("Remote host closed connection."); return; }
 
-        // Check for any errors during the operation
-        var error = args.SocketError;
-        if (error != SocketError.Success && error != SocketError.IOPending) {
-            string msg = null;
-            if (error != SocketError.ConnectionReset) msg = $"Receive SocketError.{error}";
+        _bytesRead += args.BytesTransferred;
+        int offset = 0;
+        while (_bytesRead - offset >= 5) {
+            int length = IPAddress.NetworkToHostOrder(BitConverter.ToInt32(_readBuffer, offset));
 
-            Disconnect(msg);
-            return;
-        }
-
-        var bytesReceived = args.BytesTransferred;
-        if (bytesReceived == 0) {
-            Disconnect("Remote host closed connection.");
-            return;
-        }
-
-        Log.Debug($"Received {bytesReceived} bytes from server");
-
-        // Log.Debug("Reading...");
-
-        // Start reading a new packet
-        var bytesNotRead = bytesReceived;
-        while (bytesNotRead > 0) {
-            var start = (int)_reader.BaseStream.Position;
-
-            var length = _reader.ReadInt32(); // We always start reading from the beginning
-            // Log.Debug($"Start: {start} Length: {length} BytesNotRead: {bytesNotRead} BytesRead: {_bytesRead}");
-
-            var read = Math.Min(length - _bytesRead, bytesNotRead); // Bytes read in this current iteration
-            _bytesRead += read;
-
-            if (_bytesRead < length) // This means we still have bytes to read that we haven't received in this call
-            {
-                Buffer.BlockCopy(_readBuffer, start, _readBuffer, 0,
-                                 _bytesRead); // Move this many bytes to the beginning of the buffer
-                break;
+            if (length < 5 || length > RECV_BUFFER_SIZE) {
+                Disconnect($"Invalid packet length: {length}");
+                return;
+            }
+            if (_bytesRead - offset < length) {
+                break; 
             }
 
-            var packetId = (PacketId)_reader.ReadByte();
+            offset += 4;
+            var packetId = (PacketId)_readBuffer[offset++];
+            int payloadLength = length - 5;
+
             var pkt = PacketUtils.CreateIncomingPacket(packetId);
             try {
-                // Log.Debug($"RECEIVING {packetId} ({_bytesRead} bytes)");
-                pkt.Read(_reader);
-                IncomingQueue.Enqueue(pkt);
+                using (var ms = new MemoryStream(_readBuffer, offset, payloadLength))
+                using (var reader = new NetworkReader(ms, false)) { 
+                    pkt.Read(reader);
+                    IncomingQueue.Enqueue(pkt);
+                }
             } catch (Exception e) {
-                Log.Error(e.ToString());
+                Log.Error($"Error parsing {packetId}: {e}");
             }
 
-            _reader.BaseStream.Seek(start + _bytesRead,
-                                    SeekOrigin.Begin); // In case we failed processing, go to the end of the packet
-            _bytesRead = 0;
-
-            bytesNotRead -= read;
+            offset += payloadLength;
         }
 
-        _reader.BaseStream.Seek(0, SeekOrigin.Begin);
+        int remaining = _bytesRead - offset;
+        if (remaining > 0 && offset > 0) {
+            Buffer.BlockCopy(_readBuffer, offset, _readBuffer, 0, remaining);
+        }
+        _bytesRead = remaining;
 
         StartReceive();
     }

@@ -234,7 +234,7 @@ public class NetworkWriter : BinaryWriter
     }
 
     public void WriteUTF(string str)
-    {
+    { 
         if (str == null)
             Write((ushort)0);
         else

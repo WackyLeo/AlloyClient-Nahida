@@ -21,15 +21,20 @@ public class Goto : IncomingPacket<Goto> {
     }
 
     public override void Handle() {
-        if (ObjectId == Map.LocalPlayer.ObjectId) {
-            Map.LocalPlayer.MoveTo(Pos.X, Pos.Y, true);
-            Map.LocalPlayer.TickPosition.X = Pos.X;
-            Map.LocalPlayer.TickPosition.Y = Pos.Y;
-            Map.LocalPlayer.PositionAtTick.X = Pos.X;
-            Map.LocalPlayer.PositionAtTick.Y = Pos.Y;
+        var gt = GotoAck.CreatePacket();
+        gt.Time = (int)Main.GameTime.TotalMs;
+        Client.QueuePacket(gt);
 
-            var gt = GotoAck.CreatePacket();
-            Client.QueuePacket(gt);
+        if (Map.Entities.TryGetValue(ObjectId, out var entity)) {
+            entity.MoveTo(Pos.X, Pos.Y, entity == Map.LocalPlayer);
+        
+            entity.TickPosition.X = Pos.X;
+            entity.TickPosition.Y = Pos.Y;
+            entity.PositionAtTick.X = Pos.X;
+            entity.PositionAtTick.Y = Pos.Y;
+        
+            entity.MovementVector.X = 0;
+            entity.MovementVector.Y = 0;
         }
     }
 
