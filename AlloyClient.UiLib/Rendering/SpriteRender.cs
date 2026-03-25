@@ -1,6 +1,7 @@
 ﻿using System;
 using AlloyClient.Engine.Graphics;
 using AlloyClient.Engine.Graphics.Buffers;
+using AlloyClient.UiLib.Core;
 using OpenTK.Graphics.OpenGL;
 
 namespace AlloyClient.UiLib.Rendering;
@@ -48,6 +49,7 @@ public static class SpriteRender {
         _instanceBuffer.BindToIndex(0);
         
         UiRender.UiShader.Apply();
+        UiRender.UiShader.SetValue("Time", (float)Stage.GameTime.TotalMs / 1000f);
         
         GL.Disable(EnableCap.DepthTest);
         GL.Disable(EnableCap.StencilTest);

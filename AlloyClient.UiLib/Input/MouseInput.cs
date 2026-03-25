@@ -6,7 +6,7 @@ using OpenTK.Platform;
 
 namespace AlloyClient.UiLib.Input;
 
-internal static class MouseInput {
+public static class MouseInput {
 
     private static readonly string[] EventTypes = [
         MouseEvent.LeftDown, MouseEvent.MiddleDown, MouseEvent.RightDown,
@@ -58,7 +58,7 @@ internal static class MouseInput {
 
     internal static float GetHorizontalScrollDelta() => _scrollDelta.X;
 
-    internal static Vector2i GetMousePosition() => new((int) _mousePosition.X, (int)_mousePosition.Y);
+    public static Vector2i GetMousePosition() => new((int) _mousePosition.X, (int)_mousePosition.Y);
 
     private static string ButtonToEvent(MouseButton button, bool down) => button switch {
         MouseButton.Button1 => down ? MouseEvent.LeftDown : MouseEvent.LeftUp,

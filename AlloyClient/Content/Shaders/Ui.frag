@@ -25,6 +25,7 @@ uniform sampler2D TextTexture;
 
 uniform sampler2D TitleGraphicTexture;
 uniform sampler2D TitleLogoTexture;
+uniform float Time;
 
 const float TextTypeNormal = 0.0;
 const float TextTypeSmall = 1.0;
@@ -40,6 +41,14 @@ const float IdTitleLogo = 7.0;
 const float IdMinimap = 8.0;
 const float IdEllipse = 9.0;
 const float IdHpBar = 10.0;
+
+// Foward declare eff's
+
+vec3 CalculateFireEffect(vec2 screenPos, float time);
+vec3 CalculateRainbowEffect(vec2 screenPos, float time);
+vec4 CalculateGlitchEffect(vec2 uv, vec2 screenPos, float time, float pxRange, float bodyAlpha, float totalBgAlpha, vec4 outlineColor);
+vec3 CalculateElectricEffect(vec2 screenPos, float time, float bodyAlpha, float strokeAlpha);
+vec3 CalculateVoidEffect(vec2 screenPos, float time, float bodyAlpha);
 
 vec4 unpackColor(uint color) {
     return vec4(
@@ -191,8 +200,24 @@ vec4 RenderText() {
     vec4 outlineColor = unpackColor(inp.Override);
     vec4 textColor = unpackColor(inp.Color);
 
-    vec4 finalColor = mix(outlineColor, textColor, bodyAlpha);
+    int effectId = int(inp.Extra2.x);
+    if (effectId == 1) {
+        textColor.rgb = CalculateFireEffect(gl_FragCoord.xy, Time);
+    }
+    else if (effectId == 2) {
+        textColor.rgb = CalculateRainbowEffect(gl_FragCoord.xy, Time);
+    }
+    else if (effectId == 3) {
+        return CalculateGlitchEffect(inp.UVCoords, gl_FragCoord.xy, Time, pxRange, bodyAlpha, totalBgAlpha, outlineColor);
+    }
+    else if (effectId == 4) {
+        textColor.rgb = CalculateElectricEffect(gl_FragCoord.xy, Time, bodyAlpha, strokeAlpha);
+    }
+    else if (effectId == 5) {
+        textColor.rgb = CalculateVoidEffect(gl_FragCoord.xy, Time, bodyAlpha);
+    }
 
+    vec4 finalColor = mix(outlineColor, textColor, bodyAlpha);
     return vec4(finalColor.rgb, clamp(totalBgAlpha, 0.0, 1.0));
 }
 
@@ -366,4 +391,117 @@ void main() {
 
     pixel.a *= inp.Info.y;
     FragColor = pixel;
+}
+
+// Effects
+
+vec3 CalculateFireEffect(vec2 screenPos, float time) {
+    float n = sin(screenPos.x * 0.05 + time * 3.0) * 0.5 + 0.5;
+    n += sin(screenPos.y * 0.08 - time * 5.0) * 0.5;
+    n = clamp(n, 0.0, 1.0);
+
+    vec3 red = vec3(1.0, 0.1, 0.0);
+    vec3 orange = vec3(1.0, 0.6, 0.0);
+    vec3 yellow = vec3(1.0, 0.9, 0.2);
+
+    if (n < 0.5) return mix(red, orange, n * 2.0);
+    return mix(orange, yellow, (n - 0.5) * 2.0);
+}
+
+vec3 CalculateRainbowEffect(vec2 screenPos, float time) {
+    float x = screenPos.x * 0.02;
+
+    return vec3(
+    sin(time * 2.0 + x) * 0.5 + 0.5,
+    sin(time * 2.0 + x + 2.0) * 0.5 + 0.5,
+    sin(time * 2.0 + x + 4.0) * 0.5 + 0.5
+    );
+}
+
+vec4 CalculateGlitchEffect(vec2 uv, vec2 screenPos, float time, float pxRange, float bodyAlpha, float totalBgAlpha, vec4 outlineColor) {
+    float band = floor(screenPos.y / 4.0);
+
+    float trigger = step(0.93, sin(time * 4.7 + band * 0.4) * sin(time * 9.1));
+    float offset = trigger * (fract(sin(band * 127.1 + time * 3.3) * 43758.5) - 0.5) * 0.007;
+
+    vec4 msR = texture(TextTexture, uv + vec2(offset * 2.8, 0.0));
+    vec4 msB = texture(TextTexture, uv - vec2(offset * 2.8, 0.0));
+
+    float distR = (median(msR.r, msR.g, msR.b) - 0.5) * pxRange;
+    float distB = (median(msB.r, msB.g, msB.b) - 0.5) * pxRange;
+
+    float aR = clamp(distR + 0.5, 0.0, 1.0);
+    float aG = bodyAlpha;
+    float aB = clamp(distB + 0.5, 0.0, 1.0);
+
+    float flicker = 0.82 + 0.18 * sin(time * 55.0 + band * 1.3);
+    float scanline = sin(screenPos.y * 1.8 + time * 1.5) * 0.06 + 0.94;
+
+    vec4 result;
+    result.r = mix(outlineColor.r, 1.0 * flicker * scanline, aR);
+    result.g = mix(outlineColor.g, 0.97 * flicker * scanline, aG);
+    result.b = mix(outlineColor.b, 1.0 * flicker * scanline, aB);
+    result.a = clamp(totalBgAlpha, 0.0, 1.0);
+
+    return result;
+}
+
+vec3 CalculateElectricEffect(vec2 screenPos, float time, float bodyAlpha, float strokeAlpha) {
+    float ex = screenPos.x;
+    float ey = screenPos.y;
+
+    float arc  = sin(ex * 0.26 + time * 16.0) * sin(ey * 0.19 + time * 11.0);
+    arc += sin(ex * 0.44 - time * 23.0) * sin(ey * 0.32 - time * 8.5) * 0.6;
+    arc += sin((ex + ey) * 0.14 + time * 19.0) * 0.4;
+    arc  = arc / 2.0 * 0.5 + 0.5;
+
+    float bolt = smoothstep(0.70, 1.0, arc);
+
+    vec3 dark= vec3(0.0,  0.25, 0.85);
+    vec3 mid = vec3(0.15, 0.65, 1.0);
+    vec3 bright = vec3(0.85, 1.0,  1.0);
+
+    vec3 elec = mix(dark, mid, arc);
+    elec = mix(elec, bright, bolt);
+
+    float edge = (1.0 - bodyAlpha) * strokeAlpha;
+    elec = mix(elec, bright, edge * bolt * 1.5);
+
+    return elec;
+}
+
+vec3 CalculateVoidEffect(vec2 screenPos, float time, float bodyAlpha) {
+    float vx = screenPos.x * 0.02;
+    float vy = screenPos.y * 0.02;
+
+    float n1 = sin(vx * 1.6 + time * 0.6) * sin(vy * 1.3 - time * 0.5);
+    float n2 = sin(vx * 2.4 - time * 1.0) * sin(vy * 2.0 + time * 0.7);
+    float n3 = sin((vx + vy) * 1.2 + time * 0.8) * 0.5;
+
+    float n = (n1 + n2 + n3) / 3.0;
+    n = n * 0.5 + 0.5;
+
+    n = smoothstep(0.2, 0.85, n);
+    vec3 c1 = vec3(0.12, 0.88, 1.00);
+    vec3 c2 = vec3(0.82, 1.00, 1.00);
+    vec3 c3 = vec3(1.00, 1.00, 1.00);
+
+    vec3 voidColor;
+    if (n < 0.5)
+    voidColor = mix(c1, c2, (n - 0.33) * 3.0);
+    else
+    voidColor = mix(c2, c3, (n - 0.66) * 3.0);
+
+    vec2 cell = floor(screenPos / 3.0);
+    float rng = fract(sin(dot(cell, vec2(127.1, 311.7))) * 43758.5453);
+
+    float isSpark = step(0.975, rng);
+    float twinkle = isSpark * pow(
+    sin(time * 6.0 + rng * 6.2831) * 0.5 + 0.5,
+    6.0
+    );
+
+    vec3 sparkleColor = vec3(0.7, 1.0, 1.0);
+    voidColor = mix(voidColor, sparkleColor, twinkle * bodyAlpha);
+    return voidColor;
 }

@@ -149,6 +149,7 @@ public sealed class ItemTile : Sprite {
         }
 
         var color = 0xFFFFFFu;
+        var effects = TextEffect.None;
         var tag = $"T{ItemDesc.Tier}";
         if (ItemDesc.TributePoints > 0)
         {
@@ -167,6 +168,7 @@ public sealed class ItemTile : Sprite {
             else if (ItemDesc.Ferozium) {
                 color = 0x52DCFF;
                 tag = "FT" + ItemDesc.Tier;
+                effects = TextEffect.Void;
             } else {
                 tag = "UT";
                 if(ItemDesc.TributePoints > 749999){ color = 0x00D287;}
@@ -191,6 +193,7 @@ public sealed class ItemTile : Sprite {
 
         _tierText.SetText(tag);
         _tierText.SetColor(color);
+        _tierText.SetEffect(effects);
         _tierText.Visible = true;
     }
 

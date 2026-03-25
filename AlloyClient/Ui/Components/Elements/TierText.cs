@@ -12,36 +12,38 @@ public class TierText : Sprite
     public TierText(ItemDesc desc)
     {
         var c = Color.White;
+        var effect = TextEffect.None;
         string text;
         if (desc.TributePoints > 0)
         {
             if (desc.ST)
             {
-                c = new Color(0xFF9900);
+                c = Color.FromHexRGB(0xFF9900);
                 text = "ST";
             }
             else if (desc.UnHoly)
             {
-                c = new Color(0x9E9859);
+                c = Color.FromHexRGB(0x9E9859);
                 text = "UH";
             }
             else if (desc.Div)
             {
-                c = new Color(0xFCE53D);
+                c = Color.FromHexRGB(0xFCE53D);
                 text = "DIV";
             }
             else if (desc.Ferozium)
             {
-                c = new Color(0x52DCFF);
+                c = Color.FromHexRGB(0x52DCFF);
                 text = "FT" + desc.Tier;
+                effect = TextEffect.Void;
             }
             else
             {
                 text = "UT";
 
-                if (desc.TributePoints > 749999) c = new Color(0x00D287);
-                else if (desc.TributePoints > 99999) c = new Color(0xB2001D);
-                else c = new Color(9055202);
+                if (desc.TributePoints > 749999) c = Color.FromHexRGB(0x00D287);
+                else if (desc.TributePoints > 99999) c = Color.FromHexRGB(0xB2001D);
+                else c = Color.FromHexRGB(9055202);
             }
         }
         else
@@ -49,7 +51,7 @@ public class TierText : Sprite
             if (desc.Tier == -1)
             {
                 text = "UT";
-                c = new Color(9055202);
+                c = Color.FromHexRGB(9055202);
             }
             else
             {
@@ -63,9 +65,11 @@ public class TierText : Sprite
             FontType = FontType.Bold,
             Text = text,
             OutlineColor = 0,
-            OutlineThickness = 0.5f
+            OutlineThickness = 0.5f,
+            ShaderEffect = effect
         });
         Tag.Color = c;
+        
         AddChild(Tag);
     }
 }

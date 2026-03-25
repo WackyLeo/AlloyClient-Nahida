@@ -1,5 +1,6 @@
 using System;
 using AlloyClient.Assets.XmlStructs;
+using AlloyClient.Game;
 using AlloyClient.Game.Objects.Util;
 using AlloyClient.Ui.Components.Elements;
 using AlloyClient.UiLib.BuiltIn;
@@ -9,19 +10,37 @@ using AlloyClient.Utils;
 namespace AlloyClient.Ui.Components.Tooltips;
 
 public sealed class EquipmentToolTip : Tooltip {
+    
+    private const uint BgDefault = 0xFF363636u;
+    private const uint BgUnusable = 0xFF5C1D1Du;
+    
+    private const uint BgOutlineDefault = 0xFF676767u;
+    private const uint BgOutlineUnusable = 0xFFA7502Fu;
+    private bool _usable = false;
+    
     private const uint ColorDefault = 0xB3B3B3;
     private const uint ColorWhite = 0xFFFFFF;
-    private const uint ColorGreen = 0x00FF00;
     private const uint ColorRed = 0xFF0000;
     private const uint ColorKhaki = 0xE8E873;
     private const uint ColorGold = 0xFCDF00;
+    private uint ColorGreen = 0x00FF00;
+
     private readonly ItemDesc _itemDesc;
     private int _currentY;
 
-    public EquipmentToolTip(ItemDesc itemDesc) : base(260, 100) {
+    public EquipmentToolTip(ItemDesc itemDesc) : base(260, 100,
+        IsUsableByPlayer(itemDesc) ? BgDefault : BgUnusable, 
+        IsUsableByPlayer(itemDesc) ? BgOutlineDefault : BgOutlineUnusable) {
+        
         _itemDesc = itemDesc;
         _currentY = 10;
-
+        
+        // Like this is just silly
+        _usable = IsUsableByPlayer(itemDesc);
+        if (!_usable) {
+            ColorGreen = ColorKhaki;
+        }
+        
         AddHeader();
         AddDescription();
         AddLineBreak();
@@ -46,17 +65,23 @@ public sealed class EquipmentToolTip : Tooltip {
         icon.X = 10;
         icon.Y = 10;
         AddChild(icon);
-
-        var title = AddTextLine(
-                                _itemDesc.DisplayName ?? _itemDesc.ObjectId,
-                                ColorWhite,
-                                FontType.Bold,
-                                18,
-                                62,
-                                _currentY,
-                                150
-                               );
-
+ 
+        int effectId = TextEffect.None;
+        if (_itemDesc.Ferozium) effectId = TextEffect.Void;
+ 
+        var titleConfig = SimpleConfig(
+            _itemDesc.DisplayName ?? _itemDesc.ObjectId,
+            18, FontType.Bold, ColorWhite, 0x000000, 0f, 150, 0.5f, effectId);
+        titleConfig.X = 62;
+        var title = new SimpleText(titleConfig);
+        
+        const int iconCentreY = 28;
+        int titleY = title.Height <= 22
+            ? iconCentreY - title.Height / 2
+            : _currentY;
+        title.Y = titleY;
+        AddChild(title);
+ 
         if (!_itemDesc.Consumable && _itemDesc.SlotType != 10) {
             ushort divIcon = 0;
             if (!string.IsNullOrEmpty(_itemDesc.Divinity))
@@ -70,7 +95,7 @@ public sealed class EquipmentToolTip : Tooltip {
                     case "Siera": divIcon = 4574; break;
                     case "Paradox": divIcon = 3058; break;
                 }
-
+ 
             if (divIcon != 0) {
                 var divinityIcon = new ObjectRect(new ObjectRectConfig {
                     Texture = TextureHelper.FromGameAtlas(divIcon),
@@ -79,21 +104,19 @@ public sealed class EquipmentToolTip : Tooltip {
                     OutlineEnabled = true,
                     GlowEnabled = true
                 });
-
+ 
                 divinityIcon.X = ToolWidth - divinityIcon.Width - 10;
                 divinityIcon.Y = 10;
                 AddChild(divinityIcon);
             }
-
+ 
             var tierTag = new TierText(_itemDesc);
-            tierTag.SetAnchor(UiAnchor.RightTop);
-
-            tierTag.X = ToolWidth - 16;
+            tierTag.X = ToolWidth - 28 - tierTag.Width / 2;
             tierTag.Y = _currentY + 12;
             AddChild(tierTag);
         }
-
-        _currentY = Math.Max(_currentY + title.Height, 10 + 44) + 4;
+ 
+        _currentY = Math.Max(titleY + title.Height, 10 + 44) + 4;
     }
 
     private void AddDescription() {
@@ -224,8 +247,8 @@ public sealed class EquipmentToolTip : Tooltip {
     }
 
     private SimpleText AddTextLine(string text, uint color, FontType font, int fontSize, int xOffset = 12,
-                                   int? yOverride = null, int maxWidth = 320, float glow = 0.5f) {
-        var config = SimpleConfig(text, fontSize, font, color, 0x000000, 0f, maxWidth, glow);
+                                   int? yOverride = null, int maxWidth = 320, float glow = 0.5f, int effect = 0) {
+        var config = SimpleConfig(text, fontSize, font, color, 0x000000, 0f, maxWidth, glow, effect);
         config.X = xOffset;
         config.Y = yOverride ?? _currentY;
 
@@ -255,7 +278,7 @@ public sealed class EquipmentToolTip : Tooltip {
 
     public static TextConfig SimpleConfig(string text = "", int size = 14, FontType type = FontType.Bold,
                                           uint color = 0xFFFFFFFFu, uint outline = 0xFF000000u, float thickness = 1f,
-                                          int maxWidth = 320, float glow = 0.5f) {
+                                          int maxWidth = 320, float glow = 0.5f, int effect = 0) {
         return new TextConfig {
             FontSize = size,
             FontType = type,
@@ -264,7 +287,26 @@ public sealed class EquipmentToolTip : Tooltip {
             OutlineColor = outline,
             OutlineThickness = thickness,
             MaxWidth = maxWidth,
-            Glow = glow
+            Glow = glow,
+            ShaderEffect = effect
         };
+    }
+    
+    private static bool IsUsableByPlayer(ItemDesc itemDesc) {
+        if (Map.LocalPlayer == null || itemDesc == null) return true;
+        if (itemDesc.ObjectType == 0) return false;
+
+        var slotType = itemDesc.SlotType;
+
+        if (slotType == ItemConstants.PotionType)
+            return true;
+
+        var slots = Map.LocalPlayer.Properties.SlotTypes;
+        for (var i = 0; i < slots.Count; i++) {
+            if (slots[i] == slotType)
+                return true;
+        }
+
+        return false;
     }
 }

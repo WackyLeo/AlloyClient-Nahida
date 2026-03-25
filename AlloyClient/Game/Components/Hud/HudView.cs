@@ -27,7 +27,7 @@ public sealed class HudView : Sprite {
             Width = Width,
             Height = Settings.DefaultScreenHeight,
             Cut = 0,
-            Color = 0x363636u, 
+            Color = 0xFF363636u, 
             OutlineSize = 0f,
             ShadowRadius = 3f, 
             ShadowAlpha = 0.3f

@@ -97,7 +97,7 @@ public class ItemDesc {
         Div = xml.HasElement("DIV");
         UnHoly = xml.HasElement("Unholy");
         Ferozium = xml.HasElement("Ferozium");
-        ST = xml.HasElement("setType");
+        ST = xml.HasAttribute("setType");
         Divinity = xml.GetValue<string>("Divinity");
 
         NextCount = xml.GetValue("NextCount", 99999);

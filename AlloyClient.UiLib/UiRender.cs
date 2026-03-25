@@ -24,7 +24,7 @@ public static class UiRender {
 
     internal static Vector2i DefaultScreen;
 
-    internal static Vector2i Screen;
+    public static Vector2i Screen;
 
     public static int LastRenderCount = 0;
 

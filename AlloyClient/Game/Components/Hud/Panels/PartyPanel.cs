@@ -62,7 +62,8 @@ public sealed class PartyPanel : Panel {
             Root.MouseEnabled = true;
             Root.AddEventListener(MouseEvent.MouseOver, OnMouseOver);
             Root.AddEventListener(MouseEvent.MouseOut, OnMouseOut);
-
+            Root.AddEventListener(MouseEvent.LeftClick, OnClick);
+            
             _portrait = new ObjectRect(new ObjectRectConfig {
                 Width = PortraitSize,
                 Height = PortraitSize,
@@ -93,6 +94,22 @@ public sealed class PartyPanel : Panel {
             Root.Visible = false;
         }
 
+        private void OnClick() {
+            if (_player == null) return;
+            OnMouseOut(); 
+
+            var menu = new PlayerMenuToolTip(_player);
+            var mousePos = AlloyClient.UiLib.Input.MouseInput.GetMousePosition();
+    
+            menu.X = mousePos.X - menu.ToolWidth;
+            menu.Y = mousePos.Y - menu.ToolHeight;
+
+            menu.SpawnMouse = mousePos;
+            menu.X = mousePos.X - (int)(menu.ToolWidth * Stage.ScreenScale.X);
+            menu.Y = mousePos.Y - (int)(menu.ToolHeight * Stage.ScreenScale.Y);
+            Map.GameSprite.AddChild(menu);
+        }
+        
         private void OnMouseOver() {
             if (_player == null) return;
             _tooltip = new PlayerToolTip(_player);
@@ -153,26 +170,6 @@ public sealed class PartyPanel : Panel {
             var bb = b & 0xFF;
             return ((aa + (uint)((ba - aa) * t)) << 24) | ((ar + (uint)((br - ar) * t)) << 16) |
                    ((ag + (uint)((bg - ag) * t)) << 8) | (ab + (uint)((bb - ab) * t));
-        }
-    }
-
-    private class PlayerToolTip : Tooltip {
-        public PlayerToolTip(Player player) : base(120, 50) {
-            var nameText =
-                new SimpleText(EquipmentToolTip.SimpleConfig(player.Name, 16, FontType.Bold, 0xFFFFFFFFu, 0xFF000000u,
-                                                             0.5f, 100));
-            nameText.X = 10;
-            nameText.Y = 10;
-            AddChild(nameText);
-
-            var fameText =
-                new SimpleText(EquipmentToolTip.SimpleConfig($"Fame: {player.Fame}", 14, FontType.Normal, 0xFFDDDDDDu,
-                                                             0xFF000000u, 0.5f, 100));
-            fameText.X = 10;
-            fameText.Y = 28;
-            AddChild(fameText);
-
-            DrawSprite();
         }
     }
 }

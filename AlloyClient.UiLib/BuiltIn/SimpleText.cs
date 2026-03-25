@@ -19,8 +19,17 @@ public struct TextConfig {
     public uint OutlineColor = 0x0;
     public float Alpha = 1.0f;
     public UiAnchor Anchor = UiAnchor.LeftTop;
-
+    public int ShaderEffect = 0;
     public TextConfig() { }
+}
+
+public static class TextEffect {
+    public const int None = 0;
+    public const int Fire = 1;
+    public const int Rainbow = 2;
+    public const int Glitch = 3;
+    public const int Electric = 4;
+    public const int Void = 5;
 }
 
 public sealed class SimpleText : Sprite {
@@ -51,6 +60,7 @@ public sealed class SimpleText : Sprite {
         X = config.X;
         Y = config.Y;
         Alpha = config.Alpha;
+        Extra2 = new Vector4(config.ShaderEffect, 0, 0, 0);
         _outlineThickness = _font.ValidateOutlineSize(config.OutlineThickness);
         SetColor(config.Color);
         SetColorSecondary(config.OutlineColor);
@@ -199,6 +209,15 @@ public sealed class SimpleText : Sprite {
 
     public void OffsetLineWrapBy(float x) {
         _lineWrapStart = x;
+        Rebuild();
+    }
+    
+    public void SetEffect(int effect) {
+        if ((int)Extra2.X == effect) {
+            return;
+        }
+        
+        Extra2 = new Vector4(effect, 0, 0, 0);
         Rebuild();
     }
 }

@@ -43,7 +43,8 @@ public class SdfRect : Sprite {
         _shadowRadius = config.ShadowRadius;
         _shadowAlpha = config.ShadowAlpha;
 
-        SetColor(config.Color);
+        var a = (config.Color >> 24) / 255f;
+        SetColor(config.Color & 0x00FFFFFFu, a);
         SetColorSecondary(config.OutlineColor);
         Alpha = config.Alpha;
         SetAnchor(config.Anchor);
