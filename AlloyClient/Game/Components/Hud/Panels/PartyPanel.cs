@@ -47,8 +47,8 @@ public sealed class PartyPanel : Panel {
 
         private readonly SimpleText _nameText;
 
-        //private readonly ColorRect _hpBarBg;
-        //private readonly ColorRect _hpBar;
+        private readonly ColorRect _hpBarBg;
+        private readonly ColorRect _hpBar;
         private readonly ObjectRect _portrait;
 
         public readonly Sprite Root;
@@ -72,7 +72,7 @@ public sealed class PartyPanel : Panel {
             Root.AddChild(_portrait);
 
             _nameText = new SimpleText(new TextConfig {
-                FontSize = 18,
+                FontSize = 14,
                 Color = 0xFFFFFFFFu,
                 OutlineColor = 0xFF000000u,
                 OutlineThickness = 0.5f,
@@ -80,7 +80,7 @@ public sealed class PartyPanel : Panel {
             }) { X = PortraitSize + 2, Y = 2 };
             Root.AddChild(_nameText);
 
-            /*_hpBarBg = new ColorRect(new ColorRectConfig { Width = BarWidth, Height = BarHeight, Color = 0xFF222222u });
+            _hpBarBg = new ColorRect(new ColorRectConfig { Width = BarWidth, Height = BarHeight, Color = 0xFF222222u });
             _hpBarBg.X = PortraitSize + 2;
             _hpBarBg.Y = SlotHeight - BarHeight - 4;
             Root.AddChild(_hpBarBg);
@@ -88,7 +88,7 @@ public sealed class PartyPanel : Panel {
             _hpBar = new ColorRect(new ColorRectConfig { Width = BarWidth, Height = BarHeight, Color = 0xFF00FF00u });
             _hpBar.X = PortraitSize + 2;
             _hpBar.Y = SlotHeight - BarHeight - 4;
-            Root.AddChild(_hpBar);*/
+            Root.AddChild(_hpBar);
 
             Root.Visible = false;
         }
@@ -122,14 +122,14 @@ public sealed class PartyPanel : Panel {
             _nameText.SetText(_player.Name ?? "");
             _portrait.ChangeTexture(TextureHelper.Create(_player.Texture, TextureType.GameAtlas));
 
-            /*if (_player.Hp < _player.MaxHp * 0.2f) {
+            if (_player.Hp < _player.MaxHp * 0.2f) {
                 if (_lowHealthStart == 0) _lowHealthStart = Stage.GameTime.TotalMs;
                 var intensity = (float)(Math.Abs(Math.Sin(_lowHealthStart / 200.0)) * 10) / 10f;
                 var offset = (int)(intensity * 128);
-                Root.Color = new Color((uint)((255 << 24) | (Math.Min(255, 255 + offset) << 16) | (Math.Max(0, 255 - offset) << 8) | Math.Max(0, 255 - offset)));
+                Root.Color = new Engine.Common.Color((uint)((255 << 24) | (Math.Min(255, 255 + offset) << 16) | (Math.Max(0, 255 - offset) << 8) | Math.Max(0, 255 - offset)));
             } else {
                 _lowHealthStart = 0;
-                Root.Color = Color.White;
+                Root.Color = Engine.Common.Color.White;
             }
 
             float hpRatio = _player.MaxHp > 0 ? Math.Clamp((float)_player.Hp / _player.MaxHp, 0f, 1f) : 0f;
@@ -138,7 +138,7 @@ public sealed class PartyPanel : Panel {
                 : LerpColor(0xFFFFFF00u, 0xFFFF0000u, 1f - hpRatio * 2f);
 
             _hpBar.Resize((int)Math.Max(1, BarWidth * hpRatio), BarHeight);
-            _hpBar.SetColor(barColor);*/
+            _hpBar.SetColor(barColor);
         }
 
         private static uint LerpColor(uint a, uint b, float t) {

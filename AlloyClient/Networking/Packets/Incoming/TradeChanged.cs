@@ -1,4 +1,6 @@
-﻿namespace AlloyClient.Networking.Packets.Incoming;
+﻿using AlloyClient.Game;
+
+namespace AlloyClient.Networking.Packets.Incoming;
 
 public class TradeChanged : IncomingPacket<TradeChanged> {
     public bool[] Offer;
@@ -16,9 +18,9 @@ public class TradeChanged : IncomingPacket<TradeChanged> {
             Offer[i] = reader.ReadBoolean();
         }
     }
-
-
+    
     public override void Handle() {
+        Map.GameSprite.UpdatePartnerOffer(Offer);
     }
 
     public override string ToString() {

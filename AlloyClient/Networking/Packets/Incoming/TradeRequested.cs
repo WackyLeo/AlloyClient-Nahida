@@ -14,6 +14,9 @@ public class TradeRequested : IncomingPacket<TradeRequested> {
     }
 
     public override void Handle() {
+        Game.Components.Hud.InteractPanel.AddOverride.Dispatch(
+            new Game.Components.Hud.Panels.TradeRequestPanel(Name)
+        );
     }
 
     public override string ToString() {

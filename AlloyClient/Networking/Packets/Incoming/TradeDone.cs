@@ -1,4 +1,6 @@
-﻿namespace AlloyClient.Networking.Packets.Incoming;
+﻿using AlloyClient.Game;
+
+namespace AlloyClient.Networking.Packets.Incoming;
 
 public class TradeDone : IncomingPacket<TradeDone> {
     public int Code;
@@ -17,6 +19,7 @@ public class TradeDone : IncomingPacket<TradeDone> {
     }
 
     public override void Handle() {
+        Map.GameSprite.CloseTradeView();
     }
 
     public override string ToString() {

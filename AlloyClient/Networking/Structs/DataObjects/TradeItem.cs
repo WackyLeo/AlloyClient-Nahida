@@ -5,14 +5,12 @@ public struct TradeItem : IDataObject {
     public int SlotType;
     public bool Tradeable;
     public bool Included;
-    public string ItemData;
-
+    
     public void Reset() {
         Item = 0;
         SlotType = 0;
         Tradeable = false;
         Included = false;
-        ItemData = null;
     }
 
     public void Read(NetworkReader reader) {
@@ -20,7 +18,6 @@ public struct TradeItem : IDataObject {
         SlotType = reader.ReadInt32();
         Tradeable = reader.ReadBoolean();
         Included = reader.ReadBoolean();
-        ItemData = reader.ReadUTF();
     }
 
     public void Write(NetworkWriter writer) {
@@ -28,11 +25,10 @@ public struct TradeItem : IDataObject {
         writer.Write(SlotType);
         writer.Write(Tradeable);
         writer.Write(Included);
-        writer.Write(ItemData);
     }
 
     public override string ToString() {
         return
-            $"Item: {Item}, SlotType: {SlotType}, Tradeable: {Tradeable}, Included: {Included}, ItemData: {ItemData}";
+            $"Item: {Item}, SlotType: {SlotType}, Tradeable: {Tradeable}, Included: {Included}";
     }
 }

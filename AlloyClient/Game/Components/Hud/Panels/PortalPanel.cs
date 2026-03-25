@@ -46,7 +46,7 @@ public class PortalPanel : Panel {
         _fullText = new SimpleText(new TextConfig {
             X = Panel.PanelWidth / 2,
             Y = 56,
-            Text = _locked ? "Locked" : "Full",
+            Text = "Locked",
             FontSize = 20,
             FontType = FontType.Bold,
             OutlineColor = 0xFF0000,

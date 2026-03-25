@@ -4,7 +4,10 @@ using AlloyClient.Ui.Character;
 using AlloyClient.Ui.Chat;
 using AlloyClient.UiLib.Core;
 using AlloyClient.Game.Components.Hud.Chat;
+using AlloyClient.Game.Components.Hud.Trade;
+using AlloyClient.Networking.Structs.DataObjects;
 using AlloyClient.Ui.Components.Elements;
+using AlloyClient.UiLib.Enums;
 
 namespace AlloyClient.Game.Components;
 
@@ -14,7 +17,8 @@ public sealed class GameSprite : Sprite {
     public readonly HudView Hud;
     private readonly CurrencyView _currencyView;
     private readonly ChatBox _chat;
-
+    private TradeView _tradeView; 
+    
     public GameSprite() {
         AddChild(UserInput = new UserInput());
         AddChild(new ChatLayer());
@@ -41,8 +45,6 @@ public sealed class GameSprite : Sprite {
         Stage.RemoveEventListener(ResizeEvent.Resize, OnResize);
     }
     
-    
-    
     private void OnResize(ResizeEvent args) {
         SetPosition(args.Width, args.Height);
     }
@@ -66,5 +68,40 @@ public sealed class GameSprite : Sprite {
         _chat.X = 0;
         _chat.Y = height;
         _chat.Scale = Stage.ScreenScale;
+        
+        PositionTradeView(width, height);
+    }
+    
+    // Trading
+    
+    public void UpdatePartnerOffer(bool[] offer) {
+        _tradeView?.UpdatePartnerOffer(offer);
+    }
+    
+    public void OpenTrade(TradeItem[] myItems, string yourName, TradeItem[] yourItems) {
+        if (_tradeView != null) CloseTradeView();
+
+        _tradeView = new TradeView(myItems, yourName, yourItems);
+        AddChild(_tradeView);
+
+        PositionTradeView(Stage.StageWidth, Stage.StageHeight);
+    }
+
+    public void CloseTradeView() {
+        if (_tradeView == null) return;
+        RemoveChild(_tradeView);
+        _tradeView = null;
+    }
+    
+    private void PositionTradeView(int width, int height) {
+        if (_tradeView == null) return;
+
+        var scale = Stage.ScreenScale;
+        var hudLeft = width - HudView.Width * scale.X;
+
+        _tradeView.SetAnchor(UiAnchor.RightBottom);
+        _tradeView.X = (int)hudLeft - 20;
+        _tradeView.Y = (int)(height - 20);
+        _tradeView.Scale = scale;
     }
 }

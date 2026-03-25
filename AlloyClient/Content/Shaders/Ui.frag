@@ -120,6 +120,59 @@ vec4 RenderHpBar() {
     discard;
 }
 
+const float IdSdfRect = 11.0;
+
+vec4 RenderSdfRect() {
+    float w = inp.Extra1.x;
+    float h = inp.Extra1.y;
+    float cut = inp.Extra1.z;
+    float shadowRadius = inp.Extra1.w;
+    float shadowMaxAlpha = inp.Extra2.x;
+    int cutsMask = int(inp.Extra2.y);
+    float outlineSize = inp.Extra2.z;
+
+    vec2 totalSize = vec2(w + shadowRadius * 2.0 + outlineSize * 2.0, h + shadowRadius * 2.0 + outlineSize * 2.0);
+    vec2 pos = inp.UVCoords * totalSize;
+    vec2 center = totalSize * 0.5;
+
+    vec2 dir = pos - center;
+    vec2 p = abs(dir);
+    vec2 halfSize = vec2(w * 0.5, h * 0.5);
+
+    vec2 d = p - halfSize;
+    float dist = max(d.x, d.y);
+    bool applyCut = false;
+
+    if (dir.x <= 0.0 && dir.y <= 0.0 && (cutsMask & 1) != 0) applyCut = true;
+    else if (dir.x >= 0.0 && dir.y <= 0.0 && (cutsMask & 2) != 0) applyCut = true;
+    else if (dir.x <= 0.0 && dir.y >= 0.0 && (cutsMask & 4) != 0) applyCut = true;
+    else if (dir.x >= 0.0 && dir.y >= 0.0 && (cutsMask & 8) != 0) applyCut = true;
+
+    if (applyCut) {
+        float cornerDist = (p.x + p.y - (halfSize.x + halfSize.y - cut)) * 0.70710678;
+        dist = max(dist, cornerDist);
+    }
+
+    vec4 bgColor = unpackColor(inp.Color);
+    vec4 outlineColor = unpackColor(inp.Override);
+
+    float px = fwidth(dist);
+    if (px == 0.0) px = 1.0;
+
+    float shadowNorm = clamp((dist - outlineSize) / max(shadowRadius, 0.001), 0.0, 1.0);
+    float shadowAlpha = shadowMaxAlpha * (1.0 - shadowNorm * shadowNorm);
+    vec4 shadowColor = vec4(0.0, 0.0, 0.0, shadowAlpha);
+
+    float outlineEdge = smoothstep(outlineSize - px, outlineSize + px, dist);
+    vec4 bgOutColor = mix(outlineColor, shadowColor, outlineEdge);
+
+    float bgEdge = smoothstep(-px, px, dist);
+    vec4 finalColor = mix(bgColor, bgOutColor, bgEdge);
+
+    if (finalColor.a <= 0.001) discard;
+    return finalColor;
+}
+
 vec4 RenderText() {
     vec4 mtsdf = texture(TextTexture, inp.UVCoords);
     float dist = median(mtsdf.r, mtsdf.g, mtsdf.b) - 0.5;
@@ -271,7 +324,6 @@ void main() {
     }
 
     vec4 color = unpackColor(inp.Color);
-
     float type = inp.Info.x;
 
     if (type == IdColor) {
@@ -294,12 +346,15 @@ void main() {
         pixel = RenderMinimap();
     } else if (type == IdEllipse) {
         pixel = RenderEllipse();
-    }  if (type == IdHpBar) {
+    }  else if (type == IdHpBar) {
         pixel = RenderHpBar();
+    } else if (type == IdSdfRect) {
+        pixel = RenderSdfRect();
     }
 
-    if (color.a > 0 && type != IdColor && type != IdText && type != IdEllipse)
-    pixel *= color;
+    if (color.a > 0 && type != IdColor && type != IdText && type != IdEllipse && type != IdSdfRect) {
+        pixel *= color;
+    }
 
     vec4 add = floor(inp.ColorTransform / 1000.0);
     vec4 mult = inp.ColorTransform - add * 1000.0;
