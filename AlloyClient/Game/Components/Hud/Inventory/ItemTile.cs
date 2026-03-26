@@ -225,6 +225,10 @@ public sealed class ItemTile : Sprite {
             _pendingDouble = false;
 
             // added basic consume logic, this will be looked at another time i assume
+            if (ItemDesc == null ) {
+                return;
+            }
+            
             if (ItemDesc.ObjectType == ItemConstants.PotionType || ItemDesc.Consumable) {
                 int timeStuff = (int) Map.LastGameTime.TotalMs;
 
