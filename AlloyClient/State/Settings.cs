@@ -24,15 +24,15 @@ public static class Settings {
     public const string BuildVersion = "localhost";
     public const string BuildLabel = $"Version {BuildVersion}";
 
-    private const string AppEngineAddress = "116.255.20.214"; // 135.125.181.109
-    private const string AppEnginePort = "65001";               // 65001
+    private const string AppEngineAddress = "135.125.181.109"; // 135.125.181.109
+    private const string AppEnginePort = "8080";               // 65001
 
     public const string AppEngineUrl = $"http://{AppEngineAddress}:{AppEnginePort}";
     public const int AppEngineTimeout = 10000;
 
     // World-Engine connection info
-    public const string GameServerAddress = "116.255.20.214"; // 116.255.20.214
-    public const ushort GameServerPort = 2051;                // 26959
+    public const string GameServerAddress = "135.125.181.109"; // 116.255.20.214
+    public const ushort GameServerPort = 26959;                // 26959
 
     // Screen-Information
     public const int DefaultScreenWidth = 1280;

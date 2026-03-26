@@ -140,7 +140,10 @@ public class PlayerMenuToolTip : Tooltip {
             });
             label.X = 40;
             label.Y = 4;
+
             AddChild(label);
+            AddEventListener(MouseEvent.MouseOver, new Action(() => label.SetColor(0xFCDF00)));
+            AddEventListener(MouseEvent.MouseOut, new Action(() => label.SetColor(0xFFFFFF)));
             AddEventListener(MouseEvent.LeftClick, new Action(() => onClick?.Invoke()));
         }
     }

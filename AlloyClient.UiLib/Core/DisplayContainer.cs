@@ -16,10 +16,10 @@ public abstract class DisplayContainer : EventManager {
     public Stage Stage { get; internal set; }
     
     public Sprite Parent { get; private set; }
-    
-    internal float SelfContentWidth;
 
-    internal float SelfContentHeight;
+    public float SelfContentWidth;
+
+    public float SelfContentHeight;
     
     internal int ContentWidth;
 
@@ -167,7 +167,7 @@ public abstract class DisplayContainer : EventManager {
         }
     }
 
-    internal void UpdateBounds() {
+    public void UpdateBounds() {
         var xMin = 0f;
         var xMax = SelfContentWidth;
         var yMin = 0f;

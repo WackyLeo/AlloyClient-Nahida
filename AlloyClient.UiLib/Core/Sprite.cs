@@ -115,15 +115,15 @@ public partial class Sprite : DisplayContainer {
 
     #region TrueValues
 
-    private int _trueX;
-    
-    private int _trueY;
+    protected int _trueX;
+
+    protected int _trueY;
 
     private float _trueRotation;
 
     private float _trueAlpha;
 
-    private Vector2 _trueScale;
+    protected Vector2 _trueScale;
 
     private ColorTransform _trueTransform;
 
@@ -132,6 +132,8 @@ public partial class Sprite : DisplayContainer {
     #endregion
 
     private void InternalUpdate() {
+        ClipChildren = false;
+        _scissor = NoScissor;
         (_anchorX, _anchorY) = InternalUtils.GetAnchorOffset(Anchor, (int)ContentWidth, (int)ContentHeight);
         var (tx, ty) = (0, 0);
         var ta = Alpha;

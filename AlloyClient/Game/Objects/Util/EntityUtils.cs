@@ -63,6 +63,16 @@ public static class EntityUtils {
         return closestEntity;
     }
     
+    public static Entity GetPlayerHit(Vector2 position, float radius) {
+        var projPos = Camera.WorldToDebug2D(new Vector3(Map.LocalPlayer.Position.X, Map.LocalPlayer.Position.Y, 0.5f));
+        var dist = CalculateDistance(position, projPos);
+
+        if (dist < radius)
+            return Map.LocalPlayer;
+        
+        return null;
+    }
+    
     public static Entity GetClosestPlayer(Vector2 position, float radius) {
         var entities = Map.Entities.Values;
         Entity en = null;
@@ -83,6 +93,7 @@ public static class EntityUtils {
 
         return en;
     }
+    
     public static Entity GetClosestEnemy(Vector2 position, float radius) {
         var entities = Map.Entities.Values;
         Entity en = null;

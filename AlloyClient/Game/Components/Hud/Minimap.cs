@@ -1,10 +1,15 @@
 ﻿using System;
+using System.Collections.Generic;
+using AlloyClient.Display;
 using AlloyClient.State;
+using AlloyClient.Ui.Components.Panels;
+using AlloyClient.Ui.Components.Tooltips;
 using AlloyClient.UiLib.BuiltIn;
 using AlloyClient.UiLib.BuiltIn.Buttons;
 using AlloyClient.UiLib.Core;
 using AlloyClient.UiLib.Enums;
 using AlloyClient.UiLib.Extra;
+using AlloyClient.UiLib.Input;
 using AlloyClient.UiLib.Rendering;
 using AlloyClient.UiLib.Signals;
 using AlloyClient.Utils;
@@ -17,27 +22,24 @@ public sealed class Minimap : Sprite {
 
     public static readonly SingleSignal<int> OnZoom = new();
     public static readonly SingleSignal<int, int> OnNewMap = new();
-
-    private static readonly ColorTransform DefaultCt = new (1f, 1f, 1f, 1f);
-    private static readonly ColorTransform FadeCt = new (0.5f, 0.5f, 0.5f, 1f);
     
     public const int MapSize = 230;
-    
+    private bool _menuOpen;
     private float _zoom = 4.0f;
     private float _maxZoom;
     private float _zoomStep;
     private float _size;
 
-    private bool _mouseOver;
-
     private readonly MinimapLayer _layer;
-
     private readonly IconButton _zoomIn;
     private readonly IconButton _zoomOut;
     private readonly ObjectRect _arrow;
 
+    private PlayerGroupToolTip _hoverTooltip;
+
     public Minimap() {
         TextureId = TextureType.Minimap;
+        MouseEnabled = true; 
 
         ResizeBackBuffer();
         FillData();
@@ -50,46 +52,31 @@ public sealed class Minimap : Sprite {
 
         _zoomIn = new IconButton(new IconButtonConfig {
             Texture = TextureHelper.FromGameAtlas("lofiInterface", 54, false),
-            X = MapSize,
-            Y = 0,
-            Width = 24,
-            Height = 24,
-            Anchor = UiAnchor.RightTop,
+            X = MapSize, Y = 0, Width = 24, Height = 24, Anchor = UiAnchor.RightTop,
             OnClick = () => ZoomHandle(1)
         });
         AddChild(_zoomIn);
         
         _zoomOut = new IconButton(new IconButtonConfig {
             Texture = TextureHelper.FromGameAtlas("lofiInterface", 55, false),
-            X = MapSize,
-            Y = _zoomIn.Height + 4,
-            Width = 24,
-            Height = 24,
-            Anchor = UiAnchor.RightTop,
+            X = MapSize, Y = _zoomIn.Height + 4, Width = 24, Height = 24, Anchor = UiAnchor.RightTop,
             OnClick = () => ZoomHandle(-1)
         });
         AddChild(_zoomOut);
 
         _arrow = new ObjectRect(new ObjectRectConfig {
             Texture = TextureHelper.FromGameAtlas("lofiInterface", 54, false),
-            X = MapSize / 2,
-            Y = MapSize / 2,
-            Width = 9,
-            Height = 36,
-            Anchor = UiAnchor.Middle
+            X = MapSize / 2, Y = MapSize / 2, Width = 9, Height = 36, Anchor = UiAnchor.Middle
         });
         _arrow.ColorTransformation = new ColorTransform(0f, 0f, 1f, 1f);
         AddChild(_arrow);
         
         AddEventListener(Event.EnterFrame, OnFrameEnter);
-        
-        // :smallbrain: not valid callbacks, doesnt support lambdas /shrug >:
-        //AddEventListener(MouseEventId.MouseOver, () => _mouseOver = true);
-        //AddEventListener(MouseEventId.MouseOut, () => _mouseOver = false);
+        AddEventListener(MouseEvent.LeftClick, new Action(OnMapClick)); // Click event for the menu
     }
 
     private void UpdateButtons() {
-        if (_zoom <= 1f) {
+        if (_zoom <= 0.5f) { // Adjusted for further zoom
             _zoomIn.ColorTransformation = Transforms.Default;
             _zoomOut.ColorTransformation = Transforms.Dark;
         } else if (_zoom >= _maxZoom) {
@@ -107,17 +94,16 @@ public sealed class Minimap : Sprite {
     }
 
     private void FillData() {
-        VertexData[0] = new VertexUi(new Vector2(0, 0)); //Top Left
-        VertexData[1] = new VertexUi(new Vector2(MapSize, 0)); //Top Right
-        VertexData[2] = new VertexUi(new Vector2(MapSize, MapSize)); //Bottom Right
-        VertexData[3] = new VertexUi(new Vector2(0, MapSize)); //Bottom Left
-        
+        VertexData[0] = new VertexUi(new Vector2(0, 0));
+        VertexData[1] = new VertexUi(new Vector2(MapSize, 0));
+        VertexData[2] = new VertexUi(new Vector2(MapSize, MapSize));
+        VertexData[3] = new VertexUi(new Vector2(0, MapSize));
         SetGraphicsBuffer();
     }
     
     private void ZoomHandle(int zoom) {
         _zoom += _zoomStep * zoom;
-        _zoom = Math.Max(1, Math.Min(_maxZoom, _zoom));
+        _zoom = Math.Max(0.5f, Math.Min(_maxZoom, _zoom));
         UpdateButtons();
     }
     
@@ -129,6 +115,36 @@ public sealed class Minimap : Sprite {
         MinimapTexture.ClearData();
     }
     
+    private void OnMapClick() {
+        if (_layer.HoveredPlayers.Count == 0) return;
+
+        if (_hoverTooltip != null) {
+            TooltipManager.RemoveTooltip(_hoverTooltip);
+            _hoverTooltip = null;
+        }
+
+        _menuOpen = true;
+        var mousePos = MouseInput.GetMousePosition();
+
+        Sprite menu;
+        if (_layer.HoveredPlayers.Count == 1) {
+            var pMenu = new PlayerMenuToolTip(_layer.HoveredPlayers[0]);
+            pMenu.SpawnMouse = mousePos;
+            pMenu.X = mousePos.X - (int)(pMenu.ToolWidth * Stage.ScreenScale.X);
+            pMenu.Y = mousePos.Y;
+            menu = pMenu;
+        } else {
+            var gMenu = new PlayerGroupMenu(_layer.HoveredPlayers);
+            gMenu.SpawnMouse = mousePos;
+            gMenu.X = mousePos.X - (int)(gMenu.ToolWidth * Stage.ScreenScale.X);
+            gMenu.Y = mousePos.Y;
+            menu = gMenu;
+        }
+
+        menu.AddEventListener(Event.RemovedFromStage, new Action(() => _menuOpen = false));
+        Map.GameSprite.AddChild(menu);
+    }
+
     private void OnFrameEnter() {
         if (Map.LocalPlayer == null) return;
 
@@ -147,5 +163,20 @@ public sealed class Minimap : Sprite {
         VertexData[3].UV = new Vector2(x1 / 4096, y2 / 4096);
         
         _layer.SetSize(size);
+
+        if (!_menuOpen) {
+            if (_layer.HoveredPlayers.Count > 0) {
+                if (_hoverTooltip == null || !_hoverTooltip.Matches(_layer.HoveredPlayers)) {
+                    if (_hoverTooltip != null) TooltipManager.RemoveTooltip(_hoverTooltip);
+                    _hoverTooltip = new PlayerGroupToolTip(_layer.HoveredPlayers);
+                    TooltipManager.AddTooltip(_hoverTooltip);
+                }
+            } else {
+                if (_hoverTooltip != null) {
+                    TooltipManager.RemoveTooltip(_hoverTooltip);
+                    _hoverTooltip = null;
+                }
+            }
+        }
     }
 }

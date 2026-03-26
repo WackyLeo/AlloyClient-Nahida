@@ -201,7 +201,6 @@ public sealed class Projectile {
             blocked = !MoveTo(newPos);
 
         if (blocked || (doHitTest && HitTest(time)))
-            //TriggerSplit(time);
             return false;
 
         if (!blocked) {
@@ -210,21 +209,14 @@ public sealed class Projectile {
             RenderBaseType.SetRotation(Rotation);
             RenderBaseType.SetTexture(GetTexture(curLifetime));
         }
-
-        //Render.DebugCircle(_position, 0.25f + _projDesc.BonusSize, new Vector3(0, 1, 0), 0.05f);
-        //float worldAngle = Rotation - Camera.CameraAngle;
-        //Render.DebugArrow(_position, worldAngle, 1f, new Vector3(1, 0, 0), 0.05f);
-
+        
         // Projectile debug + hit pos
 
-        if (_damage > 0) {
-            var hitPos = Camera.WorldToDebug2D(new Vector3(_position.X, _position.Y, 0.5f));
-
-            if (Render.DebugEnabled) {
-                Render.DebugCircle(hitPos, 0.25f + _projDesc.BonusSize, new Vector3(0, 1, 0), 0.05f);
-                var worldAngle = Rotation - Camera.CameraAngle;
-                Render.DebugArrow(hitPos, worldAngle, 1f, new Vector3(1, 0, 0), 0.05f);
-            }
+        var hitPos = Camera.WorldToDebug2D(new Vector3(_position.X, _position.Y, 0.5f));
+        if (Render.DebugEnabled) {
+            Render.DebugCircle(hitPos, 0.25f + _projDesc.BonusSize, new Vector3(0, 1, 0), 0.05f);
+            var worldAngle = Rotation - Camera.CameraAngle - _angleCorrection;
+            Render.DebugArrow(hitPos, worldAngle, 1f, new Vector3(1, 0, 0), 0.05f);
         }
 
         if (_projDesc.ParticleTrail && doHitTest)
@@ -274,7 +266,7 @@ public sealed class Projectile {
         var checkPos = Camera.WorldToDebug2D(new Vector3(_position.X, _position.Y, 0.5f));
 
         if (_damagePlayers) {
-            var target = EntityUtils.GetClosestPlayer(checkPos, hitRadius);
+            var target = EntityUtils.GetPlayerHit(checkPos, hitRadius);
             if (target == null || _hitEntities.Contains(target.ObjectId))
                 return false;
 
