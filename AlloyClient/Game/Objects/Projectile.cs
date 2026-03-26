@@ -300,7 +300,6 @@ public sealed class Projectile {
             var distSqr = (goPos - checkPos).LengthSquared;
 
             if (distSqr > hitRadiusSqr) continue;
-
             if (_ricochetsLeft > 0) {
                 _ricochetsLeft--;
                 var chainTarget = GetChainTarget(go);
@@ -316,8 +315,6 @@ public sealed class Projectile {
                 } else {
                     Clear = true;
                 }
-
-                return false;
             }
 
             if (enemy.HasConditionEffect(ConditionEffects.Invincible) ||
@@ -342,7 +339,8 @@ public sealed class Projectile {
 
             _hitEntities.Add(go.ObjectId);
             hitSomething = true;
-
+            
+            if(_ricochetsLeft == 0 && _projDesc.Ricochet > 0) return true;
             if (!_projDesc.MultiHit) return true;
         }
 
