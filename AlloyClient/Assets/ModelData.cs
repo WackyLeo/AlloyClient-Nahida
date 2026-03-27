@@ -59,7 +59,8 @@ public enum ModelType {
     PbDoubleWall,
     PbDoubleWall2,
     PbTripleWall,
-    PbGroundObject
+    PbGroundObject,
+    PbCaveWall
 }
 
 public static partial class ModelData {

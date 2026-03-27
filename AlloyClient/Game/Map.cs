@@ -267,14 +267,28 @@ public static class Map {
         GL.Enable(EnableCap.CullFace);
 
         #region Entities
+        
+        GL.Disable(EnableCap.CullFace);
+        GL.DepthMask(true);
+        GL.Enable(EnableCap.DepthTest);
+        
+        if (EntityStorage.TryGetValue(ModelType.PbCaveWall, out var caveWalls)) {
+            Render.SetCaveWallShaderParams();
+            Render.StartDrawCaveWall();
+            
+            foreach (var wall in caveWalls) {
+                if (wall.Visible) 
+                    wall.Draw();
+            }
+            Render.FlushCaveWall();
+        }
+        GL.Enable(EnableCap.CullFace);
 
         Render.StartDrawModel();
-
         foreach (var kvp in EntityStorage) {
-            if (kvp.Key == ModelType.Null || kvp.Key == ModelType.PbObject) continue;
-
+            if (kvp.Key == ModelType.Null || kvp.Key == ModelType.PbObject || kvp.Key == ModelType.PbCaveWall) continue;
+            
             Render.SetEntityModel(kvp.Key);
-
             foreach (var entity in kvp.Value)
                 if (entity.Visible) {
                     entity.Draw();
@@ -283,14 +297,14 @@ public static class Map {
 
             Render.FlushBufferModel();
         }
-
+        
         GL.Disable(EnableCap.CullFace);
 
         Render.StartDrawEntity();
         for (var i = 0; i < ParticleGenCount; i++)
             if (ParticleGenerators[i] is RayCastParticle rcp)
                 rcp.Draw();
-
+        
         if (EntityStorage.TryGetValue(ModelType.PbObject, out var entities)) {
             entities.Sort();
 

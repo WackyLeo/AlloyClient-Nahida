@@ -145,13 +145,13 @@ public static class RemoteAssetLoader
                 var props = new GroundProperties(ground);
 
                 lock (GroundLibrary.TypeToGroundProps)
-                    GroundLibrary.TypeToGroundProps.TryAdd(props.ObjectType, props);
+                    GroundLibrary.TypeToGroundProps[props.ObjectType] = props;
 
                 lock (GroundLibrary.TypeToTextureData)
-                    GroundLibrary.TypeToTextureData.TryAdd(props.ObjectType, new TextureData(ground));
+                    GroundLibrary.TypeToTextureData[props.ObjectType] = new TextureData(ground);
 
                 lock (GroundLibrary.IdToTileType)
-                    GroundLibrary.IdToTileType.TryAdd(props.ObjectId, props.ObjectType);
+                    GroundLibrary.IdToTileType[props.ObjectId] = props.ObjectType;
             }
             catch (Exception e)
             {
@@ -169,30 +169,33 @@ public static class RemoteAssetLoader
                 var props = new ObjectProperties(obj);
 
                 lock (ObjectLibrary.TypeToObjectProps)
-                    ObjectLibrary.TypeToObjectProps.TryAdd(props.ObjectType, props);
+                    ObjectLibrary.TypeToObjectProps[props.ObjectType] = props;
 
                 lock (ObjectLibrary.TypeToTextureData)
-                    ObjectLibrary.TypeToTextureData.TryAdd(props.ObjectType, new TextureData(obj));
+                    ObjectLibrary.TypeToTextureData[props.ObjectType] = new TextureData(obj);
 
                 lock (ObjectLibrary.IdToObjectType)
-                    ObjectLibrary.IdToObjectType.TryAdd(props.ObjectId, props.ObjectType);
+                    ObjectLibrary.IdToObjectType[props.ObjectId] = props.ObjectType;
 
                 if (props.Class == "Player")
                 {
                     lock (ObjectLibrary.TypeToClassProps)
-                        ObjectLibrary.TypeToClassProps.TryAdd(props.ObjectType, props.PlayerProperties);
+                        ObjectLibrary.TypeToClassProps[props.ObjectType] = props.PlayerProperties;
                 }
 
                 if (props.Skin)
                 {
-                    lock (ObjectLibrary.TypeToSkins)
-                        ObjectLibrary.TypeToSkins.Add(new Tuple<ushort, ushort>(props.PlayerClassType, props.ObjectType));
+                    var skinTuple = new Tuple<ushort, ushort>(props.PlayerClassType, props.ObjectType);
+                    lock (ObjectLibrary.TypeToSkins) {
+                        if (!ObjectLibrary.TypeToSkins.Contains(skinTuple))
+                            ObjectLibrary.TypeToSkins.Add(skinTuple);
+                    }
                 }
 
                 if (obj.HasElement("Item"))
                 {
                     lock (ObjectLibrary.TypeToItem)
-                        ObjectLibrary.TypeToItem.TryAdd(props.ObjectType, new ItemDesc(props.ObjectType, obj));
+                        ObjectLibrary.TypeToItem[props.ObjectType] = new ItemDesc(props.ObjectType, obj);
                 }
             }
             catch (Exception e)

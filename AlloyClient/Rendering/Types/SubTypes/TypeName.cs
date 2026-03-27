@@ -15,12 +15,17 @@ public class TypeName : SubRenderBase {
     public string Name;
     private GlyphData[] _glyphs;
 
-    public TypeName(RenderBase parent, Entity entity) {
+    public TypeName(RenderBase parent, Entity entity, string name = "") {
         Parent = parent;
         Entity = entity;
-        Name = entity.Name;
-
-        if (string.IsNullOrEmpty(Name)) Name = "Default";
+        
+        Name = name;
+        if (string.IsNullOrEmpty(name)) {
+            Name = Entity.Name;
+        } 
+        if (string.IsNullOrEmpty(Entity.Name)) {
+            Name = "";
+        }
         
         SetTextures();
         Extra = new ExtraData(RenderConfig.TypeText, RenderConfig.NoShade);

@@ -26,7 +26,6 @@ public static partial class Render {
     private static readonly (string, string)[] ShadowDefines = [("ShadowBuffer", $"{ShadowBufferSize}")];
     private static readonly (string, string)[] ObjectDefines = [("ObjectBuffer", $"{BufferSize}")];
     
-    
     // Shaders
     private static Shader _shaderGround;
     private static Shader _shaderShadow;
@@ -128,6 +127,8 @@ public static partial class Render {
         
         GL.BindVertexArray(0);
         GL.BindBuffer(BufferTarget.ArrayBuffer, 0);
+        
+        InitCaveWall(atlas);
     }
     
     public static void SetShaderParams(GameTime gameTime) {
@@ -160,6 +161,8 @@ public static partial class Render {
         _shaderGroundObject.SetValue("ViewMatrix", Camera.ViewMatrix);
         _shaderGroundObject.SetValue("ProjMatrix", Camera.ProjectionMatrix);
         _shaderGroundObject.SetValue("GameTime", (float)(gameTime.TotalMs / 1000.0f));
+        
+        SetCaveWallShaderParams();
     }
     
     public static void SetTileElevation(float elevation) {

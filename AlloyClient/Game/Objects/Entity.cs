@@ -176,12 +176,16 @@ public class Entity {
         if (props.RealSize != -1) {
             Size = props.RealSize;
         }
-
+        
         if (props.MinSize != props.MaxSize) {
             var maxSteps = (props.MaxSize - props.MinSize) / props.SizeStep;
             Size = props.MinSize + (int)(Random.Shared.NextSingle() * maxSteps) * props.SizeStep;
         }
 
+        if (IsBigBag(type)) {
+            Size = 120;
+        }
+        
         if (!string.IsNullOrEmpty(props.Model)) {
             return new TypeModel3D(props.Model, this);
         }
@@ -190,11 +194,14 @@ public class Entity {
             return new TypeGroundObject(this);
         }
 
+        Logger.Info($"Entity class: '{props.Class}' for type 0x{type:X4}");
+        
         return props.Class switch {
             "Wall" => new TypeWall(this),
             "DoubleWall" => new TypeWall(this, ModelType.PbDoubleWall),
             "DoubleWall2" => new TypeWall(this, ModelType.PbDoubleWall), // ModelType.PbDoubleWall2
             "TripleWall" => new TypeWall(this, ModelType.PbDoubleWall), // ModelType.PbTripleWall
+            "CaveWall" => new TypeCaveWall(this),
             _ => new TypeGameObject(this)
         };
     }
@@ -452,6 +459,10 @@ public class Entity {
                 case StatsType.AnimationSpeed:
                     AnimationSpeed = stat.Value;
                     break;
+                case StatsType.ObjectConnection:
+                    ConnectType = stat.Value;
+                    (RenderBaseType as TypeCaveWall)?.SetConnectType(stat.Value);
+                break;
             }
         }
     }
@@ -563,5 +574,15 @@ public class Entity {
         // Clear Madness dict
 
         // Dispose
+    }
+    
+    private static bool IsBigBag(ushort type) {
+        return type switch {
+            0x0509 or 0x050B or 0x050C or 0x050E or 0x050F or 0x0510 or 
+                0x040D or 0x1591 or 0x1595 or 0x15AB or 0x1606 or 0x04F4 or 
+                0x04F5 or 0x042D or 0x0427 or 0x04F6 or 0x04F7 or 0x04F8 or 
+                0x1596 or 0x1597 or 0x158F or 0x15AC or 0x1607 => true,
+            _ => false
+        };
     }
 }

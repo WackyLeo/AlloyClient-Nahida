@@ -38,18 +38,19 @@ public sealed class SpeechBubble : Sprite {
             _ => (0xE1DFDCu, 0xFFFFFFu, 0x545454u)
         };
         
-        const int cut = 10;
-        const int outline = 2;
-        
+        const int cut = 4;
         var txt = new SimpleText(new TextConfig { Text = data.Text, FontSize = 15, X = cut, Y = cut, Color = colors.Item3, MaxWidth = 120,OutlineThickness = 0, Glow = 0});
-        var rect = new CutEdgeRect(new CutEdgeConfig { Width = cut * 2 + txt.Width, Height = cut * 2 + txt.Height, CutX = cut, CutY = cut, Color = colors.Item1 });
-        var outlineRect = new CutEdgeRect(new CutEdgeConfig { Width = (cut + outline) * 2 + txt.Width, Height = (cut + outline) * 2 + txt.Height, CutX = cut + outline / 2, CutY = cut + outline / 2, Color = colors.Item2 }) {
-            X = -outline,
-            Y = -outline
-        };
-        
-        AddChild(outlineRect);
-        AddChild(rect);
+        var bg = new SdfRect(new SdfRectConfig {
+            Width = cut * 2 + txt.Width,
+            Height = cut * 2 + txt.Height,
+            Cut = cut,
+            Color = colors.Item1 + 0xFF000000, 
+            OutlineColor =  colors.Item2,
+            OutlineSize = 2f,
+            ShadowRadius = 3f, 
+            ShadowAlpha = 0.3f
+        });
+        AddChild(bg);
         AddChild(txt);
         
         SetAnchor(UiAnchor.MiddleBottom);
