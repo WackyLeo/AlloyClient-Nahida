@@ -14,6 +14,9 @@ namespace AlloyClient.Rendering;
 
 public static partial class Render {
     
+    private static Shader _shaderBackground;
+    private static int _bgVao;
+    private static int _bgVbo; 
     
     private const int BufferSize = 1000;
     private const int TileBufferSize = (int) (Map.TileRenderDistance * Map.TileRenderDistance * MathHelper.Pi) * 3;
@@ -108,8 +111,23 @@ public static partial class Render {
         _shaderObject.SetValue("TextTextureSize", new Vector2(UiRender.MyriadPro.Atlas.Width, UiRender.MyriadPro.Atlas.Height));
         _shaderObject.SetValue("TextTexture", UiRender.MyriadPro.Sampler);
         
-        
         BuildParticleBuffers();
+        
+        _shaderBackground = ContentReader.LoadShader("Shaders/Clouds");
+
+        float[] quadVertices = { -1f,  1f, -1f, -1f, 1f,  1f, 1f, -1f };
+        _bgVbo = GL.GenBuffer();
+        GL.BindBuffer(BufferTarget.ArrayBuffer, _bgVbo);
+        GL.BufferData(BufferTarget.ArrayBuffer, quadVertices.Length * sizeof(float), quadVertices, BufferUsage.StaticDraw);
+
+        _bgVao = GL.GenVertexArray();
+        GL.BindVertexArray(_bgVao);
+
+        GL.EnableVertexAttribArray(0);
+        GL.VertexAttribPointer(0, 2, VertexAttribPointerType.Float, false, 2 * sizeof(float), 0);
+        
+        GL.BindVertexArray(0);
+        GL.BindBuffer(BufferTarget.ArrayBuffer, 0);
     }
     
     public static void SetShaderParams(GameTime gameTime) {

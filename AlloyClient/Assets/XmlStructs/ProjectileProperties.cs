@@ -71,7 +71,7 @@ public sealed class ProjectileProperties {
     public readonly bool ArcBlade;
     public readonly bool CircularAngle;
     public readonly bool ForceHit;
-    
+    public readonly bool VanillaAngle;
     public ProjectileProperties(XElement e) {
         BulletType = e.GetAttribute<int>("id");
         ObjectId = e.GetValue<string>("ObjectId");
@@ -144,5 +144,6 @@ public sealed class ProjectileProperties {
         ArcBlade = e.HasElement("ArcBlade");
         CircularAngle = e.HasElement("CircularAngle");
         ForceHit = e.HasElement("ForceHit");
+        VanillaAngle = !Orbiting && !DynamicAngle;
     }
 }

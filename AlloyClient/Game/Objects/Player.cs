@@ -194,133 +194,154 @@ public class Player : Entity {
     }
 
     public bool UseAltWeapon(float mouseX, float mouseY, byte useType) {
-        if (Map.LocalPlayer == null || HasConditionEffect(ConditionEffects.Paused)) return false;
+    if (Map.LocalPlayer == null || HasConditionEffect(ConditionEffects.Paused)) return false;
 
-        var ability = Equipment[1];
-        if (ability == null) return false;
+    var ability = Equipment[1];
+    if (ability == null) return false;
 
-        var range = 25f;
-        var xDiff = Position.X - mouseX;
-        var yDiff = Position.Y - mouseY;
-        var dist = MathF.Sqrt(xDiff * xDiff + yDiff * yDiff);
-        var angle = MathF.Atan2(-yDiff, -xDiff);
+    var range = 25f;
+    var xDiff = Position.X - mouseX;
+    var yDiff = Position.Y - mouseY;
+    var dist = MathF.Sqrt(xDiff * xDiff + yDiff * yDiff);
+    var angle = MathF.Atan2(-yDiff, -xDiff);
 
-        var targetX = mouseX;
-        var targetY = mouseY;
+    var targetX = mouseX;
+    var targetY = mouseY;
 
-        if (dist > range) {
-            targetX = Position.X + MathF.Cos(angle) * range;
-            targetY = Position.Y + MathF.Sin(angle) * range;
-        }
-
-        var shoot = false;
-        var teleport = false;
-        var dash = false;
-        var isMultiPhase = ability.MpEndCost > 0;
-
-        if (ability.ActivateEffects != null)
-            foreach (var effect in ability.ActivateEffects) {
-                if (effect.Effect == "Teleport") teleport = true;
-                if (effect.Effect == "Shoot") shoot = true;
-                if (effect.Effect == "AutoShoot") shoot = true;
-                if (effect.Effect == "Dash") dash = true;
-                if (effect.Effect != "AutoShoot" && useType == 4) return false;
-            }
-
-        if (teleport && !IsValidPosition(targetX, targetY)) return false;
-
-        var time = (int)Main.GameTime.TotalMs;
-
-        if (useType == 1 || useType == 4 || (useType == 5 && isMultiPhase)) {
-            if (time < NextAltAttack) return false;
-
-            var mpCheck = isMultiPhase && ability.SlotType == 25 ? ability.MpEndCost : ability.MpCost;
-            var xorCondition = !(isMultiPhase ^ (useType == 5));
-
-            if ((mpCheck != 0 && mpCheck > Mp && xorCondition) || HasConditionEffect(ConditionEffects.Silenced))
-                return false;
-
-            var cooldown = (int)(ability.Cooldown * 1000f);
-            if (cooldown <= 0) cooldown = 550;
-
-            if (isMultiPhase && ability.SlotType == 25) {
-                if (useType == 5) {
-                    LastAltAttack = time;
-                    NextAltAttack = time + cooldown;
-                }
-            } else {
-                NextAltAttack = time + cooldown;
-                LastAltAttack = time;
-            }
-
-            var pkt = UseItem.CreatePacket();
-            pkt.Time = time;
-            pkt.SlotObject = new ObjectSlot { ObjectId = ObjectId, SlotId = 1, ObjectType = ability.ObjectType };
-            pkt.ItemUsePos = new Position { X = targetX, Y = targetY };
-            pkt.UseType = useType;
-            Client.QueuePacket(pkt);
-
-            if (dash) {
-                DashTimer = 100;
-                IFrame = true;
-            }
-
-            if (shoot && (!(isMultiPhase && useType != 5) || (isMultiPhase && useType == 5))) {
-                if (useType == 5 && Mp < ability.MpEndCost) return false;
-
-                var props = ObjectLibrary.TypeToObjectProps[ability.ObjectType];
-                var shootPacket = PlayerShoot.CreatePacket();
-
-                var arc = MathHelper.DegreesToRadians(props.ArcGap) * (props.NumProjectiles - 1);
-                var startAngle = angle - arc / 2;
-
-                var startCount = ability.StartCount;
-                var nextCount = ability.NextCount;
-                var projTypeIndex = 0;
-
-                for (var i = 0; i < props.NumProjectiles; i++) {
-                    var projDesc = ability.AllProjectiles[projTypeIndex % ability.AllProjectiles.Length];
-                    var projObjType = ObjectLibrary.IdToObjectType[projDesc.ObjectId];
-                    var objProps = ObjectLibrary.TypeToObjectProps[projObjType];
-                    var projAngle = startAngle + MathHelper.DegreesToRadians(props.ArcGap) * i;
-                    var bId = GetBulletId2();
-
-                    var rawDmg = MathUtils.RandomInt(projDesc.MinDamage, projDesc.MaxDamage);
-                    var dmg = (int)(rawDmg * (0.5f + Attack / 50f));
-
-                    if (!props.ProjectilesDict.TryGetValue(projDesc.BulletType, out var projPropsInfo))
-                        projPropsInfo = props.Projectiles[0];
-
-                    var proj = ObjectPools.Projectiles.Pop();
-                    proj.Reset(bId, dmg, projAngle, this, objProps, projPropsInfo);
-                    Map.AddProjectile(proj);
-
-                    if (i == 0)
-                        shootPacket.Shots.Add(new ShootData {
-                            Time = time,
-                            BulletId = bId,
-                            ItemType = ability.ObjectType,
-                            StartingPos = new Position { X = Position.X, Y = Position.Y },
-                            Angle = projAngle
-                        });
-
-                    startCount++;
-                    if (startCount % nextCount == 0) projTypeIndex++;
-                }
-
-                Client.QueuePacket(shootPacket);
-            }
-        } else if (isMultiPhase) {
-            var pkt = UseItem.CreatePacket();
-            pkt.Time = time;
-            pkt.SlotObject = new ObjectSlot { ObjectId = ObjectId, SlotId = 1, ObjectType = ability.ObjectType };
-            pkt.ItemUsePos = new Position { X = targetX, Y = targetY };
-            pkt.UseType = useType;
-            Client.QueuePacket(pkt);
-        }
-
-        return true;
+    if (dist > range) {
+        targetX = Position.X + MathF.Cos(angle) * range;
+        targetY = Position.Y + MathF.Sin(angle) * range;
     }
+
+    var shoot = false;
+    var teleport = false;
+    var dash = false;
+    var isMultiPhase = ability.MpEndCost > 0;
+
+    if (ability.ActivateEffects != null)
+        foreach (var effect in ability.ActivateEffects) {
+            if (effect.Effect == "Teleport") teleport = true;
+            if (effect.Effect == "Shoot") shoot = true;
+            if (effect.Effect == "AutoShoot") shoot = true;
+            if (effect.Effect == "Dash") dash = true;
+            if (effect.Effect != "AutoShoot" && useType == 4) return false;
+        }
+
+    if (teleport && !IsValidPosition(targetX, targetY)) return false;
+
+    var time = (int)Main.GameTime.TotalMs;
+
+    if (useType == 1 || useType == 4 || (useType == 5 && isMultiPhase)) {
+        if (time < NextAltAttack) return false;
+
+        var mpCheck = isMultiPhase && ability.SlotType == 25 ? ability.MpEndCost : ability.MpCost;
+        var xorCondition = !(isMultiPhase ^ (useType == 5));
+
+        if ((mpCheck != 0 && mpCheck > Mp && xorCondition) || HasConditionEffect(ConditionEffects.Silenced))
+            return false;
+
+        var cooldown = (int)(ability.Cooldown * 1000f);
+        if (cooldown <= 0) cooldown = 550;
+
+        if (isMultiPhase && ability.SlotType == 25) {
+            if (useType == 5) {
+                LastAltAttack = time;
+                NextAltAttack = time + cooldown;
+            }
+        } else {
+            NextAltAttack = time + cooldown;
+            LastAltAttack = time;
+        }
+        int serverBulletId = ReadServerId();
+        
+        if (useType == 5 && isMultiPhase) {
+            var pktCancel = UseItem.CreatePacket();
+            pktCancel.Time = time;
+            pktCancel.SlotObject = new ObjectSlot { ObjectId = ObjectId, SlotId = 1, ObjectType = ability.ObjectType };
+            pktCancel.ItemUsePos = new Position { X = targetX, Y = targetY };
+            pktCancel.UseType = 2;
+            pktCancel.ProjId = serverBulletId;
+            Client.QueuePacket(pktCancel);
+
+            var pktShoot = UseItem.CreatePacket();
+            pktShoot.Time = time;
+            pktShoot.SlotObject = new ObjectSlot { ObjectId = ObjectId, SlotId = 1, ObjectType = ability.ObjectType };
+            pktShoot.ItemUsePos = new Position { X = targetX, Y = targetY };
+            pktShoot.UseType = 4;
+            pktShoot.ProjId = serverBulletId;
+            Client.QueuePacket(pktShoot);
+        } else {
+            var pkt = UseItem.CreatePacket();
+            pkt.Time = time;
+            pkt.SlotObject = new ObjectSlot { ObjectId = ObjectId, SlotId = 1, ObjectType = ability.ObjectType };
+            pkt.ItemUsePos = new Position { X = targetX, Y = targetY };
+            pkt.UseType = useType;
+            pkt.ProjId = serverBulletId;
+            Client.QueuePacket(pkt);
+        }
+
+        if (dash) {
+            DashTimer = 100;
+            IFrame = true;
+        }
+
+        if (shoot && (!(isMultiPhase && useType != 5) || (isMultiPhase && useType == 5))) {
+            if (useType == 5 && Mp < ability.MpEndCost) return false;
+
+            var props = ObjectLibrary.TypeToObjectProps[ability.ObjectType];
+            var shootPacket = PlayerShoot.CreatePacket();
+
+            var arc = MathHelper.DegreesToRadians(props.ArcGap) * (props.NumProjectiles - 1);
+            var startAngle = angle - arc / 2;
+
+            var startCount = ability.StartCount;
+            var nextCount = ability.NextCount;
+            var projTypeIndex = 0;
+
+            for (var i = 0; i < props.NumProjectiles; i++) {
+                var projDesc = ability.AllProjectiles[projTypeIndex % ability.AllProjectiles.Length];
+                var projObjType = ObjectLibrary.IdToObjectType[projDesc.ObjectId];
+                var objProps = ObjectLibrary.TypeToObjectProps[projObjType];
+                var projAngle = startAngle + MathHelper.DegreesToRadians(props.ArcGap) * i;
+                var bId = GetBulletId2();
+
+                var rawDmg = MathUtils.RandomInt(projDesc.MinDamage, projDesc.MaxDamage);
+                var dmg = (int)(rawDmg * (0.5f + Attack / 50f));
+
+                if (!props.ProjectilesDict.TryGetValue(projDesc.BulletType, out var projPropsInfo))
+                    projPropsInfo = props.Projectiles[0];
+
+                var proj = ObjectPools.Projectiles.Pop();
+                proj.Reset(bId, dmg, projAngle, this, objProps, projPropsInfo);
+                Map.AddProjectile(proj);
+
+                if (i == 0) {
+                    shootPacket.Shots.Add(new ShootData {
+                        Time = time,
+                        BulletId = bId,
+                        ItemType = ability.ObjectType,
+                        StartingPos = new Position { X = Position.X, Y = Position.Y },
+                        Angle = projAngle
+                    });
+                }
+
+                startCount++;
+                if (startCount % nextCount == 0) projTypeIndex++;
+            }
+
+            Client.QueuePacket(shootPacket);
+        }
+    } else if (isMultiPhase) {
+        var pkt = UseItem.CreatePacket();
+        pkt.Time = time;
+        pkt.SlotObject = new ObjectSlot { ObjectId = ObjectId, SlotId = 1, ObjectType = ability.ObjectType };
+        pkt.ItemUsePos = new Position { X = targetX, Y = targetY };
+        pkt.UseType = useType;
+        Client.QueuePacket(pkt);
+    }
+
+    return true;
+}
 
     public override void UpdateStats(StatData[] statData, int offset, int count) {
         base.UpdateStats(statData, offset, count);

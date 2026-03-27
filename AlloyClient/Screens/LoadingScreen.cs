@@ -19,9 +19,6 @@ public class LoadingScreen : Screen {
     private readonly SimpleText _text;
     
     public LoadingScreen() {
-        var background = new ScreenGraphic();
-        AddChild(background);
-
         _text = new SimpleText(new TextConfig {
             Text = "Loading...",
             FontSize = 40,
@@ -43,7 +40,7 @@ public class LoadingScreen : Screen {
             //Task.Run(SoundManager.PreLoadSounds),
             //Task.Run(Music.PreLoadSongs),
             AssetParser.LoadAssetsAsync(),
-            Task.Delay(2000) // Loading screen too fast lmao
+            Task.Delay(2000)
         ), () => { ScreenManager.FadeToScreen(new TitleScreen(), Easing.SineInOut, 1000, 0x0); });
     }
 

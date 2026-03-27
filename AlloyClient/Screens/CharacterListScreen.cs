@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using AlloyClient.AppEngine;
 using AlloyClient.Data;
@@ -11,9 +12,11 @@ using AlloyClient.Ui.Components.Buttons;
 using AlloyClient.Ui.Components.Scrollbars;
 using AlloyClient.UiLib.BuiltIn;
 using AlloyClient.UiLib.BuiltIn.Buttons;
+using AlloyClient.UiLib.Core;
 using AlloyClient.UiLib.Enums;
 using AlloyClient.UiLib.Extra;
 using AlloyClient.Utils;
+using OpenTK.Mathematics;
 
 namespace AlloyClient.Screens;
 
@@ -21,33 +24,35 @@ public class CharacterListScreen : TitleScreenBase {
     private const int PlayFontSize = 55;
     private const int FontSize = 35;
     
-    private readonly Container _scrollContainer;
+    private readonly MenuBarButton _playButton;
+    private readonly MenuBarButton _classesButton;
+    private readonly MenuBarButton _backButton;
+    private readonly ColorRect _lineDivider;
+    
+    private readonly TextButton _nameText;
+    private readonly ObjectRect _goldIcon;
+    private readonly SimpleText _goldText;
+    private readonly ObjectRect _fameIcon;
+    private readonly SimpleText _fameText;
 
+    private readonly TextButton _charactersButton;
+    private readonly TextButton _graveyardButton;
+
+    private readonly Container _scrollContainer;
     private readonly Container _characterListContainer;
     private readonly Container _graveyardContainer;
     
-    private readonly TextButton _charactersButton;
-    private readonly TextButton _graveyardButton;
-    
     private readonly List<CharacterRect> _characterListRects = [];
     private CharacterRect _newCharacterRect;
-    
     private List<CharacterRect> _graveyardCharacterRects = [];
     
     private VerticalScrollBar _scrollBar;
-
     private int _selectedCharacterId = -1;
-
-
-    private Container _mainBar;
-    private Container _backBar;
-    
-    
 
     public CharacterListScreen() {
         #region Title Buttons
 
-        var playButton = new MenuBarButton("play",  PlayFontSize, () => {
+        _playButton = new MenuBarButton("play", PlayFontSize, () => {
             var data = GlobalData.Get<CharacterListData>();
             var charList = data.Characters;
             if (charList == null || charList.Length <= 0)
@@ -58,40 +63,28 @@ public class CharacterListScreen : TitleScreenBase {
             GlobalData.SelectedCharacterId = _selectedCharacterId;
             ScreenManager.FadeToScreen(new GameScreen(), Easing.SineInOut, 1000, 0x0);
         }, true);
-        playButton.SetAnchor(UiAnchor.Middle);
-        playButton.X = Settings.DefaultScreenWidth / 2;
-        playButton.Y = Settings.DefaultScreenHeight - 50;
-        AddChild(playButton);
+        _playButton.SetAnchor(UiAnchor.Middle);
+        AddChild(_playButton);
 
-        var classesButton = new MenuBarButton("classes", FontSize, ShowCharacterCreate);
-        classesButton.SetAnchor(UiAnchor.MiddleLeft);
-        classesButton.X = playButton.X + playButton.Width / 2 + 50;
-        classesButton.Y = Settings.DefaultScreenHeight - 50;
-        AddChild(classesButton);
+        _classesButton = new MenuBarButton("classes", FontSize, ShowCharacterCreate);
+        _classesButton.SetAnchor(UiAnchor.MiddleLeft);
+        AddChild(_classesButton);
 
-        var backButton = new MenuBarButton("back", FontSize, () => {
+        _backButton = new MenuBarButton("back", FontSize, () => {
             ScreenManager.FadeToScreen(new TitleScreen(), Easing.SineInOut, 1000, 0x0);
         });
-        backButton.SetAnchor(UiAnchor.MiddleRight);
-        backButton.X = playButton.X - playButton.Width / 2 - 50;
-        backButton.Y = Settings.DefaultScreenHeight - 50;
-        AddChild(backButton);
-
-        #endregion
-
-        #region Class Creation Popup
+        _backButton.SetAnchor(UiAnchor.MiddleRight);
+        AddChild(_backButton);
 
         #endregion
 
         #region Decoration
-
-        var lineDivider = new ColorRect(new ColorRectConfig {
-            Y = 100,
+        _lineDivider = new ColorRect(new ColorRectConfig {
             Width = Settings.DefaultScreenWidth,
             Height = 5,
             Color = 0x2B2B2B,
         });
-        AddChild(lineDivider);
+        AddChild(_lineDivider);
 
         #endregion
 
@@ -99,72 +92,57 @@ public class CharacterListScreen : TitleScreenBase {
 
         var account = GlobalData.Get<AccountData>();
 
-        //TODO: swap to simple text
-        var nameText = new TextButton(new TextButtonConfig() {
+        _nameText = new TextButton(new TextButtonConfig() {
             Text = account.Name,
             FontSize = 32,
             FontType = FontType.Bold,
-            X = Settings.DefaultScreenWidth / 2,
-            Y = 50,
             ActiveColor = 0xB3B3B3,
             InactiveColor = 0xB3B3B3,
             Anchor = UiAnchor.Middle,
         });
-        AddChild(nameText);
+        AddChild(_nameText);
 
-        var goldIcon = new ObjectRect(new ObjectRectConfig {
+        _goldIcon = new ObjectRect(new ObjectRectConfig {
             Texture = TextureHelper.FromGameAtlas("lofiObj3", 0xE1),
-            X = Settings.DefaultScreenWidth - 15,
-            Y = 88,
             Width = 16,
             Height = 16,
             Anchor = UiAnchor.RightBottom,
         });
-        AddChild(goldIcon);
+        AddChild(_goldIcon);
 
-        var goldText = new SimpleText(new TextConfig {
+        _goldText = new SimpleText(new TextConfig {
             Text = account.Stats.Credits.ToString(),
             FontSize = 24,
             FontType = FontType.Normal,
-            X = goldIcon.X - goldIcon.Width - 5,
-            Y = 93,
             Color = 0xFFFFFF,
             Anchor = UiAnchor.RightBottom,
         });
-        AddChild(goldText);
+        AddChild(_goldText);
 
-        var fameIcon = new ObjectRect(new ObjectRectConfig {
+        _fameIcon = new ObjectRect(new ObjectRectConfig {
             Texture = TextureHelper.FromGameAtlas("lofiObj3", 0xE0),
-            X = goldText.X - goldText.Width - 10,
-            Y = 88,
             Width = 16,
             Height = 16,
             Anchor = UiAnchor.RightBottom,
         });
-        AddChild(fameIcon);
+        AddChild(_fameIcon);
 
-        var fameText = new SimpleText(new TextConfig {
+        _fameText = new SimpleText(new TextConfig {
             Text = account.Stats.Fame.ToString(),
             FontSize = 24,
             FontType = FontType.Normal,
-            X = fameIcon.X - fameIcon.Width - 5,
-            Y = 93,
             Color = 0xFFFFFF,
             Anchor = UiAnchor.RightBottom,
         });
-        AddChild(fameText);
+        AddChild(_fameText);
 
         #endregion
 
         #region Containers
-
-        var containerY = lineDivider.Y + lineDivider.Height;
-        var containerHeight = Settings.DefaultScreenHeight - containerY - 80;
-        _scrollContainer = new Container(new ContainerConfig {
-            Y = lineDivider.Y + lineDivider.Height,
+        _scrollContainer = new Container(new ContainerConfig { 
             Width = Settings.DefaultScreenWidth,
-            Height = containerHeight,
-            EnableClip = true
+            Height = Settings.DefaultScreenHeight - 185,
+            EnableClip = true 
         });
         AddChild(_scrollContainer);
 
@@ -173,7 +151,6 @@ public class CharacterListScreen : TitleScreenBase {
 
         _graveyardContainer = new Container();
         _scrollContainer.AddChild(_graveyardContainer);
-
         _graveyardContainer.Visible = false;
 
         #endregion
@@ -186,17 +163,10 @@ public class CharacterListScreen : TitleScreenBase {
             OnClicked = () => {
                 _characterListContainer.Visible = true;
                 _graveyardContainer.Visible = false;
-
-                if (_graveyardButton == null || _charactersButton == null) {
-                    return;
-                }
-
                 _graveyardButton.Alpha = 0.6f;
                 _charactersButton.Alpha = 1f;
-            },
-            X = 15
+            }
         });
-        _charactersButton.Y = lineDivider.Y - _charactersButton.Height / 2 - 15;
         AddChild(_charactersButton);
 
         _graveyardButton = new TextButton(new TextButtonConfig {
@@ -205,18 +175,11 @@ public class CharacterListScreen : TitleScreenBase {
             OnClicked = () => {
                 _graveyardContainer.Visible = true;
                 _characterListContainer.Visible = false;
-
-                if (_graveyardButton == null || _charactersButton == null) {
-                    return;
-                }
-
                 _charactersButton.Alpha = 0.6f;
                 _graveyardButton.Alpha = 1f;
-            },
-            X = _charactersButton.X + _charactersButton.Width + 25
+            }
         });
         _graveyardButton.Alpha = 0.6f;
-        _graveyardButton.Y = lineDivider.Y - _graveyardButton.Height / 2 - 15;
         AddChild(_graveyardButton);
 
         #endregion
@@ -229,29 +192,85 @@ public class CharacterListScreen : TitleScreenBase {
         });
     }
 
+    protected override void OnResize(ResizeEvent args) {
+        base.OnResize(args);
+
+        float uniformScale = Math.Min(Stage.ScreenScale.X, Stage.ScreenScale.Y);
+        _nameText.Scale = new Vector2(uniformScale);
+        _nameText.X = args.Width / 2;
+        _nameText.Y = (int)(50 * uniformScale);
+
+        int rightPadding = (int)(15 * uniformScale);
+        int topPadding = (int)(88 * uniformScale);
+        int iconSpacing = (int)(5 * uniformScale);
+        int statSpacing = (int)(10 * uniformScale);
+
+        _goldIcon.Scale = new Vector2(uniformScale);
+        _goldIcon.X = args.Width - rightPadding;
+        _goldIcon.Y = topPadding;
+
+        _goldText.Scale = new Vector2(uniformScale);
+        _goldText.X = _goldIcon.X - _goldIcon.Width - iconSpacing;
+        _goldText.Y = (int)(93 * uniformScale);
+
+        _fameIcon.Scale = new Vector2(uniformScale);
+        _fameIcon.X = _goldText.X - _goldText.Width - statSpacing;
+        _fameIcon.Y = topPadding;
+
+        _fameText.Scale = new Vector2(uniformScale);
+        _fameText.X = _fameIcon.X - _fameIcon.Width - iconSpacing;
+        _fameText.Y = (int)(93 * uniformScale);
+
+        _lineDivider.Resize(args.Width, (int)Math.Max(1, 5 * uniformScale));
+        _lineDivider.X = 0;
+        _lineDivider.Y = (int)(100 * uniformScale);
+
+        _scrollContainer.Scale = new Vector2(uniformScale);
+        float gridLeftEdge = (args.Width - (Settings.DefaultScreenWidth * uniformScale)) / 2f;
+        _scrollContainer.X = (int)gridLeftEdge;
+        _scrollContainer.Y = (int)(105 * uniformScale);
+
+        _charactersButton.Scale = new Vector2(uniformScale);
+        _charactersButton.X = (int)(gridLeftEdge + 15 * uniformScale); 
+        _charactersButton.Y = _lineDivider.Y - _charactersButton.Height / 2 - (int)(15 * uniformScale);
+
+        _graveyardButton.Scale = new Vector2(uniformScale);
+        _graveyardButton.X = _charactersButton.X + _charactersButton.Width + (int)(25 * uniformScale);
+        _graveyardButton.Y = _charactersButton.Y;
+        
+        _playButton.Scale = new Vector2(uniformScale);
+        _classesButton.Scale = new Vector2(uniformScale);
+        _backButton.Scale = new Vector2(uniformScale);
+
+        int bottomY = args.Height - (int)(50 * uniformScale);
+        int gap = (int)(50 * uniformScale);
+
+        _playButton.X = args.Width / 2;
+        _playButton.Y = bottomY;
+
+        _classesButton.X = _playButton.X + _playButton.Width / 2 + gap;
+        _classesButton.Y = bottomY;
+
+        _backButton.X = _playButton.X - _playButton.Width / 2 - gap;
+        _backButton.Y = bottomY;
+        UpdateGridLayout();
+    }
+
     private void LoadCharacterList() {
         var charModel = GlobalData.Get<CharacterListData>();
-        if (charModel == null) {
-            return;
-        }
+        if (charModel == null) return;
         
         var characters = charModel.Characters;
-        const int baseX = 5;
-        const int baseY = 12;
         if (characters != null) {
             foreach (var character in characters) {
                 if (_selectedCharacterId == -1) {
                     _selectedCharacterId = character.Id;
                 }
                 
-                var charRect = new CharacterRect(this) {
-                    X = baseX,
-                    Y = baseY
-                };
+                var charRect = new CharacterRect(this);
                 charRect.EnableClipRect = true;
                 charRect.Initialize(CharacterRectType.Character, character);
                 _characterListContainer.AddChild(charRect);
-                
                 _characterListRects.Add(charRect);
             }
         }
@@ -262,30 +281,51 @@ public class CharacterListScreen : TitleScreenBase {
             return bSortValue.CompareTo(aSortValue);
         });
 
-        for (var i = 1; i < _characterListRects.Count; i++) {
-            var characterRect = _characterListRects[i];
-            var row = i / 6;
-            var col = i % 6;
-            characterRect.X = baseX + col * 210;
-            characterRect.Y = baseY + row * 210;
-        }
-
         var remainingSlots = charModel.MaxNumChars - _characterListRects.Count;
-        _newCharacterRect = new CharacterRect(this) {
-            X = baseX + _characterListRects.Count % 6 * 210,
-            Y = baseY + _characterListRects.Count / 6 * 210
-        };
+        _newCharacterRect = new CharacterRect(this);
         _newCharacterRect.Initialize(CharacterRectType.NewCharacter, remainingSlots: remainingSlots);
         _characterListContainer.AddChild(_newCharacterRect);
         
-        var totalContentHeight = _newCharacterRect.Y + 210;
-        var visibleContentHeight = Settings.DefaultScreenHeight - 180;
+        UpdateGridLayout();
+    }
+
+    private void UpdateGridLayout() {
+        float cardWidth = 210;
+        float cardHeight = 210;
+
+        int cols = Settings.DefaultScreenWidth / (int)cardWidth;
+        if (cols < 1) cols = 1;
+
+        float gridTotalWidth = cols * cardWidth;
+        float startX = (Settings.DefaultScreenWidth - gridTotalWidth) / 2f;
+        float startY = 15;
+
+        int index = 0;
+        foreach (var rect in _characterListRects) {
+            rect.X = (int)(startX + (index % cols) * cardWidth);
+            rect.Y = (int)(startY + (index / cols) * cardHeight);
+            index++;
+        }
+        
+        if (_newCharacterRect != null) {
+            _newCharacterRect.X = (int)(startX + (index % cols) * cardWidth);
+            _newCharacterRect.Y = (int)(startY + (index / cols) * cardHeight);
+            index++;
+        }
+
+        int totalRows = (int)Math.Ceiling((float)index / cols);
+        float totalContentHeight = startY + (totalRows * cardHeight) + 15;
+
+        if (_scrollBar != null) {
+            _scrollContainer.RemoveChild(_scrollBar);
+        }
+
         _scrollBar = new VerticalScrollBar(_scrollContainer, new VerticalScrollBarConfig {
-            X = Settings.DefaultScreenWidth - 10,
+            X = Settings.DefaultScreenWidth - 15,
             Width = 10,
             Height = _scrollContainer.Height,
-            TotalContentHeight = totalContentHeight,
-            VisibleContentHeight = visibleContentHeight,
+            TotalContentHeight = (int)totalContentHeight,
+            VisibleContentHeight = _scrollContainer.Height,
             OnValueChanged = value => {
                 _characterListContainer.Y = -value;
             }
@@ -295,10 +335,6 @@ public class CharacterListScreen : TitleScreenBase {
 
     private void LoadGraveyardList() {
         // TODO: Implement graveyard
-        
-        // _scrollBar = new VerticalScrollBar(Settings.DefaultScreenWidth - 10, 0, 10, Settings.DefaultScreenHeight - 180, 0, 100, 0, 0, value => {
-        //     _graveyardContainer.Y = value;
-        // });
     }
 
     public void ShowCharacterCreate() {

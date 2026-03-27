@@ -20,10 +20,10 @@ public abstract class DisplayContainer : EventManager {
     public float SelfContentWidth;
 
     public float SelfContentHeight;
-    
-    internal int ContentWidth;
 
-    internal int ContentHeight;
+    protected internal int ContentWidth;
+
+    protected internal int ContentHeight;
     
     private readonly List<Sprite> _children = [];
 

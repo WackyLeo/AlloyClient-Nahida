@@ -52,9 +52,6 @@ public class NewTick : IncomingPacket<NewTick> {
             };
             move.Records = Array.Empty<TimedPosition>();
             Client.QueuePacket(move);
-
-            Map.FlushEnemyHits();
-            Map.FlushPlayerHits();
         }
 
         for (var i = 0; i < ObjectStatsCount; i++) {
@@ -69,6 +66,9 @@ public class NewTick : IncomingPacket<NewTick> {
             Client.QueuePacket(shootPkt);
             Map.LocalPlayer.PendingShots.Clear(); 
         }
+        
+        Map.FlushEnemyHits();
+        Map.FlushPlayerHits();
     }
 
     private void ProcessObjectStats(ObjectStats stats, bool isPlayer, double now) {

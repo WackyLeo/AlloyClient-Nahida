@@ -4,6 +4,7 @@ using AlloyClient.Assets;
 using AlloyClient.Rendering.VertexData;
 using Common;
 using OpenTK.Graphics.OpenGL;
+using OpenTK.Mathematics;
 
 namespace AlloyClient.Rendering;
 
@@ -212,5 +213,19 @@ public static partial class Render {
         _groundObjectBuffer.BindToIndex(0);
         GL.DrawArrays(PrimitiveType.Triangles, 0, _groundObjectCount * 6);
         _groundObjectCount = 0;
+    }
+    
+    public static void DrawBackground(GameTime gameTime, Vector2 screenResolution, Vector2 screenCentre) {
+        GL.BindVertexArray(_bgVao);
+        GL.Disable(EnableCap.DepthTest);
+
+        _shaderBackground.Apply();
+        _shaderBackground.SetValue("uTime", (float)(gameTime.TotalMs / 1000.0f));
+        _shaderBackground.SetValue("uResolution", screenResolution);
+        _shaderBackground.SetValue("uMouse", screenCentre);
+        GL.DrawArrays(PrimitiveType.TriangleStrip, 0, 4);
+
+        GL.Enable(EnableCap.DepthTest);
+        GL.BindVertexArray(0);
     }
 }
