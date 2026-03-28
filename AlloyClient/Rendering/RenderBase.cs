@@ -32,7 +32,9 @@
         public Color Color = Color.Transparent;
         
         public abstract void SetPosition(float x, float y, float z = 0);
-
+        
+        public bool IsElevated => Entity?.Tile?.ZOffset != 0f;
+        
         public void SetTexture(AtlasData texture) => SetTexture(texture, false);
 
         public virtual void SetTexture(AtlasData texture, bool attackFrame) {

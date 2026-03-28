@@ -43,7 +43,10 @@ public class MapTile(int x, int y) {
         get;
         set => SetMinimapColor(field = value);
     }
-
+    
+    public float ZOffset => GroundProperties.ZOffset;
+    public bool IsElevated => GroundProperties.ZOffset != 0f;
+    
     private readonly SortedList<BlendInfo, TileData> _blends = new(8);
 
     private Color _color;
@@ -304,4 +307,6 @@ public class MapTile(int x, int y) {
         prio = tile?.GroundProperties.BlendPriority ?? 0;
         return tile != null;
     }
+
+    public TileData GetTileData() => _data;
 }

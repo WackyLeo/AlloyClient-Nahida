@@ -40,6 +40,7 @@ public static partial class Render {
         _caveWallCount = 0;
         _shaderCaveWall.Apply();
         _caveWallVao.Bind();
+        GL.Disable(EnableCap.CullFace); 
     }
  
     public static void DrawCaveWall(TypeCaveWall wall) {
@@ -60,7 +61,6 @@ public static partial class Render {
  
     public static void FlushCaveWall() {
         if (_caveWallCount == 0) return;
- 
         _caveWallVertexBuffer.SetData(_caveWallData.AsSpan(0, _caveWallCount));
         GL.DrawArrays(PrimitiveType.Triangles, 0, _caveWallCount);
         _caveWallCount = 0;

@@ -7,7 +7,8 @@ namespace AlloyClient.Assets.XmlStructs;
 public class GroundProperties {
     public readonly ushort ObjectType;
     public readonly string ObjectId;
-
+    public readonly float ZOffset;
+    
     public readonly bool NoWalk;
 
     public readonly int MinDamage;
@@ -37,6 +38,8 @@ public class GroundProperties {
         ObjectType = e.GetAttribute<ushort>("type");
         ObjectId = e.GetAttribute<string>("id");
         
+        ZOffset = e.GetValue("ZOffset", 0f);
+        Logger.Info($"Ground 0x{ObjectType:X4} ({ObjectId}) ZOffset={ZOffset}"); // ← add this
         NoWalk = e.HasElement("NoWalk"); 
         MinDamage = e.GetValue("MinDamage", 0);
         MaxDamage = e.GetValue("MaxDamage", 0);

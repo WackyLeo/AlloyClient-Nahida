@@ -27,8 +27,8 @@ public sealed class TypeWall : RenderBase {
 
         _topZ = modelType switch {
             ModelType.PbWall => 1,
-            ModelType.PbDoubleWall => 2,
-            ModelType.PbDoubleWall2 => 2,
+            ModelType.PbDoubleWall => 20,
+            ModelType.PbDoubleWall2 => 20,
             ModelType.PbTripleWall => 3,
             _ => 1
         };

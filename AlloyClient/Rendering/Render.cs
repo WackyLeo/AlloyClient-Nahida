@@ -1,4 +1,5 @@
-﻿using AlloyClient.Assets;
+﻿using System;
+using AlloyClient.Assets;
 using AlloyClient.Engine.Graphics;
 using AlloyClient.Engine.Graphics.Buffers;
 using AlloyClient.Game;
@@ -25,6 +26,10 @@ public static partial class Render {
     private static readonly (string, string)[] TileDefines = [("TileBuffer", $"{TileBufferSize}")];
     private static readonly (string, string)[] ShadowDefines = [("ShadowBuffer", $"{ShadowBufferSize}")];
     private static readonly (string, string)[] ObjectDefines = [("ObjectBuffer", $"{BufferSize}")];
+    
+    private static TileData[] _elevatedTileData;
+    private static StorageBuffer<TileData> _elevatedTileBuffer;
+    private static int _elevatedTileCount;
     
     // Shaders
     private static Shader _shaderGround;
@@ -101,14 +106,15 @@ public static partial class Render {
         _modelVertexBuffer.BindTo(_modelVao);
         _modelDataBuffer.BindTo(_modelVao, 1);
         
-        
         _entityData = new VertexObject[BufferSize];
         _entityDataBuffer = new StorageBuffer<VertexObject>(BufferSize);
-        
         
         _shaderObject.SetValue("PixelRange", UiRender.MyriadPro.PixelRange);
         _shaderObject.SetValue("TextTextureSize", new Vector2(UiRender.MyriadPro.Atlas.Width, UiRender.MyriadPro.Atlas.Height));
         _shaderObject.SetValue("TextTexture", UiRender.MyriadPro.Sampler);
+        
+        _elevatedTileData = new TileData[TileBufferSize];
+        _elevatedTileBuffer = new StorageBuffer<TileData>(_elevatedTileData.Length);
         
         BuildParticleBuffers();
         
@@ -180,5 +186,23 @@ public static partial class Render {
         _shaderGround.Apply();
         _tileBuffer.BindToIndex(0);
         GL.DrawArrays(PrimitiveType.Triangles, BlendTileStart * 6, blendCount * 6);
+    }
+    
+    public static void StartNewElevatedTile() => _elevatedTileCount = 0;
+
+    public static void DrawNewElevatedTile(TileData data) {
+        _elevatedTileData[_elevatedTileCount++] = data;
+    }
+
+    public static void EndNewElevatedTile() {
+        _elevatedTileBuffer.SetData(_elevatedTileData.AsSpan(0, _elevatedTileCount));
+    }
+
+    public static void DrawElevatedTilesBase() {
+        if (_elevatedTileCount == 0) return;
+        _defaultVao.Bind();
+        _shaderGround.Apply();
+        _elevatedTileBuffer.BindToIndex(0);
+        GL.DrawArrays(PrimitiveType.Triangles, 0, _elevatedTileCount * 6);
     }
 }

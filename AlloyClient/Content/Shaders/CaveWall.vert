@@ -7,15 +7,18 @@ uniform mat4 ProjMatrix;
 layout(location = 0) in vec3 Position;
 layout(location = 1) in vec2 UV;
 layout(location = 2) in float Shade;
+layout(location = 3) in float SortId;
 
-out vec2 vUV;
+out vec2  vUV;
 out float vShade;
 out float vZ;
 
 void main() {
     vec4 worldPos = vec4(Position, 1.0) * WorldMatrix * ViewMatrix * ProjMatrix;
-    vUV = UV;
-    vShade = Shade;
-    vZ = Position.z;
+    worldPos.z = SortId;
     gl_Position = worldPos;
+
+    vUV    = UV;
+    vShade = Shade;
+    vZ     = Position.z;
 }

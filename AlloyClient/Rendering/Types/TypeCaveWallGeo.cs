@@ -43,7 +43,7 @@ public static class TypeCaveWallGeo {
         return d;
     }
 
-    public static void Build(float posX, float posY, int connectType, Vector4 atlasUV, List<CaveWallVertex> vertices) {
+    public static void Build(float posX, float posY, int connectType, Vector4 atlasUV, float sortId, List<CaveWallVertex> vertices) {
         int mask = 0;
         if (connectType > 255) {
             mask |= ((connectType & 0xFF) == 1) ? 1 : 0;
@@ -63,8 +63,8 @@ public static class TypeCaveWallGeo {
 
         int tx = (int)posX;
         int ty = (int)posY;
-        var builder = new Builder(tx, ty, posX, posY, result.rot, atlasUV, vertices);
-
+        var builder = new Builder(tx, ty, posX, posY, result.rot, atlasUV, vertices, sortId); 
+        
         switch (result.type) {
             case Dot: builder.BuildDot(); break;
             case ShortLine: builder.BuildShortLine(); break;
@@ -78,6 +78,7 @@ public static class TypeCaveWallGeo {
     private ref struct Builder {
         private readonly int _tx;
         private readonly int _ty;
+        private readonly float _sortId;
         private readonly float _posX;
         private readonly float _posY;
         private readonly int _rot;
@@ -85,9 +86,10 @@ public static class TypeCaveWallGeo {
         private readonly List<CaveWallVertex> _verts;
         private readonly Random _rng;
 
-        public Builder(int tx, int ty, float posX, float posY, int rot, Vector4 atlas, List<CaveWallVertex> verts) {
+        public Builder(int tx, int ty, float posX, float posY, int rot, Vector4 atlas, List<CaveWallVertex> verts, float sortId) {
             _tx = tx;
             _ty = ty;
+            _sortId = sortId;
             _posX = posX;
             _posY = posY;
             _rot = rot;
@@ -283,11 +285,11 @@ public static class TypeCaveWallGeo {
             }
         }
 
-        private void Tri(Vector3 v1, float u1, float v2_1, Vector3 v2, float u2, float v2_2, Vector3 v3, float u3, float v2_3) {
-            _verts.Add(new CaveWallVertex(v1, AtlasUV(u1, v2_1), 1f));
-            _verts.Add(new CaveWallVertex(v2, AtlasUV(u2, v2_2), 1f));
-            _verts.Add(new CaveWallVertex(v3, AtlasUV(u3, v2_3), 1f));
-        }
+    private void Tri(Vector3 v1, float u1, float v1_1, Vector3 v2, float u2, float v1_2, Vector3 v3, float u3, float v1_3) {
+        _verts.Add(new CaveWallVertex(v1, AtlasUV(u1, v1_1), 1f, _sortId));
+        _verts.Add(new CaveWallVertex(v2, AtlasUV(u2, v1_2), 1f, _sortId));
+        _verts.Add(new CaveWallVertex(v3, AtlasUV(u3, v1_3), 1f, _sortId));
+    }
 
         private Vector2 AtlasUV(float u, float v) {
             float width = (_atlas.Z > _atlas.X && _atlas.Z <= 1.0f) ? (_atlas.Z - _atlas.X) : _atlas.Z;

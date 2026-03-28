@@ -44,7 +44,7 @@ public static class Map {
         Entities = new(); // todo: add players to separate dic for minimap prio
 
     public static readonly Dictionary<int, Entity> InteractiveObjects = new();
-
+    private static readonly Dictionary<float, List<MapTile>> VisibleElevatedTiles = new();
     public static readonly List<ParticleEffect> ParticleGenerators = [];
 
     public static int ParticleGenCount;
@@ -168,184 +168,218 @@ public static class Map {
         }
     }
 
-    public static void Draw(GameTime gameTime) {
-        if (LocalPlayer == null) return;
+public static void Draw(GameTime gameTime) {
+    if (LocalPlayer == null) return;
 
-        GL.Disable(EnableCap.DepthTest);
-        GL.Disable(EnableCap.CullFace);
+    GL.Disable(EnableCap.DepthTest);
+    GL.Disable(EnableCap.CullFace);
 
-        LastGameTime = gameTime;
+    LastGameTime = gameTime;
 
-        if (Render.DebugEnabled) {
-            // Enemy hit circles
-            foreach (var (_, entity) in Entities) {
-                if (entity.Properties == null) continue;
-                if (entity.Properties.IsEnemy) {
-                    var ePos = Camera.WorldToDebug2D(new Vector3(entity.Position.X, entity.Position.Y, 0.5f));
-                    Render.DebugCircle(ePos, 0.25f, new Vector3(1f, 0.5f, 0f), 0.03f);
-                }
-
-                if (entity.Properties.IsPlayer) {
-                    var ePos = Camera.WorldToDebug2D(new Vector3(entity.Position.X, entity.Position.Y, 0.5f));
-                    Render.DebugCircle(ePos, 0.25f, new Vector3(0f, 0.5f, 1f), 0.03f);
-                }
+    if (Render.DebugEnabled) {
+        foreach (var (_, entity) in Entities) {
+            if (entity.Properties == null) continue;
+            if (entity.Properties.IsEnemy) {
+                var ePos = Camera.WorldToDebug2D(new Vector3(entity.Position.X, entity.Position.Y, 0.5f));
+                Render.DebugCircle(ePos, 0.25f, new Vector3(1f, 0.5f, 0f), 0.03f);
             }
-
-            // Local player position cross
-            if (LocalPlayer != null) {
-                var lpPos = Camera.WorldToDebug2D(new Vector3(LocalPlayer.Position.X, LocalPlayer.Position.Y,
-                                                              LocalPlayer.Z));
-                Render.DebugLine(
-                                 lpPos - new Vector2(0.3f, 0),
-                                 lpPos + new Vector2(0.3f, 0),
-                                 new Vector3(1, 1, 0), 0.03f);
+            if (entity.Properties.IsPlayer) {
+                var ePos = Camera.WorldToDebug2D(new Vector3(entity.Position.X, entity.Position.Y, 0.5f));
+                Render.DebugCircle(ePos, 0.25f, new Vector3(0f, 0.5f, 1f), 0.03f);
             }
         }
-
-        Render.SetShaderParams(gameTime);
-
-        #region Tile
-
-        var pos = Vector2.Floor(LocalPlayer.Position);
-        if (pos != _lastPosition || TilesDirty) {
-            _lastPosition = pos;
-            TilesDirty = false;
-
-            VisibleTopTiles.Clear();
-
-            Render.StartNewDrawTile();
-
-            for (var x = -LocalPlayer.UpdateRadius; x < LocalPlayer.UpdateRadius; x++) {
-                for (var y = -LocalPlayer.UpdateRadius; y < LocalPlayer.UpdateRadius; y++) {
-                    if (x * x + y * y >= LocalPlayer.UpdateRadius * LocalPlayer.UpdateRadius) continue;
-                    var tile = GetTile(x + (int)LocalPlayer.Position.X, y + (int)LocalPlayer.Position.Y);
-                    if (tile != null && tile.Type != 0xFF) {
-                        tile.DrawTileBase();
-                        if (tile.HasTop) VisibleTopTiles.Add(tile);
-                    }
-                }
-            }
-
-            Render.SaveBlendStart();
-
-            for (var x = -LocalPlayer.UpdateRadius; x < LocalPlayer.UpdateRadius; x++) {
-                for (var y = -LocalPlayer.UpdateRadius; y < LocalPlayer.UpdateRadius; y++) {
-                    if (x * x + y * y >= LocalPlayer.UpdateRadius * LocalPlayer.UpdateRadius) continue;
-                    var tile = GetTile(x + (int)LocalPlayer.Position.X, y + (int)LocalPlayer.Position.Y);
-                    if (tile != null && tile.Type != 0xFF) tile.DrawTileBlends();
-                }
-            }
-
-            Render.SaveGroundCount();
-            foreach (var topTile in VisibleTopTiles) topTile.DrawTop();
-            Render.SaveTopCount();
-            Render.EndNewDrawTile();
+        if (LocalPlayer != null) {
+            var lpPos = Camera.WorldToDebug2D(new Vector3(LocalPlayer.Position.X, LocalPlayer.Position.Y, LocalPlayer.Z));
+            Render.DebugLine(lpPos - new Vector2(0.3f, 0), lpPos + new Vector2(0.3f, 0), new Vector3(1, 1, 0), 0.03f);
         }
-
-        Render.SetTileElevation(0f);
-        Render.DrawGroundTilesBase();
-
-        if (EntityStorage.TryGetValue(ModelType.PbGroundObject, out var groundObjects)) {
-            Render.StartDrawGroundObjects();
-            foreach (var obj in groundObjects)
-                if (obj.Visible)
-                    obj.Draw();
-            Render.FlushGroundObjects();
-        }
-
-        Render.DrawGroundTileBlends();
-
-        #endregion
-
-        #region Shadows
-
-        if (EntityStorage.TryGetValue(ModelType.PbObject, out var go)) {
-            Render.StartDrawShadow();
-
-            foreach (var type in go) type.DrawShadow();
-
-            Render.EndShadowDraw();
-        }
-
-        #endregion
-
-        GL.Enable(EnableCap.DepthTest);
-
-        #region Particles
-
-        Render.DrawParticles(Particles, _particleCount);
-
-        #endregion
-
-        GL.Enable(EnableCap.CullFace);
-
-        #region Entities
-        
-        GL.Disable(EnableCap.CullFace);
-        GL.DepthMask(true);
-        GL.Enable(EnableCap.DepthTest);
-        
-        if (EntityStorage.TryGetValue(ModelType.PbCaveWall, out var caveWalls)) {
-            Render.SetCaveWallShaderParams();
-            Render.StartDrawCaveWall();
-            
-            foreach (var wall in caveWalls) {
-                if (wall.Visible) 
-                    wall.Draw();
-            }
-            Render.FlushCaveWall();
-        }
-        GL.Enable(EnableCap.CullFace);
-
-        Render.StartDrawModel();
-        foreach (var kvp in EntityStorage) {
-            if (kvp.Key == ModelType.Null || kvp.Key == ModelType.PbObject || kvp.Key == ModelType.PbCaveWall) continue;
-            
-            Render.SetEntityModel(kvp.Key);
-            foreach (var entity in kvp.Value)
-                if (entity.Visible) {
-                    entity.Draw();
-                    Render.LastDrawCountEntities++;
-                }
-
-            Render.FlushBufferModel();
-        }
-        
-        GL.Disable(EnableCap.CullFace);
-
-        Render.StartDrawEntity();
-        for (var i = 0; i < ParticleGenCount; i++)
-            if (ParticleGenerators[i] is RayCastParticle rcp)
-                rcp.Draw();
-        
-        if (EntityStorage.TryGetValue(ModelType.PbObject, out var entities)) {
-            entities.Sort();
-
-            foreach (var type in entities)
-                if (type.Visible) {
-                    type.Draw();
-                    Render.LastDrawCountEntities++;
-                }
-
-            Render.FlushBufferEntity();
-        }
-
-        #endregion
-
-        #region Top Tiles
-
-        if (VisibleTopTiles.Count > 0) {
-            GL.Enable(EnableCap.DepthTest);
-            Render.SetTileElevation(1f);
-            Render.DrawTopTiles();
-        }
-
-        #endregion
-
-
-        var vp = Camera.WorldMatrix * Camera.ViewMatrix * Camera.ProjectionMatrix;
-        Render.FlushDebug(vp);
     }
+
+    Render.SetShaderParams(gameTime);
+
+    #region Tile
+
+    var pos = Vector2.Floor(LocalPlayer.Position);
+    if (pos != _lastPosition || TilesDirty) {
+        _lastPosition = pos;
+        TilesDirty = false;
+
+        VisibleTopTiles.Clear();
+        VisibleElevatedTiles.Clear();
+        Render.StartNewDrawTile();
+
+        for (var x = -LocalPlayer.UpdateRadius; x < LocalPlayer.UpdateRadius; x++) {
+            for (var y = -LocalPlayer.UpdateRadius; y < LocalPlayer.UpdateRadius; y++) {
+                if (x * x + y * y >= LocalPlayer.UpdateRadius * LocalPlayer.UpdateRadius) continue;
+                var tile = GetTile(x + (int)LocalPlayer.Position.X, y + (int)LocalPlayer.Position.Y);
+                if (tile != null && tile.Type != 0xFF) {
+                    if (tile.ZOffset != 0f) {
+                        if (!VisibleElevatedTiles.TryGetValue(tile.ZOffset, out var list)) {
+                            list = new List<MapTile>();
+                            VisibleElevatedTiles[tile.ZOffset] = list;
+                        }
+                        list.Add(tile);
+                    } else {
+                        tile.DrawTileBase();
+                    }
+                    if (tile.HasTop) VisibleTopTiles.Add(tile);
+                }
+            }
+        }
+
+        Render.SaveBlendStart();
+
+        for (var x = -LocalPlayer.UpdateRadius; x < LocalPlayer.UpdateRadius; x++) {
+            for (var y = -LocalPlayer.UpdateRadius; y < LocalPlayer.UpdateRadius; y++) {
+                if (x * x + y * y >= LocalPlayer.UpdateRadius * LocalPlayer.UpdateRadius) continue;
+                var tile = GetTile(x + (int)LocalPlayer.Position.X, y + (int)LocalPlayer.Position.Y);
+                if (tile != null && tile.Type != 0xFF && tile.ZOffset == 0f)
+                    tile.DrawTileBlends();
+            }
+        }
+
+        Render.SaveGroundCount();
+        foreach (var topTile in VisibleTopTiles) topTile.DrawTop();
+        Render.SaveTopCount();
+        Render.EndNewDrawTile();
+    }
+    
+    foreach (var (zOffset, tiles) in VisibleElevatedTiles) {
+        Render.StartNewElevatedTile();
+        foreach (var tile in tiles)
+            Render.DrawNewElevatedTile(tile.GetTileData());
+        Render.EndNewElevatedTile();
+        Render.SetTileElevation(zOffset);
+        Render.DrawElevatedTilesBase();
+        Render.SetTileElevation(0f);
+    }
+    
+    if (EntityStorage.TryGetValue(ModelType.PbGroundObject, out var groundObjects)) {
+        Render.StartDrawGroundObjects();
+        foreach (var obj in groundObjects)
+            if (obj.Visible && obj.IsElevated)
+                obj.Draw();
+        Render.FlushGroundObjects();
+    }
+    
+    if (EntityStorage.TryGetValue(ModelType.PbObject, out var goElevated)) {
+        Render.StartDrawShadow();
+        foreach (var type in goElevated)
+            if (type.IsElevated) type.DrawShadow();
+        Render.EndShadowDraw();
+    }
+
+    GL.Enable(EnableCap.DepthTest);
+    GL.Enable(EnableCap.CullFace);
+    if (EntityStorage.TryGetValue(ModelType.PbCaveWall, out var elevatedCaveWalls)) {
+        Render.SetCaveWallShaderParams();
+        Render.StartDrawCaveWall();
+        foreach (var wall in elevatedCaveWalls)
+            if (wall.Visible && wall.IsElevated)
+                wall.Draw();
+        Render.FlushCaveWall();
+    }
+
+    Render.StartDrawModel();
+    foreach (var kvp in EntityStorage) {
+        if (kvp.Key == ModelType.Null || kvp.Key == ModelType.PbObject || kvp.Key == ModelType.PbCaveWall) continue;
+        Render.SetEntityModel(kvp.Key);
+        foreach (var entity in kvp.Value)
+            if (entity.Visible && entity.IsElevated) {
+                entity.Draw();
+                Render.LastDrawCountEntities++;
+            }
+        Render.FlushBufferModel();
+    }
+
+    GL.Disable(EnableCap.DepthTest);
+    GL.Disable(EnableCap.CullFace);
+
+    GL.Clear(ClearBufferMask.DepthBufferBit);
+    Render.SetTileElevation(0f);
+    Render.DrawGroundTilesBase();
+    Render.DrawGroundTileBlends();
+
+    if (EntityStorage.TryGetValue(ModelType.PbGroundObject, out var normalGroundObjects)) {
+        Render.StartDrawGroundObjects();
+        foreach (var obj in normalGroundObjects)
+            if (obj.Visible && obj.Position.Z == 0f)
+                obj.Draw();
+        Render.FlushGroundObjects();
+    }
+    if (EntityStorage.TryGetValue(ModelType.PbObject, out var go)) {
+        Render.StartDrawShadow();
+        foreach (var type in go)
+            if (type.Position.Z == 0f) type.DrawShadow();
+        Render.EndShadowDraw();
+    }
+
+    #endregion
+
+    GL.Enable(EnableCap.DepthTest);
+
+    #region Particles
+    Render.DrawParticles(Particles, _particleCount);
+    #endregion
+
+    GL.Enable(EnableCap.CullFace);
+
+    #region Entities
+
+    GL.Disable(EnableCap.CullFace);
+    GL.DepthMask(true);
+    GL.Enable(EnableCap.DepthTest);
+
+    if (EntityStorage.TryGetValue(ModelType.PbCaveWall, out var caveWalls)) {
+        Render.SetCaveWallShaderParams();
+        Render.StartDrawCaveWall();
+        foreach (var wall in caveWalls)
+            if (wall.Visible && !wall.IsElevated)
+                wall.Draw();
+        Render.FlushCaveWall();
+    }
+    GL.Enable(EnableCap.CullFace);
+
+    Render.StartDrawModel();
+    foreach (var kvp in EntityStorage) {
+        if (kvp.Key == ModelType.Null || kvp.Key == ModelType.PbObject || kvp.Key == ModelType.PbCaveWall) continue;
+        Render.SetEntityModel(kvp.Key);
+        foreach (var entity in kvp.Value)
+            if (entity.Visible && !entity.IsElevated) {
+                entity.Draw();
+                Render.LastDrawCountEntities++;
+            }
+        Render.FlushBufferModel();
+    }
+
+    GL.Disable(EnableCap.CullFace);
+     Render.StartDrawEntity();
+    for (var i = 0; i < ParticleGenCount; i++)
+        if (ParticleGenerators[i] is RayCastParticle rcp)
+            rcp.Draw();
+
+    if (EntityStorage.TryGetValue(ModelType.PbObject, out var entities)) {
+        entities.Sort();
+        foreach (var type in entities)
+            if (type.Visible) {
+                type.Draw();
+                Render.LastDrawCountEntities++;
+            }
+        Render.FlushBufferEntity();
+    }
+
+    #endregion
+
+    #region Top Tiles
+    if (VisibleTopTiles.Count > 0) {
+        GL.Enable(EnableCap.DepthTest);
+        Render.SetTileElevation(1f);
+        Render.DrawTopTiles();
+    }
+    #endregion
+
+    var vp = Camera.WorldMatrix * Camera.ViewMatrix * Camera.ProjectionMatrix;
+    Render.FlushDebug(vp);
+}
 
     public static void FlushEnemyHits() {
         if (PendingEnemyHit.Stack > 0) {

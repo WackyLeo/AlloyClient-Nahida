@@ -6,9 +6,11 @@ using AlloyClient.Game.Components.Options;
 using AlloyClient.Game.Objects.Util;
 using AlloyClient.Networking;
 using AlloyClient.Networking.Packets.Outgoing;
+using AlloyClient.Networking.Structs.DataObjects;
 using AlloyClient.Rendering;
 using AlloyClient.State;
 using AlloyClient.UiLib.Core;
+using AlloyClient.Utils;
 using Common;
 using OpenTK.Mathematics;
 using OpenTK.Platform;
@@ -97,7 +99,6 @@ public sealed class UserInput : Sprite {
     
     private void OnMouseMove(MouseEvent args) => _mousePosition = new Vector2(args.Coords.X, args.Coords.Y);
 
-
     public void ClearInput() {
         ClearMovement();
         _autoFire = false;
@@ -133,7 +134,8 @@ public sealed class UserInput : Sprite {
             angle += (float)((Random.Shared.NextDouble() * variance) - variance / 2f) / 360f * MathF.PI;
         }
         
-        Map.LocalPlayer.Shoot(angle, Stage.GameTime, false);    }
+        Map.LocalPlayer.Shoot(angle, Stage.GameTime, false);    
+    }
 
     private void SetPlayerMovement() {
         if (Map.LocalPlayer == null) return;
@@ -226,26 +228,36 @@ public sealed class UserInput : Sprite {
             case true when Settings.Debug.CheckValue(key):
                 Render.DebugEnabled = !Render.DebugEnabled;
                 break;
-            // Inventory //
+            
             case true when Settings.InvOne.CheckValue(key):
+                HandleUseItem(4);
                 break;
             case true when Settings.InvTwo.CheckValue(key):
+                HandleUseItem(5);
                 break;
             case true when Settings.InvThree.CheckValue(key):
+                HandleUseItem(6);
                 break;
             case true when Settings.InvFour.CheckValue(key):
+                HandleUseItem(7);
                 break;
             case true when Settings.InvFive.CheckValue(key):
+                HandleUseItem(8);
                 break;
             case true when Settings.InvSix.CheckValue(key):
+                HandleUseItem(9);
                 break;
             case true when Settings.InvSeven.CheckValue(key):
+                HandleUseItem(10);
                 break;
             case true when Settings.InvEight.CheckValue(key):
+                HandleUseItem(11);
                 break;
             case true when Settings.HealthPotion.CheckValue(key):
+                UsePotion(true);
                 break;
             case true when Settings.MagicPotion.CheckValue(key):
+                UsePotion(false);
                 break;
             // Chat //
             case true when Settings.Chat.CheckValue(key):
@@ -317,5 +329,95 @@ public sealed class UserInput : Sprite {
         }
         
         SetPlayerMovement();
+    }
+    
+    private void HandleUseItem(byte slotId) {
+        var player = Map.LocalPlayer;
+        if (player == null || player.Equipment.Length <= slotId) return;
+
+        var item = player.Equipment[slotId];
+        if (item == null || item.ObjectType == 0) return;
+
+        if (item.ObjectType == ItemConstants.HealthPotion || item.ObjectType == ItemConstants.MagicPotion) {
+            bool isHp = item.ObjectType == ItemConstants.HealthPotion;
+            int currentCount = isHp ? player.HealthStackCount : player.MagicStackCount;
+            if (currentCount < 6) {
+                byte targetSlot = isHp ? ItemConstants.HpPotionSlot : ItemConstants.MpPotionSlot;
+
+                var pSwap = InvSwap.CreatePacket();
+                pSwap.Time = (int)Map.LastGameTime.TotalMs;
+                pSwap.Position = new Position { X = player.Position.X, Y = player.Position.Y };
+                pSwap.SlotObj1 = new ObjectSlot { ObjectId = player.ObjectId, SlotId = slotId, ObjectType = item.ObjectType };
+                pSwap.SlotObj2 = new ObjectSlot { ObjectId = player.ObjectId, SlotId = targetSlot, ObjectType = 0 };
+                Client.QueuePacket(pSwap);
+
+                player.Equipment[slotId] = null;
+                if (isHp) player.HealthStackCount++; else player.MagicStackCount++;
+                player.InventoryUpdate.Dispatch(slotId);
+                return;
+            }
+        }
+
+        if (item.Consumable) {
+            SendUseItem(slotId, item.ObjectType);
+            return;
+        }
+
+        int equipSlot = -1;
+        for (int i = 0; i < 4; i++) {
+            if (player.Properties.SlotTypes.Count > i && player.Properties.SlotTypes[i] == item.SlotType) {
+                equipSlot = i;
+                break;
+            }
+        }
+
+        if (equipSlot != -1) {
+            var targetItem = player.Equipment[equipSlot];
+            ushort targetObjType = targetItem?.ObjectType ?? 0;
+
+            var swap = InvSwap.CreatePacket();
+            swap.Time = (int) Map.LastGameTime.TotalMs;
+            swap.Position = new Position { X = player.Position.X, Y = player.Position.Y };
+            swap.SlotObj1 = new ObjectSlot { ObjectId = player.ObjectId, SlotId = slotId, ObjectType = item.ObjectType };
+            swap.SlotObj2 = new ObjectSlot { ObjectId = player.ObjectId, SlotId = (byte)equipSlot, ObjectType = targetObjType };
+            Client.QueuePacket(swap);
+
+            player.Equipment[slotId] = targetItem;
+            player.Equipment[equipSlot] = item;
+            player.InventoryUpdate.Dispatch(slotId);
+            player.InventoryUpdate.Dispatch(equipSlot);
+        } else {
+            SendUseItem(slotId, item.ObjectType);
+        }
+    }
+
+    private void UsePotion(bool isHp) {
+        var player = Map.LocalPlayer;
+        if (player == null) return;
+
+        int count = isHp ? player.HealthStackCount : player.MagicStackCount;
+        if (count <= 0) return;
+
+        byte slotId = isHp ? ItemConstants.HpPotionSlot : ItemConstants.MpPotionSlot;
+        ushort objType = isHp ? ItemConstants.HealthPotion : ItemConstants.MagicPotion;
+
+        SendUseItem(slotId, objType);
+        if (isHp) player.HealthStackCount--; else player.MagicStackCount--;
+    }
+
+    private void SendUseItem(byte slotId, ushort objectType) {
+        var player = Map.LocalPlayer;
+        var packet = UseItem.CreatePacket();
+
+        packet.Time = (int) Map.LastGameTime.TotalMs;
+        packet.SlotObject.ObjectId = player.ObjectId;
+        packet.SlotObject.SlotId = slotId;
+        packet.SlotObject.ObjectType = objectType;
+        packet.ItemUsePos.X = player.Position.X;
+        packet.ItemUsePos.Y = player.Position.Y;
+        packet.UseType = 1;
+        packet.ProjId = player.ReadServerId();
+
+        Client.QueuePacket(packet);
     }
 }

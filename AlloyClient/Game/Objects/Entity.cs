@@ -291,7 +291,8 @@ public class Entity {
 
         Position.X = x;
         Position.Y = y;
-
+        Z = tile.ZOffset;
+        
         if (Properties.Static) {
             if (Tile != null) {
                 Tile.OccupiedObject = null;

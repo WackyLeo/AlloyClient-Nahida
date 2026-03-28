@@ -50,8 +50,12 @@ public sealed class TypeCaveWall : RenderBase {
 
     public override void SetVisibility(bool visible) => Visible = visible;
 
-    public override void SetDepth(float depth) => Extra.SortId = depth;
-
+    public override void SetDepth(float depth) { 
+        if (Math.Abs(Extra.SortId - depth) < 0.001f) return;
+        Extra.SortId = depth;
+        _geometryDirty = true;
+    }
+    
     public override void SetAlpha(float alpha) {
         throw new NotSupportedException("Walls do not support alpha");
     }
@@ -86,6 +90,7 @@ public sealed class TypeCaveWall : RenderBase {
             Position.X, Position.Y,
             Entity.ConnectType,
             UV,
+            Extra.SortId,
             Triangles);
     }
 }
