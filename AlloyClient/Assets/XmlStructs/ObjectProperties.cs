@@ -25,6 +25,7 @@ public class ObjectProperties {
     public readonly bool FullOccupy;
     public readonly bool IsAlly;
     public readonly bool IsEnemy;
+    public readonly bool IsQuest;
 
     public readonly bool IsPlayer;
     public readonly bool LockedPortal;
@@ -54,6 +55,7 @@ public class ObjectProperties {
     public readonly List<int> SlotTypes;
 
     public readonly bool Static;
+    public readonly bool AlwaysLoaded;
 
     public ObjectProperties(XElement e) {
         ObjectType = e.GetAttribute<ushort>("type");
@@ -82,6 +84,7 @@ public class ObjectProperties {
 
         IsPlayer = e.GetValue<bool>("Player");
         IsEnemy = e.GetValue<bool>("Enemy");
+        IsQuest = e.GetValue<bool>("Quest");
         IsAlly = e.GetValue<bool>("Ally");
 
         if (IsPlayer) PlayerProperties = new PlayerProperties(e);
@@ -91,6 +94,7 @@ public class ObjectProperties {
         FullOccupy = e.GetValue<bool>("FullOccupy");
 
         Static = e.GetValue<bool>("Static");
+        AlwaysLoaded = e.GetValue<bool>("AlwaysLoaded");
         NoMiniMap = e.GetValue<bool>("NoMiniMap");
         DrawOnGround = e.GetValue<bool>("DrawOnGround");
         ProtectFromGroundDamage = e.HasElement("ProtectFromGroundDamage");

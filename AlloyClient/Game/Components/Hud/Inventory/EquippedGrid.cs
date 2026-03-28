@@ -52,19 +52,23 @@ public sealed class EquippedGrid : Sprite {
         }
     }
 
-    public void UpdateAbilitySlot() {
-        var slot = _tileSlots[1];
-
-        if(Map.LocalPlayer == null) 
+    public void Update() {
+        if (Map.LocalPlayer == null || _owner == null) 
             return;
 
-        if (slot.ItemDesc == null || slot.ItemDesc.ObjectType == 0)
-            return;
-
-        var noMana = Map.LocalPlayer.Mp < slot.ItemDesc.MpCost;
-        //todo: silence check
+        for (byte i = 0; i < NumSlots; i++) {
+            var actualItem = _owner.Equipment[i];
+            if (_tileSlots[i].ItemDesc != actualItem) {
+                _tileSlots[i].SetItem(actualItem);
+            }
+        }
         
-        slot.SetDim(noMana);
+        var abilitySlot = _tileSlots[1];
+        if (abilitySlot.ItemDesc != null && abilitySlot.ItemDesc.ObjectType != 0) {
+            var noMana = Map.LocalPlayer.Mp < abilitySlot.ItemDesc.MpCost;
+            //todo: silence check
+            abilitySlot.SetDim(noMana);
+        }
     }
 
     private void OnInventoryChange(int slot) {

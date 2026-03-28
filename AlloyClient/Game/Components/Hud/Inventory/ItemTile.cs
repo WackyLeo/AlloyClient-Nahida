@@ -42,9 +42,6 @@ public sealed class ItemTile : Sprite {
     private bool _dragging;
     private uint _bgColor;
 
-    private readonly Timer _doubleTimer = new Timer(250, 1);
-    private bool _pendingDouble;
-
     private readonly CutEdgeRect _background;
     private readonly ObjectRect _slotDetail;
     private readonly SimpleText _slotId;
@@ -57,8 +54,6 @@ public sealed class ItemTile : Sprite {
         Interactive = interactive;
         OneWay = oneWay;
         _bgColor = bgcolor;
-
-        _doubleTimer.AddEventListener(TimerEvent.TimerComplete, OnSingleClick);
 
         _background = new CutEdgeRect(new CutEdgeConfig {Width = Size, Height = Size, CutX = 4, CutY = 4, Cuts = cut, Color = _bgColor});
         AddChild(_background);
@@ -109,6 +104,7 @@ public sealed class ItemTile : Sprite {
         if (Interactive) {
             _sprite.AddEventListener(MouseEvent.LeftDown, OnMouseDown);
             _sprite.AddEventListener(MouseEvent.LeftUp, OnMouseUp);
+            _sprite.AddEventListener(MouseEvent.DoubleClick, OnDoubleClick);
         }
 
         _sprite.AddEventListener(MouseEvent.MouseOver, OnMouseOver);
@@ -184,13 +180,6 @@ public sealed class ItemTile : Sprite {
             }
         }
 
-        //todo: item set
-        /*if (Item.Set) {
-            color = 0xFF9900;
-            tag = "ST";
-        }*/
-
-
         _tierText.SetText(tag);
         _tierText.SetColor(color);
         _tierText.SetEffect(effects);
@@ -207,7 +196,6 @@ public sealed class ItemTile : Sprite {
         if (ItemDesc == null || _tooltip == null || _dragging) return;
         TooltipManager.RemoveTooltip(_tooltip);
         _tooltip = null;
-        _pendingDouble = false;
     }
 
     private void OnMouseDown(MouseEvent args) {
@@ -222,52 +210,122 @@ public sealed class ItemTile : Sprite {
         if (_dragging) return;
 
         if (args.ShiftKey) {
-            _pendingDouble = false;
-
-            // added basic consume logic, this will be looked at another time i assume
-            if (ItemDesc == null ) {
-                return;
-            }
+            if (ItemDesc == null ) return;
             
-            if (ItemDesc.ObjectType == ItemConstants.PotionType || ItemDesc.Consumable) {
-                int timeStuff = (int) Map.LastGameTime.TotalMs;
-
-                useItem(
-                    time: timeStuff,
-                    objectId: Owner.ObjectId,
-                    slotId: SlotId,
-                    objectType: ItemDesc.ObjectType,
-                    itemUsePosX: Owner.Position.X,
-                    itemUsePosY: Owner.Position.Y,
-                    useType: (byte) UseType.START_USE
-                );
+            if (ItemDesc.SlotType == ItemConstants.PotionType || ItemDesc.Consumable) {
+                useItem((int) Map.LastGameTime.TotalMs, Owner.ObjectId, SlotId, ItemDesc.ObjectType, Owner.Position.X, Owner.Position.Y, 1);
             }
-
             return;
         }
 
         if (args.CtrlKey) {
-            _pendingDouble = false;
             // todo: swap to backpack
             return;
         }
-
-        if (_pendingDouble) {
-            _pendingDouble = false;
-            _doubleTimer.Stop();
-            // todo: double Click
-            // equip or use
-            return;
-        }
-
-        _pendingDouble = true;
-        _doubleTimer.Reset();
-        _doubleTimer.Start();
     }
 
-    private void OnSingleClick() {
-        _doubleTimer.Stop();
-        _pendingDouble = false;
+    private void OnDoubleClick(MouseEvent args) {
+        if (ItemDesc == null || ItemDesc.ObjectType == 0 || _dragging) return;
+
+        if (ItemDesc.ObjectType == ItemConstants.HealthPotion || ItemDesc.ObjectType == ItemConstants.MagicPotion) {
+            if (AddToPotionStack()) {
+                return;
+            }
+        }
+
+        if (!(Owner is Player)) { 
+            EquipOrUseContainer();
+        } else { 
+            EquipOrUseInventory();
+        }
+    }
+
+    private void EquipOrUseContainer() {
+        int freeSlot = GetNextAvailableInventorySlot();
+        if (freeSlot != -1) {
+            SwapItem(Map.LocalPlayer, (byte)freeSlot); 
+        } else {
+            useItem((int)Map.LastGameTime.TotalMs, Owner.ObjectId, SlotId, ItemDesc.ObjectType, Map.LocalPlayer.Position.X, Map.LocalPlayer.Position.Y, 1);
+        }
+    }
+
+    private void EquipOrUseInventory() {
+        if (ItemDesc.Consumable) {
+            useItem((int)Map.LastGameTime.TotalMs, Owner.ObjectId, SlotId, ItemDesc.ObjectType, Map.LocalPlayer.Position.X, Map.LocalPlayer.Position.Y, 1);
+            return;
+        }
+        if (SlotId < 4) {
+            int freeSlot = GetNextAvailableInventorySlot();
+            if (freeSlot != -1) {
+                SwapItem(Map.LocalPlayer, (byte)freeSlot);
+            }
+        } 
+        else {
+            int equipSlot = GetMatchingEquipmentSlot();
+            if (equipSlot != -1) {
+                SwapItem(Map.LocalPlayer, (byte)equipSlot);
+            } else {
+                useItem((int)Map.LastGameTime.TotalMs, Owner.ObjectId, SlotId, ItemDesc.ObjectType, Map.LocalPlayer.Position.X, Map.LocalPlayer.Position.Y, 1);
+            }
+        }
+    }
+
+    private int GetNextAvailableInventorySlot() {
+        if (Map.LocalPlayer == null) return -1;
+        for (int i = 4; i < 12; i++) {
+            if (Map.LocalPlayer.Equipment.Length > i) {
+                var item = Map.LocalPlayer.Equipment[i];
+                if (item == null || item.ObjectType == 0) return i;
+            }
+        }
+        return -1;
+    }
+
+    private int GetMatchingEquipmentSlot() {
+        if (Map.LocalPlayer == null || ItemDesc == null) return -1;
+        
+        for (int i = 0; i < 4; i++) {
+            if (Map.LocalPlayer.Properties.SlotTypes.Count > i) {
+                if (Map.LocalPlayer.Properties.SlotTypes[i] == ItemDesc.SlotType) {
+                    return i;
+                }
+            }
+        }
+        return -1;
+    }
+
+    private void SwapItem(Entity targetEntity, byte targetSlot) {
+        var targetItem = targetEntity.Equipment[targetSlot];
+        ushort targetObjType = targetItem?.ObjectType ?? 0;
+
+        var swap = InvSwap.CreatePacket();
+        swap.Time = (int) Map.LastGameTime.TotalMs;
+        swap.Position = new Position { X = Map.LocalPlayer.Position.X, Y = Map.LocalPlayer.Position.Y };
+
+        swap.SlotObj1 = new ObjectSlot {
+            ObjectId = Owner.ObjectId,
+            SlotId = SlotId,
+            ObjectType = ItemDesc.ObjectType
+        };
+        swap.SlotObj2 = new ObjectSlot {
+            ObjectId = targetEntity.ObjectId,
+            SlotId = targetSlot,
+            ObjectType = targetObjType
+        };
+        Client.QueuePacket(swap);
+
+        var sourceItem = ItemDesc;
+        Owner.Equipment[SlotId] = targetItem;
+        targetEntity.Equipment[targetSlot] = sourceItem;
+
+        SetItem(targetItem);
+        if (targetEntity is Player tPlayer) {
+            tPlayer.InventoryUpdate.Dispatch(targetSlot);
+        }
+        
+        if (Owner is Player oPlayer) {
+            oPlayer.InventoryUpdate.Dispatch(SlotId);
+        }
     }
 
     private void CancelDragCheck() {
@@ -281,7 +339,6 @@ public sealed class ItemTile : Sprite {
         var dist = MathF.Sqrt(delta.X * delta.X + delta.Y * delta.Y);
 
         if (dist > 3) {
-            _pendingDouble = false;
             CancelDragCheck();
             OnBeginDrag();
         }
@@ -331,10 +388,17 @@ public sealed class ItemTile : Sprite {
             SetItem(ItemDesc);
             return;
         }
-
+        
+        if (ItemDesc != null && (ItemDesc.ObjectType == ItemConstants.HealthPotion || ItemDesc.ObjectType == ItemConstants.MagicPotion)) {
+            if (!(target is GameScreen)) {
+                if (AddToPotionStack()) {
+                    return;
+                }
+            }
+        }
+        
         switch (target) {
             case ItemTile tile:
-                Console.WriteLine($"{!tile.Interactive} {tile.OneWay} {!CanSwapItems(this, tile)}");
                 if (!tile.Interactive) break;
                 if (tile.OneWay) break;
                 if (!CanSwapItems(this, tile)) break;
@@ -354,14 +418,20 @@ public sealed class ItemTile : Sprite {
                     ObjectType = tile.ItemDesc?.ObjectType ?? 0
                 };
                 Client.QueuePacket(swap);
+                var draggedItem = ItemDesc;
+                
+                Owner.Equipment[SlotId] = tile.ItemDesc;
+                tile.Owner.Equipment[tile.SlotId] = draggedItem;
 
-                (tile.ItemDesc, ItemDesc) = (ItemDesc, tile.ItemDesc);
+                SetItem(Owner.Equipment[SlotId]);
+                tile.SetItem(tile.Owner.Equipment[tile.SlotId]);
 
-                SetItem(ItemDesc);
-                tile.SetItem(tile.ItemDesc);
-                break; // swap
+                if (Owner is Player oPlayer) oPlayer.InventoryUpdate.Dispatch(SlotId);
+                if (tile.Owner is Player tPlayer) tPlayer.InventoryUpdate.Dispatch(tile.SlotId);
+
+                break; 
             case InventoryGrid grid:
-                break; // add to first free slot
+                break; 
             case GameScreen:
                 var drop = InvDrop.CreatePacket();
                 drop.SlotObject = new ObjectSlot {
@@ -373,9 +443,8 @@ public sealed class ItemTile : Sprite {
                 Client.QueuePacket(drop);
 
                 SetItem(null);
-                break; // drop
+                break; 
             default:
-                //reset tile
                 SetItem(ItemDesc);
                 break;
 
@@ -421,5 +490,45 @@ public sealed class ItemTile : Sprite {
         packet.ProjId = Map.LocalPlayer.ReadServerId();
 
         Client.QueuePacket(packet);
+    }
+    
+    private bool AddToPotionStack() {
+        if (Map.LocalPlayer == null || ItemDesc == null) return false;
+
+        bool isHp = ItemDesc.ObjectType == ItemConstants.HealthPotion;
+        bool isMp = ItemDesc.ObjectType == ItemConstants.MagicPotion;
+
+        if (!isHp && !isMp) return false;
+        int currentCount = isHp ? Map.LocalPlayer.HealthStackCount : Map.LocalPlayer.MagicStackCount;
+        if (currentCount >= 6) { 
+            return false; 
+        }
+
+        byte targetSlot = isHp ? ItemConstants.HpPotionSlot : ItemConstants.MpPotionSlot;
+        var swap = InvSwap.CreatePacket(); 
+        swap.Time = (int) Map.LastGameTime.TotalMs;
+        swap.Position = new Position { X = Map.LocalPlayer.Position.X, Y = Map.LocalPlayer.Position.Y };
+
+        swap.SlotObj1 = new ObjectSlot {
+            ObjectId = Owner.ObjectId,
+            SlotId = SlotId,
+            ObjectType = ItemDesc.ObjectType
+        };
+        swap.SlotObj2 = new ObjectSlot {
+            ObjectId = Map.LocalPlayer.ObjectId,
+            SlotId = targetSlot,
+            ObjectType = 0 
+        };
+        Client.QueuePacket(swap);
+        Owner.Equipment[SlotId] = null;
+        SetItem(null);
+        
+        if (Owner is Player oPlayer) {
+            oPlayer.InventoryUpdate.Dispatch(SlotId);
+            if (isHp) oPlayer.HealthStackCount++;
+            else oPlayer.MagicStackCount++;
+        }
+
+        return true;
     }
 }

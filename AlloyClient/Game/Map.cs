@@ -107,7 +107,8 @@ public static class Map {
                 continue;
             }
 
-            if (LocalPlayer != null && !entity.Properties.Static && entity.Properties.IsEnemy) {
+            if (LocalPlayer != null && !entity.Properties.Static && !entity.Properties.AlwaysLoaded && 
+                (entity.Properties.IsEnemy && !entity.Properties.IsQuest)) {
                 var dx = entity.Position.X - LocalPlayer.Position.X;
                 var dy = entity.Position.Y - LocalPlayer.Position.Y;
                 if (dx * dx + dy * dy > TileRenderDistance * TileRenderDistance) {

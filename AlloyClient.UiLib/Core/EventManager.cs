@@ -214,7 +214,11 @@ public abstract class EventManager {
     private static Sprite _leftTarget;
     private static Sprite _middleTarget;
     private static Sprite _rightTarget;
-
+    
+    private static Sprite _lastLeftClickTarget;
+    private static DateTime _lastLeftClickTime = DateTime.MinValue;
+    public static double DoubleClickThresholdMs { get; set; } = 500; 
+    
     private void CheckClicks(string type) {
         var sprite = this as Sprite;
         switch (type) {
@@ -222,8 +226,19 @@ public abstract class EventManager {
                 _leftTarget = sprite;
                 break;
             case MouseEvent.LeftUp:
-                if (_leftTarget == sprite)
+                if (_leftTarget == sprite) {
                     _pendingClicks.Enqueue(MouseEvent.LeftClick);
+                    
+                    var now = DateTime.UtcNow;
+                    if (_lastLeftClickTarget == sprite && (now - _lastLeftClickTime).TotalMilliseconds <= DoubleClickThresholdMs) {
+                        _pendingClicks.Enqueue(MouseEvent.DoubleClick);
+                        _lastLeftClickTarget = null;
+                        _lastLeftClickTime = DateTime.MinValue;
+                    } else {
+                        _lastLeftClickTarget = sprite;
+                        _lastLeftClickTime = now;
+                    }
+                }
                 _leftTarget = null;
                 break;
             case MouseEvent.MiddleDown:

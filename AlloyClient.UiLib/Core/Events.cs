@@ -53,6 +53,7 @@ public record KeyboardEvent(string Type, Key Key, Scancode Code, bool Ctrl, bool
 
 public record MouseEvent(string Type, Vector2i Coords = new(), float Delta = 0f, bool ShiftKey = false, bool CtrlKey = false, bool AltKey = false) : Event(Type, true) {
     public const string LeftClick = "leftClick";
+    public const string DoubleClick = "doubleClick";
     public const string MiddleClick = "middleClick";
     public const string RightClick = "rightClick";
     public const string MouseOver = "mouseOver";
@@ -70,6 +71,7 @@ public record MouseEvent(string Type, Vector2i Coords = new(), float Delta = 0f,
     internal static bool ValidateType(string type) {
         return type switch {
             LeftClick => true,
+            DoubleClick => true,
             MiddleClick => true,
             RightClick => true,
             MouseOver => true,
@@ -90,6 +92,7 @@ public record MouseEvent(string Type, Vector2i Coords = new(), float Delta = 0f,
     internal static bool IsButtonType(string type) {
         return type switch {
             LeftClick => true,
+            DoubleClick => true,
             MiddleClick => true,
             RightClick => true,
             LeftDown => true,
@@ -104,6 +107,7 @@ public record MouseEvent(string Type, Vector2i Coords = new(), float Delta = 0f,
         };
     }
 }
+
 
 /// <summary>
 /// Resize events are *ONLY* dispatched on stage layer, if listeners are put on any other sprite they will not trigger!

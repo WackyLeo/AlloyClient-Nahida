@@ -46,7 +46,7 @@ public sealed class InventoryGrid : Sprite {
             var bg = new CutEdgeRect(new CutEdgeConfig { Width = 223, Height = _height, CutX = 6, CutY = 6, Cuts = CutEdges.All, Color = 0x242222 });
             AddChild(bg);
 
-            _hpSlotOutline = new CutEdgeRect(new CutEdgeConfig { Width = 101, Height = 26, CutX = 4, CutY = 4, Cuts = CutEdges.Left, Color = 0x3e3d3d });
+            _hpSlotOutline = new CutEdgeRect(new CutEdgeConfig { Width = 101, Height = 26, CutX = 4, CutY = 4, Cuts = CutEdges.Left, Color = 0x454545 });
             _hpSlotOutline.Y += 152 - 38;
             _hpSlotOutline.X = 8;
             AddChild(_hpSlotOutline);
@@ -56,7 +56,7 @@ public sealed class InventoryGrid : Sprite {
             _hpSlot .X = 8 + 3;
             AddChild(_hpSlot );
 
-            _mpSlotOutline = new CutEdgeRect(new CutEdgeConfig { Width = 101, Height = 26, CutX = 4, CutY = 4, Cuts = CutEdges.Right, Color = 0x3e3d3d });
+            _mpSlotOutline = new CutEdgeRect(new CutEdgeConfig { Width = 101, Height = 26, CutX = 4, CutY = 4, Cuts = CutEdges.Right, Color = 0x454545 });
             _mpSlotOutline.Y += 152 - 38;
             _mpSlotOutline.X = _hpSlotOutline.X + 100 + 6;
             AddChild(_mpSlotOutline);
@@ -87,7 +87,7 @@ public sealed class InventoryGrid : Sprite {
             AddChild(mpIcon);
             
             _hpText = new SimpleText(new TextConfig {
-                FontSize = 14,
+                FontSize = 20,
                 Color = 0xFFFFFFFFu,
                 OutlineColor = 0xFF000000u,
                 OutlineThickness = 0.5f,
@@ -95,11 +95,11 @@ public sealed class InventoryGrid : Sprite {
                 Anchor = UiAnchor.LeftTop,
             });
             _hpText.X = hpIcon.X + 27;
-            _hpText.Y = _hpSlotOutline.Y + (_hpSlotOutline.Height /2) - (6);
+            _hpText.Y = _hpSlotOutline.Y + (_hpSlotOutline.Height /2) - (9);
             AddChild(_hpText);
 
             _mpText = new SimpleText(new TextConfig {
-                FontSize = 14,
+                FontSize = 20,
                 Color = 0xFFFFFFFFu,
                 OutlineColor = 0xFF000000u,
                 OutlineThickness = 0.5f,
@@ -107,7 +107,7 @@ public sealed class InventoryGrid : Sprite {
                 Anchor = UiAnchor.LeftTop,
             });
             _mpText.X = mpIcon.X + 27;
-            _mpText.Y = _mpSlotOutline.Y + (_mpSlotOutline.Height /2) - (6);
+            _mpText.Y = _mpSlotOutline.Y + (_mpSlotOutline.Height /2) - (9);
             AddChild(_mpText);
         }
 

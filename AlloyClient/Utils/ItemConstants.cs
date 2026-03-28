@@ -35,6 +35,8 @@ public static class ItemConstants {
     
     public const ushort HealthPotion = 2594;
     public const ushort MagicPotion = 2595;
+    public const byte HpPotionSlot = 254;
+    public const byte MpPotionSlot = 255; 
     public static TextureInfo GetSlot(int slotType) {
         switch (slotType) {
             case AllType:

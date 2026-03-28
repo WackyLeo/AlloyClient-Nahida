@@ -223,9 +223,11 @@ public sealed class UserInput : Sprite {
                 ClearMovement();
                 OptionsView.Toggle();
                 break;
+            case true when Settings.Debug.CheckValue(key):
+                Render.DebugEnabled = !Render.DebugEnabled;
+                break;
             // Inventory //
             case true when Settings.InvOne.CheckValue(key):
-                Render.DebugEnabled = !Render.DebugEnabled;
                 break;
             case true when Settings.InvTwo.CheckValue(key):
                 break;
