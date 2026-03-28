@@ -244,6 +244,7 @@ public static class TypeCaveWallGeo {
                 rx = -ry;
                 ry = tmp;
             }
+
             return new Vector3(_posX + rx, _posY + ry, lz);
         }
 
@@ -252,15 +253,13 @@ public static class TypeCaveWallGeo {
                 Tri(v[0], 0f, 0f, v[1], 1f, 0f, v[2], 1f, 1f);
             }
             else if (v.Length == 4) {
-                /*if (Rnd() < 0.5f) {
+                if (Rnd() < 0.5f) {
                     Tri(v[0], 0f, 0f, v[1], 1f, 0f, v[3], 0f, 1f);
                     Tri(v[1], 1f, 0f, v[2], 1f, 1f, v[3], 0f, 1f);
                 } else {
                     Tri(v[0], 0f, 0f, v[2], 1f, 1f, v[3], 0f, 1f);
                     Tri(v[0], 0f, 0f, v[1], 1f, 0f, v[2], 1f, 1f);
-                }*/
-                Tri(v[0], 0f, 0f, v[2], 1f, 1f, v[3], 0f, 1f);
-                Tri(v[0], 0f, 0f, v[1], 1f, 0f, v[2], 1f, 1f);
+                }
             }
             else if (v.Length == 5) {
                 Vector2[] uvs = { new(0.2f,0f), new(0.8f,0f), new(1f,0.2f), new(1f,0.8f), new(0f,0.8f) };

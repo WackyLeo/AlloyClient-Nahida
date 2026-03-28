@@ -732,16 +732,15 @@ public class Player : Entity {
     }
 
     private float GetMoveSpeed() {
+        if (HasConditionEffect(ConditionEffects.Paralyzed)) return 0.0f;
         if (HasConditionEffect(ConditionEffects.Slowed)) return MinMoveSpeed * MovementMultiplier;
 
         if (DashTimer > 0) return 0.06f;
 
         var speed = Focused ? FocusedSpeed : Speed;
-
         if (LimitSpeed) speed = SpeedLimit <= speed && SpeedLimit >= 0 ? SpeedLimit : speed;
 
         var moveSpeed = MinMoveSpeed + speed / 75f * (MaxMoveSpeed - MinMoveSpeed);
-
         if (HasConditionEffect(ConditionEffects.Speedy) || HasConditionEffect(ConditionEffects.NinjaSpeedy))
             moveSpeed *= 1.5f;
 
@@ -750,7 +749,6 @@ public class Player : Entity {
 
     public int GetBulletId() {
         var ret = NextBulletId;
-        Log.Info($"GetBulletId: returning {ret}, next will be {(NextBulletId + 1) % 1024}");
         NextBulletId = (NextBulletId + 1) % 1024;
         return ret;
     }

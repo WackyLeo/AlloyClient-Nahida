@@ -193,8 +193,6 @@ public class Entity {
         if (props.DrawOnGround) {
             return new TypeGroundObject(this);
         }
-
-        Logger.Info($"Entity class: '{props.Class}' for type 0x{type:X4}");
         
         return props.Class switch {
             "Wall" => new TypeWall(this),

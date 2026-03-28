@@ -29,8 +29,8 @@ public class CharacterStatusText : Sprite {
         var txtConfig = new TextConfig {
             Text = _text,
             Color = _color,
-            MaxWidth = 120,
-            FontSize = 20,
+            MaxWidth = 200,
+            FontSize = 25,
             OutlineColor = 0x000000,
             OutlineThickness = 0.5f,
             FontType = FontType.Bold,

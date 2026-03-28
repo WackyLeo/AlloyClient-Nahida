@@ -282,4 +282,25 @@ public partial class Sprite : DisplayContainer {
     
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static float GetScale(int contentWidth, int newWidth) => contentWidth == 0 ? 0f : (float) newWidth / contentWidth;
+
+    protected static uint LerpColor(uint a, uint b, float t) {
+        t = Math.Clamp(t, 0f, 1f);
+
+        var aa = (a >> 24) & 0xFF;
+        var ar = (a >> 16) & 0xFF;
+        var ag = (a >> 8) & 0xFF;
+        var ab = a & 0xFF;
+
+        var ba = (b >> 24) & 0xFF;
+        var br = (b >> 16) & 0xFF;
+        var bg = (b >> 8) & 0xFF;
+        var bb = b & 0xFF;
+
+        var ra = aa + (uint)MathF.Round((ba - aa) * t);
+        var rr = ar + (uint)MathF.Round((br - ar) * t);
+        var rg = ag + (uint)MathF.Round((bg - ag) * t);
+        var rb = ab + (uint)MathF.Round((bb - ab) * t);
+
+        return (ra << 24) | (rr << 16) | (rg << 8) | rb;
+    }
 }

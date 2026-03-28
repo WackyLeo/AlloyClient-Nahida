@@ -18,7 +18,6 @@ public static class Camera {
     public static Matrix4 ProjectionMatrix;
     public static Matrix4 ZoomMatrix;
     public static Matrix4 BillboardMatrix;
-
     public static Vector2 VisibleTileRadius;
 
     public static float CameraAngle;

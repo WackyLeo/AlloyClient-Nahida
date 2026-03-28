@@ -10,9 +10,9 @@ using AlloyClient.Utils;
 namespace AlloyClient.Game.Components.Hud.Panels;
 
 public sealed class PartyPanel : Panel {
-    private const int NumMembers = 6;
+    private const int NumMembers = 10;
     private const int SlotWidth = 100;
-    private const int SlotHeight = 32;
+    private const int SlotHeight = 24;
     private const int Cols = 2;
 
     private static readonly MemberSlot[] _slots = new MemberSlot[NumMembers];
@@ -41,8 +41,8 @@ public sealed class PartyPanel : Panel {
     }
 
     private sealed class MemberSlot {
-        private const int PortraitSize = 32;
-        private const int BarHeight = 8;
+        private const int PortraitSize = 24;
+        private const int BarHeight = 6;
         private const int BarWidth = 66;
 
         private readonly SimpleText _nameText;
@@ -73,7 +73,7 @@ public sealed class PartyPanel : Panel {
             Root.AddChild(_portrait);
 
             _nameText = new SimpleText(new TextConfig {
-                FontSize = 14,
+                FontSize = 12,
                 Color = 0xFFFFFFFFu,
                 OutlineColor = 0xFF000000u,
                 OutlineThickness = 0.5f,
@@ -156,20 +156,6 @@ public sealed class PartyPanel : Panel {
 
             _hpBar.Resize((int)Math.Max(1, BarWidth * hpRatio), BarHeight);
             _hpBar.SetColor(barColor);
-        }
-
-        private static uint LerpColor(uint a, uint b, float t) {
-            t = Math.Clamp(t, 0f, 1f);
-            var aa = (a >> 24) & 0xFF;
-            var ar = (a >> 16) & 0xFF;
-            var ag = (a >> 8) & 0xFF;
-            var ab = a & 0xFF;
-            var ba = (b >> 24) & 0xFF;
-            var br = (b >> 16) & 0xFF;
-            var bg = (b >> 8) & 0xFF;
-            var bb = b & 0xFF;
-            return ((aa + (uint)((ba - aa) * t)) << 24) | ((ar + (uint)((br - ar) * t)) << 16) |
-                   ((ag + (uint)((bg - ag) * t)) << 8) | (ab + (uint)((bb - ab) * t));
         }
     }
 }

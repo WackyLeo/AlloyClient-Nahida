@@ -102,8 +102,20 @@ public static class Map {
         }
 
         foreach (var (objectId, entity) in Entities) {
-            if (!entity.Update(time, dt)) EntitiesToRemove.Add(objectId);
+            if (!entity.Update(time, dt)) {
+                EntitiesToRemove.Add(objectId);
+                continue;
+            }
 
+            if (LocalPlayer != null && !entity.Properties.Static && entity.Properties.IsEnemy) {
+                var dx = entity.Position.X - LocalPlayer.Position.X;
+                var dy = entity.Position.Y - LocalPlayer.Position.Y;
+                if (dx * dx + dy * dy > TileRenderDistance * TileRenderDistance) {
+                    EntitiesToRemove.Add(objectId);
+                    continue;
+                }
+            }
+            
             entity.UpdateVisibility(ref fullMatrix);
 
             var allowTransparency = entity.RenderBaseType is TypeGameObject || entity.RenderBaseType is TypePlayer;

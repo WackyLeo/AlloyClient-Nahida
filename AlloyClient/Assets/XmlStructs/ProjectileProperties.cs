@@ -1,5 +1,7 @@
 using System;
+using System.Linq;
 using System.Xml.Linq;
+using AlloyClient.Assets.XmlStructs;
 using Common;
 
 public sealed class ProjectileProperties {
@@ -72,6 +74,7 @@ public sealed class ProjectileProperties {
     public readonly bool CircularAngle;
     public readonly bool ForceHit;
     public readonly bool VanillaAngle;
+    public readonly ConditionEffectDesc[] Effects; 
     public ProjectileProperties(XElement e) {
         BulletType = e.GetAttribute<int>("id");
         ObjectId = e.GetValue<string>("ObjectId");
@@ -144,6 +147,10 @@ public sealed class ProjectileProperties {
         ArcBlade = e.HasElement("ArcBlade");
         CircularAngle = e.HasElement("CircularAngle");
         ForceHit = e.HasElement("ForceHit");
+        
+        Effects = e.Elements("ConditionEffect")
+            .Select(x => new ConditionEffectDesc(x.Value, x.GetAttribute<float>("duration"))).ToArray();
+        
         VanillaAngle = !Orbiting && !DynamicAngle;
     }
 }

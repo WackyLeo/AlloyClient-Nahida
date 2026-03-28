@@ -9,7 +9,7 @@ namespace AlloyClient.Game;
 
 public static class PartyData {
 
-    public const int MaxVisibleMembers = 6;
+    public const int MaxVisibleMembers = 10;
 
     private const int MaxDistance = 50 * 50;
 
@@ -117,7 +117,19 @@ public static class PartyData {
     
     private class PartyComparison : IComparer<PartyInfo> {
         public int Compare(PartyInfo self, PartyInfo other) {
-            return (self!.Locked && !other!.Locked) || (self.Dist < other!.Dist) || (self.ObjectId < other.ObjectId) ? -1 : 1;
+            if (ReferenceEquals(self, other)) return 0;
+            if (self is null) return 1;
+            if (other is null) return -1;
+
+            return (
+                !self.Locked,
+                self.Dist,
+                self.ObjectId
+            ).CompareTo((
+                !other.Locked,
+                other.Dist,
+                other.ObjectId
+            ));
         }
-    }
+    }   
 }

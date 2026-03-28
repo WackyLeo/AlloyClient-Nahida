@@ -17,13 +17,15 @@ public static partial class Render {
         public Vector3 Color;
     }
     
-    private static readonly List<DebugVertex> _debugVerts = [];
     private static int _debugVao = -1;
     private static int _debugVbo = -1;
     private static int _debugShader = -1;
     private static int _debugVpUniform = -1;
     private static bool _debugInitialized = false;
 
+    private static readonly DebugVertex[] _debugVerts = new DebugVertex[524288];
+    private static float[] _debugUploadBuffer = new float[524288 * 5];
+    private static int _debugVertCount = 0;
     private static void InitDebug() {
         if (_debugInitialized) return;
         _debugInitialized = true;
@@ -80,14 +82,13 @@ public static partial class Render {
         var c = to   + perp;
         var d = to   - perp;
 
-        // Triangle 1
-        _debugVerts.Add(new DebugVertex { Position = a, Color = color });
-        _debugVerts.Add(new DebugVertex { Position = b, Color = color });
-        _debugVerts.Add(new DebugVertex { Position = c, Color = color });
-        // Triangle 2
-        _debugVerts.Add(new DebugVertex { Position = a, Color = color });
-        _debugVerts.Add(new DebugVertex { Position = c, Color = color });
-        _debugVerts.Add(new DebugVertex { Position = d, Color = color });
+        if (_debugVertCount + 6 > _debugVerts.Length) return; // safety, don't overflow
+        _debugVerts[_debugVertCount++] = new DebugVertex { Position = a, Color = color };
+        _debugVerts[_debugVertCount++] = new DebugVertex { Position = b, Color = color };
+        _debugVerts[_debugVertCount++] = new DebugVertex { Position = c, Color = color };
+        _debugVerts[_debugVertCount++] = new DebugVertex { Position = a, Color = color };
+        _debugVerts[_debugVertCount++] = new DebugVertex { Position = c, Color = color };
+        _debugVerts[_debugVertCount++] = new DebugVertex { Position = d, Color = color };
     }
 
     public static void DebugCircle(Vector2 center, float radius, Vector3 color, float thickness = 0.04f, int segments = 32) {
@@ -113,34 +114,35 @@ public static partial class Render {
     }
 
     public static void FlushDebug(Matrix4 viewProjection) {
-        if (!DebugEnabled || _debugVerts.Count == 0) return;
+        if (!DebugEnabled || _debugVertCount == 0) return;
         InitDebug();
 
-        var data = new float[_debugVerts.Count * 5];
-        for (int i = 0; i < _debugVerts.Count; i++) {
+        // Write into pre-allocated buffer, no new[]
+        for (int i = 0; i < _debugVertCount; i++) {
             var v = _debugVerts[i];
-            data[i * 5 + 0] = v.Position.X;
-            data[i * 5 + 1] = v.Position.Y;
-            data[i * 5 + 2] = v.Color.X;
-            data[i * 5 + 3] = v.Color.Y;
-            data[i * 5 + 4] = v.Color.Z;
+            var o = i * 5;
+            _debugUploadBuffer[o    ] = v.Position.X;
+            _debugUploadBuffer[o + 1] = v.Position.Y;
+            _debugUploadBuffer[o + 2] = v.Color.X;
+            _debugUploadBuffer[o + 3] = v.Color.Y;
+            _debugUploadBuffer[o + 4] = v.Color.Z;
         }
 
         GL.BindVertexArray(_debugVao);
         GL.BindBuffer(OpenTK.Graphics.OpenGL.BufferTarget.ArrayBuffer, _debugVbo);
         GL.BufferData(OpenTK.Graphics.OpenGL.BufferTarget.ArrayBuffer,
-            data.Length * sizeof(float), data,
+            _debugVertCount * 5 * sizeof(float), _debugUploadBuffer,
             OpenTK.Graphics.OpenGL.BufferUsage.StreamDraw);
 
         GL.UseProgram(_debugShader);
         GL.UniformMatrix4f(_debugVpUniform, 1, false, ref viewProjection);
 
         GL.Disable(EnableCap.DepthTest);
-        GL.DrawArrays(PrimitiveType.Triangles, 0, _debugVerts.Count);
+        GL.DrawArrays(PrimitiveType.Triangles, 0, _debugVertCount);
         GL.Enable(EnableCap.DepthTest);
 
         GL.BindVertexArray(0);
         GL.UseProgram(0);
-        _debugVerts.Clear();
+        _debugVertCount = 0; // reset counter, no Clear() needed
     }
 }

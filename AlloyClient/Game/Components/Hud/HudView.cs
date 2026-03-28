@@ -69,7 +69,7 @@ public sealed class HudView : Sprite {
 
         _interactPanel = new InteractPanel();
         _interactPanel.X = 8;
-        _interactPanel.Y = Settings.DefaultScreenHeight - 115;
+        _interactPanel.Y = Settings.DefaultScreenHeight - 125;
         AddChild(_interactPanel);
     }
 
@@ -83,6 +83,10 @@ public sealed class HudView : Sprite {
 
         if (_interactPanel != null) {
             _interactPanel.Update();
+        }
+        
+        if (_inventoryGrid != null) {
+            _inventoryGrid.UpdatePotions();
         }
     }
 }

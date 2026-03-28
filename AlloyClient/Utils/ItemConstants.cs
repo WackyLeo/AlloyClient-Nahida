@@ -32,7 +32,9 @@ public static class ItemConstants {
     public const int ScepterType = 23;
     public const int KatanaType = 24;
     public const int ShurikenType = 25;
-
+    
+    public const ushort HealthPotion = 2594;
+    public const ushort MagicPotion = 2595;
     public static TextureInfo GetSlot(int slotType) {
         switch (slotType) {
             case AllType:
