@@ -13,7 +13,7 @@ using OpenTK.Mathematics;
 
 namespace AlloyClient.Game.Objects;
 
-public sealed class Projectile {
+public sealed class Projectile : IResettable {
     private const double HitTestDelayMs = 16;
 
     private readonly HashSet<int> _hitEntities = [];
@@ -54,7 +54,41 @@ public sealed class Projectile {
 
     public float Rotation;
     public int Size;
-
+    
+    public void Reset() {
+        _bulletId = 0;
+        _damage = 0;
+        _angle = 0f;
+        _ownerId = 0;
+        _owner = null;
+        _damagePlayers = false;
+        _objDesc = null;
+        _projProp = null;
+        _rayCasted = false;
+        _checkRayCasted = false;
+        _rayCastHitDone = false;
+        _rayCastFailed = false;
+        Clear = false;
+        _savePos = Vector2.Zero;
+        _lifetime = 0;
+        _addLifetime = 0;
+        _projDelayMs = 0;
+        Size = 0;
+        _startTime = 0;
+        _lastHitTest = 0;
+        _accel = 0;
+        _angleCorrection = 0f;
+        _startPosition = Vector2.Zero;
+        _position = Vector2.Zero;
+        _spinDistance = 0f;
+        _startSpinAngle = 0f;
+        _spinAngle = 0f;
+        _ricochetsLeft = 0;
+        Rotation = 0f;
+        _hitEntities.Clear();
+        RenderBaseType = null;
+    }
+    
     public void Reset(int id, int dmg, float angle, Entity entity, ObjectProperties objDesc, ProjectileProperties projProp) {
         _bulletId = id;
         _damage = dmg;
@@ -222,13 +256,13 @@ public sealed class Projectile {
 
         var hitPos = Camera.WorldToDebug2D(new Vector3(_position.X, _position.Y, 0.5f));
         if (Render.DebugEnabled) {
-            Render.DebugCircle(hitPos, 0.25f + _projProp.BonusSize, new Vector3(0, 1, 0), 0.05f);
+            Render.DebugCircle(hitPos, 0.25f + _projProp.BonusSize, new Vector3(1, 0, 0), 0.06f);
             var worldAngle = Rotation - Camera.CameraAngle - _angleCorrection;
             
             if (_objDesc.Rotation != 0) 
                 worldAngle = _angle;
             
-            Render.DebugArrow(hitPos, worldAngle, 1f, new Vector3(1, 0, 0), 0.05f);
+            //Render.DebugArrow(hitPos, worldAngle, 1f, new Vector3(1, 0, 0), 0.05f);
         }
 
         if (_projProp.ParticleTrail && doHitTest)

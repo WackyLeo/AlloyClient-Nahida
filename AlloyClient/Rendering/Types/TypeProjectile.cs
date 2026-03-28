@@ -2,6 +2,7 @@
 using AlloyClient.Assets;
 using AlloyClient.Engine.Common;
 using AlloyClient.Game;
+using AlloyClient.Game.Objects;
 using AlloyClient.Rendering.VertexData;
 using Common;
 using Common.Structs;
@@ -9,7 +10,7 @@ using OpenTK.Mathematics;
 
 namespace AlloyClient.Rendering.Types;
 
-public sealed class TypeProjectile : RenderBase {
+public sealed class TypeProjectile : RenderBase, IResettable {
     public float RandDir;
     public float TempLt;
     public float Lifetime;
@@ -24,7 +25,9 @@ public sealed class TypeProjectile : RenderBase {
     public TypeProjectile() {
         Extra = new ExtraData(RenderConfig.TypeGameObject, RenderConfig.Shade);
     }
-
+    
+    public void Reset() => Reset(-10000f);
+    
     public void Reset(float staticFallAngle) {
         Extra = new ExtraData(RenderConfig.TypeGameObject, RenderConfig.Shade);
         Visible = false;

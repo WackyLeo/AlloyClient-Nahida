@@ -159,8 +159,8 @@ public static class Map {
             var proj = Projectiles[i];
             if (proj.Update(time, dt, matrix))
                 continue;
-            ObjectPools.Projectiles.Push(proj);
             EntityStorage.Remove(proj);
+            ObjectPools.Projectiles.Push(proj);
 
             var idx = Projectiles.Count - 1;
             Projectiles[i] = Projectiles[idx];
@@ -574,8 +574,8 @@ public class RenderStorage : Dictionary<ModelType, List<RenderBase>> {
 
     public void Remove(Projectile proj) {
         var type = proj.RenderBaseType;
+        if (type == null) return;
         if (!ContainsKey(type.ModelType)) return;
-
         base[type.ModelType].Remove(type);
     }
 
