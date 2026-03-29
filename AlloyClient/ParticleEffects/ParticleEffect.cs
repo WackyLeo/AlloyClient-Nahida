@@ -1,13 +1,15 @@
-﻿using AlloyClient.Game.Objects;
+﻿using AlloyClient.Assets.XmlStructs;
+using AlloyClient.Game.Objects;
 using OpenTK.Mathematics;
 
 namespace AlloyClient.ParticleEffects;
 
 public abstract class ParticleEffect {
-
     protected Vector2 _position;
 
-    public void SetEntityPosition(Vector2 pos) => _position = pos;
+    public void SetEntityPosition(Vector2 pos) {
+        _position = pos;
+    }
 
     public abstract bool Update(double time, double dt);
 
@@ -18,11 +20,21 @@ public abstract class ParticleEffect {
         return new Vector4(r / 255f, g / 255f, b / 255f, -1);
     }
 
-    public static ParticleEffect FromProperties(string effectName, Entity entity) {
-        return effectName switch {
+    public static ParticleEffect FromProperties(EffectProperties properties, Entity entity) {
+        return properties.Id switch {
+            "Healing" => new HealingEffect(entity),
             "Fountain" => new FountainEffect(),
+            "BlackFountain" => new BlackFountainEffect(),
+            "FountainSnowy" => new FountainSnowyEffect(),
+            "SkyBeam" => null,
+            "Circle" => new CircleEffect(entity, properties),
+            "Heart" => null,
+            "Gas" => new GasEffect(entity, properties),
+            "Vent" => null,
+            "Bubbles" => new BubbleEffect(entity, properties),
+            "Vortex" => null,
+            "XMLEffect" => null,
             _ => null
         };
     }
-
 }

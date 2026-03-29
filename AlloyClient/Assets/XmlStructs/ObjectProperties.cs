@@ -6,6 +6,7 @@ using Common;
 namespace AlloyClient.Assets.XmlStructs;
 
 public class ObjectProperties {
+    public readonly bool AlwaysLoaded;
     public readonly float AngleCorrection;
     public readonly float ArcGap;
 
@@ -19,15 +20,16 @@ public class ObjectProperties {
     public readonly string DisplayName;
     public readonly bool DrawOnGround;
     public readonly string Effect;
+    public readonly EffectProperties EffectProperties;
 
     public readonly bool EnemyOccupySquare;
     public readonly List<ushort?> Equipment;
     public readonly bool FullOccupy;
     public readonly bool IsAlly;
     public readonly bool IsEnemy;
-    public readonly bool IsQuest;
 
     public readonly bool IsPlayer;
+    public readonly bool IsQuest;
     public readonly bool LockedPortal;
     public readonly int MaxSize;
     public readonly int MinSize;
@@ -55,7 +57,6 @@ public class ObjectProperties {
     public readonly List<int> SlotTypes;
 
     public readonly bool Static;
-    public readonly bool AlwaysLoaded;
 
     public ObjectProperties(XElement e) {
         ObjectType = e.GetAttribute<ushort>("type");
@@ -106,6 +107,8 @@ public class ObjectProperties {
         SizeStep = e.GetValue("SizeStep", 5);
 
         Description = e.GetValue<string>("Description");
+
+        if (e.HasElement("Effect")) EffectProperties = new EffectProperties(e.Element("Effect"));
 
         PlayerClassType = e.GetValue<ushort>("PlayerClassType");
         Skin = e.GetValue<bool>("Skin");

@@ -17,8 +17,8 @@ public class FountainEffect : ParticleEffect {
 
     private double _lastUpdate = -1;
 
-    public FountainEffect() {
-        _color = GetColor(0x4165D5);
+    public FountainEffect(uint colour = 0x4165D5) {
+        _color = GetColor(colour);
     }
     
     public override bool Update(double time, double dt) {

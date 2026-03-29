@@ -54,7 +54,7 @@ public sealed class Projectile : IResettable {
 
     public float Rotation;
     public int Size;
-    
+
     public void Reset() {
         _bulletId = 0;
         _damage = 0;
@@ -88,8 +88,11 @@ public sealed class Projectile : IResettable {
         _hitEntities.Clear();
         RenderBaseType = null;
     }
-    
-    public void Reset(int id, int dmg, float angle, Entity entity, ObjectProperties objDesc, ProjectileProperties projProp) {
+
+    public bool IsInPool { get; set; }
+
+    public void Reset(int id, int dmg, float angle, Entity entity, ObjectProperties objDesc,
+        ProjectileProperties projProp) {
         _bulletId = id;
         _damage = dmg;
         _angle = angle;
@@ -128,15 +131,13 @@ public sealed class Projectile : IResettable {
         _ricochetsLeft = _projProp.Ricochet;
 
         _hitEntities.Clear();
-        if (RenderBaseType is not TypeProjectile) {
-            RenderBaseType = ObjectPools.TypeProjectiles.Pop();
-        }
-        
+        if (RenderBaseType is not TypeProjectile) RenderBaseType = ObjectPools.TypeProjectiles.Pop();
+
         ((TypeProjectile)RenderBaseType).Reset(_projProp.StaticFallAngle);
         ((TypeProjectile)RenderBaseType).IsFalldown = _projProp.Falldown;
         ((TypeProjectile)RenderBaseType).IsMissile = _projProp.Missile;
         ((TypeProjectile)RenderBaseType).SpawnPosition = entity.Position;
-        
+
         ((TypeProjectile)RenderBaseType).RandDir = Random.Shared.NextSingle() * 360f;
         ((TypeProjectile)RenderBaseType).TempLt = 0f;
         ((TypeProjectile)RenderBaseType).Lifetime = _lifetime;
@@ -201,34 +202,32 @@ public sealed class Projectile : IResettable {
         var curLifetime = elapsed - _projDelayMs;
 
         if (curLifetime > _lifetime) return false;
-        
-        if (_projProp.Falldown)
-            ((TypeProjectile)RenderBaseType).Height = 40f - (curLifetime / _lifetime * 40f);
-        else if (_projProp.Missile) {
-            ((TypeProjectile)RenderBaseType).Height = 
-                MathF.Abs(MathF.Sin(curLifetime / _lifetime * MathF.PI)) * 3f 
+
+        if (_projProp.Falldown) {
+            ((TypeProjectile)RenderBaseType).Height = 40f - curLifetime / _lifetime * 40f;
+        } else if (_projProp.Missile) {
+            ((TypeProjectile)RenderBaseType).Height =
+                MathF.Abs(MathF.Sin(curLifetime / _lifetime * MathF.PI)) * 3f
                 + (0.8f - curLifetime / _lifetime * 0.8f);
             ((TypeProjectile)RenderBaseType).TempLt = curLifetime;
         }
 
         UpdateVisibility(matrix);
-        
+
         var newPos = PositionAt(curLifetime + _addLifetime);
         if (_objDesc.Rotation != 0) {
             Rotation = elapsed / _objDesc.Rotation;
         } else if (_projProp.DynamicAngle) {
             if (_savePos == Vector2.Zero) _savePos = PositionAt(curLifetime - 20f);
-            
+
             var dir = newPos - _savePos;
             Rotation = MathF.Atan2(dir.Y, dir.X)
                        + Camera.CameraAngle
                        + _angleCorrection;
 
             _savePos = _position;
-            
         } else if (_projProp.ForceOrbiting || _projProp.Orbiting) {
             Rotation = _spinAngle + Camera.CameraAngle + _angleCorrection;
-            
         } else if (!_projProp.NoRotation) {
             var direction = newPos - _position;
             var angle = direction.LengthSquared > 0.000001f ? MathF.Atan2(direction.Y, direction.X) : _angle;
@@ -251,25 +250,25 @@ public sealed class Projectile : IResettable {
             RenderBaseType.SetRotation(Rotation);
             RenderBaseType.SetTexture(GetTexture(curLifetime));
         }
-        
+
         // Projectile debug + hit pos
 
         var hitPos = Camera.WorldToDebug2D(new Vector3(_position.X, _position.Y, 0.5f));
         if (Render.DebugEnabled) {
-            Render.DebugCircle(hitPos, 0.25f + _projProp.BonusSize, new Vector3(1, 0, 0), 0.06f);
+            Render.DebugCircle(hitPos, 0.25f + _projProp.BonusSize, new Vector3(1, 0, 0), 0.05f);
             var worldAngle = Rotation - Camera.CameraAngle - _angleCorrection;
-            
-            if (_objDesc.Rotation != 0) 
+
+            if (_objDesc.Rotation != 0)
                 worldAngle = _angle;
-            
+
             //Render.DebugArrow(hitPos, worldAngle, 1f, new Vector3(1, 0, 0), 0.05f);
         }
 
         if (_projProp.ParticleTrail && doHitTest)
             Map.AddParticleEffect(new SparkEffect(100, _projProp.ParticleTrailColor, _projProp.ParticleTrailLifetime,
-                                                0.5f,
-                                                MathUtils.RandomPlusMinus(3), MathUtils.RandomPlusMinus(3), newPos.X,
-                                                newPos.Y));
+                0.5f,
+                MathUtils.RandomPlusMinus(3), MathUtils.RandomPlusMinus(3), newPos.X,
+                newPos.Y));
 
         return true;
     }
@@ -315,17 +314,17 @@ public sealed class Projectile : IResettable {
             var target = EntityUtils.GetPlayerHit(checkPos, hitRadius);
             if (target == null || _hitEntities.Contains(target.ObjectId))
                 return false;
-            
+
             if (target.HasConditionEffect(ConditionEffects.Invincible) ||
                 target.HasConditionEffect(ConditionEffects.Stasis) ||
                 target.HasConditionEffect(ConditionEffects.Paused))
                 return false;
-            
+
             var actualDamage = DamageWithDefense(_damage, target.Defense, _projProp.ArmorPiercing, target);
             if (actualDamage > 0 || (_projProp.Effects != null && _projProp.Effects.Length > 0)) {
                 var newHealth = target.Hp - actualDamage;
                 var notification = $"-{actualDamage} [{newHealth}]";
-                var clr = GetHitColour(_projProp.Effects,_projProp.ArmorPiercing);
+                var clr = GetHitColour(_projProp.Effects, _projProp.ArmorPiercing);
                 Map.AddParticleEffect(new HitEffect(target, clr));
                 NotificationLayer.AddStatusText(target, notification, clr, 1000, 0);
                 Map.PendingPlayerHit.AddHit(_bulletId, _ownerId);
@@ -341,7 +340,7 @@ public sealed class Projectile : IResettable {
         var enemy = EntityUtils.GetClosestEnemy(checkPos, hitRadius);
         if (enemy == null || _hitEntities.Contains(enemy.ObjectId))
             return false;
-        
+
         var hitRadiusSqr = hitRadius * hitRadius;
         var hitSomething = false;
 
@@ -383,7 +382,7 @@ public sealed class Projectile : IResettable {
             if (actualDamage > 0 || (_projProp.Effects != null && _projProp.Effects.Length > 0)) {
                 var newHealth = go.Hp - actualDamage;
                 var notification = $"-{actualDamage} [{newHealth}]";
-                var clr = GetHitColour(_projProp.Effects,_projProp.ArmorPiercing);
+                var clr = GetHitColour(_projProp.Effects, _projProp.ArmorPiercing);
                 Map.AddParticleEffect(new HitEffect(go, clr));
                 NotificationLayer.AddStatusText(go, notification, clr, 1000, 0);
             }
@@ -395,8 +394,8 @@ public sealed class Projectile : IResettable {
 
             _hitEntities.Add(go.ObjectId);
             hitSomething = true;
-            
-            if(_ricochetsLeft == 0 && _projProp.Ricochet > 0) return true;
+
+            if (_ricochetsLeft == 0 && _projProp.Ricochet > 0) return true;
             if (!_projProp.MultiHit) return true;
         }
 
@@ -447,7 +446,7 @@ public sealed class Projectile : IResettable {
             if (_projProp.Amplitude != 0) {
                 var deflection = _projProp.Amplitude *
                                  MathF.Sin(phase + curLifetime / _projProp.LifetimeMs * _projProp.Frequency * 2 *
-                                           MathF.PI);
+                                     MathF.PI);
                 pos.X += deflection * MathF.Cos(_angle + MathF.PI / 2);
                 pos.Y += deflection * MathF.Sin(_angle + MathF.PI / 2);
             }
@@ -456,11 +455,11 @@ public sealed class Projectile : IResettable {
             pos.Y += baseDistance * MathF.Sin(_angle);
             if (_projProp.Amplitude != 0) {
                 var deflection = _projProp.Amplitude * MathF.Sin(
-                                                                 phase + (curLifetime + _projProp.LifetimeMs *
-                                                                          (_projProp.StartFrequency /
-                                                                           _projProp.Frequency))
-                                                                 / _projProp.LifetimeMs * _projProp.Frequency * 2 *
-                                                                 MathF.PI);
+                    phase + (curLifetime + _projProp.LifetimeMs *
+                        (_projProp.StartFrequency /
+                         _projProp.Frequency))
+                    / _projProp.LifetimeMs * _projProp.Frequency * 2 *
+                    MathF.PI);
                 pos.X += deflection * MathF.Cos(_angle + MathF.PI / 2);
                 pos.Y += deflection * MathF.Sin(_angle + MathF.PI / 2);
             }
@@ -496,8 +495,7 @@ public sealed class Projectile : IResettable {
     }
 
     private int DamageWithDefense(int damage, int defense, bool nodef, Entity entity, int damageMulti = 0,
-                                  bool isPlayer = false) {
-        
+        bool isPlayer = false) {
         if (entity.HasConditionEffect(ConditionEffects.Invulnerable)) return 0;
 
         if (nodef || entity.HasConditionEffect(ConditionEffects.ArmorBroken))
@@ -535,9 +533,9 @@ public sealed class Projectile : IResettable {
 
             if (tile.OccupiedObject != null && !_projProp.PassAll) {
                 var obj = tile.OccupiedObject.Properties;
-                
-                if (obj.IsEnemy || tile.OccupiedObject.Hp > 0) 
-                    continue; 
+
+                if (obj.IsEnemy || tile.OccupiedObject.Hp > 0)
+                    continue;
 
                 if (obj.EnemyOccupySquare || (!_projProp.PassesCover && obj.OccupySquare)) {
                     if (_projProp.ReturnRayCast) {
@@ -555,7 +553,7 @@ public sealed class Projectile : IResettable {
 
         return true;
     }
-    
+
     private Vector2 PositionAtRayCastLine(float t) {
         var pos = _startPosition;
         var speed = _projProp.RCSpeed;
@@ -578,16 +576,15 @@ public sealed class Projectile : IResettable {
                 pos = PositionAt(t);
 
             var tile = Map.GetTile(pos);
-            if (tile == null || tile.Type == 0xFF) {
-                if (_damagePlayers) break;
-            }
+            if (tile == null || tile.Type == 0xFF)
+                if (_damagePlayers)
+                    break;
             if (tile.OccupiedObject != null && !_projProp.PassAll) {
                 var obj = tile.OccupiedObject.Properties;
-                bool isHittable = obj.IsEnemy || tile.OccupiedObject.Hp > 0;
-                if (!isHittable) {
+                var isHittable = obj.IsEnemy || tile.OccupiedObject.Hp > 0;
+                if (!isHittable)
                     if (obj.EnemyOccupySquare || (!_projProp.PassesCover && obj.OccupySquare))
-                        break; 
-                }
+                        break;
             }
 
             var angle = t == 0 ? _angle : MathF.Atan2(pos.Y - _startPosition.Y, pos.X - _startPosition.X);
@@ -599,12 +596,11 @@ public sealed class Projectile : IResettable {
             if (_damagePlayers) {
                 var target = EntityUtils.GetPlayerHit(projPos, hitRadius);
                 if (target != null && !_hitEntities.Contains(target.ObjectId)) {
-                    
                     var actualDamage = DamageWithDefense(_damage, target.Defense, _projProp.ArmorPiercing, target);
                     if (actualDamage > 0 || (_projProp.Effects != null && _projProp.Effects.Length > 0)) {
                         var newHealth = target.Hp - actualDamage;
                         var notification = $"-{actualDamage} [{newHealth}]";
-                        var clr = GetHitColour(_projProp.Effects,_projProp.ArmorPiercing);
+                        var clr = GetHitColour(_projProp.Effects, _projProp.ArmorPiercing);
                         Map.AddParticleEffect(new HitEffect(target, clr));
                         NotificationLayer.AddStatusText(target, notification, clr, 1000, 0);
                         Map.PendingPlayerHit.AddHit(_bulletId, _ownerId);
@@ -616,8 +612,8 @@ public sealed class Projectile : IResettable {
             } else {
                 var target = EntityUtils.GetClosestEnemy(projPos, hitRadius);
                 if (target != null && target.Properties != null && !_hitEntities.Contains(target.ObjectId)) {
-                    bool isEnemy = target.Properties.IsEnemy;
-                    bool isDestructible = target.Hp > 0; 
+                    var isEnemy = target.Properties.IsEnemy;
+                    var isDestructible = target.Hp > 0;
 
                     if (isEnemy || isDestructible) {
                         if (target.HasConditionEffect(ConditionEffects.Invincible) ||
@@ -627,18 +623,18 @@ public sealed class Projectile : IResettable {
 
                         var actualDamage = DamageWithDefense(_damage, target.Defense, _projProp.ArmorPiercing, target);
                         Map.PendingEnemyHit.AddHit((int)time, _bulletId, target.ObjectId, false);
-                        
+
                         if (actualDamage > 0 || (_projProp.Effects != null && _projProp.Effects.Length > 0)) {
                             var newHealth = target.Hp - actualDamage;
                             var notification = $"-{actualDamage} [{newHealth}]";
-                            var clr = GetHitColour(_projProp.Effects,_projProp.ArmorPiercing);
-                            
+                            var clr = GetHitColour(_projProp.Effects, _projProp.ArmorPiercing);
+
                             Map.AddParticleEffect(new HitEffect(target, clr));
                             NotificationLayer.AddStatusText(target, notification, clr, 1000, 0);
                         }
-                        
+
                         if (!_projProp.MultiHit) return;
-                            _hitEntities.Add(target.ObjectId);
+                        _hitEntities.Add(target.ObjectId);
                     }
                 }
             }
@@ -667,11 +663,11 @@ public sealed class Projectile : IResettable {
 
         return closest;
     }
-    
+
     private uint GetHitColour(ConditionEffectDesc[] effects, bool armorBreak) {
         if (effects != null && effects.Length > 0) {
             var firstEffect = (ConditionEffects)effects[0].EffectId;
-            switch(firstEffect) {
+            switch (firstEffect) {
                 case ConditionEffects.Quiet: return 0xe6e6e6u;
                 case ConditionEffects.Weak: return 0xa8a8a8u;
                 case ConditionEffects.Slowed: return 0xaabf71u;
@@ -691,14 +687,12 @@ public sealed class Projectile : IResettable {
                 case ConditionEffects.Curse: return 0x4a1d1du;
                 case ConditionEffects.Exposed: return 0xd1dfe0u;
                 case ConditionEffects.Silenced: return 0xffffffu;
-                default: return armorBreak ? 0x9000FFu: 0xFF0000u; 
+                default: return armorBreak ? 0x9000FFu : 0xFF0000u;
             }
         }
-        
-        return armorBreak ? 0x9000FFu : 0xFF0000u; 
-    }
-    
-    // Debuggin Tools
-    
-}
 
+        return armorBreak ? 0x9000FFu : 0xFF0000u;
+    }
+
+    // Debuggin Tools
+}

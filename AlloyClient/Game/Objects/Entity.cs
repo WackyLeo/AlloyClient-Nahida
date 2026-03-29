@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
 using AlloyClient.Assets;
 using AlloyClient.Assets.Libraries;
 using AlloyClient.Assets.XmlStructs;
@@ -12,7 +10,6 @@ using AlloyClient.Networking.Structs.DataObjects;
 using AlloyClient.ParticleEffects;
 using AlloyClient.Rendering;
 using AlloyClient.Rendering.Types;
-using AlloyClient.State;
 using AlloyClient.UiLib.Signals;
 using AlloyClient.Utils;
 using Common;
@@ -26,113 +23,60 @@ public class Entity {
 
     public static float AttackPeriod = 300;
 
-    public int ObjectId;
-    public ushort Type;
-    
     public readonly Signal<int> InventoryUpdate = new();
 
-    public float HeightOffset;
-    public Vector2 Position;
-    public float Rotation;
-    public float Z;
+    public float Alpha = 1.0f;
+    public float AttackAngle;
 
-    public Vector2 MovementVector;
-    public Vector2 TickPosition;
-    public Vector2 PositionAtTick;
+    public double AttackStart;
+
+    public ParticleEffect Effect;
+
+    public float FacingAngle;
+
+    public bool Flipped;
+
+    public float HeightOffset;
+
+    public float Jitter;
 
     public int LastTickId;
     public double LastTickUpdateTime;
 
-    public MapTile Tile;
-    public ObjectProperties Properties;
-    
-    public double AttackStart;
-    public float AttackAngle;
-
-    #region StatData
-
-    public string Name;
-
-    public int Texture1Id;
-    public int Texture2Id;
-
-    public int GlowColor;
-    public ushort AltItemID;
-    private int _lastAltTex = 0;
-    
-    public int MaxHp;
-    public int Hp;
-    public int Defense;
-    public int Size = 100;
-    public int Level;
-
-    public int AnimationMin = -1;
-    public int AnimationMax = -1;
-    public int AnimationSpeed = 0;
-    private int _animationMinOld = -1;
-    private double _animationStart = 0;
-    
-    public ItemDesc[] Equipment = new ItemDesc[20];
-
-    public ConditionEffects ConditionEffects = 0;
-    
-    public int ConnectType;
-
-    public int PlayerHost;
-
-    public bool PermaPet;
-
-    public int MadnessPullRadius;
-    public int MadnessPullMaxSpeed;
-
-    public int QuestGlowColor;
-
-    public int MinimumHp;
-
-    public bool DontFaceAttacks;
-
-    public bool AllDebuffsImmune;
-
-    public int DamagersCount;
-
-    public int CustomTexture;
-
-    public bool PortalUsable;
-
-    #endregion
-
-    public RenderBase RenderBaseType;
-
-    public TextureData TextureData;
-
-    public AtlasData Texture;
-    
-    public bool Flipped;
-
-    public float FacingAngle;
-    
-    public float Jitter;
-
-    public ParticleEffect Effect;
-    
-    public float Alpha = 1.0f;
-    
     // Merchant Specific
 
     public int merchandiseType_;
 
+    public Vector2 MovementVector;
+
+    public int ObjectId;
+    public Vector2 Position;
+    public Vector2 PositionAtTick;
+    public ObjectProperties Properties;
+
+    public RenderBase RenderBaseType;
+    public float Rotation;
+
+    public AtlasData Texture;
+
+    public TextureData TextureData;
+    public Vector2 TickPosition;
+
+    public MapTile Tile;
+    public ushort Type;
+    public float Z;
+
     public void SetObjectId(int id) {
         ObjectId = id;
         Jitter = Random.Shared.NextSingle() * 0.00002f - 0.00001f;
-        Effect = ParticleEffect.FromProperties(Properties.Effect, this);
+        if (Properties.EffectProperties != null)
+            Effect = ParticleEffect.FromProperties(Properties.EffectProperties, this);
     }
 
-    public void SetType(ushort type)
-    {
+    public void SetType(ushort type) {
         Type = type;
 
-        if (!ObjectLibrary.TypeToTextureData.TryGetValue(type, out var textureData))
-        {
+        if (!ObjectLibrary.TypeToTextureData.TryGetValue(type, out var textureData)) {
             Log.Warn($"No texture data found for type 0x{type:X4}, using fallback.");
             textureData = ObjectLibrary.TypeToTextureData[ObjectLibrary.FallbackType];
         }
@@ -142,25 +86,19 @@ public class Entity {
         if (TextureData.HasAnimationData
             && TextureData.AnimatedTextures.FaceRight != null
             && TextureData.AnimatedTextures.FaceRight.Length > 0)
-        {
             Texture = TextureData.AnimatedTextures.FaceRight[0];
-        }
         else
-        {
-            Texture = TextureData.GetTexture(random: true);
-        }
+            Texture = TextureData.GetTexture(true);
 
         RenderBaseType = GetRenderType(type);
     }
-    
+
     public void SetTransparency(float alpha) {
         Alpha = Math.Clamp(alpha, 0f, 1f);
 
-        if (RenderBaseType != null) {
-            RenderBaseType.Extra.Alpha = Alpha;
-        }
+        if (RenderBaseType != null) RenderBaseType.Extra.Alpha = Alpha;
     }
-    
+
     public Color GetDominateColor() {
         if (RenderBaseType is TypeWall) return TextureData.TopTexture.DominantColor;
         return TextureData.DominantColor;
@@ -169,31 +107,21 @@ public class Entity {
     protected virtual RenderBase GetRenderType(ushort type) {
         ObjectLibrary.TypeToObjectProps.TryGetValue(type, out var props);
 
-        if (props == null) {
-            return new TypeNullObject();
-        }
+        if (props == null) return new TypeNullObject();
 
-        if (props.RealSize != -1) {
-            Size = props.RealSize;
-        }
-        
+        if (props.RealSize != -1) Size = props.RealSize;
+
         if (props.MinSize != props.MaxSize) {
             var maxSteps = (props.MaxSize - props.MinSize) / props.SizeStep;
             Size = props.MinSize + (int)(Random.Shared.NextSingle() * maxSteps) * props.SizeStep;
         }
 
-        if (IsBigBag(type)) {
-            Size = 120;
-        }
-        
-        if (!string.IsNullOrEmpty(props.Model)) {
-            return new TypeModel3D(props.Model, this);
-        }
-        
-        if (props.DrawOnGround) {
-            return new TypeGroundObject(this);
-        }
-        
+        if (IsBigBag(type)) Size = 120;
+
+        if (!string.IsNullOrEmpty(props.Model)) return new TypeModel3D(props.Model, this);
+
+        if (props.DrawOnGround) return new TypeGroundObject(this);
+
         return props.Class switch {
             "Wall" => new TypeWall(this),
             "DoubleWall" => new TypeWall(this, ModelType.PbDoubleWall),
@@ -218,12 +146,12 @@ public class Entity {
     }
 
     public virtual bool Update(double time, double dt) {
-        if (MovementVector is not {X: 0, Y: 0}) {
+        if (MovementVector is not { X: 0, Y: 0 }) {
             if (LastTickId >= Map.LastTickId) {
                 var tickDt = time - LastTickUpdateTime;
                 var pX = PositionAtTick.X + tickDt * MovementVector.X;
                 var pY = PositionAtTick.Y + tickDt * MovementVector.Y;
-                MoveTo((float) pX, (float) pY, false);
+                MoveTo((float)pX, (float)pY, false);
             } else {
                 MovementVector.X = 0;
                 MovementVector.Y = 0;
@@ -235,43 +163,43 @@ public class Entity {
         }
 
         // add wall support here at some point
-        if (TextureData.HasAnimationData) {
-            AnimateCharacter(time);
-        }
-        
+        if (TextureData.HasAnimationData) AnimateCharacter(time);
+
         if (AnimationSpeed > 0) {
             if (_animationMinOld != AnimationMin) {
                 _animationStart = time;
                 _animationMinOld = AnimationMin;
             }
+
             ClientAnimation(time);
         }
-        
-        Effect?.Update(time, dt);
+
+        if (Effect != null && !Effect.Update(time, dt)) Effect = null;
+
         RenderBaseType.SetPosition(Position.X, Position.Y, Z);
         return true;
     }
-    
+
     private void ClientAnimation(double time) {
         if (AnimationMax <= 0) return;
-    
+
         var frame = (int)(Math.Floor((time - _animationStart) / AnimationSpeed) % AnimationMax) + AnimationMin;
-    
+
         if (frame == _lastAltTex) return;
         _lastAltTex = frame;
-    
+
         SetAltTexture(frame);
     }
-    
+
     public void UpdateVisibility(ref Matrix4 matrix) {
         var dx = Position.X - Camera.Position.X;
         var dy = Position.Y + Camera.Position.Y;
         var distanceSquared = dx * dx + dy * dy;
-        int playerSightRadiusSquared = Map.LocalPlayer.UpdateRadius * Map.LocalPlayer.UpdateRadius ;
+        var playerSightRadiusSquared = Map.LocalPlayer.UpdateRadius * Map.LocalPlayer.UpdateRadius;
 
-        bool visible = distanceSquared <= playerSightRadiusSquared;
+        var visible = distanceSquared <= playerSightRadiusSquared;
         RenderBaseType.SetVisibility(visible);
-        
+
         //TODO: double check mg to make sure
         //var sort = Vector3.Transform(new Vector3(Position.X, Position.Y, 0), matrix).Y;
         var sort = Vector3.TransformPerspective(new Vector3(Position.X, Position.Y, 0), matrix).Y;
@@ -281,22 +209,16 @@ public class Entity {
     public bool MoveTo(float x, float y, bool isPlayer) {
         var tile = Map.GetTile((int)x, (int)y);
 
-        if (tile == null) {
-            return false;
-        }
-        
-        if (isPlayer && tile.OccupiedObject != null && tile.OccupiedObject.Properties.OccupySquare) {
-            return false;
-        }
+        if (tile == null) return false;
+
+        if (isPlayer && tile.OccupiedObject != null && tile.OccupiedObject.Properties.OccupySquare) return false;
 
         Position.X = x;
         Position.Y = y;
         Z = tile.ZOffset;
-        
+
         if (Properties.Static) {
-            if (Tile != null) {
-                Tile.OccupiedObject = null;
-            }
+            if (Tile != null) Tile.OccupiedObject = null;
 
             tile.OccupiedObject = this;
         }
@@ -307,15 +229,13 @@ public class Entity {
     }
 
     public void OnTickPosition(float x, float y, double tickTime, int tickId, bool isPlayer, double now) {
-        if (!isPlayer && LastTickId < Map.LastTickId) {
-            MoveTo(TickPosition.X, TickPosition.Y, false);
-        }
-    
+        if (!isPlayer && LastTickId < Map.LastTickId) MoveTo(TickPosition.X, TickPosition.Y, false);
+
         TickPosition.X = x;
         TickPosition.Y = y;
         LastTickId = tickId;
         LastTickUpdateTime = now;
-    
+
         PositionAtTick.X = Position.X;
         PositionAtTick.Y = Position.Y;
 
@@ -359,16 +279,14 @@ public class Entity {
                     var index = stat.Type - StatsType.Inventory0;
                     if (stat.Value == -1) {
                         Equipment[index] = null;
-                    } else if (Equipment[index] == null || (Equipment[index] != null && stat.Value != Equipment[index].ObjectType)) {
-                        if(ObjectLibrary.TypeToItem.TryGetValue((ushort)stat.Value, out var b))
-                        {
+                    } else if (Equipment[index] == null ||
+                               (Equipment[index] != null && stat.Value != Equipment[index].ObjectType)) {
+                        if (ObjectLibrary.TypeToItem.TryGetValue((ushort)stat.Value, out var b))
                             Equipment[index] = b;
-                        }
                         else
-                        {
                             Equipment[index] = null;
-                        }
                     }
+
                     InventoryUpdate.Dispatch(index);
                     break;
                 case StatsType.Effects:
@@ -380,20 +298,17 @@ public class Entity {
                         Name = string.Intern(stat.Text);
                         RenderBaseType.SetName(stat.Text);
                     }
+
                     break;
                 case StatsType.Texture1:
-                    if (stat.Value == Texture1Id) {
-                        break;
-                    }
+                    if (stat.Value == Texture1Id) break;
 
                     Texture1Id = stat.Value;
                     // TexturingCache = new Dict;
                     // Portrait = null;
                     break;
                 case StatsType.Texture2:
-                    if (stat.Value == Texture2Id) {
-                        break;
-                    }
+                    if (stat.Value == Texture2Id) break;
 
                     Texture2Id = stat.Value;
                     // TexturingCache = new Dict;
@@ -406,20 +321,17 @@ public class Entity {
                     SetAltTexture(stat.Value);
                     break;
                 case StatsType.AltItemId:
-                    if (stat.Value <= 0) {
-                        break;
-                    }
-                    
+                    if (stat.Value <= 0) break;
+
                     AltItemID = (ushort)stat.Value;
-                    if (!ObjectLibrary.TypeToTextureData.TryGetValue(AltItemID, out var textureData)) {
+                    if (!ObjectLibrary.TypeToTextureData.TryGetValue(AltItemID, out var textureData))
                         textureData = ObjectLibrary.TypeToTextureData[ObjectLibrary.FallbackType];
-                    }
-                    
+
                     TextureData = textureData;
                     Texture = TextureData.Texture;
                     RenderBaseType?.SetTexture(Texture);
                     break;
-                
+
                 case StatsType.BackPack0:
                 case StatsType.BackPack1:
                 case StatsType.BackPack2:
@@ -431,16 +343,14 @@ public class Entity {
                     index = 12 + stat.Type - StatsType.BackPack0;
                     if (stat.Value == -1) {
                         Equipment[index] = null;
-                    } else if (Equipment[index] == null || (Equipment[index] != null && stat.Value != Equipment[index].ObjectType)) {
+                    } else if (Equipment[index] == null ||
+                               (Equipment[index] != null && stat.Value != Equipment[index].ObjectType)) {
                         if (ObjectLibrary.TypeToItem.TryGetValue((ushort)stat.Value, out var b))
-                        {
                             Equipment[index] = b;
-                        }
                         else
-                        {
                             Equipment[index] = null;
-                        }
                     }
+
                     InventoryUpdate.Dispatch(index);
                     break;
                 case StatsType.HasBackpack:
@@ -461,7 +371,7 @@ public class Entity {
                 case StatsType.ObjectConnection:
                     ConnectType = stat.Value;
                     (RenderBaseType as TypeCaveWall)?.SetConnectType(stat.Value);
-                break;
+                    break;
             }
         }
     }
@@ -491,7 +401,7 @@ public class Entity {
         AttackStart = Main.GameTime.TotalMs;
         AttackAngle = attackAngle;
     }
-    
+
     public virtual AtlasData GetTexture(double time, out bool attackFrame, out bool flipped) {
         attackFrame = false;
         flipped = false;
@@ -514,7 +424,8 @@ public class Entity {
             idx = time % walkPer / walkPer;
         }
 
-        return TextureData.AnimatedTextures.TextureFromFacing(FacingAngle, action, (float)idx, out attackFrame, out flipped);
+        return TextureData.AnimatedTextures.TextureFromFacing(FacingAngle, action, (float)idx, out attackFrame,
+            out flipped);
     }
 
     // we should move this shit somewhere else too
@@ -524,24 +435,21 @@ public class Entity {
     }
 
     private void SetAltTexture(int index) {
-        if (!ObjectLibrary.TypeToTextureData.TryGetValue(Type, out var baseTextureData)) {
-            return;
-        }
+        if (!ObjectLibrary.TypeToTextureData.TryGetValue(Type, out var baseTextureData)) return;
         if (index == 0 || index == -1) {
             TextureData = baseTextureData;
-        } 
-        else {
-            if (baseTextureData.GetAltTexture(index, out var altData)) {
-                TextureData = altData;
-            } else {
-                TextureData = baseTextureData; 
-            }
-        }
-        if (TextureData.HasAnimationData && TextureData.AnimatedTextures.FaceRight != null && TextureData.AnimatedTextures.FaceRight.Length > 0) {
-            Texture = TextureData.AnimatedTextures.FaceRight[0];
         } else {
-            Texture = TextureData.GetTexture(random: true);
+            if (baseTextureData.GetAltTexture(index, out var altData))
+                TextureData = altData;
+            else
+                TextureData = baseTextureData;
         }
+
+        if (TextureData.HasAnimationData && TextureData.AnimatedTextures.FaceRight != null &&
+            TextureData.AnimatedTextures.FaceRight.Length > 0)
+            Texture = TextureData.AnimatedTextures.FaceRight[0];
+        else
+            Texture = TextureData.GetTexture(true);
         RenderBaseType?.SetTexture(Texture);
     }
 
@@ -550,18 +458,15 @@ public class Entity {
         TickPosition = Position;
 
         if (!MoveTo(position.X, position.Y, false))
-        {
-            Log.Error($"Failed to add entity {ObjectId} (type=0x{Type:X4}) to map at ({position.X}, {position.Y}). Map size: {Map.Width}x{Map.Height}, tiles null: {Map._tiles == null}");
-        }
+            Log.Error(
+                $"Failed to add entity {ObjectId} (type=0x{Type:X4}) to map at ({position.X}, {position.Y}). Map size: {Map.Width}x{Map.Height}, tiles null: {Map._tiles == null}");
 
         // Add entity's effect
     }
 
     public void OnRemovedFromMap() {
         if (Properties.Static && Tile != null) {
-            if (Tile.OccupiedObject == this) {
-                Tile.OccupiedObject = null;
-            }
+            if (Tile.OccupiedObject == this) Tile.OccupiedObject = null;
 
             Tile = null;
         }
@@ -574,14 +479,66 @@ public class Entity {
 
         // Dispose
     }
-    
+
     private static bool IsBigBag(ushort type) {
         return type switch {
-            0x0509 or 0x050B or 0x050C or 0x050E or 0x050F or 0x0510 or 
-                0x040D or 0x1591 or 0x1595 or 0x15AB or 0x1606 or 0x04F4 or 
-                0x04F5 or 0x042D or 0x0427 or 0x04F6 or 0x04F7 or 0x04F8 or 
+            0x0509 or 0x050B or 0x050C or 0x050E or 0x050F or 0x0510 or
+                0x040D or 0x1591 or 0x1595 or 0x15AB or 0x1606 or 0x04F4 or
+                0x04F5 or 0x042D or 0x0427 or 0x04F6 or 0x04F7 or 0x04F8 or
                 0x1596 or 0x1597 or 0x158F or 0x15AC or 0x1607 => true,
             _ => false
         };
     }
+
+    #region StatData
+
+    public string Name;
+
+    public int Texture1Id;
+    public int Texture2Id;
+
+    public int GlowColor;
+    public ushort AltItemID;
+    private int _lastAltTex;
+
+    public int MaxHp;
+    public int Hp;
+    public int Defense;
+    public int Size = 100;
+    public int Level;
+
+    public int AnimationMin = -1;
+    public int AnimationMax = -1;
+    public int AnimationSpeed;
+    private int _animationMinOld = -1;
+    private double _animationStart;
+
+    public ItemDesc[] Equipment = new ItemDesc[20];
+
+    public ConditionEffects ConditionEffects = 0;
+
+    public int ConnectType;
+
+    public int PlayerHost;
+
+    public bool PermaPet;
+
+    public int MadnessPullRadius;
+    public int MadnessPullMaxSpeed;
+
+    public int QuestGlowColor;
+
+    public int MinimumHp;
+
+    public bool DontFaceAttacks;
+
+    public bool AllDebuffsImmune;
+
+    public int DamagersCount;
+
+    public int CustomTexture;
+
+    public bool PortalUsable;
+
+    #endregion
 }

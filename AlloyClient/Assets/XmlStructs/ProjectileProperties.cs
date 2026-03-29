@@ -1,8 +1,9 @@
 using System;
 using System.Linq;
 using System.Xml.Linq;
-using AlloyClient.Assets.XmlStructs;
 using Common;
+
+namespace AlloyClient.Assets.XmlStructs;
 
 public sealed class ProjectileProperties {
     public readonly int BulletType;

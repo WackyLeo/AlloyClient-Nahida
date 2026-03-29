@@ -27,7 +27,8 @@ public sealed class TypeProjectile : RenderBase, IResettable {
     }
     
     public void Reset() => Reset(-10000f);
-    
+    public bool IsInPool { get; set; }
+
     public void Reset(float staticFallAngle) {
         Extra = new ExtraData(RenderConfig.TypeGameObject, RenderConfig.Shade);
         Visible = false;
