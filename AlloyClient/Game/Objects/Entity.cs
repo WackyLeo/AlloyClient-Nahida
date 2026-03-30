@@ -10,6 +10,7 @@ using AlloyClient.Networking.Structs.DataObjects;
 using AlloyClient.ParticleEffects;
 using AlloyClient.Rendering;
 using AlloyClient.Rendering.Types;
+using AlloyClient.Ui.Character;
 using AlloyClient.UiLib.Signals;
 using AlloyClient.Utils;
 using Common;
@@ -478,6 +479,81 @@ public class Entity {
         // Clear Madness dict
 
         // Dispose
+    }
+
+    public static int DamageWithDefense(int damage, int defense, bool nodef, Entity entity, int damageMulti = 0,
+        bool isPlayer = false) {
+        if (entity.HasConditionEffect(ConditionEffects.Invulnerable)) return 0;
+
+        if (nodef || entity.HasConditionEffect(ConditionEffects.ArmorBroken))
+            defense = 0;
+        else if (entity.HasConditionEffect(ConditionEffects.Armored)) defense = defense * 2;
+
+        var limit = damage * 0.15f; // Magic Number
+        var ret = 0;
+
+        if (damage - defense < limit)
+            ret = (int)limit;
+        else
+            ret = damage - defense;
+
+        if (entity.HasConditionEffect(ConditionEffects.Exposed)) ret += 20;
+        if (entity.HasConditionEffect(ConditionEffects.Petrify)) ret = (int)(ret * 0.9f);
+        if (entity.HasConditionEffect(ConditionEffects.Curse)) ret = (int)(ret * 1.2f);
+        if (entity.HasConditionEffect(ConditionEffects.Protected)) ret = (int)(ret * (isPlayer ? 0.5f : 0.25f));
+        return ret;
+    }
+
+    public static uint GetHitColour(ConditionEffectDesc[] effects, bool armorBreak) {
+        if (effects != null && effects.Length > 0) {
+            var firstEffect = effects[0];
+            return GetHitColour((ConditionEffectIndex)firstEffect.EffectId, armorBreak);
+        }
+
+        return armorBreak ? 0x9000FFu : 0xFF0000u;
+    }
+
+    public static uint GetHitColour(ConditionEffectIndex effect, bool armorBreak) {
+        switch (effect) {
+            case ConditionEffectIndex.Quiet: return 0xe6e6e6u;
+            case ConditionEffectIndex.Weak: return 0xa8a8a8u;
+            case ConditionEffectIndex.Slowed: return 0xaabf71u;
+            case ConditionEffectIndex.Sick: return 0x0f4512u;
+            case ConditionEffectIndex.Dazed: return 0xc5c977u;
+            case ConditionEffectIndex.Stunned: return 0xe3b540u;
+            case ConditionEffectIndex.Blind: return 0x0f0f0fu;
+            case ConditionEffectIndex.Hallucinating: return 0xff00fbu;
+            case ConditionEffectIndex.Drunk: return 0x8c9c43u;
+            case ConditionEffectIndex.Paralyzed: return 0xe0e0b4u;
+            case ConditionEffectIndex.Bleeding: return 0x330c0cu;
+            case ConditionEffectIndex.Stasis: return 0x363636u;
+            case ConditionEffectIndex.ArmorBroken: return 0x28184au;
+            case ConditionEffectIndex.Unstable: return 0x764bd1u;
+            case ConditionEffectIndex.Darkness: return 0x000000u;
+            case ConditionEffectIndex.Petrify: return 0x171717u;
+            case ConditionEffectIndex.Curse: return 0x4a1d1du;
+            case ConditionEffectIndex.Exposed: return 0xd1dfe0u;
+            case ConditionEffectIndex.Silenced: return 0xffffffu;
+            default: return armorBreak ? 0x9000FFu : 0xFF0000u;
+        }
+    }
+
+    public void Damage(int damageAmount, ConditionEffectIndex effect = ConditionEffectIndex.None,
+        bool isArmorPiercing = false) {
+        if (HasConditionEffect(ConditionEffects.Invincible) || HasConditionEffect(ConditionEffects.Invulnerable))
+            return;
+
+        if (Map.LocalPlayer == null) return;
+
+        if (effect != ConditionEffectIndex.None) ConditionEffects |= (ConditionEffects)(1UL << (int)effect);
+
+        if (damageAmount > 0) {
+            var newHealth = Map.LocalPlayer.Hp - damageAmount;
+            var notification = $"-{damageAmount} [{newHealth}]";
+            var clr = GetHitColour(effect, isArmorPiercing);
+            Map.AddParticleEffect(new HitEffect(Map.LocalPlayer, clr));
+            NotificationLayer.AddStatusText(Map.LocalPlayer, notification, clr, 1000, 0);
+        }
     }
 
     private static bool IsBigBag(ushort type) {

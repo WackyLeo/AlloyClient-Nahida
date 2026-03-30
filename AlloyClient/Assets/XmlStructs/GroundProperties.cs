@@ -5,42 +5,41 @@ using Common;
 namespace AlloyClient.Assets.XmlStructs;
 
 public class GroundProperties {
-    public readonly ushort ObjectType;
-    public readonly string ObjectId;
-    public readonly float ZOffset;
-    
-    public readonly bool NoWalk;
-
-    public readonly int MinDamage;
-    public readonly int MaxDamage;
-    public readonly bool Push;
     public readonly GroundAnimate Animate;
     public readonly int BlendPriority;
     public readonly int CompositePriority;
-    public readonly float Speed;
-    public readonly float SlideAmount;
-    public readonly float XOffset;
-    public readonly float YOffset;
-    public readonly bool Sink;
-    public readonly bool Sinking;
-    public readonly bool RandomOffset;
+    public readonly TextureData CornerTD;
+    public readonly TextureData EdgeTD;
 
 
     public readonly bool HasEdge;
-    public readonly TextureData EdgeTD;
-    public readonly TextureData CornerTD;
     public readonly TextureData InnerCornerTD;
+    public readonly int MaxDamage;
+
+    public readonly int MinDamage;
+
+    public readonly bool NoWalk;
+    public readonly string ObjectId;
+    public readonly ushort ObjectType;
+    public readonly bool Push;
+    public readonly bool RandomOffset;
     public readonly bool SameTypeEdgeMode;
-    public readonly TextureData TopTD;
+    public readonly bool Sink;
+    public readonly bool Sinking;
+    public readonly float SlideAmount;
+    public readonly float Speed;
     public readonly GroundAnimate TopAnimate;
+    public readonly TextureData TopTD;
+    public readonly float XOffset;
+    public readonly float YOffset;
+    public readonly float ZOffset;
 
     public GroundProperties(XElement e) {
         ObjectType = e.GetAttribute<ushort>("type");
         ObjectId = e.GetAttribute<string>("id");
-        
+
         ZOffset = e.GetValue("ZOffset", 0f);
-        Logger.Info($"Ground 0x{ObjectType:X4} ({ObjectId}) ZOffset={ZOffset}"); // ← add this
-        NoWalk = e.HasElement("NoWalk"); 
+        NoWalk = e.HasElement("NoWalk");
         MinDamage = e.GetValue("MinDamage", 0);
         MaxDamage = e.GetValue("MaxDamage", 0);
         Push = e.HasElement("Push");
@@ -48,7 +47,7 @@ public class GroundProperties {
         BlendPriority = e.GetValue("BlendPriority", -1);
         CompositePriority = e.GetValue<int>("CompositePriority");
         Speed = e.GetValue("Speed", 1f);
-        SlideAmount = e.GetValue<float>("SlideAmount", 0.0f);
+        SlideAmount = e.GetValue<float>("SlideAmount");
         XOffset = e.GetValue("XOffset", 0f);
         YOffset = e.GetValue("YOffset", 0f);
         Sink = e.HasElement("Sink");
@@ -58,13 +57,9 @@ public class GroundProperties {
         if (e.HasElement("Edge")) {
             HasEdge = true;
             EdgeTD = new TextureData(e.Element("Edge"));
-            
-            if (e.HasElement("Corner")) {
-                CornerTD = new TextureData(e.Element("Corner"));
-            }
-            if (e.HasElement("InnerCorner")) {
-                InnerCornerTD = new TextureData(e.Element("InnerCorner"));
-            }
+
+            if (e.HasElement("Corner")) CornerTD = new TextureData(e.Element("Corner"));
+            if (e.HasElement("InnerCorner")) InnerCornerTD = new TextureData(e.Element("InnerCorner"));
         }
 
         SameTypeEdgeMode = e.HasElement("SameTypeEdgeMode");
@@ -77,7 +72,6 @@ public class GroundProperties {
 }
 
 public readonly struct GroundAnimate {
-
     public readonly State Type;
     public readonly float DeltaX;
     public readonly float DeltaY;

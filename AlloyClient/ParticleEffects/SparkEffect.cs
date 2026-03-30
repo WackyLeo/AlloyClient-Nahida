@@ -5,14 +5,13 @@ using OpenTK.Mathematics;
 namespace AlloyClient.ParticleEffects;
 
 public class SparkEffect : ParticleEffect {
+    private readonly float _dx;
+    private readonly float _dy;
+    private readonly double _lifeTime;
+
+    private readonly int _startingSize;
     private ParticleData _particle;
-
-    private float _startingSize;
-    private double _lifeTime;
     private double _timeLeft;
-
-    private float _dx;
-    private float _dy;
 
     public SparkEffect(int size, uint color, int lifetime, float z, Vector2 start, Vector2 end) {
         _startingSize = size;
@@ -37,7 +36,7 @@ public class SparkEffect : ParticleEffect {
         var delta = (float)(dt / 1000.0);
         _particle.Position.X += _dx * delta;
         _particle.Position.Y += _dy * delta;
-        _particle.Position.W = (float)(_timeLeft / _lifeTime * _startingSize / 100d);
+        _particle.Position.W = ParticleW(_startingSize) * (float)(_timeLeft / _lifeTime);
 
         Map.AddParticle(_particle);
         return true;

@@ -18,70 +18,74 @@ using OpenTK.Platform;
 namespace AlloyClient.Game.Components;
 
 public sealed class UserInput : Sprite {
-
-    private static Vector2 _mousePosition;
-    public static Vector2 MousePosition => _mousePosition;
-    
     private static bool _windowFocus;
 
     private static bool _manualFocus = true;
 
-    private bool _mouseDown;
-    private bool _specialKeyDown;
-    
     private bool _autoFire;
 
-    private int _rotateRight;
-    private int _rotateLeft;
+    private bool _mouseDown;
+    private int _moveDown;
+    private int _moveLeft;
 
     private int _moveRight;
-    private int _moveLeft;
-    private int _moveDown;
     private int _moveUp;
+    private int _rotateLeft;
+
+    private int _rotateRight;
+    private bool _specialKeyDown;
 
     public UserInput() {
         AddEventListener(Event.AddedToStage, AddedToStage);
         AddEventListener(Event.RemovedFromStage, RemovedFromStage);
     }
 
+    public static Vector2 MousePosition { get; private set; }
+
     private void AddedToStage() {
         Stage.AddEventListener(KeyboardEvent.KeyDown, OnKeyDown);
         Stage.AddEventListener(KeyboardEvent.KeyUp, OnKeyUp);
-        
+
         Stage.AddEventListener(MouseEvent.RightDown, OnRightDown);
-        Stage.AddEventListener(MouseEvent.LeftDown,OnLeftDown);
+        Stage.AddEventListener(MouseEvent.LeftDown, OnLeftDown);
         Stage.AddEventListener(MouseEvent.LeftUp, OnLeftUp);
         Stage.AddEventListener(MouseEvent.ScrollVertical, OnScroll);
         Stage.AddEventListener(MouseEvent.MiddleClick, OnMiddleClick);
         Stage.AddEventListener(MouseEvent.MouseMove, OnMouseMove);
         AddEventListener(Event.EnterFrame, OnFrameEnter);
     }
-    
+
     private void RemovedFromStage() {
         Stage.RemoveEventListener(KeyboardEvent.KeyDown, OnKeyDown);
         Stage.RemoveEventListener(KeyboardEvent.KeyUp, OnKeyUp);
-        
+
         Stage.RemoveEventListener(MouseEvent.RightDown, OnRightDown);
-        Stage.RemoveEventListener(MouseEvent.LeftDown,OnLeftDown);
+        Stage.RemoveEventListener(MouseEvent.LeftDown, OnLeftDown);
         Stage.RemoveEventListener(MouseEvent.LeftUp, OnLeftUp);
         Stage.RemoveEventListener(MouseEvent.ScrollVertical, OnScroll);
         Stage.RemoveEventListener(MouseEvent.MiddleClick, OnMiddleClick);
         Stage.RemoveEventListener(MouseEvent.MouseMove, OnMouseMove);
         RemoveEventListener(Event.EnterFrame, OnFrameEnter);
     }
-    
-    public static void SetWindowFocus(bool focus) => _windowFocus = focus;
 
-    public static void SetManualFocus(bool focus) => _manualFocus = focus;
+    public static void SetWindowFocus(bool focus) {
+        _windowFocus = focus;
+    }
 
-    private static bool IsInputDisabled() => !(_windowFocus && _manualFocus);
+    public static void SetManualFocus(bool focus) {
+        _manualFocus = focus;
+    }
+
+    private static bool IsInputDisabled() {
+        return !(_windowFocus && _manualFocus);
+    }
 
     private void OnLeftDown(MouseEvent args) {
         if (args.Coords.X > Settings.ScreenWidth - HudView.Width * Stage.ScreenScale.X) return;
         _mouseDown = true;
-        
+
         if (args.ShiftKey && Map.LocalPlayer != null) {
-            var pos = Camera.ScreenToWorld(_mousePosition);
+            var pos = Camera.ScreenToWorld(MousePosition);
             Map.LocalPlayer.UseAltWeapon(pos.X, pos.Y, 1);
             return;
         }
@@ -89,15 +93,19 @@ public sealed class UserInput : Sprite {
         _mouseDown = true;
     }
 
-    private void OnLeftUp() => _mouseDown = false;
-    
+    private void OnLeftUp() {
+        _mouseDown = false;
+    }
+
     private void OnRightDown(MouseEvent args) {
         if (IsInputDisabled() || Map.LocalPlayer == null) return;
-        var pos = Camera.ScreenToWorld(_mousePosition);
+        var pos = Camera.ScreenToWorld(MousePosition);
         Map.LocalPlayer.TryReload(pos.X, pos.Y);
     }
-    
-    private void OnMouseMove(MouseEvent args) => _mousePosition = new Vector2(args.Coords.X, args.Coords.Y);
+
+    private void OnMouseMove(MouseEvent args) {
+        MousePosition = new Vector2(args.Coords.X, args.Coords.Y);
+    }
 
     public void ClearInput() {
         ClearMovement();
@@ -105,7 +113,7 @@ public sealed class UserInput : Sprite {
         _mouseDown = false;
         _specialKeyDown = false;
     }
-    
+
     public void ClearMovement() {
         _rotateLeft = 0;
         _rotateRight = 0;
@@ -119,41 +127,41 @@ public sealed class UserInput : Sprite {
     private void OnFrameEnter() {
         if (IsInputDisabled() || !(_mouseDown || _autoFire) || Map.LocalPlayer == null)
             return;
-        
-        var pos = Camera.ScreenToWorld(_mousePosition);
 
-        var dX = pos.X - Map.LocalPlayer.Position.X;
-        var dY = pos.Y - Map.LocalPlayer.Position.Y;
+        var pos = Camera.ScreenToWorld(MousePosition);
+        var hitPos = Camera.WorldToDebug2D(new Vector3(pos.X, pos.Y, -0.5f));
+
+        var dX = hitPos.X - Map.LocalPlayer.Position.X;
+        var dY = hitPos.Y - Map.LocalPlayer.Position.Y;
         var angle = MathF.Atan2(dY, dX);
-        
+
         if (Map.LocalPlayer.HasConditionEffect(ConditionEffects.Unstable)) {
-            float variance = 180f;
-            if (Random.Shared.NextSingle() * 5 < 1) {
-                variance = 720f;
-            }
-            angle += (float)((Random.Shared.NextDouble() * variance) - variance / 2f) / 360f * MathF.PI;
+            var variance = 180f;
+            if (Random.Shared.NextSingle() * 5 < 1) variance = 720f;
+            angle += (float)(Random.Shared.NextDouble() * variance - variance / 2f) / 360f * MathF.PI;
         }
-        
-        Map.LocalPlayer.Shoot(angle, Stage.GameTime, false);    
+
+        Map.LocalPlayer.Shoot(angle, Stage.GameTime, false);
     }
 
     private void SetPlayerMovement() {
         if (Map.LocalPlayer == null) return;
-        
+
         if (IsInputDisabled()) {
             Map.LocalPlayer.SetRelativeMovement(0, 0, 0);
             return;
         }
-        
+
         Map.LocalPlayer.SetRelativeMovement(_rotateRight - _rotateLeft, _moveRight - _moveLeft, _moveDown - _moveUp);
     }
 
     private void OnScroll(MouseEvent args) {
         if (IsInputDisabled()) return;
         if (Map.LocalPlayer == null) return;
-        
+
         if (args.ShiftKey) {
-            Settings.CameraZoom = Math.Clamp(Settings.CameraZoom += 0.1f * args.Delta, Settings.MinCameraZoom, Settings.MaxCameraZoom);
+            Settings.CameraZoom = Math.Clamp(Settings.CameraZoom += 0.1f * args.Delta, Settings.MinCameraZoom,
+                Settings.MaxCameraZoom);
             Logger.Info($"Camera zoom: {Settings.CameraZoom.Value}");
             Camera.SetZoom(Settings.CameraZoom);
         } else {
@@ -171,7 +179,7 @@ public sealed class UserInput : Sprite {
             return;
         if (Map.LocalPlayer == null)
             return;
-        
+
         var key = args.Code;
 
         switch (true) {
@@ -198,18 +206,19 @@ public sealed class UserInput : Sprite {
                 break;
             case true when Settings.Special.CheckValue(key): {
                 if (!_specialKeyDown) {
-                    var pos = Camera.ScreenToWorld(_mousePosition);
-                    bool success = Map.LocalPlayer.UseAltWeapon(pos.X, pos.Y, 1); // 1 = START_USE
+                    var pos = Camera.ScreenToWorld(MousePosition);
+                    var success = Map.LocalPlayer.UseAltWeapon(pos.X, pos.Y, 1); // 1 = START_USE
                     if (success) {
                         _specialKeyDown = true;
                         Map.LocalPlayer.AutoAbilityToggle(true);
                     }
                 }
-            } break;
+            }
+                break;
             case true when Settings.Escape.CheckValue(key):
                 if (Map.Name == "Nexus" || Client.IsReconnecting)
                     break;
-                
+
                 Client.QueuePacket(Escape.CreatePacket());
                 Client.IsReconnecting = true;
                 break;
@@ -228,7 +237,7 @@ public sealed class UserInput : Sprite {
             case true when Settings.Debug.CheckValue(key):
                 Render.DebugEnabled = !Render.DebugEnabled;
                 break;
-            
+
             case true when Settings.InvOne.CheckValue(key):
                 HandleUseItem(4);
                 break;
@@ -286,12 +295,11 @@ public sealed class UserInput : Sprite {
             case true when Settings.ChatHistoryDown.CheckValue(key):
                 ChatBox.OnChatHistoryDown.Dispatch();
                 break;
-            
         }
-        
+
         SetPlayerMovement();
     }
-    
+
     private void OnKeyUp(KeyboardEvent args) {
         if (IsInputDisabled() || args.Code == Scancode.Unknown) return;
         if (Map.LocalPlayer == null) return;
@@ -321,16 +329,16 @@ public sealed class UserInput : Sprite {
                 if (_specialKeyDown) {
                     _specialKeyDown = false;
                     Map.LocalPlayer.AutoAbilityToggle(false);
-                    var pos = Camera.ScreenToWorld(_mousePosition);
+                    var pos = Camera.ScreenToWorld(MousePosition);
                     Map.LocalPlayer.UseAltWeapon(pos.X, pos.Y, 2); // 2 = END_USE
                 }
             }
-            break;
+                break;
         }
-        
+
         SetPlayerMovement();
     }
-    
+
     private void HandleUseItem(byte slotId) {
         var player = Map.LocalPlayer;
         if (player == null || player.Equipment.Length <= slotId) return;
@@ -339,20 +347,22 @@ public sealed class UserInput : Sprite {
         if (item == null || item.ObjectType == 0) return;
 
         if (item.ObjectType == ItemConstants.HealthPotion || item.ObjectType == ItemConstants.MagicPotion) {
-            bool isHp = item.ObjectType == ItemConstants.HealthPotion;
-            int currentCount = isHp ? player.HealthStackCount : player.MagicStackCount;
+            var isHp = item.ObjectType == ItemConstants.HealthPotion;
+            var currentCount = isHp ? player.HealthStackCount : player.MagicStackCount;
             if (currentCount < 6) {
-                byte targetSlot = isHp ? ItemConstants.HpPotionSlot : ItemConstants.MpPotionSlot;
+                var targetSlot = isHp ? ItemConstants.HpPotionSlot : ItemConstants.MpPotionSlot;
 
                 var pSwap = InvSwap.CreatePacket();
                 pSwap.Time = (int)Map.LastGameTime.TotalMs;
                 pSwap.Position = new Position { X = player.Position.X, Y = player.Position.Y };
-                pSwap.SlotObj1 = new ObjectSlot { ObjectId = player.ObjectId, SlotId = slotId, ObjectType = item.ObjectType };
+                pSwap.SlotObj1 = new ObjectSlot
+                    { ObjectId = player.ObjectId, SlotId = slotId, ObjectType = item.ObjectType };
                 pSwap.SlotObj2 = new ObjectSlot { ObjectId = player.ObjectId, SlotId = targetSlot, ObjectType = 0 };
                 Client.QueuePacket(pSwap);
 
                 player.Equipment[slotId] = null;
-                if (isHp) player.HealthStackCount++; else player.MagicStackCount++;
+                if (isHp) player.HealthStackCount++;
+                else player.MagicStackCount++;
                 player.InventoryUpdate.Dispatch(slotId);
                 return;
             }
@@ -363,23 +373,24 @@ public sealed class UserInput : Sprite {
             return;
         }
 
-        int equipSlot = -1;
-        for (int i = 0; i < 4; i++) {
+        var equipSlot = -1;
+        for (var i = 0; i < 4; i++)
             if (player.Properties.SlotTypes.Count > i && player.Properties.SlotTypes[i] == item.SlotType) {
                 equipSlot = i;
                 break;
             }
-        }
 
         if (equipSlot != -1) {
             var targetItem = player.Equipment[equipSlot];
-            ushort targetObjType = targetItem?.ObjectType ?? 0;
+            var targetObjType = targetItem?.ObjectType ?? 0;
 
             var swap = InvSwap.CreatePacket();
-            swap.Time = (int) Map.LastGameTime.TotalMs;
+            swap.Time = (int)Map.LastGameTime.TotalMs;
             swap.Position = new Position { X = player.Position.X, Y = player.Position.Y };
-            swap.SlotObj1 = new ObjectSlot { ObjectId = player.ObjectId, SlotId = slotId, ObjectType = item.ObjectType };
-            swap.SlotObj2 = new ObjectSlot { ObjectId = player.ObjectId, SlotId = (byte)equipSlot, ObjectType = targetObjType };
+            swap.SlotObj1 = new ObjectSlot
+                { ObjectId = player.ObjectId, SlotId = slotId, ObjectType = item.ObjectType };
+            swap.SlotObj2 = new ObjectSlot
+                { ObjectId = player.ObjectId, SlotId = (byte)equipSlot, ObjectType = targetObjType };
             Client.QueuePacket(swap);
 
             player.Equipment[slotId] = targetItem;
@@ -395,21 +406,22 @@ public sealed class UserInput : Sprite {
         var player = Map.LocalPlayer;
         if (player == null) return;
 
-        int count = isHp ? player.HealthStackCount : player.MagicStackCount;
+        var count = isHp ? player.HealthStackCount : player.MagicStackCount;
         if (count <= 0) return;
 
-        byte slotId = isHp ? ItemConstants.HpPotionSlot : ItemConstants.MpPotionSlot;
-        ushort objType = isHp ? ItemConstants.HealthPotion : ItemConstants.MagicPotion;
+        var slotId = isHp ? ItemConstants.HpPotionSlot : ItemConstants.MpPotionSlot;
+        var objType = isHp ? ItemConstants.HealthPotion : ItemConstants.MagicPotion;
 
         SendUseItem(slotId, objType);
-        if (isHp) player.HealthStackCount--; else player.MagicStackCount--;
+        if (isHp) player.HealthStackCount--;
+        else player.MagicStackCount--;
     }
 
     private void SendUseItem(byte slotId, ushort objectType) {
         var player = Map.LocalPlayer;
         var packet = UseItem.CreatePacket();
 
-        packet.Time = (int) Map.LastGameTime.TotalMs;
+        packet.Time = (int)Map.LastGameTime.TotalMs;
         packet.SlotObject.ObjectId = player.ObjectId;
         packet.SlotObject.SlotId = slotId;
         packet.SlotObject.ObjectType = objectType;

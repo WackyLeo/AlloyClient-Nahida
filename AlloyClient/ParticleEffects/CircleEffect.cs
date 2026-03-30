@@ -75,7 +75,7 @@ public class CircleEffect : ParticleEffect {
                         0.3f),
                     GetColor(_color)
                 );
-                _particles[i].Position.W = _particleSize * 1.1f;
+                _particles[i].Position.W = ParticleW(_particleSize * 75);
             }
 
             _initialized = true;

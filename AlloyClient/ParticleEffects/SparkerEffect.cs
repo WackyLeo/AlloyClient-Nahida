@@ -1,20 +1,18 @@
-﻿using AlloyClient.Game;
-using AlloyClient.Rendering.VertexData;
+﻿using System;
+using AlloyClient.Game;
 using OpenTK.Mathematics;
-using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace AlloyClient.ParticleEffects;
 
 internal class SparkerEffect : ParticleEffect {
-    private int _startingSize;
-    private int _lifeTime;
-    private double _timeLeft;
-    private uint _color;
+    private readonly uint _color;
 
-    private float _dx;
-    private float _dy;
+    private readonly float _dx;
+    private readonly float _dy;
+    private int _lifeTime;
+    private double _spawnTimer;
+    private int _startingSize;
+    private double _timeLeft;
 
     public SparkerEffect(int size, uint color, int lifetime, float z, Vector2 start, Vector2 end) {
         _position = start;
@@ -31,8 +29,13 @@ internal class SparkerEffect : ParticleEffect {
 
         var delta = (float)(dt / 1000.0);
         _position += delta * new Vector2(_dx, _dy);
-        Map.AddParticleEffect(new SparkEffect(100, _color, 600, 0.5f, _position,
-            _position + new Vector2(Random.Shared.NextSingle() * 2 - 1, Random.Shared.NextSingle() * 2 - 1)));
+        _spawnTimer -= dt;
+
+        if (_spawnTimer <= 0) {
+            Map.AddParticleEffect(new SparkEffect(100, _color, 600, 0.5f, _position,
+                _position + new Vector2(Random.Shared.NextSingle() * 2 - 1, Random.Shared.NextSingle() * 2 - 1)));
+            _spawnTimer = 16.66;
+        }
 
         return true;
     }

@@ -6,40 +6,39 @@ using OpenTK.Mathematics;
 namespace AlloyClient.ParticleEffects;
 
 public class FountainEffect : ParticleEffect {
-
     private const int Buffer = 50;
 
-    private int _count;
-    private readonly ParticleData[] _particles = new ParticleData[Buffer];
-    private readonly FountainParticle[] _data = new FountainParticle[Buffer];
-
     private readonly Vector4 _color;
+    private readonly FountainParticle[] _data = new FountainParticle[Buffer];
+    private readonly ParticleData[] _particles = new ParticleData[Buffer];
+
+    private int _count;
 
     private double _lastUpdate = -1;
 
     public FountainEffect(uint colour = 0x4165D5) {
         _color = GetColor(colour);
     }
-    
+
     public override bool Update(double time, double dt) {
         if (_lastUpdate < 0) _lastUpdate = Math.Max(0, time - 400);
-        
+
         var count = (int)(time / 50);
         var start = (int)(_lastUpdate / 50);
 
         for (var i = start; i < count; i++) {
             if (_count == Buffer) break;
-            
+
             _data[_count] = new FountainParticle(time, MathHelper.TwoPi * Random.Shared.NextSingle());
             _particles[_count] = new ParticleData(SetStartPosition(_data[_count], time), _color);
-            
+            _particles[_count].Position.W = ParticleW(75);
             _count++;
         }
 
         for (var i = _count - 1; i >= 0; i--) {
             var data = _data[i];
-            
-            var t = (float) (time - data.StartTime) / 1000f;
+
+            var t = (float)(time - data.StartTime) / 1000f;
             var z = 0.75f + FountainParticle.VI * t + FountainParticle.G * (t * t);
 
             if (z <= 0) {
@@ -48,13 +47,13 @@ public class FountainEffect : ParticleEffect {
                 _count--;
                 continue;
             }
-            
+
             ref var part = ref _particles[i];
-            part.Position.X += data.Velocity.X * (float) (dt * 0.0008);
-            part.Position.Y += data.Velocity.Y * (float) (dt * 0.0008);
+            part.Position.X += data.Velocity.X * (float)(dt * 0.0008);
+            part.Position.Y += data.Velocity.Y * (float)(dt * 0.0008);
             part.Position.Z = z;
         }
-        
+
         Map.AddParticles(_particles, _count);
 
         _lastUpdate = time;

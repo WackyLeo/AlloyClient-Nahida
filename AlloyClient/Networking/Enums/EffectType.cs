@@ -1,6 +1,6 @@
 ﻿namespace AlloyClient.Networking.Enums;
 
-public enum EffectType {
+public enum EffectType : uint {
     Heal = 1, // target, color
     Teleport = 2, // pos1
     Stream = 3, // pos1, pos2, color

@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Diagnostics;
 using AlloyClient.Assets;
 using AlloyClient.Rendering.VertexData;
 using Common;
@@ -18,9 +17,42 @@ public static partial class Render {
     private static int _modelCount;
     private static int _entityCount;
     private static ModelType _entityModel;
-   
+
+    public static void StartDrawGroundObjects() {
+        _groundObjectCount = 0;
+    }
+
+    public static void DrawGroundObject(TileData data) {
+        _groundObjectData[_groundObjectCount] = data;
+        _groundObjectCount++;
+    }
+
+    public static void FlushGroundObjects() {
+        if (_groundObjectCount == 0) return;
+        _groundObjectBuffer.SetData(_groundObjectData.AsSpan(0, _groundObjectCount));
+        _defaultVao.Bind();
+        _shaderGroundObject.Apply();
+        _groundObjectBuffer.BindToIndex(0);
+        GL.DrawArrays(PrimitiveType.Triangles, 0, _groundObjectCount * 6);
+        _groundObjectCount = 0;
+    }
+
+    public static void DrawBackground(GameTime gameTime, Vector2 screenResolution, Vector2 screenCentre) {
+        GL.BindVertexArray(_bgVao);
+        GL.Disable(EnableCap.DepthTest);
+
+        _shaderBackground.Apply();
+        _shaderBackground.SetValue("uTime", (float)(gameTime.TotalMs / 1000.0f));
+        _shaderBackground.SetValue("uResolution", screenResolution);
+        _shaderBackground.SetValue("uMouse", screenCentre);
+        GL.DrawArrays(PrimitiveType.TriangleStrip, 0, 4);
+
+        GL.Enable(EnableCap.DepthTest);
+        GL.BindVertexArray(0);
+    }
+
     #region Render Tile
-    
+
     public static int GroundTileCount;
     public static int TopTileCount;
 
@@ -55,7 +87,7 @@ public static partial class Render {
         _tileBuffer.BindToIndex(0);
         GL.DrawArrays(PrimitiveType.Triangles, 0, BlendTileStart * 6);
     }
-    
+
     public static void DrawGroundTileBlends() {
         var blendCount = GroundTileCount - BlendTileStart;
         if (blendCount == 0) return;
@@ -67,11 +99,11 @@ public static partial class Render {
 
     public static void DrawTopTiles() {
         if (TopTileCount == 0) return;
-        
+
         _defaultVao.Bind();
         _shaderGround.Apply();
         _tileBuffer.BindToIndex(0);
-        
+
         GL.DrawArrays(PrimitiveType.Triangles, GroundTileCount * 6, TopTileCount * 6);
     }
 
@@ -91,25 +123,21 @@ public static partial class Render {
         _shadowData[_shadowCount] = shadow;
         _shadowCount++;
 
-        if (_shadowCount == _shadowData.Length) {
-            FlushBufferShadow();
-        }
+        if (_shadowCount == _shadowData.Length) FlushBufferShadow();
     }
 
     private static void FlushBufferShadow() {
         _shadowBuffer.SetData(_shadowData.AsSpan(0, _shadowCount), 0);
-        
+
         GL.DrawArrays(PrimitiveType.Triangles, 0, _shadowCount * 6);
-        
+
         LastDrawCountShadows += _shadowCount;
         _shadowCount = 0;
     }
 
     public static void EndShadowDraw() {
-        if (_shadowCount == 0) {
-            return;
-        }
-        
+        if (_shadowCount == 0) return;
+
         FlushBufferShadow();
     }
 
@@ -120,42 +148,41 @@ public static partial class Render {
     public static void StartDrawModel() {
         LastDrawCountEntities = 0;
         _modelCount = 0;
-        
+
         _shaderModel.Apply();
         _modelVao.Bind();
     }
 
-    public static void SetEntityModel(ModelType model) => _entityModel = model;
+    public static void SetEntityModel(ModelType model) {
+        _entityModel = model;
+    }
 
     public static void DrawModel(VertexModel vertexModel) {
         _modelData[_modelCount] = vertexModel;
         _modelCount++;
 
-        if (_modelCount == _modelData.Length) {
-            FlushBufferModel();
-        }
+        if (_modelCount == _modelData.Length) FlushBufferModel();
     }
 
     public static void FlushBufferModel() {
-        if (_modelCount < 1) {
-            return;
-        }
-        
+        if (_modelCount < 1) return;
+
         _modelDataBuffer.SetData(_modelData.AsSpan(0, _modelCount));
 
         var info = ModelData.ModelRenderInfo[_entityModel];
-        GL.DrawElementsInstanced(PrimitiveType.Triangles, info.PrimitiveCount * 3, DrawElementsType.UnsignedShort, info.IndexOffset * 2, _modelCount);
+        GL.DrawElementsInstanced(PrimitiveType.Triangles, info.PrimitiveCount * 3, DrawElementsType.UnsignedShort,
+            info.IndexOffset * 2, _modelCount);
         _modelCount = 0;
     }
 
     #endregion
-    
+
     #region Render Entity
 
     public static void StartDrawEntity() {
         LastDrawCountEntities = 0;
         _entityCount = 0;
-        
+
         _shaderObject.Apply();
         _entityDataBuffer.BindToIndex(0);
     }
@@ -164,68 +191,33 @@ public static partial class Render {
         _entityData[_entityCount] = vertexObject;
         _entityCount++;
 
-        if (_entityCount == _entityData.Length) {
-            FlushBufferEntity();
-        }
+        if (_entityCount == _entityData.Length) FlushBufferEntity();
     }
 
     public static void FlushBufferEntity() {
         if (_entityCount < 1) return;
 
-        // Pass 1: opaque pixels only — depth writes ON, no blend
         _entityDataBuffer.SetData(_entityData.AsSpan(0, _entityCount));
-        
+
+        // Pass 1: opaque pixels only — depth writes ON, no blend
         GL.DepthMask(true);
         GL.DepthFunc(DepthFunction.Less);
         GL.Disable(EnableCap.Blend);
         _shaderObject.SetValue("RenderPass", 0);
         GL.DrawArrays(PrimitiveType.Triangles, 0, _entityCount * 6);
 
-        // Pass 2: glow/outline pixels only — depth writes OFF, test still rejects hidden glows
+        // Pass 2: glow/outline pixels only — depth writes OFF
         GL.DepthMask(false);
         GL.DepthFunc(DepthFunction.Lequal);
         GL.Enable(EnableCap.Blend);
+        GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha); // Ensure proper alpha blending
         _shaderObject.SetValue("RenderPass", 1);
         GL.DrawArrays(PrimitiveType.Triangles, 0, _entityCount * 6);
 
         // Restore
         GL.DepthMask(true);
-
         _entityCount = 0;
     }
 
     #endregion
-    
-    public static void StartDrawGroundObjects() {
-        _groundObjectCount = 0;
-    }
-
-    public static void DrawGroundObject(TileData data) {
-        _groundObjectData[_groundObjectCount] = data;
-        _groundObjectCount++;
-    }
-
-    public static void FlushGroundObjects() {
-        if (_groundObjectCount == 0) return;
-        _groundObjectBuffer.SetData(_groundObjectData.AsSpan(0, _groundObjectCount));
-        _defaultVao.Bind();
-        _shaderGroundObject.Apply();
-        _groundObjectBuffer.BindToIndex(0);
-        GL.DrawArrays(PrimitiveType.Triangles, 0, _groundObjectCount * 6);
-        _groundObjectCount = 0;
-    }
-    
-    public static void DrawBackground(GameTime gameTime, Vector2 screenResolution, Vector2 screenCentre) {
-        GL.BindVertexArray(_bgVao);
-        GL.Disable(EnableCap.DepthTest);
-
-        _shaderBackground.Apply();
-        _shaderBackground.SetValue("uTime", (float)(gameTime.TotalMs / 1000.0f));
-        _shaderBackground.SetValue("uResolution", screenResolution);
-        _shaderBackground.SetValue("uMouse", screenCentre);
-        GL.DrawArrays(PrimitiveType.TriangleStrip, 0, 4);
-
-        GL.Enable(EnableCap.DepthTest);
-        GL.BindVertexArray(0);
-    }
 }
