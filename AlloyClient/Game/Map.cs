@@ -58,7 +58,7 @@ public static class Map {
     public static int LastTickId;
 
     public static Signal<Player> OnPlayerUpdate = new();
-    private static readonly List<MapTile> VisibleGroundTiles = new();
+
     public static bool TilesDirty = true;
     private static int _particleCount;
     private static readonly ParticleData[] Particles = new ParticleData[30000];
@@ -209,54 +209,52 @@ public static class Map {
 
             VisibleTopTiles.Clear();
             VisibleElevatedTiles.Clear();
-            VisibleGroundTiles.Clear(); 
-
-            var rSqr = LocalPlayer.UpdateRadius * LocalPlayer.UpdateRadius;
-            var pX = (int)LocalPlayer.Position.X;
-            var pY = (int)LocalPlayer.Position.Y;
+            Render.StartNewDrawTile();
 
             for (var x = -LocalPlayer.UpdateRadius; x < LocalPlayer.UpdateRadius; x++) {
                 for (var y = -LocalPlayer.UpdateRadius; y < LocalPlayer.UpdateRadius; y++) {
-                    if (x * x + y * y >= rSqr) continue;
-                    
-                    var tile = GetTile(x + pX, y + pY);
+                    if (x * x + y * y >= LocalPlayer.UpdateRadius * LocalPlayer.UpdateRadius) continue;
+                    var tile = GetTile(x + (int)LocalPlayer.Position.X, y + (int)LocalPlayer.Position.Y);
                     if (tile != null && tile.Type != 0xFF) {
-                        VisibleGroundTiles.Add(tile);
-
                         if (tile.ZOffset != 0f) {
                             if (!VisibleElevatedTiles.TryGetValue(tile.ZOffset, out var list)) {
                                 list = new List<MapTile>();
                                 VisibleElevatedTiles[tile.ZOffset] = list;
                             }
+
                             list.Add(tile);
+                        } else {
+                            tile.DrawTileBase();
                         }
+
                         if (tile.HasTop) VisibleTopTiles.Add(tile);
                     }
                 }
             }
-        }
 
-        Render.StartNewDrawTile();
-        foreach (var tile in VisibleGroundTiles) {
-            if (tile.ZOffset == 0f) tile.DrawTileBase();
-        }
-        
-        Render.SaveBlendStart();
-        foreach (var tile in VisibleGroundTiles) {
-            if (tile.ZOffset == 0f) tile.DrawTileBlends();
-        }
-        Render.SaveGroundCount();
+            Render.SaveBlendStart();
 
-        foreach (var topTile in VisibleTopTiles) topTile.DrawTop();
-        Render.SaveTopCount();
-        Render.EndNewDrawTile();
+            for (var x = -LocalPlayer.UpdateRadius; x < LocalPlayer.UpdateRadius; x++) {
+                for (var y = -LocalPlayer.UpdateRadius; y < LocalPlayer.UpdateRadius; y++) {
+                    if (x * x + y * y >= LocalPlayer.UpdateRadius * LocalPlayer.UpdateRadius) continue;
+                    var tile = GetTile(x + (int)LocalPlayer.Position.X, y + (int)LocalPlayer.Position.Y);
+                    if (tile != null && tile.Type != 0xFF && tile.ZOffset == 0f)
+                        tile.DrawTileBlends();
+                }
+            }
+
+            Render.SaveGroundCount();
+            foreach (var topTile in VisibleTopTiles) topTile.DrawTop();
+            Render.SaveTopCount();
+            Render.EndNewDrawTile();
+        }
 
         foreach (var (zOffset, tiles) in VisibleElevatedTiles) {
             Render.StartNewElevatedTile();
             foreach (var tile in tiles)
                 Render.DrawNewElevatedTile(tile.GetTileData());
             Render.EndNewElevatedTile();
-            Render.SetTileElevation(0f);
+            Render.SetTileElevation(zOffset);
             Render.DrawElevatedTilesBase();
             Render.SetTileElevation(0f);
         }
@@ -383,7 +381,7 @@ public static class Map {
 
             Render.FlushBufferEntity();
         }
-        
+
         #endregion
 
         #region Top Tiles
@@ -435,7 +433,6 @@ public static class Map {
     }
 
     public static void AddParticleEffect(ParticleEffect effect) {
-        return;
         if (ParticleGenCount == ParticleGenerators.Count)
             ParticleGenerators.Add(effect);
         else
