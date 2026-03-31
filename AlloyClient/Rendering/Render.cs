@@ -17,7 +17,11 @@ public static partial class Render {
     private const int TileBufferSize = (int)(Map.TileRenderDistance * Map.TileRenderDistance * MathHelper.Pi) * 3;
     private const int ShadowBufferSize = 4096;
 
-    private static Shader _shaderBackground;
+    public static int _Fbo;
+    public static int _FboTID;
+    public static int _RboID;
+    public static int _emptyVao;
+
     private static int _bgVao;
     private static int _bgVbo;
 
@@ -29,19 +33,21 @@ public static partial class Render {
     private static StorageBuffer<TileData> _elevatedTileBuffer;
     private static int _elevatedTileCount;
 
-// Shaders
+    // Shaders
     private static Shader _shaderGround;
     private static Shader _shaderShadow;
     private static Shader _shaderModel;
     private static Shader _shaderObject;
     private static Shader _shaderParticle;
     private static Shader _shaderGroundObject;
+    private static Shader _shaderBackground;
+    public static Shader _shaderPostProcess;
 
-// Vertex Objects
+    // Vertex Objects
     private static VertexArrayObject _defaultVao;
     private static VertexArrayObject _modelVao;
 
-// Buffers
+    // Buffers
     private static IndexBuffer _modelIndexBuffer;
     private static VertexBuffer<VertexBase> _modelVertexBuffer;
 
@@ -59,11 +65,46 @@ public static partial class Render {
 
     private static TileData[] _groundObjectData;
     private static StorageBuffer<TileData> _groundObjectBuffer;
+
     private static int _groundObjectCount;
     public static int BlendTileStart;
 
     public static unsafe void FirstTimeInit(Sampler atlas) {
-        // Shaders
+        _shaderPostProcess = ContentReader.LoadShader("Shaders/PostProcess");
+
+        _emptyVao = GL.GenVertexArray();
+        _shaderPostProcess.Apply();
+        var loc = GL.GetUniformLocation(_shaderPostProcess.Handle, "colourTexture");
+        if (loc != -1) GL.Uniform1i(loc, 7);
+
+        GL.GenFramebuffer(out _Fbo);
+        GL.BindFramebuffer(FramebufferTarget.Framebuffer, _Fbo);
+
+        GL.GenTexture(out _FboTID);
+        GL.BindTexture(TextureTarget.Texture2d, _FboTID);
+
+        GL.TexImage2D(TextureTarget.Texture2d, 0, InternalFormat.Rgba16f, 800, 600,
+            0, PixelFormat.Rgba, PixelType.Float, IntPtr.Zero);
+
+        GL.TexParameteri(TextureTarget.Texture2d, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Linear);
+        GL.TexParameteri(TextureTarget.Texture2d, TextureParameterName.TextureMagFilter, (int)TextureMinFilter.Linear);
+
+        GL.BindTexture(TextureTarget.Texture2d, 0);
+        GL.BindTextureUnit(atlas.TextureUnit, atlas.TextureHandle);
+
+        GL.FramebufferTexture(FramebufferTarget.Framebuffer, FramebufferAttachment.ColorAttachment0, _FboTID, 0);
+
+        GL.GenRenderbuffer(out _RboID);
+        GL.BindRenderbuffer(RenderbufferTarget.Renderbuffer, _RboID);
+        GL.RenderbufferStorage(RenderbufferTarget.Renderbuffer, InternalFormat.Depth24Stencil8, 800, 600);
+        GL.BindRenderbuffer(RenderbufferTarget.Renderbuffer, 0);
+        GL.FramebufferRenderbuffer(FramebufferTarget.Framebuffer, FramebufferAttachment.DepthStencilAttachment,
+            RenderbufferTarget.Renderbuffer, _RboID);
+
+        if (GL.CheckFramebufferStatus(FramebufferTarget.Framebuffer) == FramebufferStatus.FramebufferComplete)
+            Console.WriteLine("Frame buffer completeness passed!");
+        GL.BindFramebuffer(FramebufferTarget.Framebuffer, 0);
+
         _shaderGround = ContentReader.LoadShader("Shaders/Ground", TileDefines);
         _shaderGround.SetValue("GameTexture", atlas);
 
@@ -128,7 +169,6 @@ public static partial class Render {
 
         _bgVao = GL.GenVertexArray();
         GL.BindVertexArray(_bgVao);
-
         GL.EnableVertexAttribArray(0);
         GL.VertexAttribPointer(0, 2, VertexAttribPointerType.Float, false, 2 * sizeof(float), 0);
 
@@ -138,11 +178,27 @@ public static partial class Render {
         InitCaveWall(atlas);
     }
 
+    public static void ResizeFbo(int width, int height) {
+        if (width == 0 || height == 0 || _Fbo == 0) return;
+
+        GL.BindTexture(TextureTarget.Texture2d, _FboTID);
+        GL.TexImage2D(TextureTarget.Texture2d, 0, InternalFormat.Rgba16f, width, height, 0, PixelFormat.Rgba,
+            PixelType.Float, IntPtr.Zero);
+
+        GL.BindRenderbuffer(RenderbufferTarget.Renderbuffer, _RboID);
+        GL.RenderbufferStorage(RenderbufferTarget.Renderbuffer, InternalFormat.Depth24Stencil8, width, height);
+
+        GL.BindTexture(TextureTarget.Texture2d, 0);
+        GL.BindRenderbuffer(RenderbufferTarget.Renderbuffer, 0);
+    }
+
     public static void SetShaderParams(GameTime gameTime) {
+        var timeObj = (float)(gameTime.TotalMs / 1000.0f);
+
         _shaderGround.SetValue("WorldMatrix", Camera.WorldMatrix);
         _shaderGround.SetValue("ViewMatrix", Camera.ViewMatrix);
         _shaderGround.SetValue("ProjMatrix", Camera.ProjectionMatrix);
-        _shaderGround.SetValue("GameTime", (float)(gameTime.TotalMs / 1000.0f));
+        _shaderGround.SetValue("GameTime", timeObj);
 
         _shaderShadow.SetValue("WorldMatrix", Camera.WorldMatrix);
         _shaderShadow.SetValue("ViewMatrix", Camera.ViewMatrix);
@@ -157,7 +213,6 @@ public static partial class Render {
         _shaderObject.SetValue("ViewMatrix", Camera.ViewMatrix);
         _shaderObject.SetValue("ProjMatrix", Camera.ProjectionMatrix);
         _shaderObject.SetValue("BillMatrix", Camera.BillboardMatrix);
-        //_shaderObject.SetValue("Zoom", Settings.CameraZoom);
 
         _shaderParticle.SetValue("WorldMatrix", Camera.WorldMatrix);
         _shaderParticle.SetValue("ViewMatrix", Camera.ViewMatrix);
@@ -167,7 +222,7 @@ public static partial class Render {
         _shaderGroundObject.SetValue("WorldMatrix", Camera.WorldMatrix);
         _shaderGroundObject.SetValue("ViewMatrix", Camera.ViewMatrix);
         _shaderGroundObject.SetValue("ProjMatrix", Camera.ProjectionMatrix);
-        _shaderGroundObject.SetValue("GameTime", (float)(gameTime.TotalMs / 1000.0f));
+        _shaderGroundObject.SetValue("GameTime", timeObj);
 
         SetCaveWallShaderParams();
     }
@@ -178,15 +233,6 @@ public static partial class Render {
 
     public static void SaveBlendStart() {
         BlendTileStart = _tileCount;
-    }
-
-    public static void DrawBlendTiles() {
-        var blendCount = GroundTileCount - BlendTileStart;
-        if (blendCount == 0) return;
-        _defaultVao.Bind();
-        _shaderGround.Apply();
-        _tileBuffer.BindToIndex(0);
-        GL.DrawArrays(PrimitiveType.Triangles, BlendTileStart * 6, blendCount * 6);
     }
 
     public static void StartNewElevatedTile() {

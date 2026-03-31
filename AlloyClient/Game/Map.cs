@@ -170,11 +170,9 @@ public static class Map {
 
     public static void Draw(GameTime gameTime) {
         if (LocalPlayer == null) return;
-
-        GL.Disable(EnableCap.DepthTest);
-        GL.Disable(EnableCap.CullFace);
-
         LastGameTime = gameTime;
+
+        RenderPipeline.BeginFrame(gameTime);
 
         if (Render.DebugEnabled) {
             foreach (var (_, entity) in Entities) {
@@ -198,62 +196,21 @@ public static class Map {
             }
         }
 
-        Render.SetShaderParams(gameTime);
-
-        #region Tile
-
         var pos = Vector2.Floor(LocalPlayer.Position);
         if (pos != _lastPosition || TilesDirty) {
             _lastPosition = pos;
             TilesDirty = false;
-
-            VisibleTopTiles.Clear();
-            VisibleElevatedTiles.Clear();
-            Render.StartNewDrawTile();
-
-            for (var x = -LocalPlayer.UpdateRadius; x < LocalPlayer.UpdateRadius; x++) {
-                for (var y = -LocalPlayer.UpdateRadius; y < LocalPlayer.UpdateRadius; y++) {
-                    if (x * x + y * y >= LocalPlayer.UpdateRadius * LocalPlayer.UpdateRadius) continue;
-                    var tile = GetTile(x + (int)LocalPlayer.Position.X, y + (int)LocalPlayer.Position.Y);
-                    if (tile != null && tile.Type != 0xFF) {
-                        if (tile.ZOffset != 0f) {
-                            if (!VisibleElevatedTiles.TryGetValue(tile.ZOffset, out var list)) {
-                                list = new List<MapTile>();
-                                VisibleElevatedTiles[tile.ZOffset] = list;
-                            }
-
-                            list.Add(tile);
-                        } else {
-                            tile.DrawTileBase();
-                        }
-
-                        if (tile.HasTop) VisibleTopTiles.Add(tile);
-                    }
-                }
-            }
-
-            Render.SaveBlendStart();
-
-            for (var x = -LocalPlayer.UpdateRadius; x < LocalPlayer.UpdateRadius; x++) {
-                for (var y = -LocalPlayer.UpdateRadius; y < LocalPlayer.UpdateRadius; y++) {
-                    if (x * x + y * y >= LocalPlayer.UpdateRadius * LocalPlayer.UpdateRadius) continue;
-                    var tile = GetTile(x + (int)LocalPlayer.Position.X, y + (int)LocalPlayer.Position.Y);
-                    if (tile != null && tile.Type != 0xFF && tile.ZOffset == 0f)
-                        tile.DrawTileBlends();
-                }
-            }
-
-            Render.SaveGroundCount();
-            foreach (var topTile in VisibleTopTiles) topTile.DrawTop();
-            Render.SaveTopCount();
-            Render.EndNewDrawTile();
+            BuildTileVisibility();
         }
 
+        RenderPipeline.BeginElevatedBase();
         foreach (var (zOffset, tiles) in VisibleElevatedTiles) {
+            if (tiles.Count == 0) continue;
+
             Render.StartNewElevatedTile();
-            foreach (var tile in tiles)
-                Render.DrawNewElevatedTile(tile.GetTileData());
+            foreach (var tile in tiles) Render.DrawNewElevatedTile(tile.GetTileData());
             Render.EndNewElevatedTile();
+
             Render.SetTileElevation(zOffset);
             Render.DrawElevatedTilesBase();
             Render.SetTileElevation(0f);
@@ -275,10 +232,8 @@ public static class Map {
             Render.EndShadowDraw();
         }
 
-        GL.Enable(EnableCap.DepthTest);
-        GL.Enable(EnableCap.CullFace);
+        RenderPipeline.BeginElevatedOpaque();
         if (EntityStorage.TryGetValue(ModelType.PbCaveWall, out var elevatedCaveWalls)) {
-            Render.SetCaveWallShaderParams();
             Render.StartDrawCaveWall();
             foreach (var wall in elevatedCaveWalls)
                 if (wall.Visible && wall.IsElevated)
@@ -299,10 +254,7 @@ public static class Map {
             Render.FlushBufferModel();
         }
 
-        GL.Disable(EnableCap.DepthTest);
-        GL.Disable(EnableCap.CullFace);
-
-        GL.Clear(ClearBufferMask.DepthBufferBit);
+        RenderPipeline.BeginGroundBase();
         Render.SetTileElevation(0f);
         Render.DrawGroundTilesBase();
         Render.DrawGroundTileBlends();
@@ -323,26 +275,9 @@ public static class Map {
             Render.EndShadowDraw();
         }
 
-        #endregion
 
-        GL.Enable(EnableCap.DepthTest);
-
-        #region Particles
-
-        Render.DrawParticles(Particles, _particleCount);
-
-        #endregion
-
-        GL.Enable(EnableCap.CullFace);
-
-        #region Entities
-
-        GL.Disable(EnableCap.CullFace);
-        GL.DepthMask(true);
-        GL.Enable(EnableCap.DepthTest);
-
+        RenderPipeline.BeginCaveWalls();
         if (EntityStorage.TryGetValue(ModelType.PbCaveWall, out var caveWalls)) {
-            Render.SetCaveWallShaderParams();
             Render.StartDrawCaveWall();
             foreach (var wall in caveWalls)
                 if (wall.Visible && !wall.IsElevated)
@@ -350,8 +285,7 @@ public static class Map {
             Render.FlushCaveWall();
         }
 
-        GL.Enable(EnableCap.CullFace);
-
+        RenderPipeline.BeginModels();
         Render.StartDrawModel();
         foreach (var kvp in EntityStorage) {
             if (kvp.Key == ModelType.Null || kvp.Key == ModelType.PbObject || kvp.Key == ModelType.PbCaveWall) continue;
@@ -365,7 +299,7 @@ public static class Map {
             Render.FlushBufferModel();
         }
 
-        GL.Disable(EnableCap.CullFace);
+        RenderPipeline.BeginEntities();
         Render.StartDrawEntity();
         for (var i = 0; i < ParticleGenCount; i++)
             if (ParticleGenerators[i] is RayCastParticle rcp)
@@ -382,20 +316,64 @@ public static class Map {
             Render.FlushBufferEntity();
         }
 
-        #endregion
-
-        #region Top Tiles
+        RenderPipeline.BeginParticles();
+        Render.DrawParticles(Particles, _particleCount);
 
         if (VisibleTopTiles.Count > 0) {
-            GL.Enable(EnableCap.DepthTest);
+            RenderPipeline.BeginTopTiles();
             Render.SetTileElevation(1f);
             Render.DrawTopTiles();
         }
 
-        #endregion
-
         var vp = Camera.WorldMatrix * Camera.ViewMatrix * Camera.ProjectionMatrix;
         Render.FlushDebug(vp);
+
+        RenderPipeline.EndFrameAndPostProcess(gameTime);
+        GL.BindTextureUnit(Main.gameAtlasSampler.TextureUnit, Main.gameAtlasSampler.TextureHandle);
+    }
+
+    private static void BuildTileVisibility() {
+        VisibleTopTiles.Clear();
+
+        foreach (var list in VisibleElevatedTiles.Values) list.Clear();
+        Render.StartNewDrawTile();
+
+        for (var x = -LocalPlayer.UpdateRadius; x < LocalPlayer.UpdateRadius; x++) {
+            for (var y = -LocalPlayer.UpdateRadius; y < LocalPlayer.UpdateRadius; y++) {
+                if (x * x + y * y >= LocalPlayer.UpdateRadius * LocalPlayer.UpdateRadius) continue;
+                var tile = GetTile(x + (int)LocalPlayer.Position.X, y + (int)LocalPlayer.Position.Y);
+                if (tile != null && tile.Type != 0xFF) {
+                    if (tile.ZOffset != 0f) {
+                        if (!VisibleElevatedTiles.TryGetValue(tile.ZOffset, out var list)) {
+                            list = new List<MapTile>();
+                            VisibleElevatedTiles[tile.ZOffset] = list;
+                        }
+
+                        list.Add(tile);
+                    } else {
+                        tile.DrawTileBase();
+                    }
+
+                    if (tile.HasTop) VisibleTopTiles.Add(tile);
+                }
+            }
+        }
+
+        Render.SaveBlendStart();
+
+        for (var x = -LocalPlayer.UpdateRadius; x < LocalPlayer.UpdateRadius; x++) {
+            for (var y = -LocalPlayer.UpdateRadius; y < LocalPlayer.UpdateRadius; y++) {
+                if (x * x + y * y >= LocalPlayer.UpdateRadius * LocalPlayer.UpdateRadius) continue;
+                var tile = GetTile(x + (int)LocalPlayer.Position.X, y + (int)LocalPlayer.Position.Y);
+                if (tile != null && tile.Type != 0xFF && tile.ZOffset == 0f)
+                    tile.DrawTileBlends();
+            }
+        }
+
+        Render.SaveGroundCount();
+        foreach (var topTile in VisibleTopTiles) topTile.DrawTop();
+        Render.SaveTopCount();
+        Render.EndNewDrawTile();
     }
 
     public static void FlushEnemyHits() {
