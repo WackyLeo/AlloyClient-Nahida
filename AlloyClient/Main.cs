@@ -33,6 +33,7 @@ public class Main {
 
     public static Atlas Atlas;
     public static Atlas UiAtlas;
+    public static Sampler gameAtlasSampler;
 
     public readonly OpenGLContextHandle Context;
     public readonly WindowHandle Window;
@@ -91,8 +92,8 @@ public class Main {
                 var display = Toolkit.Window.GetDisplay(Window);
                 Toolkit.Display.GetResolution(display, out var width, out var height);
                 Toolkit.Window.SetClientPosition(Window,
-                                                 new Vector2i(width / 2 - Settings.ScreenWidth / 2,
-                                                              height / 2 - Settings.ScreenHeight / 2));
+                    new Vector2i(width / 2 - Settings.ScreenWidth / 2,
+                        height / 2 - Settings.ScreenHeight / 2));
                 break;
             case WindowMode.ExclusiveFullscreen:
             case WindowMode.WindowedFullscreen:
@@ -118,7 +119,7 @@ public class Main {
         var font = new BitmapFamily(ContentReader.LoadFont("Fonts/MyriadPro/MyriadPro.msdf"));
 
         // Set texture units
-        var gameAtlasSampler = new Sampler(Atlas.Texture, 0);
+        gameAtlasSampler = new Sampler(Atlas.Texture, 0);
         var uiAtlasSampler = new Sampler(UiAtlas.Texture, 1);
         var uiAtlasLinear = new Sampler(UiAtlas.Texture, TextureFilter.Linear, 2);
         var mapTextureSampler = new Sampler(mapTexture, 3);
@@ -250,7 +251,7 @@ public class Main {
     private static void EnableDebugOutput() {
         GL.DebugMessageCallback(OnDebugMessage, nint.Zero);
         GL.DebugMessageControl(DebugSource.DebugSourceApi, DebugType.DebugTypeOther, DebugSeverity.DontCare, 1,
-                               [131185], false);
+            [131185], false);
         GL.Enable(EnableCap.DebugOutput);
         GL.Enable(EnableCap.DebugOutputSynchronous);
     }
@@ -274,8 +275,8 @@ public class Main {
             context = Toolkit.OpenGL.CreateFromWindow(window);
         } catch {
             Toolkit.Dialog.ShowMessageBox(window, "OpenGL creation failure",
-                                          $"Client requires a minimum opengl version of {version.Major}.{version.Minor}",
-                                          MessageBoxType.Information);
+                $"Client requires a minimum opengl version of {version.Major}.{version.Minor}",
+                MessageBoxType.Information);
             pass = false;
         } finally {
             if (pass) Toolkit.OpenGL.DestroyContext(context!);

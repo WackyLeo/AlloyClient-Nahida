@@ -17,7 +17,10 @@ public static partial class Render {
     private const int TileBufferSize = (int)(Map.TileRenderDistance * Map.TileRenderDistance * MathHelper.Pi) * 3;
     private const int ShadowBufferSize = 4096;
 
-    private static Shader _shaderBackground;
+    public static int _Fbo;
+    public static int _FboTID;
+    public static int _RboID;
+
     private static int _bgVao;
     private static int _bgVbo;
 
@@ -29,19 +32,21 @@ public static partial class Render {
     private static StorageBuffer<TileData> _elevatedTileBuffer;
     private static int _elevatedTileCount;
 
-// Shaders
+    // Shaders
     private static Shader _shaderGround;
     private static Shader _shaderShadow;
     private static Shader _shaderModel;
     private static Shader _shaderObject;
     private static Shader _shaderParticle;
     private static Shader _shaderGroundObject;
+    private static Shader _shaderBackground;
+    public static Shader _shaderPostProcess;
 
-// Vertex Objects
+    // Vertex Objects
     private static VertexArrayObject _defaultVao;
     private static VertexArrayObject _modelVao;
 
-// Buffers
+    // Buffers
     private static IndexBuffer _modelIndexBuffer;
     private static VertexBuffer<VertexBase> _modelVertexBuffer;
 
@@ -59,10 +64,45 @@ public static partial class Render {
 
     private static TileData[] _groundObjectData;
     private static StorageBuffer<TileData> _groundObjectBuffer;
+
     private static int _groundObjectCount;
     public static int BlendTileStart;
 
     public static unsafe void FirstTimeInit(Sampler atlas) {
+        _shaderPostProcess = ContentReader.LoadShader("Shaders/PostProcess");
+
+
+        GL.GenFramebuffer(out _Fbo);
+        GL.BindFramebuffer(FramebufferTarget.Framebuffer, _Fbo);
+
+        GL.GenTexture(out _FboTID);
+        GL.BindTexture(TextureTarget.Texture2d, _FboTID);
+
+        GL.TexImage2D(TextureTarget.Texture2d, 0, InternalFormat.Rgb, 800, 600,
+            0, PixelFormat.Rgb, PixelType.UnsignedByte, IntPtr.Zero);
+
+        GL.TexParameteri(TextureTarget.Texture2d, TextureParameterName.TextureMinFilter,
+            (int)TextureMinFilter.Linear);
+        GL.TexParameteri(TextureTarget.Texture2d, TextureParameterName.TextureMagFilter,
+            (int)TextureMinFilter.Linear);
+
+        GL.BindTexture(TextureTarget.Texture2d, 0);
+        GL.BindTextureUnit(atlas.TextureUnit, atlas.TextureHandle);
+
+        GL.FramebufferTexture(FramebufferTarget.Framebuffer, FramebufferAttachment.ColorAttachment0, _FboTID, 0);
+
+        GL.GenRenderbuffer(out _RboID);
+        GL.BindRenderbuffer(RenderbufferTarget.Renderbuffer, _RboID);
+
+        GL.RenderbufferStorage(RenderbufferTarget.Renderbuffer, InternalFormat.Depth24Stencil8, 800, 600);
+        GL.BindRenderbuffer(RenderbufferTarget.Renderbuffer, 0);
+        GL.FramebufferRenderbuffer(FramebufferTarget.Framebuffer, FramebufferAttachment.StencilAttachment,
+            RenderbufferTarget.Renderbuffer, _RboID);
+
+        if (GL.CheckFramebufferStatus(FramebufferTarget.Framebuffer) == FramebufferStatus.FramebufferComplete)
+            Console.WriteLine("Frame buffer completeness passed!");
+        GL.BindFramebuffer(FramebufferTarget.Framebuffer, 0);
+
         // Shaders
         _shaderGround = ContentReader.LoadShader("Shaders/Ground", TileDefines);
         _shaderGround.SetValue("GameTexture", atlas);

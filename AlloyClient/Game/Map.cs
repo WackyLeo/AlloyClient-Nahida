@@ -70,7 +70,7 @@ public static class Map {
     private static readonly List<(Projectile proj, double spawnAt)> PendingProjectiles = [];
 
     public static void InitMap(int width, int height, string name, string display, int diff, uint seed, int background,
-        bool allowTp, bool showDisplays) {
+                               bool allowTp, bool showDisplays) {
         Width = width;
         Height = height;
         Name = name;
@@ -170,6 +170,8 @@ public static class Map {
 
     public static void Draw(GameTime gameTime) {
         if (LocalPlayer == null) return;
+        GL.BindFramebuffer(FramebufferTarget.Framebuffer, Render._Fbo);
+        GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
 
         GL.Disable(EnableCap.DepthTest);
         GL.Disable(EnableCap.CullFace);
@@ -302,7 +304,6 @@ public static class Map {
         GL.Disable(EnableCap.DepthTest);
         GL.Disable(EnableCap.CullFace);
 
-        GL.Clear(ClearBufferMask.DepthBufferBit);
         Render.SetTileElevation(0f);
         Render.DrawGroundTilesBase();
         Render.DrawGroundTileBlends();
@@ -396,6 +397,18 @@ public static class Map {
 
         var vp = Camera.WorldMatrix * Camera.ViewMatrix * Camera.ProjectionMatrix;
         Render.FlushDebug(vp);
+
+        // Oop
+        GL.BindFramebuffer(FramebufferTarget.Framebuffer, 0);
+        GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
+        
+        Render._shaderPostProcess.Apply();
+        GL.Disable(EnableCap.DepthTest);
+        GL.BindTexture(TextureTarget.Texture2d, Render._FboTID);
+        
+        GL.DrawArrays(PrimitiveType.Triangles, 0, 3);
+        GL.BindTexture(TextureTarget.Texture2d, 0);
+        GL.BindTextureUnit(Main.gameAtlasSampler.TextureUnit, Main.gameAtlasSampler.TextureHandle);
     }
 
     public static void FlushEnemyHits() {
