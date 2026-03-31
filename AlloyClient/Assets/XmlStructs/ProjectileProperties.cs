@@ -68,6 +68,7 @@ public sealed class ProjectileProperties {
     public readonly float BonusSize;
     public readonly bool RayCast;
     public readonly bool CheckRayCast;
+    public readonly int Fade;
     
     public readonly string SecondId;
     public readonly int ArcAmount;
@@ -108,7 +109,8 @@ public sealed class ProjectileProperties {
         Frequency = e.GetValue<float>("Frequency", 1f);
         StartFrequency = e.GetValue<float>("StartFrequency", 0f);
         Magnitude = e.GetValue<float>("Magnitude", 3f);
-
+        Fade = e.GetValue<int>("Fade", 0);
+        
         Acceleration = e.GetValue<float>("Acceleration", 0f);
         AccelerationDelay = e.GetValue<float>("AccelerationDelay", 0f);
         MaxAcceleration = e.GetValue<float>("MaxAcceleration", 100000f);

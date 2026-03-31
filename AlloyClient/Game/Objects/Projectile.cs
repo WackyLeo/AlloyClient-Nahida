@@ -25,7 +25,8 @@ public sealed class Projectile : IResettable {
     private float _addLifetime;
     private float _angle;
     private float _angleCorrection;
-
+    private bool _fadeOff;
+    
     private int _bulletId;
     private bool _checkRayCasted;
     private int _damage;
@@ -70,6 +71,7 @@ public sealed class Projectile : IResettable {
         _checkRayCasted = false;
         _rayCastHitDone = false;
         _rayCastFailed = false;
+        _fadeOff = false;
         Clear = false;
         _savePos = Vector2.Zero;
         _lifetime = 0;
@@ -109,6 +111,7 @@ public sealed class Projectile : IResettable {
         _checkRayCasted = false;
         _rayCastHitDone = false;
         _rayCastFailed = false;
+        _fadeOff = false;
         Clear = false;
         _savePos = Vector2.Zero;
         _lifetime = _projProp.LifetimeMs;
@@ -215,7 +218,17 @@ public sealed class Projectile : IResettable {
         var curLifetime = elapsed - _projDelayMs;
 
         if (curLifetime > _lifetime) return false;
-
+        
+        if (_projProp.Fade > 0) {
+            if (!_fadeOff) {
+                RenderBaseType.SetAlpha(0.2f);
+                if (curLifetime >= _projProp.Fade) {
+                    _fadeOff = true;
+                    RenderBaseType.SetAlpha(1.0f);
+                }
+            }
+        }
+        
         if (_projProp.Falldown) {
             ((TypeProjectile)RenderBaseType).Height = 40f - curLifetime / _lifetime * 40f;
         } else if (_projProp.Missile) {
@@ -253,8 +266,9 @@ public sealed class Projectile : IResettable {
             blocked = false;
         else
             blocked = !MoveTo(newPos);
-
-        if (blocked || (doHitTest && HitTest(time)))
+        
+        var canHit = _projProp.Fade == 0 || _fadeOff;
+        if (blocked || (canHit && doHitTest && HitTest(time)))
             return false;
 
         if (!blocked) {
