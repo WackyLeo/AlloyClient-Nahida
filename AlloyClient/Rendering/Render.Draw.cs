@@ -23,8 +23,7 @@ public static partial class Render {
     }
 
     public static void DrawGroundObject(TileData data) {
-        _groundObjectData[_groundObjectCount] = data;
-        _groundObjectCount++;
+        _groundObjectData[_groundObjectCount++] = data;
     }
 
     public static void FlushGroundObjects() {
@@ -64,8 +63,7 @@ public static partial class Render {
     }
 
     public static void DrawNewTile(TileData data) {
-        _tileData[_tileCount] = data;
-        _tileCount++;
+        _tileData[_tileCount++] = data;
     }
 
     public static void SaveGroundCount() {
@@ -99,11 +97,9 @@ public static partial class Render {
 
     public static void DrawTopTiles() {
         if (TopTileCount == 0) return;
-
         _defaultVao.Bind();
         _shaderGround.Apply();
         _tileBuffer.BindToIndex(0);
-
         GL.DrawArrays(PrimitiveType.Triangles, GroundTileCount * 6, TopTileCount * 6);
     }
 
@@ -113,32 +109,25 @@ public static partial class Render {
 
     public static void StartDrawShadow() {
         LastDrawCountShadows = _shadowCount = 0;
-
         _defaultVao.Bind();
         _shaderShadow.SetValue("ShadowData", _shadowBuffer);
         _shaderShadow.Apply();
     }
 
     public static void DrawShadow(ShadowData shadow) {
-        _shadowData[_shadowCount] = shadow;
-        _shadowCount++;
-
+        _shadowData[_shadowCount++] = shadow;
         if (_shadowCount == _shadowData.Length) FlushBufferShadow();
     }
 
     private static void FlushBufferShadow() {
         _shadowBuffer.SetData(_shadowData.AsSpan(0, _shadowCount), 0);
-
         GL.DrawArrays(PrimitiveType.Triangles, 0, _shadowCount * 6);
-
         LastDrawCountShadows += _shadowCount;
         _shadowCount = 0;
     }
 
     public static void EndShadowDraw() {
-        if (_shadowCount == 0) return;
-
-        FlushBufferShadow();
+        if (_shadowCount > 0) FlushBufferShadow();
     }
 
     #endregion
@@ -148,7 +137,6 @@ public static partial class Render {
     public static void StartDrawModel() {
         LastDrawCountEntities = 0;
         _modelCount = 0;
-
         _shaderModel.Apply();
         _modelVao.Bind();
     }
@@ -158,15 +146,12 @@ public static partial class Render {
     }
 
     public static void DrawModel(VertexModel vertexModel) {
-        _modelData[_modelCount] = vertexModel;
-        _modelCount++;
-
+        _modelData[_modelCount++] = vertexModel;
         if (_modelCount == _modelData.Length) FlushBufferModel();
     }
 
     public static void FlushBufferModel() {
         if (_modelCount < 1) return;
-
         _modelDataBuffer.SetData(_modelData.AsSpan(0, _modelCount));
 
         var info = ModelData.ModelRenderInfo[_entityModel];
@@ -182,15 +167,12 @@ public static partial class Render {
     public static void StartDrawEntity() {
         LastDrawCountEntities = 0;
         _entityCount = 0;
-
         _shaderObject.Apply();
         _entityDataBuffer.BindToIndex(0);
     }
 
     public static void DrawEntity(VertexObject vertexObject) {
-        _entityData[_entityCount] = vertexObject;
-        _entityCount++;
-
+        _entityData[_entityCount++] = vertexObject;
         if (_entityCount == _entityData.Length) FlushBufferEntity();
     }
 
@@ -199,23 +181,21 @@ public static partial class Render {
 
         _entityDataBuffer.SetData(_entityData.AsSpan(0, _entityCount));
 
-        // Pass 1: opaque pixels only — depth writes ON, no blend
         GL.DepthMask(true);
         GL.DepthFunc(DepthFunction.Less);
         GL.Disable(EnableCap.Blend);
         _shaderObject.SetValue("RenderPass", 0);
         GL.DrawArrays(PrimitiveType.Triangles, 0, _entityCount * 6);
 
-        // Pass 2: glow/outline pixels only — depth writes OFF
         GL.DepthMask(false);
         GL.DepthFunc(DepthFunction.Lequal);
         GL.Enable(EnableCap.Blend);
-        GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha); // Ensure proper alpha blending
+        GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
         _shaderObject.SetValue("RenderPass", 1);
         GL.DrawArrays(PrimitiveType.Triangles, 0, _entityCount * 6);
 
-        // Restore
         GL.DepthMask(true);
+        GL.DepthFunc(DepthFunction.Less);
         _entityCount = 0;
     }
 

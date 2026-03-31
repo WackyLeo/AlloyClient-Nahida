@@ -1,0 +1,6 @@
+﻿<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="Publish AlloyTk to folder (3)" type="DotNetFolderPublish" factoryName="Publish to folder">
+    <riderPublish configuration="Release" delete_existing_files="true" platform="Any CPU" produce_single_file="true" self_contained="true" target_folder="$PROJECT_DIR$/AlloyClient/bin/Release/net10.0/publish" target_framework="net10.0" trim_unused_assemblies="true" uuid_high="3032587598047952917" uuid_low="-6127832070677897363" />
+    <method v="2" />
+  </configuration>
+</component>

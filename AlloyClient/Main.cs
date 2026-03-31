@@ -235,6 +235,9 @@ public class Main {
             case FocusEventArgs e:
                 UserInput.SetWindowFocus(e.GotFocus);
                 break;
+            case WindowResizeEventArgs e:
+                Render.ResizeFbo(e.NewClientSize.X, e.NewClientSize.Y);
+                break;
         }
     }
 
@@ -257,7 +260,7 @@ public class Main {
     }
 
     private static void OnDebugMessage(DebugSource source, DebugType type, uint id, DebugSeverity severity, int length,
-                                       nint pmessage, nint userParam) {
+        nint pmessage, nint userParam) {
         var message = Marshal.PtrToStringAnsi(pmessage, length);
         Console.WriteLine("[{0} source={1} type={2} id={3}] {4}", severity, source, type, id, message);
     }
