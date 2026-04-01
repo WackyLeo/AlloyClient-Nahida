@@ -28,6 +28,25 @@ public sealed class ScreenManager : Sprite {
         Stage.AddEventListener(KeyboardEvent.KeyUp, OnKeyUp);
         Stage.AddEventListener(ResizeEvent.Resize, OnResize);
     }
+    
+    public static void FadeOutCurrent(int durationMs, uint color, Action onFinish = null) {
+        _instance.RemoveChild(FadeScreen);
+        _instance.AddChild(FadeScreen);
+
+        FadeScreen.Resize(Settings.ScreenWidth, Settings.ScreenHeight);
+        FadeScreen.Visible = true;
+        FadeScreen.SetFadeColor(color);
+        FadeScreen.Alpha = 0f; 
+
+        GTween.Add(Tween.New(FadeScreen, Easing.SineInOut, durationMs, 1f, EaseType.Alpha, 0, onFinish));
+    }
+
+    public static void FadeInCurrent(int durationMs, Action onFinish = null) {
+        GTween.Add(Tween.New(FadeScreen, Easing.SineInOut, durationMs, 0f, EaseType.Alpha, 0, () => {
+            FadeScreen.Visible = false;
+            onFinish?.Invoke();
+        }));
+    }
 
     /// <summary>
     ///     Calls the current screens virtual update call, used for drawing the actual game
@@ -93,6 +112,7 @@ public sealed class ScreenManager : Sprite {
         Settings.SetWindowSize(args.Width, args.Height);
         Settings.SaveSettings();
         Camera.UpdateViewPort(args.Width, args.Height);
+        FadeScreen.Resize(args.Width, args.Height);
     }
 }
 
@@ -119,5 +139,10 @@ public class FadeScreen : Screen {
 
     public void SetFadeColor(uint color) {
         _rect.SetColor(color);
+    }
+
+    public void Resize(int width, int height) {
+        _rect.Width = width;
+        _rect.Height = height;
     }
 }

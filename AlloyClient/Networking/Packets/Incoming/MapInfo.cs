@@ -1,5 +1,6 @@
 ﻿using System;
 using AlloyClient.Data;
+using AlloyClient.Display;
 using AlloyClient.Game;
 using AlloyClient.Networking.Packets.Outgoing;
 
@@ -54,6 +55,8 @@ public class MapInfo : IncomingPacket<MapInfo> {
         GC.WaitForPendingFinalizers();
 
         Client.IsReconnecting = false;
+
+        ScreenManager.FadeInCurrent(400); 
     }
 
     private static void LoadOrCreate() {

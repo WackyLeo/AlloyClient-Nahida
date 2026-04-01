@@ -283,34 +283,34 @@ public static class Client {
     public static void ReconnectToGame(int gameId, int keyTime, byte[] key) {
         IsReconnecting = true;
 
-        _tcp?.Close();
-        _socket?.Close();
-        State = ConnectionState.Disconnected;
-        Reset();
+        ScreenManager.FadeOutCurrent(100, 0x000000, () => {
+            _tcp?.Close();
+            _socket?.Close();
+            State = ConnectionState.Disconnected;
+            Reset();
 
-        Task.Run(async () => {
-            await Task.Delay(500);
+            Task.Run(async () => {
+                await Task.Delay(200);
 
-            _tcp = new TcpClient { NoDelay = true };
-            await _tcp.ConnectAsync(Settings.GameServerAddress, Settings.GameServerPort);
-            _socket = _tcp.Client;
-            State = ConnectionState.Connected;
-            IsReconnecting = false;
+                _tcp = new TcpClient { NoDelay = true };
+                await _tcp.ConnectAsync(Settings.GameServerAddress, Settings.GameServerPort);
+                _socket = _tcp.Client;
+                State = ConnectionState.Connected;
+                
+                Log.Info("Reconnected to server.");
+                var login = GlobalData.Get<LoginData>();
+                var hello = Hello.CreatePacket();
+                hello.BuildVersion = Settings.BuildVersion;
+                hello.GameId = gameId;
+                hello.Guid = login.GUID;
+                hello.Password = login.Password;
+                hello.KeyTime = keyTime;
+                hello.Key = key;
+                hello.MapJSON = "";
+                QueuePacket(hello);
 
-            Log.Info("Reconnected to server.");
-
-            var login = GlobalData.Get<LoginData>();
-            var hello = Hello.CreatePacket();
-            hello.BuildVersion = Settings.BuildVersion;
-            hello.GameId = gameId;
-            hello.Guid = login.GUID;
-            hello.Password = login.Password;
-            hello.KeyTime = keyTime;
-            hello.Key = key;
-            hello.MapJSON = "";
-            QueuePacket(hello);
-
-            StartReceive();
+                StartReceive();
+            });
         });
     }
 

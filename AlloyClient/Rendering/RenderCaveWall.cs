@@ -40,7 +40,11 @@ public static partial class Render {
         _caveWallCount = 0;
         _shaderCaveWall.Apply();
         _caveWallVao.Bind();
-        GL.Disable(EnableCap.CullFace); 
+        GL.Enable(EnableCap.CullFace);
+        GL.CullFace(TriangleFace.Front); 
+        GL.Enable(EnableCap.DepthTest);
+        GL.DepthFunc(DepthFunction.Less); 
+        GL.DepthMask(true);
     }
  
     public static void DrawCaveWall(TypeCaveWall wall) {
