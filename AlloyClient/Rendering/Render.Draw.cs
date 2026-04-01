@@ -61,9 +61,11 @@ public static partial class Render {
         GroundTileCount = 0;
         TopTileCount = 0;
     }
-
-    public static void DrawNewTile(TileData data) {
-        _tileData[_tileCount++] = data;
+    
+    public static void DrawTiles(ReadOnlySpan<TileData> data) {
+        var span = new Span<TileData>(_tileData, _tileCount, data.Length);
+        data.CopyTo(span);
+        _tileCount += data.Length;
     }
 
     public static void SaveGroundCount() {

@@ -76,6 +76,10 @@ public sealed class TextureData {
     public Color DominantColor = Color.Transparent;
     public Texture OverrideTexture;
 
+    public TextureData EdgeTexture;
+    public TextureData CornerTexture;
+    public TextureData InnerCornerTexture;
+    
     public bool IsRemoteSheet => OverrideTexture != null;
 
     public TextureData() { }
@@ -149,6 +153,18 @@ public sealed class TextureData {
 
         if (xml.GetElement("EditorTexture", out elem)) {
             EditorTexture = Main.Atlas.GetAtlasData(elem.GetValue<string>("File"), elem.GetValue<int>("Index"));
+        }
+        
+        if (xml.GetElement("Edge", out elem)) {
+            EdgeTexture = new TextureData(elem);
+        }
+        
+        if (xml.GetElement("Corner", out elem)) {
+            CornerTexture = new TextureData(elem);
+        }
+        
+        if (xml.GetElement("InnerCorner", out elem)) {
+            InnerCornerTexture = new TextureData(elem);
         }
     }
     

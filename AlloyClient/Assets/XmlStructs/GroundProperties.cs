@@ -12,7 +12,6 @@ public class GroundProperties {
     public readonly TextureData EdgeTD;
 
 
-    public readonly bool HasEdge;
     public readonly TextureData InnerCornerTD;
     public readonly int MaxDamage;
 
@@ -23,6 +22,7 @@ public class GroundProperties {
     public readonly ushort ObjectType;
     public readonly bool Push;
     public readonly bool RandomOffset;
+    public readonly bool HasEdge;
     public readonly bool SameTypeEdgeMode;
     public readonly bool Sink;
     public readonly bool Sinking;
@@ -54,14 +54,7 @@ public class GroundProperties {
         Sinking = e.HasElement("Sinking");
         RandomOffset = e.HasElement("RandomOffset");
 
-        if (e.HasElement("Edge")) {
-            HasEdge = true;
-            EdgeTD = new TextureData(e.Element("Edge"));
-
-            if (e.HasElement("Corner")) CornerTD = new TextureData(e.Element("Corner"));
-            if (e.HasElement("InnerCorner")) InnerCornerTD = new TextureData(e.Element("InnerCorner"));
-        }
-
+        HasEdge = e.HasElement("Edge");
         SameTypeEdgeMode = e.HasElement("SameTypeEdgeMode");
 
         if (e.HasElement("Top")) {

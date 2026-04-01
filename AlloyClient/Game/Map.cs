@@ -402,14 +402,34 @@ public static class Map {
         _tiles[x, y] = tile;
         return tile;
     }
+    
+    private static readonly MapTile[] RebuildData = new MapTile[9];
 
     public static void SetTileData(int x, int y, ushort type) {
         var tile = GetTile(x, y);
         if (tile == null) return;
         TilesDirty = true;
         tile.SetType(type);
+        for (var y1 = y - 1; y1 <= y + 1; y1++){
+            for (var x1 = x - 1; x1 <= x + 1; x1++) {
+                RebuildTile(GetTile(x1, y1));
+            }
+        }
+        
+        Array.Clear(RebuildData);
     }
-
+    
+    private static void RebuildTile(MapTile tile) {
+        var idx = 0;
+        for (var y1 = tile.Y - 1; y1 <= tile.Y + 1; y1++){
+            for (var x1 = tile.X - 1; x1 <= tile.X + 1; x1++) {
+                RebuildData[idx++] = GetTile(x1, y1);
+            }
+        }
+        
+        tile.Rebuild(RebuildData);
+    }
+    
     public static void AddParticleEffect(ParticleEffect effect) {
         if (ParticleGenCount == ParticleGenerators.Count)
             ParticleGenerators.Add(effect);

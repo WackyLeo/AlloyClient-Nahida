@@ -23,6 +23,7 @@ struct InstanceData {
     vec4 UV;
     vec4 Animate;
     vec4 Mask;
+    vec4 Temp;
 };
 
 layout(std140, binding = 0) readonly buffer InstanceBuffer {
@@ -34,6 +35,7 @@ out GROUND_OUTPUT {
     vec2 coreUV;
     vec4 UV;
     vec4 Mask;
+    float Swizzle;
 } vsOutput;
 
 void main() {
@@ -52,4 +54,5 @@ void main() {
     vsOutput.coreUV.y = tileUV[verId].y + data.Position.w + sin(GameTime * data.Animate.y) + GameTime * data.Animate.w;
     vsOutput.UV = data.UV;
     vsOutput.Mask = data.Mask;
+    vsOutput.Swizzle = data.Temp.x;
 }

@@ -1,8 +1,10 @@
-﻿using OpenTK.Mathematics;
-
+﻿
 namespace Common.Structs;
+using System.Runtime.InteropServices;
+using OpenTK.Mathematics;
 
-public struct AtlasData {
+[StructLayout(LayoutKind.Sequential, Pack = 1)]
+public struct AtlasData : IEquatable<AtlasData> {
     public float U;
     public float V;
     public float W;
@@ -16,14 +18,28 @@ public struct AtlasData {
             H = h / AtlasConfig.AtlasHeight
         };
     }
-
+    private AtlasData(float u, float v, float w, float h) {
+        U = u;
+        V = v;
+        W = w;
+        H = h;
+    }
     public void RemovePadding(uint pixels = 1) {
         U += AtlasConfig.Padding * pixels / AtlasConfig.AtlasWidth;
         V += AtlasConfig.Padding * pixels / AtlasConfig.AtlasHeight;
         W -= AtlasConfig.Padding * pixels * 2 / AtlasConfig.AtlasWidth;
         H -= AtlasConfig.Padding * pixels * 2 / AtlasConfig.AtlasHeight;
     }
-
+    public AtlasData Rotate(int steps) {
+        steps = (steps % 4 + 4) % 4;
+        return steps switch {
+            0 => new AtlasData(U, V, W, H),
+            1 => new AtlasData(V + H, U, -H, W),
+            2 => new AtlasData(U + W, V + H, -W, -H),
+            3 => new AtlasData(V, U + W, H, -W),
+            _ => new AtlasData(U, V, W, H)
+        };
+    }
     public Vector4 ToVector4(bool removePad = false) {
         if (removePad) RemovePadding();
         return new Vector4(U, V, W, H);
@@ -46,7 +62,7 @@ public struct AtlasData {
     }
 
     public static bool operator ==(AtlasData left, AtlasData right) {
-        return left.U == right.U && left.V == right.V && left.W == right.W && left.H == right.H;
+        return left.Equals(right);
     }
 
     public static bool operator !=(AtlasData left, AtlasData right) {

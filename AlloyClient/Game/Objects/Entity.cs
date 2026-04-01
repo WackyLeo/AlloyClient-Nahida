@@ -126,8 +126,8 @@ public class Entity {
         return props.Class switch {
             "Wall" => new TypeWall(this),
             "DoubleWall" => new TypeWall(this, ModelType.PbDoubleWall),
-            "DoubleWall2" => new TypeWall(this, ModelType.PbDoubleWall), // ModelType.PbDoubleWall2
-            "TripleWall" => new TypeWall(this, ModelType.PbDoubleWall), // ModelType.PbTripleWall
+            "DoubleWall2" => new TypeWall(this, ModelType.PbDoubleWall),
+            "TripleWall" => new TypeWall(this, ModelType.PbDoubleWall),
             "CaveWall" => new TypeCaveWall(this),
             _ => new TypeGameObject(this)
         };
