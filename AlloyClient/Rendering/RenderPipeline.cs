@@ -65,7 +65,7 @@ public static class RenderPipeline {
         GL.Enable(EnableCap.DepthTest);
     }
 
-    public static void EndFrameAndPostProcess(GameTime gameTime) {
+    public static void EndFrameAndPostProcess(GameTime gameTime, Vector2 gameCenter,Vector2 gameHalfSize) {
         GL.BindFramebuffer(FramebufferTarget.Framebuffer, 0);
         GL.ClearColor(0f, 0f, 0f, 1f);
         GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
@@ -76,15 +76,6 @@ public static class RenderPipeline {
         Render._shaderPostProcess.Apply();
         Render._shaderPostProcess.SetValue("uTime", (float)(gameTime.TotalMs / 1000.0));
         Render._shaderPostProcess.SetValue("uResolution", new Vector2(Settings.ScreenWidth, Settings.ScreenHeight));
-
-        var hudPixelWidth = HudView.Width * Stage.ScreenScale.X;
-        var gamePixelWidth = Settings.ScreenWidth - hudPixelWidth;
-
-        var gameWidthUV = gamePixelWidth / Settings.ScreenWidth;
-        var gameCenterX = gameWidthUV / 2f;
-
-        var gameCenter = new Vector2(gameCenterX, 0.5f);
-        var gameHalfSize = new Vector2(gameWidthUV / 2f, 0.5f);
 
         Render._shaderPostProcess.SetValue("uGameCenter", gameCenter);
         Render._shaderPostProcess.SetValue("uGameHalfSize", gameHalfSize);

@@ -46,7 +46,7 @@ public class DebugStats : Sprite {
     private double _lastTime;
 
     public DebugStats() {
-        return;
+       
         AddChild(_fps);
         AddChild(_avgFrameTime);
         AddChild(_p90FrameTime);

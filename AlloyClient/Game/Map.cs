@@ -12,6 +12,9 @@ using AlloyClient.ParticleEffects;
 using AlloyClient.Rendering;
 using AlloyClient.Rendering.Types;
 using AlloyClient.Rendering.VertexData;
+using AlloyClient.State;
+using AlloyClient.UiLib;
+using AlloyClient.UiLib.Core;
 using AlloyClient.UiLib.Signals;
 using Common;
 using OpenTK.Graphics.OpenGL;
@@ -171,28 +174,16 @@ public static class Map {
     public static void Draw(GameTime gameTime) {
         if (LocalPlayer == null) return;
         LastGameTime = gameTime;
-
         RenderPipeline.BeginFrame(gameTime);
-
         if (Render.DebugEnabled) {
             foreach (var (_, entity) in Entities) {
                 if (entity.Properties == null) continue;
-                if (entity.Properties.IsEnemy) {
-                    var ePos = Camera.WorldToDebug2D(new Vector3(entity.Position.X, entity.Position.Y, 0.5f));
-                    Render.DebugCircle(ePos, 0.25f, new Vector3(1f, 0.5f, 0f), 0.03f);
-                }
-
-                if (entity.Properties.IsPlayer) {
-                    var ePos = Camera.WorldToDebug2D(new Vector3(entity.Position.X, entity.Position.Y, 0.5f));
-                    Render.DebugCircle(ePos, 0.25f, new Vector3(0f, 0.5f, 1f), 0.03f);
-                }
+                if (entity.Properties.IsEnemy) Render.DebugCircle(Camera.WorldToDebug2D(new Vector3(entity.Position.X, entity.Position.Y, 0.5f)), 0.25f, new Vector3(1f, 0.5f, 0f), 0.03f);
+                if (entity.Properties.IsPlayer) Render.DebugCircle(Camera.WorldToDebug2D(new Vector3(entity.Position.X, entity.Position.Y, 0.5f)), 0.25f, new Vector3(0f, 0.5f, 1f), 0.03f);
             }
-
             if (LocalPlayer != null) {
-                var lpPos = Camera.WorldToDebug2D(new Vector3(LocalPlayer.Position.X, LocalPlayer.Position.Y,
-                    LocalPlayer.Z));
-                Render.DebugLine(lpPos - new Vector2(0.3f, 0), lpPos + new Vector2(0.3f, 0), new Vector3(1, 1, 0),
-                    0.03f);
+                var lpPos = Camera.WorldToDebug2D(new Vector3(LocalPlayer.Position.X, LocalPlayer.Position.Y, LocalPlayer.Z));
+                Render.DebugLine(lpPos - new Vector2(0.3f, 0), lpPos + new Vector2(0.3f, 0), new Vector3(1, 1, 0), 0.03f);
             }
         }
 
@@ -206,11 +197,9 @@ public static class Map {
         RenderPipeline.BeginElevatedBase();
         foreach (var (zOffset, tiles) in VisibleElevatedTiles) {
             if (tiles.Count == 0) continue;
-
             Render.StartNewElevatedTile();
             foreach (var tile in tiles) Render.DrawNewElevatedTile(tile.GetTileData());
             Render.EndNewElevatedTile();
-
             Render.SetTileElevation(zOffset);
             Render.DrawElevatedTilesBase();
             Render.SetTileElevation(0f);
@@ -218,26 +207,20 @@ public static class Map {
 
         if (EntityStorage.TryGetValue(ModelType.PbGroundObject, out var groundObjects)) {
             Render.StartDrawGroundObjects();
-            foreach (var obj in groundObjects)
-                if (obj.Visible && obj.IsElevated)
-                    obj.Draw();
+            foreach (var obj in groundObjects) if (obj.Visible && obj.IsElevated) obj.Draw();
             Render.FlushGroundObjects();
         }
 
         if (EntityStorage.TryGetValue(ModelType.PbObject, out var goElevated)) {
             Render.StartDrawShadow();
-            foreach (var type in goElevated)
-                if (type.IsElevated)
-                    type.DrawShadow();
+            foreach (var type in goElevated) if (type.IsElevated) type.DrawShadow();
             Render.EndShadowDraw();
         }
 
         RenderPipeline.BeginElevatedOpaque();
         if (EntityStorage.TryGetValue(ModelType.PbCaveWall, out var elevatedCaveWalls)) {
             Render.StartDrawCaveWall();
-            foreach (var wall in elevatedCaveWalls)
-                if (wall.Visible && wall.IsElevated)
-                    wall.Draw();
+            foreach (var wall in elevatedCaveWalls) if (wall.Visible && wall.IsElevated) wall.Draw();
             Render.FlushCaveWall();
         }
 
@@ -250,10 +233,9 @@ public static class Map {
                     entity.Draw();
                     Render.LastDrawCountEntities++;
                 }
-
             Render.FlushBufferModel();
         }
-
+        
         RenderPipeline.BeginGroundBase();
         Render.SetTileElevation(0f);
         Render.DrawGroundTilesBase();
@@ -261,27 +243,23 @@ public static class Map {
 
         if (EntityStorage.TryGetValue(ModelType.PbGroundObject, out var normalGroundObjects)) {
             Render.StartDrawGroundObjects();
-            foreach (var obj in normalGroundObjects)
-                if (obj.Visible && obj.Position.Z == 0f)
-                    obj.Draw();
+            foreach (var obj in normalGroundObjects) if (obj.Visible && obj.Position.Z == 0f) obj.Draw();
             Render.FlushGroundObjects();
         }
 
         if (EntityStorage.TryGetValue(ModelType.PbObject, out var go)) {
             Render.StartDrawShadow();
-            foreach (var type in go)
-                if (type.Position.Z == 0f)
-                    type.DrawShadow();
+            foreach (var type in go) if (type.Position.Z == 0f) type.DrawShadow();
             Render.EndShadowDraw();
         }
-
+        
+        RenderPipeline.BeginParticles();
+        Render.DrawParticles(Particles, _particleCount);
 
         RenderPipeline.BeginCaveWalls();
         if (EntityStorage.TryGetValue(ModelType.PbCaveWall, out var caveWalls)) {
             Render.StartDrawCaveWall();
-            foreach (var wall in caveWalls)
-                if (wall.Visible && !wall.IsElevated)
-                    wall.Draw();
+            foreach (var wall in caveWalls) if (wall.Visible && !wall.IsElevated) wall.Draw();
             Render.FlushCaveWall();
         }
 
@@ -295,7 +273,6 @@ public static class Map {
                     entity.Draw();
                     Render.LastDrawCountEntities++;
                 }
-
             Render.FlushBufferModel();
         }
 
@@ -312,13 +289,9 @@ public static class Map {
                     type.Draw();
                     Render.LastDrawCountEntities++;
                 }
-
             Render.FlushBufferEntity();
         }
-
-        RenderPipeline.BeginParticles();
-        Render.DrawParticles(Particles, _particleCount);
-
+        
         if (VisibleTopTiles.Count > 0) {
             RenderPipeline.BeginTopTiles();
             Render.SetTileElevation(1f);
@@ -328,7 +301,13 @@ public static class Map {
         var vp = Camera.WorldMatrix * Camera.ViewMatrix * Camera.ProjectionMatrix;
         Render.FlushDebug(vp);
 
-        RenderPipeline.EndFrameAndPostProcess(gameTime);
+        var hudPixelWidth = HudView.Width * Stage.ScreenScale.X;
+        var gamePixelWidth = Settings.ScreenWidth - hudPixelWidth;
+        var gameWidthUV = gamePixelWidth / Settings.ScreenWidth;
+        var gameCenter = new Vector2(gameWidthUV / 2f, 0.5f);
+        var gameHalfSize = new Vector2(gameWidthUV / 2f, 0.5f);
+
+        RenderPipeline.EndFrameAndPostProcess(gameTime, gameCenter, gameHalfSize);
         GL.BindTextureUnit(Main.gameAtlasSampler.TextureUnit, Main.gameAtlasSampler.TextureHandle);
     }
 
