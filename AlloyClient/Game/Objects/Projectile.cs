@@ -17,20 +17,20 @@ public sealed class Projectile : IResettable {
     private const double HitTestDelayMs = 16;
 
     private readonly HashSet<int> _hitEntities = [];
-    private float _dirX;
-    private float _dirY;
-    
+
     private readonly float _jitter = Random.Shared.NextSingle() * 0.00002f - 0.00001f;
     private float _accel;
     private float _addLifetime;
     private float _angle;
     private float _angleCorrection;
-    private bool _fadeOff;
-    
+
     private int _bulletId;
     private bool _checkRayCasted;
     private int _damage;
     private bool _damagePlayers;
+    private float _dirX;
+    private float _dirY;
+    private bool _fadeOff;
     private double _lastHitTest;
     private float _lifetime;
     private ObjectProperties _objDesc;
@@ -218,8 +218,8 @@ public sealed class Projectile : IResettable {
         var curLifetime = elapsed - _projDelayMs;
 
         if (curLifetime > _lifetime) return false;
-        
-        if (_projProp.Fade > 0) {
+
+        if (_projProp.Fade > 0)
             if (!_fadeOff) {
                 RenderBaseType.SetAlpha(0.2f);
                 if (curLifetime >= _projProp.Fade) {
@@ -227,8 +227,7 @@ public sealed class Projectile : IResettable {
                     RenderBaseType.SetAlpha(1.0f);
                 }
             }
-        }
-        
+
         if (_projProp.Falldown) {
             ((TypeProjectile)RenderBaseType).Height = 40f - curLifetime / _lifetime * 40f;
         } else if (_projProp.Missile) {
@@ -266,7 +265,7 @@ public sealed class Projectile : IResettable {
             blocked = false;
         else
             blocked = !MoveTo(newPos);
-        
+
         var canHit = _projProp.Fade == 0 || _fadeOff;
         if (blocked || (canHit && doHitTest && HitTest(time)))
             return false;
@@ -279,6 +278,12 @@ public sealed class Projectile : IResettable {
         }
 
         // Projectile debug + hit pos
+
+        if (_damagePlayers && _damage <= 0 &&
+            (_projProp.Effects == null || _projProp.Effects.Length == 0)) {
+            RenderBaseType.SetVisibility(false);
+            return true;
+        }
 
         var hitPos = Camera.WorldToDebug2D(new Vector3(_position.X, _position.Y, 0.5f));
         if (Render.DebugEnabled) {
@@ -357,8 +362,9 @@ public sealed class Projectile : IResettable {
                 var clr = Entity.GetHitColour(_projProp.Effects, _projProp.ArmorPiercing);
                 Map.AddParticleEffect(new HitEffect(target, clr));
                 NotificationLayer.AddStatusText(target, notification, clr, 1000, 0);
-                Map.PendingPlayerHit.AddHit(_bulletId, _ownerId);
             }
+
+            Map.PendingPlayerHit.AddHit(_bulletId, _ownerId);
 
             if (!_projProp.MultiHit)
                 return true;
@@ -490,7 +496,7 @@ public sealed class Projectile : IResettable {
                          _projProp.Frequency))
                     / _projProp.LifetimeMs * _projProp.Frequency * 2 *
                     MathF.PI);
-                pos.X += deflection * -_dirY; 
+                pos.X += deflection * -_dirY;
                 pos.Y += deflection * _dirX;
             }
         }

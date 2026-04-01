@@ -1,19 +1,20 @@
-﻿using AlloyClient.Data;
+﻿using System;
+using AlloyClient.Data;
 using AlloyClient.Game;
 using AlloyClient.Networking.Packets.Outgoing;
 
 namespace AlloyClient.Networking.Packets.Incoming;
 
 public class MapInfo : IncomingPacket<MapInfo> {
-    public int Width;
+    public bool AllowPlayerTeleport;
+    public int Background;
+    public int Difficulty;
+    public string DisplayName;
     public int Height;
     public string Name;
-    public string DisplayName;
-    public int Difficulty;
     public uint Seed;
-    public int Background;
-    public bool AllowPlayerTeleport;
     public bool ShowDisplays;
+    public int Width;
 
     public override PacketId PacketId => PacketId.MapInfo;
 
@@ -49,6 +50,9 @@ public class MapInfo : IncomingPacket<MapInfo> {
 
         LoadOrCreate();
 
+        GC.Collect(2, GCCollectionMode.Forced, true, true);
+        GC.WaitForPendingFinalizers();
+
         Client.IsReconnecting = false;
     }
 
@@ -62,13 +66,14 @@ public class MapInfo : IncomingPacket<MapInfo> {
             GlobalData.CharacterType = 0;
             return;
         }
-        
+
         var load = Load.CreatePacket();
         load.CharId = GlobalData.SelectedCharacterId;
         Client.QueuePacket(load);
     }
 
     public override string ToString() {
-        return $"Width: {Width}, Height: {Height}, Name: {Name}, DisplayName: {DisplayName}, Difficulty: {Difficulty}, Seed: {Seed}, Background: {Background}, AllowPlayerTeleport: {AllowPlayerTeleport}, ShowDisplays: {ShowDisplays}";
+        return
+            $"Width: {Width}, Height: {Height}, Name: {Name}, DisplayName: {DisplayName}, Difficulty: {Difficulty}, Seed: {Seed}, Background: {Background}, AllowPlayerTeleport: {AllowPlayerTeleport}, ShowDisplays: {ShowDisplays}";
     }
 }

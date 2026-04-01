@@ -9,6 +9,7 @@ using AlloyClient.Networking.Packets.Outgoing;
 using AlloyClient.Networking.Structs.DataObjects;
 using AlloyClient.Rendering;
 using AlloyClient.State;
+using AlloyClient.Ui.Character;
 using AlloyClient.UiLib.Core;
 using AlloyClient.Utils;
 using Common;
@@ -237,7 +238,11 @@ public sealed class UserInput : Sprite {
             case true when Settings.Debug.CheckValue(key):
                 Render.DebugEnabled = !Render.DebugEnabled;
                 break;
-
+            case true when Settings.Crouch.CheckValue(key):
+                Map.LocalPlayer.LimitSpeed = !Map.LocalPlayer.LimitSpeed;
+                var notification = Map.LocalPlayer.LimitSpeed ? "crouch" : "off";
+                NotificationLayer.AddStatusText(Map.LocalPlayer, notification, 0xcfe0ff, 1000, 0);
+                break;
             case true when Settings.InvOne.CheckValue(key):
                 HandleUseItem(4);
                 break;
@@ -268,6 +273,7 @@ public sealed class UserInput : Sprite {
             case true when Settings.MagicPotion.CheckValue(key):
                 UsePotion(false);
                 break;
+
             // Chat //
             case true when Settings.Chat.CheckValue(key):
                 ClearMovement();
