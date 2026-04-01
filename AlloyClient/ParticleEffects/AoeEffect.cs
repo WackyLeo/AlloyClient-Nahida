@@ -16,7 +16,7 @@ public class AoeEffect : ParticleEffect {
 
     public override bool Update(double time, double dt) {
         var size = 200;
-        var lifetime = 200 * 6;
+        var lifetime = 200;
         var count = (int)(6 + _novaRadius * 2);
 
         for (var i = 0; i < count; i++) {

@@ -36,6 +36,7 @@ out GROUND_OUTPUT {
     vec4 UV;
     vec4 Mask;
     float Swizzle;
+    vec2 WorldPos;
 } vsOutput;
 
 void main() {
@@ -47,6 +48,9 @@ void main() {
 
     inputPosition.xy = (inputPosition.xy - 0.5) * 1.002 + 0.5;
     inputPosition.xy += data.Position.xy;
+
+    vsOutput.WorldPos = inputPosition.xy;
+
     gl_Position = inputPosition * WorldMatrix * ViewMatrix * ProjMatrix;
 
     vsOutput.baseUV = tileUV[verId];

@@ -1,10 +1,10 @@
 ﻿namespace AlloyClient.Networking.Packets.Incoming;
 
 public class GlobalNotification : IncomingPacket<GlobalNotification> {
-    public int Type;
     public string Text;
+    public int Type;
 
-    public override PacketId PacketId => PacketId.Unknown;
+    public override PacketId PacketId => PacketId.GlobalNotification;
 
     public override void Reset() {
         Type = 0;
@@ -17,6 +17,16 @@ public class GlobalNotification : IncomingPacket<GlobalNotification> {
     }
 
     public override void Handle() {
+        switch (Text) {
+            case "yellow": break;
+            case "red": break;
+            case "green": break;
+            case "purple": break;
+            case "showKeyUI": break;
+            case "giftChestOccupied": break;
+            case "giftChestEmpty": break;
+            case "beginnersPackage": break;
+        }
     }
 
     public override string ToString() {

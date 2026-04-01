@@ -24,22 +24,20 @@ public interface IOutgoingPacket : IPacket {
 public abstract class BasePacket<T> : IPacket where T : BasePacket<T>, new() {
     private static readonly ConcurrentQueue<T> PacketPool = new();
 
-    public static T CreatePacket() {
-        if (PacketPool.TryDequeue(out var packet)) {
-            return packet;
-        }
-
-        var packetInstance = new T();
-        packetInstance.Reset();
-        return packetInstance;
-    }
-
     public void ReturnPacket() {
         Reset();
         PacketPool.Enqueue((T)this);
     }
 
     public virtual PacketId PacketId => PacketId.Unknown;
+
+    public static T CreatePacket() {
+        if (PacketPool.TryDequeue(out var packet)) return packet;
+
+        var packetInstance = new T();
+        packetInstance.Reset();
+        return packetInstance;
+    }
 
     public abstract void Reset();
 }
@@ -68,7 +66,7 @@ public static class PacketUtils {
             PacketId.EnemyShoot => EnemyShoot.CreatePacket(),
             PacketId.Failure => Failure.CreatePacket(),
             //PacketId.File => File.CreatePacket(),
-            //PacketId.GlobalNotification => GlobalNotification.CreatePacket(),
+            PacketId.GlobalNotification => GlobalNotification.CreatePacket(),
             PacketId.Goto => Goto.CreatePacket(),
             PacketId.GuildResult => GuildResult.CreatePacket(),
             PacketId.InvitedToGuild => InvitedToGuild.CreatePacket(),
@@ -95,8 +93,7 @@ public static class PacketUtils {
         };
     }
 
-    private static IIncomingPacket LogAndReturnUnknown(PacketId packetId)
-    {
+    private static IIncomingPacket LogAndReturnUnknown(PacketId packetId) {
         Client.Log.Warn($"Unsupported incoming packet: {packetId} (0x{(byte)packetId:X2}), skipping.");
         return UnknownPacket.CreatePacket();
     }

@@ -18,9 +18,9 @@ public class NovaEffect : ParticleEffect {
     }
 
     public override bool Update(double time, double dt) {
-        var qualityScale = 0.5f;
-        var baseSize = 50;
-        var baseLife = 200;
+        const float qualityScale = 0.75f;
+        const int baseSize = 100;
+        const int baseLife = 200;
 
         var particleCount = (int)((4 + _novaRadius * 2) * qualityScale);
 

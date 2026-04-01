@@ -20,10 +20,6 @@ internal struct HealParticleData {
     }
 }
 
-/// <summary>
-///     One-shot ring of heal particles orbiting the entity.
-///     Each particle stays at a fixed angle + radius and rises over 1000ms.
-/// </summary>
 public class HealEffect : ParticleEffect {
     private const int Buffer = 20;
 

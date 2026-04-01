@@ -71,6 +71,8 @@ public static class Map {
 
     private static readonly List<(Projectile proj, double spawnAt)> PendingProjectiles = [];
 
+    private static readonly MapTile[] RebuildData = new MapTile[9];
+
     public static void InitMap(int width, int height, string name, string display, int diff, uint seed, int background,
         bool allowTp, bool showDisplays) {
         Width = width;
@@ -111,6 +113,11 @@ public static class Map {
 
             if (LocalPlayer != null && !entity.Properties.Static && !entity.Properties.AlwaysLoaded &&
                 entity.Properties.IsEnemy && !entity.Properties.IsQuest) {
+                if (entity.RenderBaseType is TypeWall ||
+                    entity.RenderBaseType is TypeCaveWall ||
+                    entity.RenderBaseType is TypeWallTop)
+                    continue;
+                
                 var dx = entity.Position.X - LocalPlayer.Position.X;
                 var dy = entity.Position.Y - LocalPlayer.Position.Y;
                 if (dx * dx + dy * dy > TileRenderDistance * TileRenderDistance) {
@@ -265,7 +272,7 @@ public static class Map {
         if (EntityStorage.TryGetValue(ModelType.PbObject, out var go)) {
             Render.StartDrawShadow();
             foreach (var type in go)
-                if (type.Position.Z == 0f)
+                if (type.Position.Z == 0f && type.Visible)
                     type.DrawShadow();
             Render.EndShadowDraw();
         }
@@ -334,13 +341,17 @@ public static class Map {
 
     private static void BuildTileVisibility() {
         VisibleTopTiles.Clear();
-
         foreach (var list in VisibleElevatedTiles.Values) list.Clear();
         Render.StartNewDrawTile();
 
-        for (var x = -LocalPlayer.UpdateRadius; x < LocalPlayer.UpdateRadius; x++) {
-            for (var y = -LocalPlayer.UpdateRadius; y < LocalPlayer.UpdateRadius; y++) {
-                if (x * x + y * y >= LocalPlayer.UpdateRadius * LocalPlayer.UpdateRadius) continue;
+        var halfWidthTiles = Settings.ScreenWidth / (100f * Settings.CameraZoom);
+        var halfHeightTiles = Settings.ScreenHeight / (100f * Settings.CameraZoom);
+        
+        var distToCorner = MathF.Sqrt(halfWidthTiles * halfWidthTiles + halfHeightTiles * halfHeightTiles);
+        var renderDist = (int)MathF.Ceiling(distToCorner) + 2;
+
+        for (var x = -renderDist; x < renderDist; x++) {
+            for (var y = -renderDist; y < renderDist; y++) {
                 var tile = GetTile(x + (int)LocalPlayer.Position.X, y + (int)LocalPlayer.Position.Y);
                 if (tile != null && tile.Type != 0xFF) {
                     if (tile.ZOffset != 0f) {
@@ -361,9 +372,8 @@ public static class Map {
 
         Render.SaveBlendStart();
 
-        for (var x = -LocalPlayer.UpdateRadius; x < LocalPlayer.UpdateRadius; x++) {
-            for (var y = -LocalPlayer.UpdateRadius; y < LocalPlayer.UpdateRadius; y++) {
-                if (x * x + y * y >= LocalPlayer.UpdateRadius * LocalPlayer.UpdateRadius) continue;
+        for (var x = -renderDist; x < renderDist; x++) {
+            for (var y = -renderDist; y < renderDist; y++) {
                 var tile = GetTile(x + (int)LocalPlayer.Position.X, y + (int)LocalPlayer.Position.Y);
                 if (tile != null && tile.Type != 0xFF && tile.ZOffset == 0f)
                     tile.DrawTileBlends();
@@ -402,34 +412,33 @@ public static class Map {
         _tiles[x, y] = tile;
         return tile;
     }
-    
-    private static readonly MapTile[] RebuildData = new MapTile[9];
 
     public static void SetTileData(int x, int y, ushort type) {
         var tile = GetTile(x, y);
         if (tile == null) return;
         TilesDirty = true;
         tile.SetType(type);
-        for (var y1 = y - 1; y1 <= y + 1; y1++){
-            for (var x1 = x - 1; x1 <= x + 1; x1++) {
-                RebuildTile(GetTile(x1, y1));
-            }
+        for (var y1 = y - 1; y1 <= y + 1; y1++) {
+            for (var x1 = x - 1; x1 <= x + 1; x1++) RebuildTile(GetTile(x1, y1));
         }
-        
+
         Array.Clear(RebuildData);
     }
-    
+
     private static void RebuildTile(MapTile tile) {
+        if (tile == null) return;
+
         var idx = 0;
-        for (var y1 = tile.Y - 1; y1 <= tile.Y + 1; y1++){
+        for (var y1 = tile.Y - 1; y1 <= tile.Y + 1; y1++) {
             for (var x1 = tile.X - 1; x1 <= tile.X + 1; x1++) {
-                RebuildData[idx++] = GetTile(x1, y1);
+                var t = GetTile(x1, y1);
+                RebuildData[idx++] = t ?? tile;
             }
         }
-        
+
         tile.Rebuild(RebuildData);
     }
-    
+
     public static void AddParticleEffect(ParticleEffect effect) {
         if (ParticleGenCount == ParticleGenerators.Count)
             ParticleGenerators.Add(effect);

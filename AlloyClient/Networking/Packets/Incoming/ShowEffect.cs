@@ -40,7 +40,6 @@ public class ShowEffect : IncomingPacket<ShowEffect> {
     public override void Handle() {
         ParticleEffect effect = null;
         Map.Entities.TryGetValue(TargetObjectId, out var entity);
-
         switch (EffectType) {
             case EffectType.Heal:
                 if (entity == null) return;

@@ -14,7 +14,7 @@ namespace AlloyClient.Rendering;
 
 public static partial class Render {
     private const int BufferSize = 1000;
-    private const int TileBufferSize = (int)(Map.TileRenderDistance * Map.TileRenderDistance * MathHelper.Pi) * 4;
+    private const int TileBufferSize = 30000;
     private const int ShadowBufferSize = 4096;
 
     public static int _Fbo;
@@ -192,6 +192,14 @@ public static partial class Render {
 
     public static void SetShaderParams(GameTime gameTime) {
         var timeObj = (float)(gameTime.TotalMs / 1000.0f);
+
+        var playerPos = Map.LocalPlayer?.Position ?? Vector2.Zero;
+        var sightRadius = Map.LocalPlayer?.UpdateRadius ?? 20f;
+        _shaderGround.SetValue("uPlayerPos", playerPos);
+        _shaderGround.SetValue("uSightRadius", sightRadius);
+
+        _shaderGround.SetValue("WorldMatrix", Camera.WorldMatrix);
+        _shaderGround.SetValue("ViewMatrix", Camera.ViewMatrix);
 
         _shaderGround.SetValue("WorldMatrix", Camera.WorldMatrix);
         _shaderGround.SetValue("ViewMatrix", Camera.ViewMatrix);
