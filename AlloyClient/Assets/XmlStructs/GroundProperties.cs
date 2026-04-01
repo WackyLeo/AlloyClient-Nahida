@@ -10,6 +10,7 @@ public class GroundProperties {
     public readonly int CompositePriority;
     public readonly TextureData CornerTD;
     public readonly TextureData EdgeTD;
+    public readonly bool HasEdge;
 
 
     public readonly TextureData InnerCornerTD;
@@ -22,7 +23,6 @@ public class GroundProperties {
     public readonly ushort ObjectType;
     public readonly bool Push;
     public readonly bool RandomOffset;
-    public readonly bool HasEdge;
     public readonly bool SameTypeEdgeMode;
     public readonly bool Sink;
     public readonly bool Sinking;

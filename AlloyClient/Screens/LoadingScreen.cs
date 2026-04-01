@@ -1,23 +1,18 @@
-﻿using AlloyClient.AppEngine;
-using AlloyClient.Assets;
+﻿using System.Threading.Tasks;
+using AlloyClient.AppEngine;
 using AlloyClient.Assets.Libraries;
 using AlloyClient.Display;
-using AlloyClient.Models;
 using AlloyClient.State;
-using AlloyClient.Ui.Components.Graphics;
 using AlloyClient.UiLib.BuiltIn;
 using AlloyClient.UiLib.Core;
 using AlloyClient.UiLib.Enums;
 using AlloyClient.UiLib.Extra;
-using AlloyClient.Utils;
-using System.Threading.Tasks;
 
 namespace AlloyClient.Screens;
 
 public class LoadingScreen : Screen {
-
     private readonly SimpleText _text;
-    
+
     public LoadingScreen() {
         _text = new SimpleText(new TextConfig {
             Text = "Loading...",
@@ -30,17 +25,14 @@ public class LoadingScreen : Screen {
             Anchor = UiAnchor.Middle
         });
         AddChild(_text);
-        
+
         AddEventListener(Event.AddedToStage, OnStageEnter);
         AddEventListener(Event.RemovedFromStage, OnStageExit);
         ObjectLibrary.SetFallback();
 
         AddEventListener(Task.WhenAll(
             AppRequests.Startup(),
-            //Task.Run(SoundManager.PreLoadSounds),
-            //Task.Run(Music.PreLoadSongs),
-            AssetParser.LoadAssetsAsync(),
-            Task.Delay(2000)
+            Task.Delay(0)
         ), () => { ScreenManager.FadeToScreen(new TitleScreen(), Easing.SineInOut, 1000, 0x0); });
     }
 
@@ -52,7 +44,7 @@ public class LoadingScreen : Screen {
     private void OnStageExit() {
         Stage.RemoveEventListener(ResizeEvent.Resize, OnResize);
     }
-    
+
     protected override void OnResize(ResizeEvent args) {
         _text.Scale = Stage.ScreenScale;
         _text.X = Stage.StageWidth / 2;

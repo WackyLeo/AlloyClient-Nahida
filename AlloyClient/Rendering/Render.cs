@@ -101,8 +101,6 @@ public static partial class Render {
         GL.FramebufferRenderbuffer(FramebufferTarget.Framebuffer, FramebufferAttachment.DepthStencilAttachment,
             RenderbufferTarget.Renderbuffer, _RboID);
 
-        if (GL.CheckFramebufferStatus(FramebufferTarget.Framebuffer) == FramebufferStatus.FramebufferComplete)
-            Console.WriteLine("Frame buffer completeness passed!");
         GL.BindFramebuffer(FramebufferTarget.Framebuffer, 0);
 
         _shaderGround = ContentReader.LoadShader("Shaders/Ground", TileDefines);
