@@ -12,11 +12,12 @@ public static class StatsUtil {
             26 => "Vitality",
             27 => "Wisdom",
             102 => "Luck",
-            109 => "Maximum SH",
-            113 => "Damage Taken",
-            114 => "All Damage Taken",
-            115 => "Damage Reduction",
-            129 => "Max Ammo",
+            109 => "Maximum Shield",
+            110 => "Shield",
+            113 => "% Damage Resistance",
+            114 => "% To All Damage Multiplier",
+            115 => "Defense Damage Reduction Cap",
+            129 => "Maximum Ammunition",
             _ => "Invalid Stat!"
         };
     }

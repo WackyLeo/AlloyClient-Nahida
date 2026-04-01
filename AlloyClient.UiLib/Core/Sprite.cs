@@ -142,7 +142,6 @@ public partial class Sprite : DisplayContainer {
         var tr = Rotation;
         var test = false;
         
-        //TODO: maybe move these out into the client rather than being built in
         if (TooltipMode) {
             (tx, ty) = MouseInput.GetMousePosition().ToPair();
             (_anchorX, _anchorY) = InternalUtils.GetAnchorOffset(
@@ -195,8 +194,8 @@ public partial class Sprite : DisplayContainer {
         _trueRotation = tr;
 
         if (TooltipMode) {
-            _trueX = Math.Clamp(_trueX, 0, UiRender.Screen.X - Width);
-            _trueY = Math.Clamp(_trueY, 0, UiRender.Screen.Y - Height);
+            _trueX = Math.Clamp(_trueX, 0, Math.Max(0, UiRender.Screen.X - Width));
+            _trueY = Math.Clamp(_trueY, 0, Math.Max(0, UiRender.Screen.Y - Height));
         }
 
         if (EnableClipRect) {

@@ -21,6 +21,7 @@ public class ItemDesc {
     public readonly bool Div;
     public readonly string Divinity;
     public readonly int Doses;
+    public readonly ExtraTooltipDataDesc[] ExtraTooltipData;
     public readonly int FameBonus;
     public readonly bool Ferozium;
     public readonly bool InvUse;
@@ -34,8 +35,10 @@ public class ItemDesc {
     public readonly ushort ObjectType;
     public readonly bool Potion;
     public readonly ProjectileDesc Projectiles;
+    public readonly int Quantity;
     public readonly float RateOfFire;
     public readonly bool Resurrects;
+    public readonly string SetName;
     public readonly int SlotType;
     public readonly bool Soulbound;
     public readonly bool ST;
@@ -78,6 +81,7 @@ public class ItemDesc {
         MpCost = xml.GetValue<int>("MpCost");
         Cooldown = xml.GetValue("Cooldown", 0.5f);
         Doses = xml.GetValue<int>("Doses");
+        Quantity = xml.GetValue<int>("Quantity");
         SuccessorId = xml.GetValue<string>("SuccessorId");
         Backpack = xml.HasElement("Backpack");
         LDBoosted = xml.HasElement("LDBoosted");
@@ -98,12 +102,17 @@ public class ItemDesc {
         UnHoly = xml.HasElement("Unholy");
         Ferozium = xml.HasElement("Ferozium");
         ST = xml.HasAttribute("setType");
+        SetName = xml.GetValue<string>("setName");
         Divinity = xml.GetValue<string>("Divinity");
 
         NextCount = xml.GetValue("NextCount", 99999);
         AllProjectiles = xml.Elements("Projectile")
-                            .Select(p => new ProjectileDesc(p))
-                            .ToArray();
+            .Select(p => new ProjectileDesc(p))
+            .ToArray();
+
+        ExtraTooltipData = xml.Element("ExtraTooltipData")?.Elements("EffectInfo")
+            .Select(e => new ExtraTooltipDataDesc(e))
+            .ToArray();
     }
 }
 
@@ -147,7 +156,7 @@ public class ProjectileDesc {
         }
 
         Effects = xml.Elements("ConditionEffect")
-                     .Select(x => new ConditionEffectDesc(x.Value, x.GetAttribute<float>("duration"))).ToArray();
+            .Select(x => new ConditionEffectDesc(x.Value, x.GetAttribute<float>("duration"))).ToArray();
 
         Trail = xml.HasElement("ParticleTrail") ? new ParticleTrailDesc(xml.Element("ParticleTrail")) : null;
 
@@ -246,5 +255,15 @@ public class ActivateEffectDesc {
         RemoveSelf = xml.GetAttribute<bool>("removeSelf");
         DungeonName = xml.GetAttribute<string>("dungeonName");
         LockedName = xml.GetAttribute<string>("lockedName");
+    }
+}
+
+public class ExtraTooltipDataDesc {
+    public readonly string Description;
+    public readonly string Name;
+
+    public ExtraTooltipDataDesc(XElement xml) {
+        Name = xml.GetAttribute<string>("name");
+        Description = xml.GetAttribute<string>("description");
     }
 }
