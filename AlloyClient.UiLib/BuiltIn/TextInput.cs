@@ -16,7 +16,7 @@ public struct InputConfig {
     public FontType FontType = FontType.Normal;
     public uint Color = 0xFFFFFF;
     public uint OutlineColor = 0x0;
-    public uint OutlineThickness = 4;
+    public uint OutlineThickness = 1;
     public int Width = 100;
     public string DefaultText = "";
     public byte MaxCharacters = byte.MaxValue;

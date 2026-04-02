@@ -10,6 +10,7 @@ using AlloyClient.Networking.Structs.DataObjects;
 using AlloyClient.Rendering;
 using AlloyClient.State;
 using AlloyClient.Ui.Character;
+using AlloyClient.Ui.Wiki;
 using AlloyClient.UiLib.Core;
 using AlloyClient.Utils;
 using Common;
@@ -20,8 +21,8 @@ namespace AlloyClient.Game.Components;
 
 public sealed class UserInput : Sprite {
     private static bool _windowFocus;
-
     private static bool _manualFocus = true;
+    private static bool _intputDisable = false;
 
     private bool _autoFire;
 
@@ -41,6 +42,14 @@ public sealed class UserInput : Sprite {
         AddEventListener(Event.RemovedFromStage, RemovedFromStage);
     }
 
+    public static void SetInputDisabled(bool disable) {
+        _intputDisable = disable;
+    }
+
+    public static bool GetInputDisabled() {
+        return _intputDisable;
+    }
+    
     public static Vector2 MousePosition { get; private set; }
 
     private void AddedToStage() {
@@ -54,7 +63,7 @@ public sealed class UserInput : Sprite {
         Stage.AddEventListener(MouseEvent.MiddleClick, OnMiddleClick);
         Stage.AddEventListener(MouseEvent.MouseMove, OnMouseMove);
         AddEventListener(Event.EnterFrame, OnFrameEnter);
-    }
+    }   
 
     private void RemovedFromStage() {
         Stage.RemoveEventListener(KeyboardEvent.KeyDown, OnKeyDown);
@@ -78,7 +87,7 @@ public sealed class UserInput : Sprite {
     }
 
     private static bool IsInputDisabled() {
-        return !(_windowFocus && _manualFocus);
+        return !(_windowFocus && _manualFocus) || _intputDisable;
     }
 
     private void OnLeftDown(MouseEvent args) {
@@ -237,6 +246,11 @@ public sealed class UserInput : Sprite {
                 break;
             case true when Settings.Debug.CheckValue(key):
                 Render.DebugEnabled = !Render.DebugEnabled;
+                break;
+            case true when Settings.Debug2.CheckValue(key):
+                var wiki = new WikiWindow();
+                Stage.AddChild(wiki);
+                SetInputDisabled(true);
                 break;
             case true when Settings.Crouch.CheckValue(key):
                 Map.LocalPlayer.LimitSpeed = !Map.LocalPlayer.LimitSpeed;
