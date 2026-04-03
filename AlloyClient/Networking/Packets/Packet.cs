@@ -78,6 +78,7 @@ public static class PacketUtils {
             //PacketId.Pic => Pic.CreatePacket(),
             PacketId.Ping => Ping.CreatePacket(),
             PacketId.PlaySound => PlaySound.CreatePacket(),
+            PacketId.SwitchMusic => SwitchMusic.CreatePacket(),
             //PacketId.QuestObjId => QuestObjId.CreatePacket(),
             PacketId.Reconnect => Reconnect.CreatePacket(),
             PacketId.ServerPlayerShoot => ServerPlayerShoot.CreatePacket(),

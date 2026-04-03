@@ -4,6 +4,7 @@ using AlloyClient.Display;
 using AlloyClient.Game.Components;
 using AlloyClient.Networking;
 using AlloyClient.Rendering;
+using AlloyClient.Sound;
 using AlloyClient.State;
 using Common;
 
@@ -28,10 +29,9 @@ public sealed class GameScreen : Screen {
     public GameScreen() {
         Client.Connect(Settings.GameServerAddress, Settings.GameServerPort);
         GameSprite = new GameSprite();
-
         Render.ResizeFbo(Settings.ScreenWidth, Settings.ScreenHeight);
-
         AddChild(GameSprite);
+        Music.Stop();
     }
 
     public override void Update(GameTime gameTime) {

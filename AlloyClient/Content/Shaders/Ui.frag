@@ -41,6 +41,9 @@ const float IdTitleLogo = 7.0;
 const float IdMinimap = 8.0;
 const float IdEllipse = 9.0;
 const float IdHpBar = 10.0;
+const float IdSdfRect = 11.0;
+const float IdDiamondLine = 12.0;
+const float IdCutEdge = 13.0;
 
 // Foward declare eff's
 
@@ -111,7 +114,7 @@ float GetOpacityFromDistance(float signedDistance, vec2 Jdx, vec2 Jdy) {
 vec4 RenderHpBar() {
     float w = inp.Extra1.x;
     float h = inp.Extra1.y;
-    float p = inp.Extra1.z; 
+    float p = inp.Extra1.z;
 
     float totalW = w + p * 2.0;
     float totalH = h + p * 2.0;
@@ -128,8 +131,6 @@ vec4 RenderHpBar() {
     if (dist <= outlineWidth) return vec4(0.0, 0.0, 0.0, 1.0);
     discard;
 }
-
-const float IdSdfRect = 11.0;
 
 vec4 RenderSdfRect() {
     float w = inp.Extra1.x;
@@ -261,7 +262,7 @@ vec4 RenderOutline() {
 
     vec2 dirs[8] = vec2[](
     -dx - dy, -dy, dx - dy, dx,
-    dx + dy,  dy, -dx + dy, -dx
+    dx + dy, dy, -dx + dy, -dx
     );
 
     float outlineAlpha = 0.0;
@@ -340,9 +341,92 @@ vec4 RenderEllipse() {
     return mix(unpackColor(inp.Color), unpackColor(inp.Override), color_val);
 }
 
+vec4 RenderCutEdge() {
+    float w = inp.Extra1.x;
+    float h = inp.Extra1.y;
+    float cx = inp.Extra1.z;
+    float cy = inp.Extra1.w;
+    int cutsMask = int(inp.Extra2.x);
+
+    vec2 totalSize = vec2(w, h);
+    vec2 p = inp.UVCoords * totalSize;
+    vec2 center = totalSize * 0.5;
+
+    vec2 dir = p - center;
+    vec2 absDir = abs(dir);
+    vec2 halfSize = totalSize * 0.5;
+
+    vec2 d = absDir - halfSize;
+    float dist = max(d.x, d.y);
+
+    bool applyCut = false;
+    if (dir.x <= 0.0 && dir.y <= 0.0 && (cutsMask & 1) != 0) applyCut = true;
+    else if (dir.x >= 0.0 && dir.y <= 0.0 && (cutsMask & 2) != 0) applyCut = true;
+    else if (dir.x <= 0.0 && dir.y >= 0.0 && (cutsMask & 4) != 0) applyCut = true;
+    else if (dir.x >= 0.0 && dir.y >= 0.0 && (cutsMask & 8) != 0) applyCut = true;
+
+    if (applyCut) {
+        vec2 n = vec2(cy, cx);
+        float len = length(n);
+        if (len > 0.0) {
+            n /= len;
+            vec2 pointOnLine = vec2(halfSize.x - cx, halfSize.y);
+            float cornerDist = dot(absDir - pointOnLine, n);
+            dist = max(dist, cornerDist);
+        }
+    }
+
+    vec4 bgColor = unpackColor(inp.Color);
+
+    float px = fwidth(dist);
+    if (px == 0.0) px = 1.0;
+    
+    float alpha = clamp(0.5 - (dist / px), 0.0, 1.0);
+
+    if (alpha <= 0.001) discard;
+    return vec4(bgColor.rgb, bgColor.a * alpha);
+}
+
+float sdDiamond(vec2 p, float s) {
+    vec2 q = abs(p);
+    
+    // 0.707 is 1/sqrt(2) for exact distance
+    return (q.x + q.y - s) * 0.70710678;
+}
+
+float sdBox(vec2 p, vec2 b) {
+    vec2 d = abs(p) - b;
+    return length(max(d, 0.0)) + min(max(d.x, d.y), 0.0);
+}
+
+vec4 RenderDiamondLine() {
+    float lineLength = inp.Extra1.x;
+    float lineThickness = inp.Extra1.y;
+    float diamondSize = inp.Extra1.z;
+
+    vec2 totalSize = vec2(lineLength + diamondSize * 2.0, max(lineThickness, diamondSize * 2.0));
+    vec2 p = inp.UVCoords * totalSize;
+    vec2 center = totalSize * 0.5;
+    vec2 localP = p - center;
+
+    float dBox = sdBox(localP, vec2(lineLength * 0.5, lineThickness * 0.5));
+    float dLeft = sdDiamond(localP - vec2(-lineLength * 0.5, 0.0), diamondSize);
+    float dRight = sdDiamond(localP - vec2(lineLength * 0.5, 0.0), diamondSize);
+    float dist = min(dBox, min(dLeft, dRight));
+
+    vec4 bgColor = unpackColor(inp.Color);
+    float px = fwidth(dist);
+    if (px == 0.0) px = 1.0;
+
+    float alpha = smoothstep(px, -px, dist);
+
+    if (alpha <= 0.001) discard;
+    return vec4(bgColor.rgb, bgColor.a * alpha);
+}
+
 void main() {
     vec4 pixel = vec4(0);
-    
+
     //TODO: replace pos1 with gl_FragCoord and send screen coords in scissor instead
     if (inp.Position1.x < inp.Scissor.x || inp.Position1.x > inp.Scissor.z || inp.Position1.y < inp.Scissor.w || inp.Position1.y > inp.Scissor.y) {
         discard;
@@ -371,13 +455,17 @@ void main() {
         pixel = RenderMinimap();
     } else if (type == IdEllipse) {
         pixel = RenderEllipse();
-    }  else if (type == IdHpBar) {
+    } else if (type == IdHpBar) {
         pixel = RenderHpBar();
     } else if (type == IdSdfRect) {
         pixel = RenderSdfRect();
+    } else if (type == IdDiamondLine) {
+        pixel = RenderDiamondLine();
+    } else if (type == IdCutEdge) {
+        pixel = RenderCutEdge();
     }
 
-    if (color.a > 0 && type != IdColor && type != IdText && type != IdEllipse && type != IdSdfRect) {
+    if (color.a > 0 && type != IdColor && type != IdText && type != IdEllipse && type != IdSdfRect && type != IdDiamondLine && type != IdCutEdge) {
         pixel *= color;
     }
 
@@ -457,9 +545,9 @@ vec3 CalculateElectricEffect(vec2 screenPos, float time, float bodyAlpha, float 
 
     float bolt = smoothstep(0.70, 1.0, arc);
 
-    vec3 dark= vec3(0.0,  0.25, 0.85);
+    vec3 dark= vec3(0.0, 0.25, 0.85);
     vec3 mid = vec3(0.15, 0.65, 1.0);
-    vec3 bright = vec3(0.85, 1.0,  1.0);
+    vec3 bright = vec3(0.85, 1.0, 1.0);
 
     vec3 elec = mix(dark, mid, arc);
     elec = mix(elec, bright, bolt);

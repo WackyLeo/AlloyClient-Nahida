@@ -9,7 +9,7 @@ using NAudio.Wave;
 namespace AlloyClient.Sound;
 
 public static class Music {
-    public const string MusicUrl = Settings.AppEngineUrl + "/sfx/music/";
+    public const string MusicUrl = Settings.AppEngineUrl + "//music/";
 
     private static readonly Logger Log = new(typeof(Music));
 
@@ -18,8 +18,7 @@ public static class Music {
     private static Song _currentSong;
 
     public static void PreLoadSongs() {
-        LoadMusic("Main Menu");
-        LoadMusic("ULTRAKILL - The World Looks Red (Loop)");
+        LoadMusic("Reclaiming Entropy");
     }
 
     public static void LoadMusic(string name) {

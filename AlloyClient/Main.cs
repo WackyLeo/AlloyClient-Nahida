@@ -9,6 +9,7 @@ using AlloyClient.Engine.Graphics;
 using AlloyClient.Game.Components;
 using AlloyClient.Rendering;
 using AlloyClient.Screens;
+using AlloyClient.Sound;
 using AlloyClient.State;
 using AlloyClient.Ui;
 using AlloyClient.UiLib;
@@ -203,6 +204,8 @@ public class Main {
         GL.Enable(EnableCap.Blend);
         GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
         GL.Disable(EnableCap.FramebufferSrgb);
+
+        Music.LoadMusic("Reclaiming Entropy");
 
         while (true) {
             var elapsedMs = sw.Elapsed.TotalMilliseconds;

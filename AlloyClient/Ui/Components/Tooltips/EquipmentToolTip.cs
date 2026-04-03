@@ -122,11 +122,19 @@ public sealed class EquipmentToolTip : Tooltip {
 
     private void AddLineBreak() {
         _currentY += 2;
-        var line = new ColorRect(new ColorRectConfig { Width = ToolWidth - 24, Height = 2, Color = 0xFF111111u });
+
+        var line = new DiamondDivider(new DiamondDividerConfig {
+            LineLength = ToolWidth - 36,
+            LineThickness = 2,
+            DiamondSize = 4,
+            Color = 0xFFAAAAAAu
+        });
+
         line.X = 12;
         line.Y = _currentY;
         AddChild(line);
-        _currentY += 8;
+
+        _currentY += 12;
     }
 
     private void AddCombatStats() {
