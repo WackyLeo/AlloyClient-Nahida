@@ -10,8 +10,6 @@ using AlloyClient.Networking.Structs.DataObjects;
 using AlloyClient.Rendering;
 using AlloyClient.State;
 using AlloyClient.Ui.Character;
-using AlloyClient.Ui.Crafting;
-using AlloyClient.Ui.DailyQuest;
 using AlloyClient.Ui.Wiki;
 using AlloyClient.UiLib.Core;
 using AlloyClient.Utils;
@@ -255,15 +253,8 @@ public sealed class UserInput : Sprite {
                 SetInputDisabled(true);
                 break;
             case true when Settings.Debug3.CheckValue(key):
-                var craft = new CraftingWindow();
-                Stage.AddChild(craft);
-                SetInputDisabled(true);
                 break;
             case true when Settings.Debug4.CheckValue(key):
-                GameSprite.DailyQuestWindow = new DailyQuestWindow();
-                GameSprite.DailyQuestWindow.LoadQuests(Map.DailyQuests);
-                Stage.AddChild(GameSprite.DailyQuestWindow);
-                SetInputDisabled(true);
                 break;
             case true when Settings.Debug5.CheckValue(key):
                 break;
