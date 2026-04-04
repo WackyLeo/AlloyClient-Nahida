@@ -1,6 +1,4 @@
-﻿using AlloyClient.Game.Components.Hud;
-using AlloyClient.State;
-using AlloyClient.UiLib.Core;
+﻿using AlloyClient.State;
 using Common;
 using OpenTK.Graphics.OpenGL;
 using OpenTK.Mathematics;
@@ -65,7 +63,7 @@ public static class RenderPipeline {
         GL.Enable(EnableCap.DepthTest);
     }
 
-    public static void EndFrameAndPostProcess(GameTime gameTime, Vector2 gameCenter,Vector2 gameHalfSize) {
+    public static void EndFrameAndPostProcess(GameTime gameTime, Vector2 gameCenter, Vector2 gameHalfSize) {
         GL.BindFramebuffer(FramebufferTarget.Framebuffer, 0);
         GL.ClearColor(0f, 0f, 0f, 1f);
         GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
@@ -73,12 +71,12 @@ public static class RenderPipeline {
         GL.Disable(EnableCap.DepthTest);
         GL.Disable(EnableCap.CullFace);
 
-        Render._shaderPostProcess.Apply();
-        Render._shaderPostProcess.SetValue("uTime", (float)(gameTime.TotalMs / 1000.0));
-        Render._shaderPostProcess.SetValue("uResolution", new Vector2(Settings.ScreenWidth, Settings.ScreenHeight));
+        Render.ShaderPostProcess.Apply();
+        Render.ShaderPostProcess.SetValue("uTime", (float)(gameTime.TotalMs / 1000.0));
+        Render.ShaderPostProcess.SetValue("uResolution", new Vector2(Settings.ScreenWidth, Settings.ScreenHeight));
 
-        Render._shaderPostProcess.SetValue("uGameCenter", gameCenter);
-        Render._shaderPostProcess.SetValue("uGameHalfSize", gameHalfSize);
+        Render.ShaderPostProcess.SetValue("uGameCenter", gameCenter);
+        Render.ShaderPostProcess.SetValue("uGameHalfSize", gameHalfSize);
 
         GL.BindTextureUnit(7, Render._FboTID);
         GL.BindVertexArray(Render._emptyVao);

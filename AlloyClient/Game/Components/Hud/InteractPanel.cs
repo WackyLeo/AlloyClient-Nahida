@@ -81,6 +81,7 @@ public sealed class InteractPanel : Sprite {
             "StorageBuyNPC" => true,
             "WikiAlter" => true,
             "Merchant" => true,
+            "QuestRewards" => true,
             _ => false
         };
     }
@@ -97,6 +98,7 @@ public sealed class InteractPanel : Sprite {
             "TributeButton" => new TributeButtonPanel(entity),
             "CurseButton" => null,
             "CurseObject" => null,
+            "QuestRewards" => new QuestPanel(),
             "TributeObjectOption" => new TributeOptionPanel(entity),
             "MarketNPC" => null,
             "StorageNPC" => null,

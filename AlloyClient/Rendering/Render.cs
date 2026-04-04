@@ -41,7 +41,7 @@ public static partial class Render {
     private static Shader _shaderParticle;
     private static Shader _shaderGroundObject;
     private static Shader _shaderBackground;
-    public static Shader _shaderPostProcess;
+    public static Shader ShaderPostProcess;
 
     // Vertex Objects
     private static VertexArrayObject _defaultVao;
@@ -70,11 +70,11 @@ public static partial class Render {
     public static int BlendTileStart;
 
     public static unsafe void FirstTimeInit(Sampler atlas) {
-        _shaderPostProcess = ContentReader.LoadShader("Shaders/PostProcess");
+        ShaderPostProcess = ContentReader.LoadShader("Shaders/PostProcess");
 
         _emptyVao = GL.GenVertexArray();
-        _shaderPostProcess.Apply();
-        var loc = GL.GetUniformLocation(_shaderPostProcess.Handle, "colourTexture");
+        ShaderPostProcess.Apply();
+        var loc = GL.GetUniformLocation(ShaderPostProcess.Handle, "colourTexture");
         if (loc != -1) GL.Uniform1i(loc, 7);
 
         GL.GenFramebuffer(out _Fbo);
@@ -186,7 +186,11 @@ public static partial class Render {
         GL.BindRenderbuffer(RenderbufferTarget.Renderbuffer, _RboID);
         GL.RenderbufferStorage(RenderbufferTarget.Renderbuffer, InternalFormat.Depth24Stencil8, width, height);
 
-        GL.BindTexture(TextureTarget.Texture2d, 0);
+        if (Main.gameAtlasSampler != null)
+            GL.BindTextureUnit(Main.gameAtlasSampler.TextureUnit, Main.gameAtlasSampler.TextureHandle);
+        else
+            GL.BindTexture(TextureTarget.Texture2d, 0);
+
         GL.BindRenderbuffer(RenderbufferTarget.Renderbuffer, 0);
     }
 

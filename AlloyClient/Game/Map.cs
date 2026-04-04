@@ -48,6 +48,7 @@ public static class Map {
     public static readonly Dictionary<int, Entity> InteractiveObjects = new();
     private static readonly Dictionary<float, List<MapTile>> VisibleElevatedTiles = new();
     public static readonly List<ParticleEffect> ParticleGenerators = [];
+    public static List<QuestData> DailyQuests = new();
 
     public static int ParticleGenCount;
     public static EnemyHit PendingEnemyHit = EnemyHit.CreatePacket();
@@ -84,10 +85,14 @@ public static class Map {
         Background = background;
         AllowPlayerTeleport = allowTp;
         ShowDisplays = showDisplays;
-
         _tiles = new MapTile[width + 1, height + 1];
-
         Minimap.OnNewMap.Dispatch(width, height);
+
+        // Pull the DQ Quest data
+        if (name == "Quest Room") {
+            var reqData = QuestFetchAsk.CreatePacket();
+            Client.QueuePacket(reqData);
+        }
     }
 
     public static void Update(double time, double dt) {
@@ -117,7 +122,7 @@ public static class Map {
                     entity.RenderBaseType is TypeCaveWall ||
                     entity.RenderBaseType is TypeWallTop)
                     continue;
-                
+
                 var dx = entity.Position.X - LocalPlayer.Position.X;
                 var dy = entity.Position.Y - LocalPlayer.Position.Y;
                 if (dx * dx + dy * dy > TileRenderDistance * TileRenderDistance) {
@@ -346,7 +351,7 @@ public static class Map {
 
         var halfWidthTiles = Settings.ScreenWidth / (100f * Settings.CameraZoom);
         var halfHeightTiles = Settings.ScreenHeight / (100f * Settings.CameraZoom);
-        
+
         var distToCorner = MathF.Sqrt(halfWidthTiles * halfWidthTiles + halfHeightTiles * halfHeightTiles);
         var renderDist = (int)MathF.Ceiling(distToCorner) + 2;
 
@@ -523,6 +528,7 @@ public static class Map {
 
         Projectiles.Clear();
         PendingProjectiles.Clear();
+        DailyQuests.Clear();
 
         LocalPlayerId = 0;
         LocalPlayer = null;

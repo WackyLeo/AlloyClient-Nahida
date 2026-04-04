@@ -15,22 +15,24 @@ public struct SdfRectConfig {
     public uint Color = 0x363636;
     public uint OutlineColor = 0x676767;
     public float OutlineSize = 2f;
-    public float ShadowRadius = 12f;
+    public float ShadowRadius = 3f;
     public float ShadowAlpha = 0.5f;
     public float Alpha = 1.0f;
     public UiAnchor Anchor = UiAnchor.LeftTop;
     public bool MouseEnabled = false;
-    public SdfRectConfig() { }
+
+    public SdfRectConfig() {
+    }
 }
 
 public class SdfRect : Sprite {
-    private int _w;
+    private readonly int _cut;
+    private readonly CutEdges _cuts;
     private int _h;
-    private int _cut;
-    private CutEdges _cuts;
-    private float _outlineSize;
-    private float _shadowRadius;
-    private float _shadowAlpha;
+    private readonly float _outlineSize;
+    private readonly float _shadowAlpha;
+    private readonly float _shadowRadius;
+    private int _w;
 
     public SdfRect(SdfRectConfig config) {
         X = config.X;
@@ -49,10 +51,10 @@ public class SdfRect : Sprite {
         Alpha = config.Alpha;
         SetAnchor(config.Anchor);
         MouseEnabled = config.MouseEnabled;
-        
+
         TextureId = (TextureType)11;
         SetHitboxType(CollisionType.Square);
-        
+
         ResizeBackBuffer();
         FillData();
     }
@@ -63,16 +65,16 @@ public class SdfRect : Sprite {
     }
 
     private void FillData() {
-        float pad = _shadowRadius + _outlineSize;
-    
+        var pad = _shadowRadius + _outlineSize;
+
         VertexData[0] = new VertexUi(new Vector2(-pad, -pad), new Vector2(0, 0));
         VertexData[1] = new VertexUi(new Vector2(_w + pad, -pad), new Vector2(1, 0));
         VertexData[2] = new VertexUi(new Vector2(_w + pad, _h + pad), new Vector2(1, 1));
         VertexData[3] = new VertexUi(new Vector2(-pad, _h + pad), new Vector2(0, 1));
 
         Extra1 = new Vector4(_w, _h, _cut, _shadowRadius);
-        
-        int cutMask = 0;
+
+        var cutMask = 0;
         if ((_cuts & CutEdges.TopLeft) != 0) cutMask |= 1;
         if ((_cuts & CutEdges.TopRight) != 0) cutMask |= 2;
         if ((_cuts & CutEdges.BottomLeft) != 0) cutMask |= 4;
@@ -81,7 +83,7 @@ public class SdfRect : Sprite {
         Extra2 = new Vector4(_shadowAlpha, cutMask, _outlineSize, 0);
 
         SetGraphicsBuffer();
-    
+
         SelfContentWidth = _w;
         SelfContentHeight = _h;
         UpdateBounds();

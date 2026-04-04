@@ -60,6 +60,9 @@ public static class Settings {
 
         Debug.Set(Scancode.F1);
         Debug2.Set(Scancode.F2);
+        Debug3.Set(Scancode.F3);
+        Debug4.Set(Scancode.F4);
+        Debug5.Set(Scancode.F5);
 
         #region HOTKEYS
 
@@ -373,8 +376,12 @@ public static class Settings {
     public static InputSetting Interact = new();
     public static InputSetting Escape = new();
     public static InputSetting Crouch = new();
+
     public static InputSetting Debug = new();
     public static InputSetting Debug2 = new();
+    public static InputSetting Debug3 = new();
+    public static InputSetting Debug4 = new();
+    public static InputSetting Debug5 = new();
 
     // Chat
     public static InputSetting Chat = new();

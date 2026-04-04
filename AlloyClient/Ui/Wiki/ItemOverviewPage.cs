@@ -360,8 +360,10 @@ public class ItemOverviewPage : Container {
         if (!_isDraggingThumb) return;
         var trackRange = _gridClip.SelfContentHeight - _scrollbarThumb.Height;
         if (trackRange <= 0) return;
+
+        var dragDeltaY = (e.Coords.Y - _thumbDragStartY) / Stage.ScreenScale.Y;
         _scrollOffset = Math.Clamp(
-            _thumbDragStartOffset + (e.Coords.Y - _thumbDragStartY) / trackRange * _maxScrollOffset,
+            _thumbDragStartOffset + dragDeltaY / trackRange * _maxScrollOffset,
             0, _maxScrollOffset);
         ApplyScroll();
     }

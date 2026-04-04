@@ -553,8 +553,10 @@ public class EnemyOverviewPage : Container {
         if (_isDraggingThumb) {
             var trackRange = _listClip.SelfContentHeight - _scrollbarThumb.Height;
             if (trackRange > 0) {
+                var dragDeltaY = (e.Coords.Y - _thumbDragStartY) / Stage.ScreenScale.Y;
+
                 _scrollOffset = Math.Clamp(
-                    _thumbDragStartOffset + (e.Coords.Y - _thumbDragStartY) / trackRange * _maxScrollOffset,
+                    _thumbDragStartOffset + dragDeltaY / trackRange * _maxScrollOffset,
                     0, _maxScrollOffset);
                 ApplyScroll();
             }
@@ -563,8 +565,10 @@ public class EnemyOverviewPage : Container {
         if (_isLootDragging) {
             var trackRange = _lootScrollClip.SelfContentHeight - _lootScrollThumb.Height;
             if (trackRange > 0) {
+                var dragDeltaY = (e.Coords.Y - _lootThumbDragStartY) / Stage.ScreenScale.Y;
+
                 _lootScroll = Math.Clamp(
-                    _lootThumbDragStartScroll + (e.Coords.Y - _lootThumbDragStartY) / trackRange * _lootMaxScroll,
+                    _lootThumbDragStartScroll + dragDeltaY / trackRange * _lootMaxScroll,
                     0, _lootMaxScroll);
                 ApplyLootScroll();
             }

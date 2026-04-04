@@ -80,6 +80,7 @@ public static class PacketUtils {
             PacketId.PlaySound => PlaySound.CreatePacket(),
             PacketId.SwitchMusic => SwitchMusic.CreatePacket(),
             //PacketId.QuestObjId => QuestObjId.CreatePacket(),
+            PacketId.QuestFetchResponse => QuestFetchResponse.CreatePacket(),
             PacketId.Reconnect => Reconnect.CreatePacket(),
             PacketId.ServerPlayerShoot => ServerPlayerShoot.CreatePacket(),
             PacketId.ShowEffect => ShowEffect.CreatePacket(),

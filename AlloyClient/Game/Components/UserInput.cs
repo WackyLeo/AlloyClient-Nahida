@@ -10,6 +10,8 @@ using AlloyClient.Networking.Structs.DataObjects;
 using AlloyClient.Rendering;
 using AlloyClient.State;
 using AlloyClient.Ui.Character;
+using AlloyClient.Ui.Crafting;
+using AlloyClient.Ui.DailyQuest;
 using AlloyClient.Ui.Wiki;
 using AlloyClient.UiLib.Core;
 using AlloyClient.Utils;
@@ -22,7 +24,7 @@ namespace AlloyClient.Game.Components;
 public sealed class UserInput : Sprite {
     private static bool _windowFocus;
     private static bool _manualFocus = true;
-    private static bool _intputDisable = false;
+    private static bool _intputDisable;
 
     private bool _autoFire;
 
@@ -42,6 +44,8 @@ public sealed class UserInput : Sprite {
         AddEventListener(Event.RemovedFromStage, RemovedFromStage);
     }
 
+    public static Vector2 MousePosition { get; private set; }
+
     public static void SetInputDisabled(bool disable) {
         _intputDisable = disable;
     }
@@ -49,8 +53,6 @@ public sealed class UserInput : Sprite {
     public static bool GetInputDisabled() {
         return _intputDisable;
     }
-    
-    public static Vector2 MousePosition { get; private set; }
 
     private void AddedToStage() {
         Stage.AddEventListener(KeyboardEvent.KeyDown, OnKeyDown);
@@ -63,7 +65,7 @@ public sealed class UserInput : Sprite {
         Stage.AddEventListener(MouseEvent.MiddleClick, OnMiddleClick);
         Stage.AddEventListener(MouseEvent.MouseMove, OnMouseMove);
         AddEventListener(Event.EnterFrame, OnFrameEnter);
-    }   
+    }
 
     private void RemovedFromStage() {
         Stage.RemoveEventListener(KeyboardEvent.KeyDown, OnKeyDown);
@@ -251,6 +253,19 @@ public sealed class UserInput : Sprite {
                 var wiki = new WikiWindow();
                 Stage.AddChild(wiki);
                 SetInputDisabled(true);
+                break;
+            case true when Settings.Debug3.CheckValue(key):
+                var craft = new CraftingWindow();
+                Stage.AddChild(craft);
+                SetInputDisabled(true);
+                break;
+            case true when Settings.Debug4.CheckValue(key):
+                GameSprite.DailyQuestWindow = new DailyQuestWindow();
+                GameSprite.DailyQuestWindow.LoadQuests(Map.DailyQuests);
+                Stage.AddChild(GameSprite.DailyQuestWindow);
+                SetInputDisabled(true);
+                break;
+            case true when Settings.Debug5.CheckValue(key):
                 break;
             case true when Settings.Crouch.CheckValue(key):
                 Map.LocalPlayer.LimitSpeed = !Map.LocalPlayer.LimitSpeed;
