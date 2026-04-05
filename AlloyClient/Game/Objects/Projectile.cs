@@ -8,6 +8,7 @@ using AlloyClient.Rendering;
 using AlloyClient.Rendering.Types;
 using AlloyClient.Ui.Character;
 using AlloyClient.Utils;
+using Common;
 using Common.Structs;
 using OpenTK.Mathematics;
 
@@ -386,9 +387,9 @@ public sealed class Projectile : IResettable {
             if (go.Properties == null) continue;
             if (_damagePlayers && !go.Properties.IsPlayer) continue;
             if (!_damagePlayers && !go.Properties.IsEnemy) continue;
-
-            if (go.IsPredictedDead && !_damagePlayers) continue;
-
+    
+            if (go.IsPredictedDead && !_damagePlayers) continue; 
+    
             if (_hitEntities.Contains(go.ObjectId)) continue;
 
             var goPos = Camera.WorldToDebug2D(new Vector3(go.Position.X, go.Position.Y, 0.5f));
@@ -417,18 +418,21 @@ public sealed class Projectile : IResettable {
                 enemy.HasConditionEffect(ConditionEffects.Paused))
                 return false;
 
-            var scaledDamage = _damage;
-            if (!_damagePlayers && Map.LocalPlayer != null)
-                scaledDamage = scaledDamage * (Map.LocalPlayer.AllDamageMultiplier + 100) / 100;
+            int scaledDamage = _damage;
+            if (!_damagePlayers && Map.LocalPlayer != null) {
+                scaledDamage = (scaledDamage * (Map.LocalPlayer.AllDamageMultiplier + 100)) / 100;
+            }
 
             var actualDamage = Entity.DamageWithDefense(scaledDamage, go.Defense, _projProp.ArmorPiercing, enemy);
 
-            var oldPredicted = go.PredictedHp;
+            int oldPredicted = go.PredictedHp;
             //Logger.Info(
             //    $"[CLIENT HIT] BulletId: {_bulletId} | Entity: {go.ObjectId} | BaseDmg: {_damage} | ActualDmg: {actualDamage} | HP: {oldPredicted} -> {oldPredicted - actualDamage}");
-
+            
             go.PredictedHp -= actualDamage;
-            if (go.PredictedHp <= 0 && !_damagePlayers) go.SetTransparency(0.4f);
+            if (go.PredictedHp <= 0 && !_damagePlayers) {
+                go.SetTransparency(0.4f);
+            }
 
             if (actualDamage > 0 || (_projProp.Effects != null && _projProp.Effects.Length > 0)) {
                 var notification = $"-{actualDamage} [{go.PredictedHp}]";

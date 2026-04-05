@@ -41,9 +41,6 @@ public static class Map {
     public static MapTile[,] _tiles;
     public static readonly RenderStorage EntityStorage = new();
     public static readonly Dictionary<int, Player> Players = new();
-
-    private static double _lastEnemyHitFlushTime = -1;
-    private const double EnemyHitPredictionWindow = 0.01;
     
     public static readonly Dictionary<int, Entity>
         Entities = new(); // todo: add players to separate dic for minimap prio
@@ -119,16 +116,9 @@ public static class Map {
                 continue;
             }
             
-            bool withinPredictionWindow = CurrentTime - _lastEnemyHitFlushTime <= EnemyHitPredictionWindow;
-
-            if (withinPredictionWindow &&
-                entity.IsPredictedDead &&
-                entity.Properties != null &&
-                entity.Properties.Class != null &&
-                (entity.Properties.Class == "Wall" ||
-                 entity.Properties.Class == "DoubleWall" ||
-                 entity.Properties.Class == "CaveWall" ||
-                 entity.Properties.Class == "ConnectedWall"))
+            if (entity.IsPredictedDead && entity.Properties != null && entity.Properties.Class != null && 
+                (entity.Properties.Class == "Wall" || entity.Properties.Class == "DoubleWall" || 
+                 entity.Properties.Class == "CaveWall" || entity.Properties.Class == "ConnectedWall")) 
             {
                 EntitiesToRemove.Add(objectId);
                 continue;
@@ -411,12 +401,9 @@ public static class Map {
         Render.EndNewDrawTile();
     }
 
-    public static void FlushEnemyHits()
-    {
-        if (PendingEnemyHit.Stack > 0)
-        {
+    public static void FlushEnemyHits() {
+        if (PendingEnemyHit.Stack > 0) {
             Client.QueuePacket(PendingEnemyHit);
-            _lastEnemyHitFlushTime = CurrentTime;
             PendingEnemyHit = EnemyHit.CreatePacket();
         }
     }

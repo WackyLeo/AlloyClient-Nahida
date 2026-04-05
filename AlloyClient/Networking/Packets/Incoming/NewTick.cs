@@ -41,19 +41,6 @@ public class NewTick : IncomingPacket<NewTick> {
         Map.LastTickId = TickId;
         var now = Main.GameTime.TotalMs;
 
-        if (Map.LocalPlayer != null) {
-            var move = Move.CreatePacket();
-            move.ObjectId = Map.LocalPlayer.ObjectId;
-            move.TickId = TickId;
-            move.Time = (int)now;
-            move.NewPosition = new Position {
-                X = Map.LocalPlayer.Position.X,
-                Y = Map.LocalPlayer.Position.Y
-            };
-            move.Records = Array.Empty<TimedPosition>();
-            Client.QueuePacket(move);
-        }
-
         for (var i = 0; i < ObjectStatsCount; i++) {
             var stats = _statsBuffer[i];
             var isMe = Map.LocalPlayer != null && stats.Id == Map.LocalPlayer.ObjectId;
@@ -69,6 +56,19 @@ public class NewTick : IncomingPacket<NewTick> {
         
         Map.FlushEnemyHits();
         Map.FlushPlayerHits();
+        
+        if (Map.LocalPlayer != null) {
+            var move = Move.CreatePacket();
+            move.ObjectId = Map.LocalPlayer.ObjectId;
+            move.TickId = TickId;
+            move.Time = (int)now;
+            move.NewPosition = new Position {
+                X = Map.LocalPlayer.Position.X,
+                Y = Map.LocalPlayer.Position.Y
+            };
+            move.Records = Array.Empty<TimedPosition>();
+            Client.QueuePacket(move);
+        }
     }
 
     private void ProcessObjectStats(ObjectStats stats, bool isPlayer, double now) {
