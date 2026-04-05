@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using AlloyClient.Display;
 using AlloyClient.State;
 using AlloyClient.Ui.Components.Panels;
@@ -13,37 +12,35 @@ using AlloyClient.UiLib.Input;
 using AlloyClient.UiLib.Rendering;
 using AlloyClient.UiLib.Signals;
 using AlloyClient.Utils;
-using Common;
 using OpenTK.Mathematics;
 
 namespace AlloyClient.Game.Components.Hud;
 
 public sealed class Minimap : Sprite {
+    public const int MapSize = 230;
 
     public static readonly SingleSignal<int> OnZoom = new();
     public static readonly SingleSignal<int, int> OnNewMap = new();
-    
-    public const int MapSize = 230;
-    private bool _menuOpen;
-    private float _zoom = 4.0f;
-    private float _maxZoom;
-    private float _zoomStep;
-    private float _size;
+    private readonly ObjectRect _arrow;
 
     private readonly MinimapLayer _layer;
     private readonly IconButton _zoomIn;
     private readonly IconButton _zoomOut;
-    private readonly ObjectRect _arrow;
 
     private PlayerGroupToolTip _hoverTooltip;
+    private float _maxZoom;
+    private bool _menuOpen;
+    private float _size;
+    private float _zoom = 4.0f;
+    private float _zoomStep;
 
     public Minimap() {
         TextureId = TextureType.Minimap;
-        MouseEnabled = true; 
+        MouseEnabled = true;
 
         ResizeBackBuffer();
         FillData();
-        
+
         OnZoom.Set(ZoomHandle);
         OnNewMap.Set(OnMapEnter);
 
@@ -56,7 +53,7 @@ public sealed class Minimap : Sprite {
             OnClick = () => ZoomHandle(1)
         });
         AddChild(_zoomIn);
-        
+
         _zoomOut = new IconButton(new IconButtonConfig {
             Texture = TextureHelper.FromGameAtlas("lofiInterface", 55, false),
             X = MapSize, Y = _zoomIn.Height + 4, Width = 24, Height = 24, Anchor = UiAnchor.RightTop,
@@ -70,13 +67,14 @@ public sealed class Minimap : Sprite {
         });
         _arrow.ColorTransformation = new ColorTransform(0f, 0f, 1f, 1f);
         AddChild(_arrow);
-        
+
         AddEventListener(Event.EnterFrame, OnFrameEnter);
         AddEventListener(MouseEvent.LeftClick, new Action(OnMapClick)); // Click event for the menu
     }
 
     private void UpdateButtons() {
-        if (_zoom <= 0.5f) { // Adjusted for further zoom
+        if (_zoom <= 0.5f) {
+            // Adjusted for further zoom
             _zoomIn.ColorTransformation = Transforms.Default;
             _zoomOut.ColorTransformation = Transforms.Dark;
         } else if (_zoom >= _maxZoom) {
@@ -100,21 +98,22 @@ public sealed class Minimap : Sprite {
         VertexData[3] = new VertexUi(new Vector2(0, MapSize));
         SetGraphicsBuffer();
     }
-    
+
     private void ZoomHandle(int zoom) {
         _zoom += _zoomStep * zoom;
         _zoom = Math.Max(0.5f, Math.Min(_maxZoom, _zoom));
         UpdateButtons();
     }
-    
+
     private void OnMapEnter(int w, int h) {
         var size = (float)Math.Max(w, h);
         _maxZoom = size / 32;
-        _zoomStep = size / Settings.DefaultScreenWidth ;
+        _zoomStep = size / Settings.DefaultScreenWidth;
         _size = size;
+        _zoom = Math.Max(0.5f, Math.Min(_maxZoom, _zoom));
         MinimapTexture.ClearData();
     }
-    
+
     private void OnMapClick() {
         if (_layer.HoveredPlayers.Count == 0) return;
 
@@ -161,7 +160,7 @@ public sealed class Minimap : Sprite {
         VertexData[1].UV = new Vector2(x2 / 4096, y1 / 4096);
         VertexData[2].UV = new Vector2(x2 / 4096, y2 / 4096);
         VertexData[3].UV = new Vector2(x1 / 4096, y2 / 4096);
-        
+
         _layer.SetSize(size);
 
         if (!_menuOpen) {

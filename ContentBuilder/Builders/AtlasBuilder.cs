@@ -1,5 +1,4 @@
 ﻿using System.Diagnostics.CodeAnalysis;
-using System.Net.Mime;
 using System.Xml.Linq;
 using Common;
 using Common.Structs;
@@ -11,14 +10,13 @@ using ColorComponents = StbImageSharp.ColorComponents;
 namespace ContentBuilder.Builders;
 
 public static class AtlasBuilder {
-    
-    private const int AtlasWidth = (int) AtlasConfig.AtlasWidth;
-    private const int AtlasHeight = (int) AtlasConfig.AtlasHeight;
-    private const int Padding = (int) AtlasConfig.Padding;
+    private const int AtlasWidth = (int)AtlasConfig.AtlasWidth;
+    private const int AtlasHeight = (int)AtlasConfig.AtlasHeight;
+    private const int Padding = (int)AtlasConfig.Padding;
 
     public static void Process(FileSettings settings, Paths paths) {
         var name = Path.GetFileName(settings.File);
-        
+
         var mainXml = XElement.Parse(File.ReadAllText(settings.File!));
         //var mask = mainXml.GetAttribute("mask", false);
         var folder = Path.Combine(paths.Content, mainXml.GetAttribute("source", ""));
@@ -26,7 +24,7 @@ public static class AtlasBuilder {
         var staticSheets = new List<StaticSheet>();
         var animatedSheets = new List<AnimatedSheet>();
 
-        foreach (var xml in mainXml.Elements()) {
+        foreach (var xml in mainXml.Elements())
             switch (xml.Name.LocalName) {
                 case "Image":
                     staticSheets.Add(StaticSheet.Parse(xml, folder));
@@ -38,7 +36,6 @@ public static class AtlasBuilder {
                     Console.WriteLine($"Unknown atlas type of '{xml.Name.LocalName}'. Must be 'Image' or 'Animated'");
                     break;
             }
-        }
 
         var isSame = CheckHash(settings.File, staticSheets, animatedSheets, paths);
 
@@ -46,28 +43,25 @@ public static class AtlasBuilder {
             Console.WriteLine($"Skipping: {name}");
             return;
         }
-        
+
         var atlas = BuildAtlas(staticSheets, animatedSheets, name!.Split('.')[0]);
-        
+
         Write(atlas, settings.File, paths);
 
         Console.WriteLine($"Building: {name}");
     }
-    
-    private static bool CheckHash(string mainFile, List<StaticSheet> sheets1, List<AnimatedSheet> sheets2, Paths paths) {
+
+    private static bool CheckHash(string mainFile, List<StaticSheet> sheets1, List<AnimatedSheet> sheets2,
+        Paths paths) {
         var allSame = HashManager.CheckFileHash(mainFile, paths);
 
-        foreach (var sheet in sheets1) {
-            allSame = HashManager.CheckFileHash(sheet.File, paths) && allSame;
-        }
-        
-        foreach (var sheet in sheets2) {
-            allSame = HashManager.CheckFileHash(sheet.File, paths) && allSame;
-        }
-        
+        foreach (var sheet in sheets1) allSame = HashManager.CheckFileHash(sheet.File, paths) && allSame;
+
+        foreach (var sheet in sheets2) allSame = HashManager.CheckFileHash(sheet.File, paths) && allSame;
+
         return allSame;
     }
-    
+
     [SuppressMessage("ReSharper.DPA", "DPA0001: Memory allocation issues")]
     private static unsafe Atlas BuildAtlas(List<StaticSheet> statics, List<AnimatedSheet> animated, string name) {
         var numNodes = AtlasWidth;
@@ -81,38 +75,37 @@ public static class AtlasBuilder {
             Data = new byte[AtlasWidth * AtlasHeight * 4]
         };
 
-        var atlas = new Atlas(png, new Dictionary<string, AtlasData[]>(), new Dictionary<string, AnimationAtlasData[]>(), new Dictionary<string, Color[]>());
+        var atlas = new Atlas(png, new Dictionary<string, AtlasData[]>(),
+            new Dictionary<string, AnimationAtlasData[]>(), new Dictionary<string, Color[]>());
 
         StbRectPack.stbrp_init_target(&stbContext, AtlasWidth, AtlasHeight, stbContext.all_nodes, numNodes);
 
-        foreach (var sheet in statics) {
+        foreach (var sheet in statics)
             try {
                 ParseSheet(&stbContext, sheet, atlas);
             } catch (Exception e) {
                 Console.WriteLine($"Failed to add image <{sheet.Lookup}>: {e.Message}");
             }
-        }
-        
-        foreach (var sheet in animated) {
+
+        foreach (var sheet in animated)
             try {
                 ParseAnimated(&stbContext, sheet, atlas);
             } catch (Exception e) {
                 Console.WriteLine($"Failed to add image <{sheet.Lookup}>: {e.Message}");
             }
-        }
-        
+
         // this whole thing is jank and i might deal with it later
 
         var path = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, $"temp/{name}.png");
-        
+
         var width = png.Width;
         var height = png.Height;
-        var comp = (StbImageWriteSharp.ColorComponents) png.Comp;
+        var comp = (StbImageWriteSharp.ColorComponents)png.Comp;
         var writer = new ImageWriter();
         using (var fileStream = new FileStream(path, FileMode.Create)) {
             writer.WritePng(png.Data, width, height, comp, fileStream);
         }
-        
+
         stbContext.Dispose();
 
         atlas.File = File.ReadAllBytes(path);
@@ -131,11 +124,9 @@ public static class AtlasBuilder {
 
     private static bool CutHaveData(ImageResult image, int startX, int startY, int width, int height) {
         for (var y = startY; y < startY + height; y++) {
-            for (var x = startX; x < startX + width; x++) {
-                if (image.Data[(y * image.Width + x) * 4 + 3] != 0) {
+            for (var x = startX; x < startX + width; x++)
+                if (image.Data[(y * image.Width + x) * 4 + 3] != 0)
                     return true;
-                }
-            }
         }
 
         return false;
@@ -145,26 +136,20 @@ public static class AtlasBuilder {
         var image = ImageResult.FromMemory(File.ReadAllBytes(sheet.File));
         var cutWidth = sheet.Width;
         var cutHeight = sheet.Height;
-        
-        if (cutWidth == -1) {
-            cutWidth = image.Width;
-        }
 
-        if (cutHeight == -1) {
-            cutHeight = image.Height;
-        }
+        if (cutWidth == -1) cutWidth = image.Width;
 
-        if (image.Width % cutWidth != 0) {
-            throw new Exception($"Skipping image <{sheet.Lookup}>, cutWidth <{cutWidth}> not a multiple of {image.Width}");
-        }
+        if (cutHeight == -1) cutHeight = image.Height;
 
-        if (image.Height % cutHeight != 0) {
-            throw new Exception($"Skipping image <{sheet.Lookup}>, cutHeight <{cutHeight}> not a multiple of {image.Height}");
-        }
+        if (image.Width % cutWidth != 0)
+            throw new Exception(
+                $"Skipping image <{sheet.Lookup}>, cutWidth <{cutWidth}> not a multiple of {image.Width}");
 
-        if (image.Height % 128 != 0) {
-            Logger.Info($"image <{sheet.Lookup}>, {image.Height / 128}");
-        }
+        if (image.Height % cutHeight != 0)
+            throw new Exception(
+                $"Skipping image <{sheet.Lookup}>, cutHeight <{cutHeight}> not a multiple of {image.Height}");
+
+        if (image.Height % 128 != 0) Logger.Info($"image <{sheet.Lookup}>, {image.Height / 128}");
         var cutSize = cutWidth * cutHeight;
         var len = image.Width * image.Height / cutSize;
         var rectList = new StbRectPack.stbrp_rect[len];
@@ -184,9 +169,7 @@ public static class AtlasBuilder {
 
         fixed (StbRectPack.stbrp_rect* rectListPtr = rectList) {
             var result = StbRectPack.stbrp_pack_rects(contextPtr, rectListPtr, len);
-            if (result == 0) {
-                throw new Exception($"Failed to pack image <{sheet.Lookup}>.");
-            }
+            if (result == 0) throw new Exception($"Failed to pack image <{sheet.Lookup}>.");
         }
 
         for (var i = 0; i < len; i++) {
@@ -200,9 +183,7 @@ public static class AtlasBuilder {
         for (var i = 0; i < len; i++) {
             var rect = rectList[i];
 
-            if (rect.w == 0 || rect.h == 0) {
-                continue;
-            }
+            if (rect.w == 0 || rect.h == 0) continue;
 
             var curAtlasX = rect.x + Padding;
             var curAtlasY = rect.y + Padding;
@@ -217,24 +198,19 @@ public static class AtlasBuilder {
                 var srcIdx = ((curSrcY + rowCount) * image.Width + curSrcX + rowIdx) * 4;
                 Array.Copy(image.Data, srcIdx, atlas.Png.Data, atlasIdx, 4);
 
-                if (image.Data[srcIdx + 3] <= 0) {
-                    continue;
-                }
+                if (image.Data[srcIdx + 3] <= 0) continue;
 
-                var rgba = new Color(image.Data[srcIdx], image.Data[srcIdx + 1], image.Data[srcIdx + 2], (byte) 255);
+                var rgba = new Color(image.Data[srcIdx], image.Data[srcIdx + 1], image.Data[srcIdx + 2], 255);
 
-                if (colorCounts.TryGetValue(rgba, out var value)) {
+                if (colorCounts.TryGetValue(rgba, out var value))
                     colorCounts[rgba] = ++value;
-                } else {
+                else
                     colorCounts[rgba] = 1;
-                }
             }
 
             var max = 0;
             foreach (var (key, value) in colorCounts) {
-                if (value <= max) {
-                    continue;
-                }
+                if (value <= max) continue;
 
                 dominantColors[i] = key;
                 max = value;
@@ -248,22 +224,18 @@ public static class AtlasBuilder {
         var image = ImageResult.FromMemory(File.ReadAllBytes(sheet.File));
         var cutWidth = sheet.Width;
         var cutHeight = sheet.Height;
-        
-        if (cutWidth == -1) {
-            cutWidth = image.Width;
-        }
 
-        if (cutHeight == -1) {
-            cutHeight = image.Height;
-        }
-        
-        if (image.Width % cutWidth != 0) {
-            throw new Exception($"Skipping image <{sheet.Lookup}>, cutWidth <{cutWidth}> not a multiple of {image.Width}");
-        }
+        if (cutWidth == -1) cutWidth = image.Width;
 
-        if (image.Height % cutHeight != 0) {
-            throw new Exception($"Skipping image <{sheet.Lookup}>, cutHeight <{cutHeight}> not a multiple of {image.Height}");
-        }
+        if (cutHeight == -1) cutHeight = image.Height;
+
+        if (image.Width % cutWidth != 0)
+            throw new Exception(
+                $"Skipping image <{sheet.Lookup}>, cutWidth <{cutWidth}> not a multiple of {image.Width}");
+
+        if (image.Height % cutHeight != 0)
+            throw new Exception(
+                $"Skipping image <{sheet.Lookup}>, cutHeight <{cutHeight}> not a multiple of {image.Height}");
 
         var framesPerRow = image.Width / cutWidth - 1;
         var rowsPerSheet = image.Height / cutHeight;
@@ -288,16 +260,12 @@ public static class AtlasBuilder {
 
         fixed (StbRectPack.stbrp_rect* rectListPtr = rectList) {
             var result = StbRectPack.stbrp_pack_rects(contextPtr, rectListPtr, len);
-            if (result == 0) {
-                throw new Exception($"Failed to pack image <{sheet.Lookup}>.");
-            }
+            if (result == 0) throw new Exception($"Failed to pack image <{sheet.Lookup}>.");
         }
 
         for (var i = 0; i < len; i++) {
             var rect = rectList[i];
-            if (rect.w == 0 || rect.h == 0) {
-                continue;
-            }
+            if (rect.w == 0 || rect.h == 0) continue;
 
             var atlasX = rect.x + Padding;
             var atlasY = rect.y + Padding;
@@ -330,6 +298,7 @@ public static class AtlasBuilder {
                 for (var j = 0; j < framesPerRow; j++) {
                     var rect = rectList[i];
                     frames[j] = AtlasData.FromRaw(rect.x, rect.y, rect.w, rect.h);
+                    if (j == 2 && (rect.w == 0 || rect.h == 0)) frames[j] = frames[0];
                     i++;
                 }
 

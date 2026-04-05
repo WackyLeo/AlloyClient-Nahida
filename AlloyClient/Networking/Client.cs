@@ -200,7 +200,7 @@ public static class Client {
 
         while (IncomingQueue.TryDequeue(out var packet)) {
             //Log.Info($"Processing incoming packet: {packet.GetType().Name}");
-            PacketLogger.LogPacket(packet);
+            //PacketLogger.LogPacket(packet);
             packet.Handle();
             packet.ReturnPacket();
         }

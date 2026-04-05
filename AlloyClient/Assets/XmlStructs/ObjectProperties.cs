@@ -53,6 +53,7 @@ public class ObjectProperties {
     public readonly bool ShowName;
     public readonly int SizeStep = 5;
     public readonly bool Skin;
+    public readonly int Defense;
 
     public readonly List<int> SlotTypes;
 
@@ -105,6 +106,7 @@ public class ObjectProperties {
         MinSize = e.GetValue<int>("MinSize");
         MaxSize = e.GetValue<int>("MaxSize");
         SizeStep = e.GetValue("SizeStep", 5);
+        Defense = e.GetValue<int>("Defense", 0);
 
         Description = e.GetValue<string>("Description");
 

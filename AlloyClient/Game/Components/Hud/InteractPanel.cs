@@ -30,7 +30,7 @@ public sealed class InteractPanel : Sprite {
         if (_overridePanel != null) {
             if (_currentPanel != null)
                 _currentPanel.Visible = false;
-            
+
             AddChild(_overridePanel);
         } else {
             if (_currentPanel != null)
@@ -40,9 +40,7 @@ public sealed class InteractPanel : Sprite {
 
 
     public void Update() {
-        if (_overridePanel != null) {
-            return;
-        }
+        if (_overridePanel != null) return;
 
         var obj = EntityUtils.FindClosestEntityInRadius(Map.LocalPlayer, Map.InteractiveObjects.Values, 1f);
 
@@ -53,6 +51,7 @@ public sealed class InteractPanel : Sprite {
             _currentObject = obj;
             SetPanel(GetInteractPanel(_currentObject));
         }
+
         _partyPanel.Refresh();
     }
 
@@ -103,7 +102,7 @@ public sealed class InteractPanel : Sprite {
             "MarketNPC" => null,
             "StorageNPC" => null,
             "StorageBuyNPC" => null,
-            "WikiAlter" => null,
+            "WikiAlter" => new WikiPanel(),
             "Merchant" => null,
             _ => null
         };

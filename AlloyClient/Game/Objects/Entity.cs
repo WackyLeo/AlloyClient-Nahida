@@ -43,7 +43,10 @@ public class Entity {
 
     public int LastTickId;
     public double LastTickUpdateTime;
-
+    
+    private bool _hpInitialized;
+    public int PredictedHp;
+    public bool IsPredictedDead => PredictedHp <= 0 && _hpInitialized;    
     // Merchant Specific
 
     public int merchandiseType_;
@@ -72,6 +75,8 @@ public class Entity {
         Jitter = Random.Shared.NextSingle() * 0.00002f - 0.00001f;
         if (Properties.EffectProperties != null)
             Effect = ParticleEffect.FromProperties(Properties.EffectProperties, this);
+        
+        Defense = Properties.Defense; 
     }
 
     public void SetType(ushort type) {
@@ -250,11 +255,39 @@ public class Entity {
         for (var i = 0; i < count; i++) {
             var stat = statData[offset + i];
             switch (stat.Type) {
+                case StatsType.Hp:
+                    int serverHp = stat.Value;
+                    if (!_hpInitialized) {
+                        Hp = serverHp;
+                        PredictedHp = serverHp;
+                        _hpInitialized = true;
+                        break;
+                    }
+
+                    if (serverHp > Hp) {
+                        if (PredictedHp <= 0 && this.Properties.IsEnemy) {
+                            int diff = serverHp - PredictedHp;
+                            NotificationLayer.AddStatusText(this, $"+{diff}", 0x00FF00, 1000, 0);
+                        }
+                        PredictedHp += (serverHp - Hp); 
+                    } 
+                    else if (serverHp < Hp) {
+                        if (PredictedHp > serverHp) {
+                            PredictedHp = serverHp; 
+                        }
+                    }
+
+                    Hp = serverHp; 
+                    //Logger.Info($"[CLIENT SYNC] Entity {ObjectId} Server HP: {Hp} | Prediction: {PredictedHp}");
+
+                    if (!IsPredictedDead) {
+                        SetTransparency(HasConditionEffect(ConditionEffects.Invisible) ? 0.5f : 1.0f);
+                    }
+                    break;
+
                 case StatsType.MaximumHp:
                     MaxHp = stat.Value;
-                    break;
-                case StatsType.Hp:
-                    Hp = stat.Value;
+                    if (!_hpInitialized && PredictedHp == 0) PredictedHp = MaxHp; 
                     break;
                 case StatsType.Defense:
                     Defense = stat.Value;
@@ -292,7 +325,15 @@ public class Entity {
                     break;
                 case StatsType.Effects:
                     ConditionEffects = (ConditionEffects)stat.Value;
-                    SetTransparency(HasConditionEffect(ConditionEffects.Invisible) ? 0.5f : 1.0f);
+
+                    if (HasConditionEffect(ConditionEffects.Invulnerable) || HasConditionEffect(ConditionEffects.Invincible)) {
+                        if (PredictedHp <= 0 && Hp > 0) {
+                            NotificationLayer.AddStatusText(this, "Immune", 0x00FF00, 1000, 0);
+                        }
+                        PredictedHp = Hp;
+                    }
+
+                    SetTransparency(IsPredictedDead ? 0.4f : (HasConditionEffect(ConditionEffects.Invisible) ? 0.5f : 1.0f));
                     break;
                 case StatsType.Name:
                     if (Name != stat.Text) {
@@ -404,30 +445,42 @@ public class Entity {
     }
 
     public virtual AtlasData GetTexture(double time, out bool attackFrame, out bool flipped) {
-        attackFrame = false;
-        flipped = false;
+        const float ZeroLimit = 0.00001f;
+        const float NegZeroLimit = -ZeroLimit;
 
-        if (!TextureData.HasAnimationData)
-            return Texture;
-
+        var texture = new AtlasData();
         var action = AnimationType.Stand;
-        var idx = 0d;
+        attackFrame = flipped = false;
 
-        if (time < AttackStart + AttackPeriod) {
-            action = AnimationType.Attack;
-            idx = (time - AttackStart) % AttackPeriod / AttackPeriod;
-            FacingAngle = AttackAngle;
-        } else if (MovementVector != Vector2.Zero) {
-            var walkPer = 0.5f / MovementVector.Length;
-            walkPer = walkPer + (400 - walkPer % 400);
-            FacingAngle = MathF.Atan2(MovementVector.Y, MovementVector.X);
-            action = AnimationType.Walk;
-            idx = time % walkPer / walkPer;
+        if (TextureData.HasAnimationData) {
+            var idx = 0d;
+            if (time < AttackStart + AttackPeriod) {
+                attackFrame = true;
+                action = AnimationType.Attack;
+                idx = (time - AttackStart) % AttackPeriod / AttackPeriod;
+                FacingAngle = AttackAngle;
+            } else if (MovementVector != Vector2.Zero) {
+                var walkPer = 0.5f / (MovementVector.Length * 4);
+                walkPer = walkPer + (400 - walkPer % 400);
+
+                if (MovementVector.X > ZeroLimit || MovementVector.X < NegZeroLimit || MovementVector.Y > ZeroLimit ||
+                    MovementVector.Y < NegZeroLimit) {
+                    FacingAngle = MathF.Atan2(MovementVector.Y, MovementVector.X);
+                    action = AnimationType.Walk;
+                } else {
+                    action = AnimationType.Stand;
+                }
+
+                idx = time % walkPer / walkPer;
+            }
+
+            texture = TextureData.AnimatedTextures.TextureFromFacing(FacingAngle, action, (float)idx, out attackFrame,
+                out flipped);
         }
 
-        return TextureData.AnimatedTextures.TextureFromFacing(FacingAngle, action, (float)idx, out attackFrame,
-            out flipped);
+        return texture;
     }
+
 
     // we should move this shit somewhere else too
     public void AnimateCharacter(double time) {

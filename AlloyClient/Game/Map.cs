@@ -42,6 +42,9 @@ public static class Map {
     public static readonly RenderStorage EntityStorage = new();
     public static readonly Dictionary<int, Player> Players = new();
 
+    private static double _lastEnemyHitFlushTime = -1;
+    private const double EnemyHitPredictionWindow = 0.01;
+    
     public static readonly Dictionary<int, Entity>
         Entities = new(); // todo: add players to separate dic for minimap prio
 
@@ -115,6 +118,21 @@ public static class Map {
                 EntitiesToRemove.Add(objectId);
                 continue;
             }
+            
+            bool withinPredictionWindow = CurrentTime - _lastEnemyHitFlushTime <= EnemyHitPredictionWindow;
+
+            if (withinPredictionWindow &&
+                entity.IsPredictedDead &&
+                entity.Properties != null &&
+                entity.Properties.Class != null &&
+                (entity.Properties.Class == "Wall" ||
+                 entity.Properties.Class == "DoubleWall" ||
+                 entity.Properties.Class == "CaveWall" ||
+                 entity.Properties.Class == "ConnectedWall"))
+            {
+                EntitiesToRemove.Add(objectId);
+                continue;
+            }
 
             if (LocalPlayer != null && !entity.Properties.Static && !entity.Properties.AlwaysLoaded &&
                 entity.Properties.IsEnemy && !entity.Properties.IsQuest) {
@@ -139,7 +157,9 @@ public static class Map {
                     if ((entity.Position - LocalPlayer.Position).LengthSquared > darknessRadiusSq)
                         entity.RenderBaseType.Visible = false;
 
-                if (entity.HasConditionEffect(ConditionEffects.Invisible))
+                if (entity.IsPredictedDead && entity.Properties != null && !entity.Properties.IsPlayer)
+                    entity.RenderBaseType.SetAlpha(0.4f); 
+                else if (entity.HasConditionEffect(ConditionEffects.Invisible))
                     entity.RenderBaseType.SetAlpha(0.5f);
                 else
                     entity.RenderBaseType.SetAlpha(1.0f);
@@ -391,9 +411,12 @@ public static class Map {
         Render.EndNewDrawTile();
     }
 
-    public static void FlushEnemyHits() {
-        if (PendingEnemyHit.Stack > 0) {
+    public static void FlushEnemyHits()
+    {
+        if (PendingEnemyHit.Stack > 0)
+        {
             Client.QueuePacket(PendingEnemyHit);
+            _lastEnemyHitFlushTime = CurrentTime;
             PendingEnemyHit = EnemyHit.CreatePacket();
         }
     }

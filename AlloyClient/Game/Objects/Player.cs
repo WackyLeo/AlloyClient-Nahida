@@ -35,7 +35,8 @@ public class Player : Entity {
 
     public bool Locked;
     public float MovementMultiplier = 1;
-
+    public int DamageTakenMultiplier;
+    
     public int NextBulletId;
     public int NextBulletId2;
     public List<ShootData> PendingShots = new();
@@ -308,9 +309,13 @@ public class Player : Entity {
                     var projAngle = startAngle + MathHelper.DegreesToRadians(props.ArcGap) * i;
                     var bId = GetBulletId2();
 
-                    var rawDmg = MathUtils.RandomInt(projDesc.MinDamage, projDesc.MaxDamage);
-                    var dmg = (int)(rawDmg * (0.5f + Attack / 50f));
+                    // DETERMINISTIC SEED
+                    var seededRand = new Random(bId + AccountId);
+                    var rawDmg = seededRand.Next(projDesc.MinDamage, projDesc.MaxDamage + 1);
+                    var baseMult = 0.5f + Attack / 50f;
+                    if (HasConditionEffect(ConditionEffects.Damaging)) baseMult *= 1.25f;
 
+                    var dmg = (int)(rawDmg * baseMult);
                     if (!props.ProjectilesDict.TryGetValue(projDesc.BulletType, out var projPropsInfo))
                         projPropsInfo = props.Projectiles[0];
 
@@ -399,7 +404,7 @@ public class Player : Entity {
                     WisdomBoost = stat.Value;
                     break;
                 case StatsType.AccountId:
-                    AccountId = stat.Value;
+                    AccountId = int.Parse(stat.Text);
                     break;
                 case StatsType.ExperienceGoal:
                     NextLevelExp = stat.Value;
@@ -483,6 +488,12 @@ public class Player : Entity {
                 case StatsType.SpeedLimit:
                     SpeedLimit = (ushort)stat.Value;
                     break;
+                case StatsType.AllDamageMultiplier:
+                    AllDamageMultiplier = stat.Value;
+                    break;
+                case StatsType.DamageTakenMultiplier:
+                    DamageTakenMultiplier = stat.Value;
+                    break;
                 case StatsType.PartyId:
                     PartyId = stat.Value;
                     PartyMembers.Clear();
@@ -520,6 +531,7 @@ public class Player : Entity {
 
         return texture;
     }
+
 
     private void SetPlayerSkinTemplate(ushort skin) {
         if (skin == 0) return;
@@ -583,9 +595,12 @@ public class Player : Entity {
             var objProps = ObjectLibrary.TypeToObjectProps[projObjType];
             var angle = startAngle + MathHelper.DegreesToRadians(props.ArcGap) * i;
             var bId = GetBulletId();
-            var rawDmg = MathUtils.RandomInt(projDesc.MinDamage, projDesc.MaxDamage);
+    
+            var seededRand = new Random(bId + AccountId);
+            var rawDmg = seededRand.Next(projDesc.MinDamage, projDesc.MaxDamage + 1);
             var dmg = (int)(rawDmg * (0.5f + Attack / 50f));
 
+            //Logger.Info($"Spawning Projectile: {seededRand} : {bId} : {AccountId} : {dmg}");
             if (!props.ProjectilesDict.TryGetValue(projDesc.BulletType, out var projProps))
                 projProps = props.Projectiles[0];
 
@@ -817,7 +832,8 @@ public class Player : Entity {
     public int WisdomBoost;
 
     public int AccountId;
-
+    public int AllDamageMultiplier;
+    
     public int NextLevelExp = 1000;
     public int Experience;
 
