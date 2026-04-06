@@ -15,66 +15,78 @@ using AlloyClient.Utils;
 namespace AlloyClient.Ui.DailyQuest;
 
 public class DailyQuestWindow : Sprite {
-    private const int Padding = 20;
+    private const int BgWidth = 860;
+    private const int BgHeight = 460;
+    private const int Pad = 20;
+    private const int TabIslandH = 35;
+    private const int TabIslandGap = 18;
+
     private readonly SdfRect _background;
-
     private readonly Container _cardsContainer;
-    private readonly SdfRect _closeButton;
-    private readonly SimpleText _refreshText;
-
     private readonly Container _screenContainer;
+    private readonly SdfRect _tabIsland;
 
     public DailyQuestWindow() {
         _screenContainer = new Container();
         AddChild(_screenContainer);
 
-        var bgWidth = 860;
-        var bgHeight = 540;
+        _tabIsland = new SdfRect(new SdfRectConfig {
+            Width = BgWidth, Height = TabIslandH, Cut = 8,
+            Color = 0xFF363636u, OutlineColor = 0xFF676767u, OutlineSize = 5f,
+            ShadowRadius = 3f, ShadowAlpha = 0.3f
+        });
+        _tabIsland.SetAnchor(UiAnchor.LeftTop);
+        _tabIsland.X = Pad;
+        _tabIsland.Y = Pad;
+        _screenContainer.AddChildAt(_tabIsland, 0);
+
+        var title = new SimpleText(new TextConfig {
+            FontSize = 13, Color = 0xFFFFFFFFu, FontType = FontType.Bold, Anchor = UiAnchor.Middle
+        });
+        title.SetText("The Tinkerer");
+        title.X = BgWidth / 2;
+        title.Y = TabIslandH / 2;
+        _tabIsland.AddChild(title);
+
+        var closeBtn = new SdfRect(new SdfRectConfig {
+            Width = 21, Height = 21, Cut = 4,
+            Color = 0xFF555555u, OutlineColor = 0xFF888888u, OutlineSize = 2f, ShadowRadius = 0f
+        });
+        closeBtn.SetAnchor(UiAnchor.RightTop);
+        closeBtn.X = BgWidth - 6;
+        closeBtn.Y = (_tabIsland.Height - 21) / 2;
+        closeBtn.MouseEnabled = true;
+        closeBtn.AddEventListener(MouseEvent.LeftClick, OnCloseClicked);
+        _tabIsland.AddChild(closeBtn);
+
+        var closeX = new SimpleText(new TextConfig {
+            FontSize = 11, Color = 0xFFFFFFFFu, FontType = FontType.Bold, Anchor = UiAnchor.Middle
+        });
+        closeX.SetText("X");
+        closeX.X = 21 / 2;
+        closeX.Y = 21 / 2;
+        closeBtn.AddChild(closeX);
 
         _background = new SdfRect(new SdfRectConfig {
-            Width = bgWidth, Height = bgHeight, Cut = 8,
-            Color = 0xFF363636u, OutlineColor = 0xFF676767u, OutlineSize = 2f,
+            Width = BgWidth, Height = BgHeight, Cut = 8,
+            Color = 0xFF363636u, OutlineColor = 0xFF676767u, OutlineSize = 5f,
             ShadowRadius = 3f, ShadowAlpha = 0.3f
         });
         _background.SetAnchor(UiAnchor.LeftTop);
-        _background.X = Padding;
-        _background.Y = Padding;
-        _screenContainer.AddChild(_background);
-
-        var title = new SimpleText(new TextConfig {
-            FontSize = 26, Color = 0xFFFFFFFFu, FontType = FontType.Bold, Anchor = UiAnchor.MiddleTop
-        });
-        title.SetText("The Tinkerer");
-        title.X = bgWidth / 2;
-        title.Y = 20;
-        _background.AddChild(title);
-
-        _refreshText = new SimpleText(new TextConfig {
-            FontSize = 12, Color = 0xFFAAAAAAu, Anchor = UiAnchor.MiddleTop
-        });
-        _refreshText.SetText("Quests refresh every restart");
-        _refreshText.X = bgWidth / 2;
-        _refreshText.Y = 50;
-        _background.AddChild(_refreshText);
-
-        _closeButton = new SdfRect(new SdfRectConfig {
-            Width = 24, Height = 24, Cut = 4, Color = 0xFF555555u, Anchor = UiAnchor.RightTop
-        });
-        _closeButton.X = bgWidth - 15;
-        _closeButton.Y = 15;
-        _closeButton.MouseEnabled = true;
-        _closeButton.AddEventListener(MouseEvent.LeftClick, OnCloseClicked);
-        _background.AddChild(_closeButton);
-
-        var closeText = new SimpleText(new TextConfig {
-            Text = "X", FontSize = 14, Color = 0xFFFFFFFFu, FontType = FontType.Bold, Anchor = UiAnchor.Middle
-        });
-        closeText.X = _closeButton.Width / 2;
-        closeText.Y = _closeButton.Height / 2;
-        _closeButton.AddChild(closeText);
+        _background.X = Pad;
+        _background.Y = Pad + TabIslandH + TabIslandGap;
+        _screenContainer.AddChildAt(_background, 1);
 
         _cardsContainer = new Container();
         _background.AddChild(_cardsContainer);
+
+        var refreshText = new SimpleText(new TextConfig {
+            FontSize = 10, Color = 0xFFAAAAAAu, Anchor = UiAnchor.LeftTop
+        });
+        refreshText.SetText("Quests refresh every completion");
+        refreshText.X = Pad;
+        refreshText.Y = _background.Height - Pad;
+        _background.AddChild(refreshText);
 
         SetPosition(Settings.ScreenWidth, Settings.ScreenHeight);
         AddEventListener(Event.AddedToStage, OnStageEnter);
@@ -85,14 +97,14 @@ public class DailyQuestWindow : Sprite {
         while (_cardsContainer.NumChildren > 0) _cardsContainer.RemoveChildAt(0);
 
         var sideCardW = 240;
-        var sideCardH = 380;
+        var sideCardH = 340;
         var midCardW = 290;
-        var midCardH = 430;
+        var midCardH = 390;
         var spacing = 20;
 
         var totalCardsWidth = sideCardW * 2 + midCardW + spacing * 2;
         var currentX = (_background.Width - totalCardsWidth) / 2;
-        var baseStartY = 85;
+        var baseStartY = 30;
 
         for (var i = 0; i < Math.Min(3, quests.Count); i++) {
             var isMiddle = i == 1;
@@ -100,15 +112,17 @@ public class DailyQuestWindow : Sprite {
             var cH = isMiddle ? midCardH : sideCardH;
             var cY = baseStartY + (isMiddle ? 0 : (midCardH - sideCardH) / 2);
 
-            BuildQuestCard(quests[i], currentX, cY, cW, cH, isMiddle);
+            var index = i == 0 ? 1 : i == 1 ? 0 : 2;
+            BuildQuestCard(quests[index], currentX, cY, cW, cH, isMiddle);
             currentX += cW + spacing;
         }
     }
 
     private void BuildQuestCard(QuestData quest, int x, int y, int cW, int cH, bool isMiddle) {
-        var cardBg = new CutEdgeRect(new CutEdgeConfig {
-            Width = cW, Height = cH, CutX = 8, CutY = 8, Cuts = CutEdges.All,
-            Color = 0xFF151515u
+        var cardBg = new SdfRect(new SdfRectConfig {
+            Width = cW, Height = cH, Cut = 8,
+            Color = 0xFF151515u, OutlineColor = 0xFF121212u, OutlineSize = 3f,
+            ShadowRadius = 2f, ShadowAlpha = 0.3f
         });
         cardBg.X = x;
         cardBg.Y = y;
@@ -122,11 +136,11 @@ public class DailyQuestWindow : Sprite {
         cardTitle.Y = 15;
         cardBg.AddChild(cardTitle);
 
-        var hasAllItems = CheckInventory(quest.Requirements, out var slotsToConsume);
+        var hasAllItems = CheckInventory(quest.Requirements, out var slotsToConsume, out var fulfilled);
         var selectedReward = quest.ItemOfChoice ? -1 : 0;
 
-        var reqY = 60;
-        DrawSlots(cardBg, reqY, quest.Requirements, cW, false, -1, null);
+        var reqY = 55;
+        DrawSlots(cardBg, reqY, quest.Requirements, cW, false, -1, null, fulfilled);
 
         var dividerY = cH / 2 + 10;
         var line = new DiamondDivider(new DiamondDividerConfig {
@@ -137,8 +151,8 @@ public class DailyQuestWindow : Sprite {
         cardBg.AddChild(line);
 
         var rewardsPill = new SdfRect(new SdfRectConfig {
-            Width = 80, Height = 22, Color = 0xFF151515u, OutlineColor = 0xFF353535u, OutlineSize = 1.5f, Cut = 11,
-            Anchor = UiAnchor.Middle
+            Width = 80, Height = 22, Color = 0xFF151515u, OutlineColor = 0xFF353535u, OutlineSize = 2f, Cut = 11,
+            ShadowRadius = 0, Anchor = UiAnchor.Middle
         });
         rewardsPill.X = cW / 2;
         rewardsPill.Y = dividerY;
@@ -164,17 +178,20 @@ public class DailyQuestWindow : Sprite {
         DrawSlots(cardBg, rewY, quest.Rewards, cW, quest.ItemOfChoice, selectedReward, onRewardClicked);
 
         if (quest.ItemOfChoice) {
-            var choiceHint = new SimpleText(new TextConfig
-                { Text = "Choose one item", FontSize = 10, Color = 0xFF888888u, Anchor = UiAnchor.MiddleTop });
+            var choiceHint = new SimpleText(new TextConfig {
+                Text = "Choose one item", FontSize = 10, Color = 0xFF888888u, Anchor = UiAnchor.MiddleTop
+            });
             choiceHint.X = cW / 2;
             choiceHint.Y = dividerY + 15;
             cardBg.AddChild(choiceHint);
         }
 
         var canComplete = !quest.Completed && hasAllItems && selectedReward != -1;
-        var completeBtn = new CutEdgeRect(new CutEdgeConfig {
-            Width = 140, Height = 34, CutX = 6, CutY = 6, Cuts = CutEdges.All,
+
+        var completeBtn = new SdfRect(new SdfRectConfig {
+            Width = 140, Height = 34,
             Color = quest.Completed ? 0xFF444444u : canComplete ? 0xFF4A9A4Au : 0xFF555555u,
+            OutlineColor = 0xFF353535u, OutlineSize = 1.5f, Cut = 4, ShadowRadius = 0,
             Anchor = UiAnchor.MiddleBottom
         });
         completeBtn.X = cW / 2;
@@ -183,8 +200,10 @@ public class DailyQuestWindow : Sprite {
 
         var btnText = new SimpleText(new TextConfig {
             Text = quest.Completed ? "Completed" : "Complete!",
-            FontSize = 14, Color = canComplete || quest.Completed ? 0xFFFFFFFFu : 0xFFAAAAAAu,
-            FontType = FontType.Bold, Anchor = UiAnchor.Middle
+            FontSize = 14,
+            Color = canComplete || quest.Completed ? 0xFFFFFFFFu : 0xFFAAAAAAu,
+            FontType = FontType.Bold,
+            Anchor = UiAnchor.Middle
         });
         btnText.X = completeBtn.Width / 2;
         btnText.Y = completeBtn.Height / 2;
@@ -201,10 +220,8 @@ public class DailyQuestWindow : Sprite {
         completeBtn.MouseEnabled = canComplete;
         completeBtn.AddEventListener(MouseEvent.LeftClick, () => {
             if (!canComplete) return;
-
             completeBtn.MouseEnabled = false;
             SendRedeemPacket(quest.Id, slotsToConsume, quest.ItemOfChoice ? quest.Rewards[selectedReward] : -1);
-
             quest.Completed = true;
             btnText.SetText("Completed");
             updateButtonState();
@@ -212,11 +229,10 @@ public class DailyQuestWindow : Sprite {
     }
 
     private void DrawSlots(Sprite parent, int startY, List<int> items, int cardWidth, bool selectable,
-        int selectedIndex, Action<int> onClick) {
+        int selectedIndex, Action<int> onClick, List<bool> fulfilled = null) {
         var iconSize = 40;
         var spacing = 6;
         var maxPerRow = 4;
-
         var rows = (int)Math.Ceiling(items.Count / (float)maxPerRow);
 
         for (var r = 0; r < rows; r++) {
@@ -229,19 +245,25 @@ public class DailyQuestWindow : Sprite {
                 var itemIndex = r * maxPerRow + i;
                 var itemId = items[itemIndex];
                 var isSelected = selectable && itemIndex == selectedIndex;
+                var isFulfilled = fulfilled != null && itemIndex < fulfilled.Count && fulfilled[itemIndex];
 
                 var bg = new SdfRect(new SdfRectConfig {
-                    Width = iconSize, Height = iconSize, Cut = 4,
-                    Color = isSelected ? 0xFF4A6A9Au : 0xFF2D2D2Du,
-                    OutlineColor = isSelected ? 0xFF7090C0u : 0xFF484848u,
-                    OutlineSize = isSelected ? 2f : 1f
+                    Width = iconSize,
+                    Height = iconSize,
+                    Cut = 4,
+                    Color = isSelected ? 0xFF4A6A9Au : isFulfilled ? 0xFF3A6A3Au : 0xFF2D2D2Du,
+                    OutlineColor = isSelected ? 0xFF7090C0u : isFulfilled ? 0xFF6BD06Bu : 0xFF484848u,
+                    OutlineSize = 2f,
+                    ShadowRadius = 0
                 });
                 bg.X = startX + i * (iconSize + spacing);
                 bg.Y = rowY;
                 parent.AddChild(bg);
 
                 var icon = new ObjectRect(new ObjectRectConfig {
-                    Texture = TextureHelper.FromGameAtlas((ushort)itemId), Width = iconSize - 8, Height = iconSize - 8
+                    Texture = TextureHelper.FromGameAtlas((ushort)itemId),
+                    Width = iconSize - 8,
+                    Height = iconSize - 8
                 });
                 icon.X = bg.X + 4;
                 icon.Y = bg.Y + 4;
@@ -256,21 +278,26 @@ public class DailyQuestWindow : Sprite {
         }
     }
 
-    private bool CheckInventory(List<int> requirements, out List<ObjectSlot> slotsToConsume) {
+    private bool CheckInventory(List<int> requirements, out List<ObjectSlot> slotsToConsume, out List<bool> fulfilled) {
         slotsToConsume = new List<ObjectSlot>();
+        fulfilled = new List<bool>();
+
         if (Map.LocalPlayer == null) return false;
 
         var availableItems = new List<(int slotId, int objType)>();
         for (var i = 4; i < 20; i++) {
             if (i >= Map.LocalPlayer.Equipment.Length) continue;
             var item = Map.LocalPlayer.Equipment[i];
-            if (item != null && item.ObjectType != 0xFFFF) availableItems.Add((i, item.ObjectType));
+            if (item != null && item.ObjectType != 0xFFFF)
+                availableItems.Add((i, item.ObjectType));
         }
 
-        var tempReqs = new List<int>(requirements);
-        foreach (var req in tempReqs) {
+        var allMet = true;
+
+        foreach (var req in requirements) {
             var foundIdx = availableItems.FindIndex(x => x.objType == req);
             if (foundIdx != -1) {
+                fulfilled.Add(true);
                 slotsToConsume.Add(new ObjectSlot {
                     ObjectId = Map.LocalPlayer.ObjectId,
                     SlotId = (byte)availableItems[foundIdx].slotId,
@@ -278,11 +305,12 @@ public class DailyQuestWindow : Sprite {
                 });
                 availableItems.RemoveAt(foundIdx);
             } else {
-                return false;
+                fulfilled.Add(false);
+                allMet = false;
             }
         }
 
-        return true;
+        return allMet;
     }
 
     private void SendRedeemPacket(string questId, List<ObjectSlot> slots, int itemOfChoiceReward) {
@@ -295,7 +323,6 @@ public class DailyQuestWindow : Sprite {
         var reqPkt = QuestFetchAsk.CreatePacket();
         Client.QueuePacket(reqPkt);
     }
-
 
     private void OnStageEnter() {
         Stage.AddEventListener(ResizeEvent.Resize, OnResize);
@@ -321,10 +348,10 @@ public class DailyQuestWindow : Sprite {
         _screenContainer.Scale = Stage.ScreenScale;
 
         var screenWidth = width - HudView.Width * Stage.ScreenScale.X;
-        var knownW = (_background.X + _background.SelfContentWidth + Padding) * Stage.ScreenScale.X;
-        var knownH = (_background.Y + _background.SelfContentHeight + Padding) * Stage.ScreenScale.Y;
+        var totalH = (TabIslandH + TabIslandGap + BgHeight + Pad * 2) * Stage.ScreenScale.Y;
+        var knownW = (BgWidth + Pad * 2) * Stage.ScreenScale.X;
 
         _screenContainer.X = (int)(screenWidth / 2f - knownW / 2f);
-        _screenContainer.Y = (int)(height / 2f - knownH / 2f);
+        _screenContainer.Y = (int)(height / 2f - totalH / 2f);
     }
 }

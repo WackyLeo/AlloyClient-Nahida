@@ -85,6 +85,7 @@ public static class PacketUtils {
             PacketId.ServerPlayerShoot => ServerPlayerShoot.CreatePacket(),
             PacketId.ShowEffect => ShowEffect.CreatePacket(),
             PacketId.Text => Text.CreatePacket(),
+            PacketId.StorageUpdate => StorageUpdate.CreatePacket(),
             PacketId.TradeAccepted => TradeAccepted.CreatePacket(),
             PacketId.TradeChanged => TradeChanged.CreatePacket(),
             PacketId.TradeDone => TradeDone.CreatePacket(),

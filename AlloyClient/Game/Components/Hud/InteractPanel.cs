@@ -100,8 +100,8 @@ public sealed class InteractPanel : Sprite {
             "QuestRewards" => new QuestPanel(),
             "TributeObjectOption" => new TributeOptionPanel(entity),
             "MarketNPC" => null,
-            "StorageNPC" => null,
-            "StorageBuyNPC" => null,
+            "StorageNPC" => new StoragePanel(),
+            "StorageBuyNPC" => new StoragePanel(),
             "WikiAlter" => new WikiPanel(),
             "Merchant" => null,
             _ => null

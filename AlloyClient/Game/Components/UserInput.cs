@@ -10,6 +10,7 @@ using AlloyClient.Networking.Structs.DataObjects;
 using AlloyClient.Rendering;
 using AlloyClient.State;
 using AlloyClient.Ui.Character;
+using AlloyClient.Ui.Storage;
 using AlloyClient.Ui.Wiki;
 using AlloyClient.UiLib.Core;
 using AlloyClient.Utils;
@@ -253,6 +254,9 @@ public sealed class UserInput : Sprite {
                 SetInputDisabled(true);
                 break;
             case true when Settings.Debug3.CheckValue(key):
+                var storage = new StorageWindow();
+                Stage.AddChild(storage);
+                SetInputDisabled(true);
                 break;
             case true when Settings.Debug4.CheckValue(key):
                 break;
