@@ -1,10 +1,10 @@
 ﻿using System;
+using Common.Structs;
 using OpenTK.Mathematics;
 
 namespace AlloyClient.ParticleEffects;
 
 public readonly struct FountainParticle(double startTime, float angle) {
-
     public const float G = -4.9f;
     public const float VI = 6.5f;
     public const float ZI = 0.75f;
@@ -16,4 +16,7 @@ public readonly struct FountainParticle(double startTime, float angle) {
 public readonly struct HitParticle(float x, float y) {
     public readonly float X = x;
     public readonly float Y = y;
+}
+
+public readonly struct BaseParticle(AtlasData bitmap) {
 }

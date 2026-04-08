@@ -34,6 +34,7 @@ public abstract class ParticleEffect {
             "Bubbles" => new BubbleEffect(entity, properties),
             "Vortex" => null,
             "XMLEffect" => new XMLEffect(entity, properties),
+            "CustomParticles" => new ParticleGenerator(entity, properties),
             _ => null
         };
     }

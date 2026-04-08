@@ -41,7 +41,7 @@ public static class Map {
     public static MapTile[,] _tiles;
     public static readonly RenderStorage EntityStorage = new();
     public static readonly Dictionary<int, Player> Players = new();
-    
+
     public static readonly Dictionary<int, Entity>
         Entities = new(); // todo: add players to separate dic for minimap prio
 
@@ -64,7 +64,7 @@ public static class Map {
 
     public static bool TilesDirty = true;
     private static int _particleCount;
-    private static readonly ParticleData[] Particles = new ParticleData[30000];
+    private static readonly ParticleData[] Particles = new ParticleData[1024 * 256];
     private static readonly List<int> EntitiesToRemove = [];
     private static readonly List<MapTile> VisibleTopTiles = [];
 
@@ -75,7 +75,7 @@ public static class Map {
     private static readonly MapTile[] RebuildData = new MapTile[9];
 
     public static void InitMap(int width, int height, string name, string display, int diff, uint seed, int background,
-        bool allowTp, bool showDisplays) {
+                               bool allowTp, bool showDisplays) {
         Width = width;
         Height = height;
         Name = name;
@@ -115,11 +115,10 @@ public static class Map {
                 EntitiesToRemove.Add(objectId);
                 continue;
             }
-            
-            if (entity.IsPredictedDead && entity.Properties != null && entity.Properties.Class != null && 
-                (entity.Properties.Class == "Wall" || entity.Properties.Class == "DoubleWall" || 
-                 entity.Properties.Class == "CaveWall" || entity.Properties.Class == "ConnectedWall")) 
-            {
+
+            if (entity.IsPredictedDead && entity.Properties != null && entity.Properties.Class != null &&
+                (entity.Properties.Class == "Wall" || entity.Properties.Class == "DoubleWall" ||
+                 entity.Properties.Class == "CaveWall" || entity.Properties.Class == "ConnectedWall")) {
                 EntitiesToRemove.Add(objectId);
                 continue;
             }
@@ -148,7 +147,7 @@ public static class Map {
                         entity.RenderBaseType.Visible = false;
 
                 if (entity.IsPredictedDead && entity.Properties != null && !entity.Properties.IsPlayer)
-                    entity.RenderBaseType.SetAlpha(0.4f); 
+                    entity.RenderBaseType.SetAlpha(0.4f);
                 else if (entity.HasConditionEffect(ConditionEffects.Invisible))
                     entity.RenderBaseType.SetAlpha(0.5f);
                 else
@@ -320,9 +319,12 @@ public static class Map {
 
         RenderPipeline.BeginEntities();
         Render.StartDrawEntity();
-        for (var i = 0; i < ParticleGenCount; i++)
+        for (var i = 0; i < ParticleGenCount; i++) {
             if (ParticleGenerators[i] is RayCastParticle rcp)
                 rcp.Draw();
+            if (ParticleGenerators[i] is XMLParticle xmp)
+                xmp.Draw();
+        }
 
         if (EntityStorage.TryGetValue(ModelType.PbObject, out var entities)) {
             entities.Sort();

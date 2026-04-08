@@ -38,7 +38,7 @@ public static class RenderPipeline {
     public static void BeginParticles() {
         GL.Enable(EnableCap.DepthTest);
         GL.Disable(EnableCap.CullFace);
-        GL.DepthMask(false);
+        GL.DepthMask(true);
     }
 
     public static void BeginCaveWalls() {

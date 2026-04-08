@@ -6,7 +6,7 @@ using OpenTK.Mathematics;
 namespace AlloyClient.ParticleEffects;
 
 public class FountainEffect : ParticleEffect {
-    private const int Buffer = 50;
+    private const int Buffer = 2000;
 
     private readonly Vector4 _color;
     private readonly FountainParticle[] _data = new FountainParticle[Buffer];
@@ -23,8 +23,8 @@ public class FountainEffect : ParticleEffect {
     public override bool Update(double time, double dt) {
         if (_lastUpdate < 0) _lastUpdate = Math.Max(0, time - 400);
 
-        var count = (int)(time / 50);
-        var start = (int)(_lastUpdate / 50);
+        var count = (int)(time / 25);
+        var start = (int)(_lastUpdate / 25);
 
         for (var i = start; i < count; i++) {
             if (_count == Buffer) break;
