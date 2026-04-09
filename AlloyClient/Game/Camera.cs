@@ -8,7 +8,6 @@ using OpenTK.Mathematics;
 namespace AlloyClient.Game;
 
 public static class Camera {
-
     public const int HudOffset = 240;
 
     public static Vector2i Viewport;
@@ -30,20 +29,23 @@ public static class Camera {
 
     public static void Reset(bool includeHud = true) {
         CameraAngle = 0f;
-
         Position = new Vector3(0f, 0f, 12);
 
         WorldMatrix = Matrix4.CreateRotationX(MathHelper.DegreesToRadians(180));
         ViewMatrix = Matrix4.Identity;
         BillboardMatrix = Matrix4.Identity;
 
-        var halfWidth = Settings.ScreenWidth.Value;
-        var halfHeight = Settings.ScreenHeight.Value;
+        var width = Settings.ScreenWidth.Value;
+        var height = Settings.ScreenHeight.Value;
         var hudOffset = includeHud ? HudOffset : 0f;
 
-        Viewport = new Vector2i(halfWidth, halfHeight);
-        ProjectionMatrix = Matrix4.CreateOrthographicOffCenter(-halfWidth + hudOffset, halfWidth + hudOffset,
-            -halfHeight, halfHeight, -10000f, 10000f);
+        var verticalOffset = Settings.CenterPlayer ? 0f : height * (3f / 4f - 13f / 24f);
+
+        Viewport = new Vector2i(width, height);
+        ProjectionMatrix = Matrix4.CreateOrthographicOffCenter(
+            -width + hudOffset, width + hudOffset,
+            -height + verticalOffset, height + verticalOffset,
+            -10000f, 10000f);
 
         ZoomMatrix = Matrix4.CreateScale(Settings.CameraZoom);
     }
@@ -54,9 +56,14 @@ public static class Camera {
 
     public static void UpdateViewPort(int width, int height) {
         Viewport = new Vector2i(width, height);
-        
         GL.Viewport(0, 0, width, height);
-        ProjectionMatrix = Matrix4.CreateOrthographicOffCenter(-width + HudOffset, width + HudOffset, -height, height, -10000f, 10000f);
+
+        var verticalOffset = Settings.CenterPlayer ? 0f : height * (3f / 4f - 13f / 24f);
+
+        ProjectionMatrix = Matrix4.CreateOrthographicOffCenter(
+            -width + HudOffset, width + HudOffset,
+            -height + verticalOffset, height + verticalOffset,
+            -10000f, 10000f);
     }
 
     public static void Update(float x, float y) {
@@ -83,37 +90,37 @@ public static class Camera {
         BillboardMatrix[1, 0] = s;
         BillboardMatrix[1, 1] = c;
 
-        VisibleTileRadius = new Vector2((Settings.ScreenWidth - HudOffset) * Settings.CameraZoom, Settings.ScreenHeight * Settings.CameraZoom);
+        VisibleTileRadius = new Vector2((Settings.ScreenWidth - HudOffset) * Settings.CameraZoom,
+            Settings.ScreenHeight * Settings.CameraZoom);
     }
 
     // Only tested on MapEditor
     public static Vector3 ScreenToWorld(Vector2 mouse) {
-        
         var mat = Matrix4.Invert(WorldMatrix * ViewMatrix * ProjectionMatrix);
-        
+
         var x = MathUtils.Map(mouse.X, 0, Viewport.X, -1, 1);
         var y = MathUtils.Map(mouse.Y, Viewport.Y, 0, -1, 1);
-        
+
         var near = new Vector3(x, y, 0);
         var far = new Vector3(x, y, 1);
-        
+
         near = Vector3.TransformPosition(near, mat);
         far = Vector3.TransformPosition(far, mat);
 
         var direction = far - near;
         direction.Normalize();
 
-        var z = -near.Z / direction.Z; 
+        var z = -near.Z / direction.Z;
         var pos = near + direction * z;
         return pos;
     }
 
     public static Vector2 WorldToDebug2D(Vector3 worldPos) {
-        float shiftX = -worldPos.Z * MathF.Sin(CameraAngle);
-        float shiftY = -worldPos.Z * MathF.Cos(CameraAngle);
+        var shiftX = -worldPos.Z * MathF.Sin(CameraAngle);
+        var shiftY = -worldPos.Z * MathF.Cos(CameraAngle);
         return new Vector2(worldPos.X + shiftX, worldPos.Y + shiftY);
     }
-    
+
     //public static Vector3 WorldToScreen(Vector3 worldPosition, Viewport viewport) {
     //    return viewport.Project(worldPosition, ProjectionMatrix, ViewMatrix, WorldMatrix);
     //}

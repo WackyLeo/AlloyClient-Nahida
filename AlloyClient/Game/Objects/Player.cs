@@ -11,6 +11,7 @@ using AlloyClient.Networking.Structs.DataObjects;
 using AlloyClient.ParticleEffects;
 using AlloyClient.Rendering;
 using AlloyClient.Rendering.Types;
+using AlloyClient.Sound;
 using AlloyClient.State;
 using AlloyClient.Ui.Character;
 using AlloyClient.Utils;
@@ -29,14 +30,14 @@ public class Player : Entity {
     private const float MaxAttackFreq = 0.008f;
 
     private static readonly Logger Log = new(nameof(Player));
+    public int DamageTakenMultiplier;
 
     public bool Focused;
     public bool Ignored;
 
     public bool Locked;
     public float MovementMultiplier = 1;
-    public int DamageTakenMultiplier;
-    
+
     public int NextBulletId;
     public int NextBulletId2;
     public List<ShootData> PendingShots = new();
@@ -324,13 +325,16 @@ public class Player : Entity {
                     Map.AddProjectile(proj);
 
                     if (i == 0)
-                        shootPacket.Shots.Add(new ShootData {
-                            Time = time,
-                            BulletId = bId,
-                            ItemType = ability.ObjectType,
-                            StartingPos = new Position { X = Position.X, Y = Position.Y },
-                            Angle = projAngle
-                        });
+                        if (!string.IsNullOrEmpty(props.OldSound))
+                            SoundManager.PlaySoundEffect(props.OldSound, SoundType.Weapon);
+
+                    shootPacket.Shots.Add(new ShootData {
+                        Time = time,
+                        BulletId = bId,
+                        ItemType = ability.ObjectType,
+                        StartingPos = new Position { X = Position.X, Y = Position.Y },
+                        Angle = projAngle
+                    });
 
                     startCount++;
                     if (startCount % nextCount == 0) projTypeIndex++;
@@ -595,7 +599,7 @@ public class Player : Entity {
             var objProps = ObjectLibrary.TypeToObjectProps[projObjType];
             var angle = startAngle + MathHelper.DegreesToRadians(props.ArcGap) * i;
             var bId = GetBulletId();
-    
+
             var seededRand = new Random(bId + AccountId);
             var rawDmg = seededRand.Next(projDesc.MinDamage, projDesc.MaxDamage + 1);
             var dmg = (int)(rawDmg * (0.5f + Attack / 50f));
@@ -609,13 +613,16 @@ public class Player : Entity {
             Map.AddProjectile(proj);
 
             if (i == 0)
-                PendingShots.Add(new ShootData {
-                    Time = (int)Main.GameTime.TotalMs,
-                    BulletId = bId,
-                    ItemType = item.ObjectType,
-                    StartingPos = new Position { X = Position.X, Y = Position.Y },
-                    Angle = attackAngle
-                });
+                if (!string.IsNullOrEmpty(props.OldSound))
+                    SoundManager.PlaySoundEffect(props.OldSound, SoundType.Weapon);
+
+            PendingShots.Add(new ShootData {
+                Time = (int)Main.GameTime.TotalMs,
+                BulletId = bId,
+                ItemType = item.ObjectType,
+                StartingPos = new Position { X = Position.X, Y = Position.Y },
+                Angle = attackAngle
+            });
 
             startCount++;
             if (startCount % nextCount == 0) projTypeIndex++;
@@ -833,7 +840,7 @@ public class Player : Entity {
 
     public int AccountId;
     public int AllDamageMultiplier;
-    
+
     public int NextLevelExp = 1000;
     public int Experience;
 

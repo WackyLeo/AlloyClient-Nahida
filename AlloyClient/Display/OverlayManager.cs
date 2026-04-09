@@ -7,12 +7,13 @@ using AlloyClient.Utils;
 namespace AlloyClient.Display;
 
 public sealed class OverlayManager : Sprite {
-    
-    private static readonly ColorRect Overlay = new (new ColorRectConfig { Width = Settings.DefaultScreenWidth, Height = Settings.DefaultScreenHeight, Color = 0x2B2B2B, Alpha = 0.8f });
+    private static readonly ColorRect Overlay = new(new ColorRectConfig
+        { Width = Settings.DefaultScreenWidth, Height = Settings.DefaultScreenHeight, Color = 0x2B2B2B, Alpha = 0.8f });
 
     private static OverlayManager Instance;
 
     private Sprite _current;
+    private int _generation;
 
     public OverlayManager() {
         Instance = this;
@@ -20,29 +21,54 @@ public sealed class OverlayManager : Sprite {
         AddEventListener(Event.RemovedFromStage, OnStageExit);
     }
 
-    public static void Set(Overlay sprite) => Instance.PrivateSet(sprite);
-    
-    public static void Clear() => Instance.PrivateClear();
+    public static void Set(Overlay sprite) {
+        Instance.PrivateSet(sprite);
+    }
+
+    public static void Clear() {
+        Instance.PrivateClear();
+    }
 
     private void PrivateSet(Overlay sprite) {
+        var gen = ++_generation;
+
         if (_current is null) {
             AddChild(Overlay);
-            Overlay.AddAlphaTween(0f, 0.8f, 250);
-            
-            AddChild(_current = sprite);
+            Overlay.AddAlphaTween(Overlay.Alpha, 0.8f, 250);
+
+            _current = sprite;
+            AddChild(_current);
             _current.AddAlphaTween(0f, 1f, 250);
         } else {
-            _current.AddAlphaTween(1f, 0f, 150, onFinish: () => {
-                RemoveChild(_current);
-                AddChild(_current = sprite);
+            var outgoing = _current;
+            _current = sprite;
+
+            outgoing.AddAlphaTween(outgoing.Alpha, 0f, 150, onFinish: () => {
+                if (gen != _generation) return;
+                RemoveChild(outgoing);
+                AddChild(_current);
                 _current.AddAlphaTween(0f, 1f, 150);
             });
         }
     }
 
     private void PrivateClear() {
-        Overlay.AddAlphaTween(0.8f, 0f, 250, onFinish: () => { RemoveChild(Overlay);});
-        _current.AddAlphaTween(1f, 0f, 175, onFinish: () => { RemoveChild(_current); _current = null; });
+        var gen = ++_generation;
+
+        Overlay.AddAlphaTween(Overlay.Alpha, 0f, 250, onFinish: () => {
+            if (gen != _generation) return;
+            RemoveChild(Overlay);
+        });
+
+        if (_current is null) return;
+
+        var outgoing = _current;
+        _current = null;
+
+        outgoing.AddAlphaTween(outgoing.Alpha, 0f, 175, onFinish: () => {
+            if (gen != _generation) return;
+            RemoveChild(outgoing);
+        });
     }
 
     private void OnStageEnter() {
@@ -63,5 +89,4 @@ public sealed class OverlayManager : Sprite {
 
         Overlay.Resize(args.Width, args.Height);
     }
-    
 }

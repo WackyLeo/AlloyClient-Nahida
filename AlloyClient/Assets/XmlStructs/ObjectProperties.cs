@@ -13,6 +13,8 @@ public class ObjectProperties {
     public readonly string Class;
 
     public readonly bool Container;
+    public readonly string DeathSound;
+    public readonly int Defense;
 
     public readonly string Description;
 
@@ -25,6 +27,7 @@ public class ObjectProperties {
     public readonly bool EnemyOccupySquare;
     public readonly List<ushort?> Equipment;
     public readonly bool FullOccupy;
+    public readonly string HitSound;
     public readonly bool IsAlly;
     public readonly bool IsEnemy;
 
@@ -39,6 +42,7 @@ public class ObjectProperties {
     public readonly string ObjectId;
     public readonly ushort ObjectType;
     public readonly bool OccupySquare;
+    public readonly string OldSound;
 
     public readonly ushort PlayerClassType;
     public readonly PlayerProperties PlayerProperties;
@@ -53,9 +57,10 @@ public class ObjectProperties {
     public readonly bool ShowName;
     public readonly int SizeStep = 5;
     public readonly bool Skin;
-    public readonly int Defense;
 
     public readonly List<int> SlotTypes;
+
+    public readonly string Sound;
 
     public readonly bool Static;
 
@@ -73,6 +78,11 @@ public class ObjectProperties {
             Projectiles.Add(props);
             ProjectilesDict.TryAdd(props.BulletType, props);
         }
+
+        Sound = e.GetValue<string>("Sound");
+        OldSound = e.GetValue<string>("OldSound");
+        HitSound = e.GetValue<string>("HitSound");
+        DeathSound = e.GetValue<string>("DeathSound");
 
         NumProjectiles = e.GetValue("NumProjectiles", 1);
         ArcGap = e.GetValue("ArcGap", 11.25f);
@@ -106,7 +116,7 @@ public class ObjectProperties {
         MinSize = e.GetValue<int>("MinSize");
         MaxSize = e.GetValue<int>("MaxSize");
         SizeStep = e.GetValue("SizeStep", 5);
-        Defense = e.GetValue<int>("Defense", 0);
+        Defense = e.GetValue<int>("Defense");
 
         Description = e.GetValue<string>("Description");
 

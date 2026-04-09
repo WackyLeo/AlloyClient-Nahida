@@ -1,10 +1,10 @@
-﻿using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.IO;
+﻿using System;
+using System.Collections.Concurrent;
+using System.Threading.Tasks;
 using AlloyClient.State;
-using AlloyClient.Utils;
 using Common;
 using NAudio.Wave;
+using NAudio.Wave.SampleProviders;
 
 namespace AlloyClient.Sound;
 
@@ -15,95 +15,149 @@ public enum SoundType {
 }
 
 public static class SoundManager {
+    private static readonly Logger Log = new(typeof(SoundManager));
     private static readonly ConcurrentDictionary<string, SoundEffect> CachedSoundEffects = new();
 
+    internal static readonly WaveFormat MixerFormat = WaveFormat.CreateIeeeFloatWaveFormat(44100, 2);
+
+    private static readonly MixingSampleProvider Mixer;
+    private static readonly WaveOutEvent OutputDevice;
+
+    static SoundManager() {
+        Mixer = new MixingSampleProvider(MixerFormat) { ReadFully = true };
+        OutputDevice = new WaveOutEvent { DesiredLatency = 50 };
+        OutputDevice.Init(Mixer);
+        OutputDevice.Play();
+    }
+
     public static void PreLoadSounds() {
-        LoadSoundEffect("button_click");
-        LoadSoundEffect("death_screen");
-        LoadSoundEffect("enter_realm");
-        LoadSoundEffect("error");
-        LoadSoundEffect("inventory_move_item");
-        LoadSoundEffect("level_up");
-        LoadSoundEffect("loot_appears");
-        LoadSoundEffect("no_mana");
-        LoadSoundEffect("use_key");
-        LoadSoundEffect("use_potion");
-        
-        LoadSoundEffect("loot/legendary_loot");
-        LoadSoundEffect("loot/demonic_loot");
-        LoadSoundEffect("loot/cosmic_loot");
-        LoadSoundEffect("loot/angelic_loot");
+        var names = new[] {
+            "button_click",
+            "death_screen",
+            "enter_realm",
+            "error",
+            "inventory_move_item",
+            "level_up",
+            "loot_appears",
+            "no_mana",
+            "use_key",
+            "use_potion",
+            "loot/legendary_loot",
+            "loot/demonic_loot",
+            "loot/cosmic_loot",
+            "loot/angelic_loot"
+        };
+
+        Parallel.ForEach(names, name => LoadSoundEffect(name));
     }
 
     public static void PlaySoundEffect(string name, SoundType soundType = SoundType.Sfx) {
-        var volume = 1f;
+        float volume;
         switch (soundType) {
             case SoundType.Sfx:
-                if (!Settings.PlaySfx) {
-                    return;
-                }
-
+                if (!Settings.PlaySfx) return;
                 volume = Settings.SfxVolume;
                 break;
             case SoundType.Weapon:
-                if (!Settings.PlayWeaponSfx) {
-                    return;
-                }
-
+                if (!Settings.PlayWeaponSfx) return;
                 volume = Settings.WeaponSfxVolume;
                 break;
             case SoundType.Loot:
-                if (!Settings.PlayLootSfx) {
-                    return;
-                }
-
+                if (!Settings.PlayLootSfx) return;
                 volume = Settings.LootSfxVolume;
                 break;
+            default:
+                return;
         }
 
-        LoadSoundEffect(name);
-        CachedSoundEffects[name].Play(volume);
-    }
-    
-    private static void LoadSoundEffect(string name) {
-        if (CachedSoundEffects.ContainsKey(name)) {
+        if (CachedSoundEffects.TryGetValue(name, out var effect)) {
+            effect?.Play(volume);
             return;
         }
 
-        CachedSoundEffects[name] = new SoundEffect($"{Settings.AppEngineUrl}//sfx/{name}.mp3");
+        Task.Run(() => {
+            try {
+                LoadSoundEffect(name)?.Play(volume);
+            } catch (Exception e) {
+                Log.Error($"Failed to lazy-load sound {name}: {e}");
+            }
+        });
+    }
+
+    internal static void AddToMixer(ISampleProvider provider) {
+        try {
+            Mixer.AddMixerInput(provider);
+        } catch (Exception e) {
+            Log.Error($"Mixer add failed: {e.Message}");
+        }
+    }
+
+    public static void Dispose() {
+        OutputDevice.Stop();
+        OutputDevice.Dispose();
+    }
+
+    private static SoundEffect LoadSoundEffect(string name) {
+        return CachedSoundEffects.GetOrAdd(name, _ => {
+            try {
+                return new SoundEffect($"{Settings.AppEngineUrl}//sfx/{name}.mp3");
+            } catch (Exception e) {
+                Log.Error($"Failed to load sound {name}: {e}");
+                return null;
+            }
+        });
     }
 }
 
 public class SoundEffect {
     private static readonly Logger Log = new(typeof(SoundEffect));
-    
-    private readonly Queue<WaveOutEvent> _soundEffectDevices = new();
-    private readonly WaveFormat _waveFormat;
-    private readonly byte[] _audioData;
+
+    private readonly float[] _samples;
 
     public SoundEffect(string url) {
         using var reader = new MediaFoundationReader(url);
-        _waveFormat = reader.WaveFormat;
-        _audioData = new byte[reader.Length];
-        _ = reader.Read(_audioData, 0, _audioData.Length);
+        using var resampler = new MediaFoundationResampler(reader, SoundManager.MixerFormat);
+
+        var byteBuffer = new byte[resampler.WaveFormat.AverageBytesPerSecond * 30];
+        var bytesRead = resampler.Read(byteBuffer, 0, byteBuffer.Length);
+
+        _samples = new float[bytesRead / 4];
+        Buffer.BlockCopy(byteBuffer, 0, _samples, 0, bytesRead);
     }
 
     public void Play(float volume = 1f) {
-        if (_soundEffectDevices.Count > 0) {
-            var soundEffectInstance = _soundEffectDevices.Dequeue();
-            soundEffectInstance.Volume = volume;
-            soundEffectInstance.Play();
-            return;
+        try {
+            var provider = new FloatArraySampleProvider(_samples, SoundManager.MixerFormat, volume);
+            SoundManager.AddToMixer(provider);
+        } catch (Exception e) {
+            Log.Error($"SoundEffect.Play failed: {e}");
         }
+    }
+}
 
-        var reader = new RawSourceWaveStream(_audioData, 0, _audioData.Length, _waveFormat);
-        var newInstance = new WaveOutEvent();
-        newInstance.Volume = volume;
-        newInstance.Init(reader);
-        newInstance.PlaybackStopped += (_, _) => {
-            _soundEffectDevices.Enqueue(newInstance);
-            reader.Seek(0, SeekOrigin.Begin);
-        };
-        newInstance.Play();
+internal class FloatArraySampleProvider : ISampleProvider {
+    private readonly float[] _samples;
+    private readonly float _volume;
+    private int _position;
+
+    public FloatArraySampleProvider(float[] samples, WaveFormat format, float volume) {
+        _samples = samples;
+        _volume = volume;
+        WaveFormat = format;
+    }
+
+    public WaveFormat WaveFormat { get; }
+
+    public int Read(float[] buffer, int offset, int count) {
+        var available = _samples.Length - _position;
+        var toRead = Math.Min(available, count);
+
+        if (toRead <= 0) return 0;
+
+        for (var i = 0; i < toRead; i++)
+            buffer[offset + i] = _samples[_position + i] * _volume;
+
+        _position += toRead;
+        return toRead;
     }
 }

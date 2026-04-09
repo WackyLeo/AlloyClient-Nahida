@@ -4,6 +4,7 @@ using AlloyClient.Data;
 using AlloyClient.Display;
 using AlloyClient.Game;
 using AlloyClient.Networking.Packets.Outgoing;
+using AlloyClient.Sound;
 
 namespace AlloyClient.Networking.Packets.Incoming;
 
@@ -82,7 +83,7 @@ public class MapInfo : IncomingPacket<MapInfo> {
         Client.IsReconnecting = false;
 
         ScreenManager.FadeInCurrent(400);
-        //Music.PlayMusic(MusicFile, 2);
+        Music.PlayMusic(MusicFile);
     }
 
     private static void LoadOrCreate() {

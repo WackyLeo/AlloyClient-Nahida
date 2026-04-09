@@ -81,9 +81,9 @@ public class OptionTabView : Container {
         _options.Add(new KeyMapperOption(Settings.MoveLeft, "Move Left", "Key to will move character to the left"));
         _options.Add(new KeyMapperOption(Settings.MoveDown, "Move Down", "Key to will move character down"));
         _options.Add(new KeyMapperOption(Settings.MoveRight, "Move Right", "Key to will move character to the right"));
-        _options.Add(new ChoiceOption<bool>(Settings.AllowRotation, OnOffLabels, OnOffValues, "Allow Camera Rotation",
-            "Toggles whether to allow for camera rotation"));
-        _options.Add(null);
+        //_options.Add(new ChoiceOption<bool>(Settings.AllowRotation, OnOffLabels, OnOffValues, "Allow Camera Rotation",
+        //    "Toggles whether to allow for camera rotation"));
+        //_options.Add(null);
         _options.Add(new KeyMapperOption(Settings.RotateLeft, "Rotate Left",
             "Key to will rotate the camera to the left"));
         _options.Add(new KeyMapperOption(Settings.RotateRight, "Rotate Right",
@@ -93,12 +93,12 @@ public class OptionTabView : Container {
         _options.Add(new KeyMapperOption(Settings.AutoFire, "Autofire Toggle", "This key will toggle autofire"));
         _options.Add(new KeyMapperOption(Settings.ResetCameraAngle, "Reset To Default Camera Angle",
             "This key will reset the camera angle to the default position"));
-        _options.Add(new KeyMapperOption(Settings.PerformanceStats, "Toggle Performance Stats",
-            "This key will toggle a display of fps and memory usage"));
+        //_options.Add(new KeyMapperOption(Settings.PerformanceStats, "Toggle Performance Stats",
+        //    "This key will toggle a display of fps and memory usage"));
         _options.Add(new KeyMapperOption(Settings.CenterPlayerKey, "Toggle Centering of Player",
             "This key will toggle the position between centered and offset"));
-        _options.Add(new KeyMapperOption(Settings.Interact, "Interact/Buy",
-            "This key will allow you to enter a portal or buy an item without using your mouse."));
+        //_options.Add(new KeyMapperOption(Settings.Interact, "Interact/Buy",
+        //    "This key will allow you to enter a portal or buy an item without using your mouse."));
     }
 
     private void AddHotkeysOptions() {
@@ -162,7 +162,7 @@ public class OptionTabView : Container {
             "Default Camera Angle", "This toggles the default camera angle",
             OnDefautCameraAngleChange));
         _options.Add(new ChoiceOption<bool>(Settings.CenterPlayer, OnOffLabels, OnOffValues, "Center On Player",
-            "This toggles whether the player is centered or offset"));
+            "This toggles whether the player is centered or offset", OnCenterPlayerChange));
         _options.Add(new ChoiceOption<bool>(Settings.EyeCandyParticles, OnOffLabels, OnOffValues, "Eye Candy Particles",
             "This toggles whether to show eye candy particles, disabling this will improve performance."));
         _options.Add(new ChoiceOption<bool>(Settings.ReducedParticles, OnOffLabels, OnOffValues, "Reduced Particles",
@@ -199,45 +199,49 @@ public class OptionTabView : Container {
     }
 
     private void OnLootSfxVolumeChange(float obj) {
-        throw new NotImplementedException();
+        //throw new NotImplementedException();
     }
 
     private void OnWeaponSfxVolumeChange(float obj) {
-        throw new NotImplementedException();
+        //throw new NotImplementedException();
     }
 
     private void OnSfxVolumeChange(float obj) {
-        throw new NotImplementedException();
+        //throw new NotImplementedException();
     }
 
     private void OnMusicVolumeChange(float obj) {
-        throw new NotImplementedException();
+        //throw new NotImplementedException();
     }
 
     private void OnPlayWeaponSoundsChange() {
-        throw new NotImplementedException();
+        //throw new NotImplementedException();
     }
 
     private void OnPlaySoundEffectsChange() {
-        throw new NotImplementedException();
+        //throw new NotImplementedException();
     }
 
     private void OnPlayMusicChange() {
-        throw new NotImplementedException();
+        //throw new NotImplementedException();
     }
 
     private void OnChatVisible() {
-        throw new NotImplementedException();
+        //throw new NotImplementedException();
         //GameSprite.Instance.ChatBox.Enabled = !GameSprite.Instance.ChatBox.Enabled;
     }
 
     private void OnChatBoxScale() {
-        throw new NotImplementedException();
+        //throw new NotImplementedException();
         //GameSprite.Instance.ChatBox.Scale = new Vector2(Settings.ChatScaling);
     }
 
     private void OnDefautCameraAngleChange() {
-        throw new NotImplementedException();
+        //throw new NotImplementedException();
+    }
+
+    private void OnCenterPlayerChange() {
+        Camera.Reset();
     }
 
     private void OnVSyncToggle() {
@@ -247,7 +251,7 @@ public class OptionTabView : Container {
     }
 
     private void OnRenderDistanceChange() {
-        throw new NotImplementedException();
+        //throw new NotImplementedException();
     }
 
     private void OnFPSChange() {
@@ -255,11 +259,11 @@ public class OptionTabView : Container {
     }
 
     private void OnMScaleChange() {
-        throw new NotImplementedException();
+        //throw new NotImplementedException();
     }
 
     private void OnFullscreenToggle() {
-        throw new NotImplementedException();
+        //throw new NotImplementedException();
     }
 
     private Option GetOption(ISettingType setting) {

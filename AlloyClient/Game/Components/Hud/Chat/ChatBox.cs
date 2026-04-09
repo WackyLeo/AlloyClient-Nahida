@@ -72,6 +72,11 @@ public class ChatBox : Sprite {
     }
 
     private void RemoveHandlers() {
+        if (_inFocus) {
+            _chatInput.UnFocus(false);
+            _inFocus = false;
+        }
+    
         AddChatLine.Remove();
         OnChatOpen.Remove(HandleChatOpen);
         OnChatHistoryUp.Remove(OnPageUp);
@@ -179,7 +184,7 @@ public class ChatBox : Sprite {
 
     private void UnfocusTextInput() {
         UserInput.SetManualFocus(true);
-        Stage.RemoveEventListener(KeyboardEvent.KeyDown, OnKeyDown);
+        Stage?.RemoveEventListener(KeyboardEvent.KeyDown, OnKeyDown);
         _inFocus = false;
     }
     

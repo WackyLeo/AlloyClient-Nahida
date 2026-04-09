@@ -18,7 +18,8 @@ public abstract class Option : Sprite {
             DescText = new SimpleText(new TextConfig {
                 Text = desc,
                 FontSize = 25,
-                OutlineThickness = 2,
+                OutlineThickness = 0.5f,
+                Glow = 0,
                 Color = 0xB3B3B3,
                 X = KeyCodeBox.BoxWidth + 38,
                 Y = (KeyCodeBox.BoxHeight - 25) / 2,

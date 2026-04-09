@@ -16,6 +16,7 @@ public sealed class GameSprite : Sprite {
     public static DailyQuestWindow DailyQuestWindow;
     private readonly ChatBox _chat;
     private readonly CurrencyView _currencyView;
+    private readonly NotificationLayer _notificationLayer;
     public readonly HudView Hud;
 
     public readonly UserInput UserInput;
@@ -24,7 +25,7 @@ public sealed class GameSprite : Sprite {
     public GameSprite() {
         AddChild(UserInput = new UserInput());
         AddChild(new ChatLayer());
-        AddChild(new NotificationLayer());
+        AddChild(_notificationLayer = new NotificationLayer());
         AddChild(Hud = new HudView());
         AddChild(_currencyView = new CurrencyView());
         AddChild(_chat = new ChatBox());

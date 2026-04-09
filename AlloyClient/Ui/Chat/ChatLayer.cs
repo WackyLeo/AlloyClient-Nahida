@@ -1,20 +1,21 @@
 ﻿using System.Collections.Generic;
 using AlloyClient.UiLib.Core;
-using Common;
 
 namespace AlloyClient.Ui.Chat;
 
 public class ChatLayer : Sprite {
-
     private static readonly Queue<SpeechData> Queue = new();
 
     private static readonly Dictionary<int, SpeechBubble> Bubbles = [];
 
     public ChatLayer() {
-        AddEventListener(Event.EnterFrame, OnFrameEnter);
+        AddEventListener(Event.AddedToStage, () => { AddEventListener(Event.EnterFrame, OnFrameEnter); });
+        AddEventListener(Event.RemovedFromStage, () => { RemoveEventListener(Event.EnterFrame, OnFrameEnter); });
     }
 
-    public static void QueueSpeech(SpeechData data) => Queue.Enqueue(data);
+    public static void QueueSpeech(SpeechData data) {
+        Queue.Enqueue(data);
+    }
 
     private void OnFrameEnter() {
         while (Queue.TryDequeue(out var data)) {

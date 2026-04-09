@@ -26,6 +26,8 @@ public class Entity {
 
     public readonly Signal<int> InventoryUpdate = new();
 
+    private bool _hpInitialized;
+
     public float Alpha = 1.0f;
     public float AttackAngle;
 
@@ -42,11 +44,8 @@ public class Entity {
     public float Jitter;
 
     public int LastTickId;
+
     public double LastTickUpdateTime;
-    
-    private bool _hpInitialized;
-    public int PredictedHp;
-    public bool IsPredictedDead => PredictedHp <= 0 && _hpInitialized;    
     // Merchant Specific
 
     public int merchandiseType_;
@@ -56,6 +55,7 @@ public class Entity {
     public int ObjectId;
     public Vector2 Position;
     public Vector2 PositionAtTick;
+    public int PredictedHp;
     public ObjectProperties Properties;
 
     public RenderBase RenderBaseType;
@@ -69,14 +69,15 @@ public class Entity {
     public MapTile Tile;
     public ushort Type;
     public float Z;
+    public bool IsPredictedDead => PredictedHp <= 0 && _hpInitialized;
 
     public void SetObjectId(int id) {
         ObjectId = id;
         Jitter = Random.Shared.NextSingle() * 0.00002f - 0.00001f;
         if (Properties.EffectProperties != null)
             Effect = ParticleEffect.FromProperties(Properties.EffectProperties, this);
-        
-        Defense = Properties.Defense; 
+
+        Defense = Properties.Defense;
     }
 
     public void SetType(ushort type) {
@@ -256,7 +257,7 @@ public class Entity {
             var stat = statData[offset + i];
             switch (stat.Type) {
                 case StatsType.Hp:
-                    int serverHp = stat.Value;
+                    var serverHp = stat.Value;
                     if (!_hpInitialized) {
                         Hp = serverHp;
                         PredictedHp = serverHp;
@@ -265,29 +266,25 @@ public class Entity {
                     }
 
                     if (serverHp > Hp) {
-                        if (PredictedHp <= 0 && this.Properties.IsEnemy) {
-                            int diff = serverHp - PredictedHp;
+                        if (PredictedHp <= 0 && Properties.IsEnemy) {
+                            var diff = serverHp - PredictedHp;
                             NotificationLayer.AddStatusText(this, $"+{diff}", 0x00FF00, 1000, 0);
                         }
-                        PredictedHp += (serverHp - Hp); 
-                    } 
-                    else if (serverHp < Hp) {
-                        if (PredictedHp > serverHp) {
-                            PredictedHp = serverHp; 
-                        }
+
+                        PredictedHp += serverHp - Hp;
+                    } else if (serverHp < Hp) {
+                        if (PredictedHp > serverHp) PredictedHp = serverHp;
                     }
 
-                    Hp = serverHp; 
+                    Hp = serverHp;
                     //Logger.Info($"[CLIENT SYNC] Entity {ObjectId} Server HP: {Hp} | Prediction: {PredictedHp}");
 
-                    if (!IsPredictedDead) {
-                        SetTransparency(HasConditionEffect(ConditionEffects.Invisible) ? 0.5f : 1.0f);
-                    }
+                    if (!IsPredictedDead) SetTransparency(HasConditionEffect(ConditionEffects.Invisible) ? 0.5f : 1.0f);
                     break;
 
                 case StatsType.MaximumHp:
                     MaxHp = stat.Value;
-                    if (!_hpInitialized && PredictedHp == 0) PredictedHp = MaxHp; 
+                    if (!_hpInitialized && PredictedHp == 0) PredictedHp = MaxHp;
                     break;
                 case StatsType.Defense:
                     Defense = stat.Value;
@@ -326,14 +323,15 @@ public class Entity {
                 case StatsType.Effects:
                     ConditionEffects = (ConditionEffects)stat.Value;
 
-                    if (HasConditionEffect(ConditionEffects.Invulnerable) || HasConditionEffect(ConditionEffects.Invincible)) {
-                        if (PredictedHp <= 0 && Hp > 0) {
+                    if (HasConditionEffect(ConditionEffects.Invulnerable) ||
+                        HasConditionEffect(ConditionEffects.Invincible)) {
+                        if (PredictedHp <= 0 && Hp > 0)
                             NotificationLayer.AddStatusText(this, "Immune", 0x00FF00, 1000, 0);
-                        }
                         PredictedHp = Hp;
                     }
 
-                    SetTransparency(IsPredictedDead ? 0.4f : (HasConditionEffect(ConditionEffects.Invisible) ? 0.5f : 1.0f));
+                    SetTransparency(IsPredictedDead ? 0.4f :
+                        HasConditionEffect(ConditionEffects.Invisible) ? 0.5f : 1.0f);
                     break;
                 case StatsType.Name:
                     if (Name != stat.Text) {
@@ -515,6 +513,7 @@ public class Entity {
             Log.Error(
                 $"Failed to add entity {ObjectId} (type=0x{Type:X4}) to map at ({position.X}, {position.Y}). Map size: {Map.Width}x{Map.Height}, tiles null: {Map._tiles == null}");
 
+        Effect?.SetEntityPosition(Position);
         // Add entity's effect
     }
 

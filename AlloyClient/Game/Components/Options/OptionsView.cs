@@ -13,19 +13,6 @@ using AlloyClient.UiLib.Signals;
 namespace AlloyClient.Game.Components.Options;
 
 public sealed class OptionsView : Overlay {
-
-    private static bool _open;
-    
-    public static void Toggle() {
-        if (_open) {
-            OverlayManager.Clear();
-            _open = false;
-        } else {
-            OverlayManager.Set(new OptionsView());
-            _open = true;
-        }
-    }
-    
     public const string ControlsTab = "Controls";
     public const string HotkeysTab = "Hot Keys";
     public const string ChatTab = "Chat";
@@ -33,17 +20,22 @@ public sealed class OptionsView : Overlay {
     public const string SoundTab = "Sound";
     public const string ExtraTab = "Extra";
 
-    private static readonly string[] Tabs = [ControlsTab, HotkeysTab, ChatTab, GraphicsTab, SoundTab, ExtraTab];
-    
-    private readonly Dictionary<string, OptionTabView> _tabViews = [];
+    private static bool _open;
 
-    public static readonly SingleSignal RefreshOptions = new ();//TODO: holds refs, redo
+    private static readonly string[] Tabs = [ControlsTab, HotkeysTab, ChatTab, GraphicsTab, SoundTab, ExtraTab];
+
+    public static readonly SingleSignal RefreshOptions = new(); //TODO: holds refs, redo
+
+    private readonly Dictionary<string, OptionTabView> _tabViews = [];
 
     private TextButton _selectedTab;
 
     public OptionsView() {
         RefreshOptions.Set(Refresh);
-        
+
+        SelfContentWidth = Settings.DefaultScreenWidth;
+        SelfContentHeight = Settings.DefaultScreenHeight;
+
         //todo:SetBaseDimensions(Settings.DefaultScreenWidth, Settings.DefaultScreenHeight);
 
         var titleText = new SimpleText(new TextConfig {
@@ -57,7 +49,8 @@ public sealed class OptionsView : Overlay {
         });
         AddChild(titleText);
 
-        var header = new ColorRect(new ColorRectConfig { X = 0, Y = 120, Width = Settings.DefaultScreenWidth, Height = 2, Color = 0x5E5E5E });
+        var header = new ColorRect(new ColorRectConfig
+            { X = 0, Y = 120, Width = Settings.DefaultScreenWidth, Height = 2, Color = 0x5E5E5E });
         AddChild(header);
 
         var continueButton = new MenuBarButton(new TextButtonConfig {
@@ -92,6 +85,16 @@ public sealed class OptionsView : Overlay {
         AddChild(homeButton);
 
         AddTabs();
+    }
+
+    public static void Toggle() {
+        if (_open) {
+            OverlayManager.Clear();
+            _open = false;
+        } else {
+            OverlayManager.Set(new OptionsView());
+            _open = true;
+        }
     }
 
     private void AddTabs() {
@@ -144,11 +147,9 @@ public sealed class OptionsView : Overlay {
         _selectedTab!.Deactivate();
         _tabViews[_selectedTab.Name].Visible = true;
     }
-    
+
     public void Refresh() {
-        foreach (var tabView in _tabViews.Values) {
-            tabView.Refresh();
-        }
+        foreach (var tabView in _tabViews.Values) tabView.Refresh();
     }
 
     private void OnResetToDefaults() {

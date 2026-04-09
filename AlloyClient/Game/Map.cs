@@ -322,8 +322,8 @@ public static class Map {
         for (var i = 0; i < ParticleGenCount; i++) {
             if (ParticleGenerators[i] is RayCastParticle rcp)
                 rcp.Draw();
-            if (ParticleGenerators[i] is XMLParticle xmp)
-                xmp.Draw();
+            //if (ParticleGenerators[i] is XMLParticle xmp)
+            //    xmp.Draw();
         }
 
         if (EntityStorage.TryGetValue(ModelType.PbObject, out var entities)) {

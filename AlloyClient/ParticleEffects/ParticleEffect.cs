@@ -33,7 +33,7 @@ public abstract class ParticleEffect {
             "Vent" => null,
             "Bubbles" => new BubbleEffect(entity, properties),
             "Vortex" => null,
-            "XMLEffect" => new XMLEffect(entity, properties),
+            //"XMLEffect" => new XMLEffect(entity, properties),
             "CustomParticles" => new ParticleGenerator(entity, properties),
             _ => null
         };
@@ -41,6 +41,5 @@ public abstract class ParticleEffect {
 
     protected static float ParticleW(int as3Size) {
         return as3Size / 100f;
-        ;
     }
 }

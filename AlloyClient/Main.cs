@@ -4,6 +4,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Runtime.InteropServices;
 using AlloyClient.Assets;
+using AlloyClient.Assets.Libraries;
 using AlloyClient.Display;
 using AlloyClient.Engine.Graphics;
 using AlloyClient.Game.Components;
@@ -118,6 +119,7 @@ public class Main {
         var titleGraphic = ContentReader.LoadTexture("TitleScreen/TitleScreenGraphic.png");
         var titleLogo = ContentReader.LoadTexture("TitleScreen/TitleScreenLogo.png");
         var font = new BitmapFamily(ContentReader.LoadFont("Fonts/MyriadPro/MyriadPro.msdf"));
+        //ParticleLibrary.Load("Particles.xml");
 
         // Set texture units
         gameAtlasSampler = new Sampler(Atlas.Texture, 0);
@@ -205,7 +207,7 @@ public class Main {
         GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
         GL.Disable(EnableCap.FramebufferSrgb);
 
-        Music.LoadMusic("Reclaiming Entropy");
+        Music.PlayMusic("Reclaiming Entropy", 0);
 
         while (true) {
             var elapsedMs = sw.Elapsed.TotalMilliseconds;

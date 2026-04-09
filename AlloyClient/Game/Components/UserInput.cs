@@ -241,6 +241,10 @@ public sealed class UserInput : Sprite {
             case true when Settings.ResetCameraAngle.CheckValue(key):
                 Settings.CameraAngle = 0;
                 break;
+            case true when Settings.CenterPlayerKey.CheckValue(key):
+                Settings.CenterPlayer = !Settings.CenterPlayer;
+                Camera.Reset();
+                break;
             case true when Settings.Options.CheckValue(key):
                 ClearMovement();
                 OptionsView.Toggle();

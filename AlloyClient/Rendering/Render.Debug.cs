@@ -31,7 +31,7 @@ public static partial class Render {
         _debugInitialized = true;
 
         const string vert = @"
-            #version 330 core
+            #version 450 core
             layout(location=0) in vec2 aPos;
             layout(location=1) in vec3 aCol;
             uniform mat4 uVP;
@@ -39,7 +39,7 @@ public static partial class Render {
             void main() { gl_Position = uVP * vec4(aPos, 0.0, 1.0); vCol = aCol; }";
 
         const string frag = @"
-            #version 330 core
+            #version 450 core
             in vec3 vCol;
             out vec4 o;
             void main() { o = vec4(vCol, 1.0); }";

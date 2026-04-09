@@ -3,7 +3,6 @@ using AlloyClient.State.SettingTypes;
 using AlloyClient.UiLib.BuiltIn;
 using AlloyClient.UiLib.Core;
 using AlloyClient.UiLib.Enums;
-using Common;
 using OpenTK.Mathematics;
 using OpenTK.Platform;
 
@@ -14,26 +13,34 @@ public class KeyCodeBox : Sprite {
     public const int BoxHeight = 51;
 
     private static readonly string[] CharCodes = [ //TODO: sync to Key enum
-        "[Unset]", "", "", "", "", "", "", "", "Backspace", "Tab", "", "", "Clear", "Enter", "", "Cmd", "Shift", "Ctrl", "Alt", "Pause", "CapsLock", "", "", "", "", "", "",
-        "Esc", "", "", "", "", "Space", "PgUp", "PgDn", "End", "Home", "Left", "Up", "Right", "Down", "", "", "", "", "Insert", "Delete", "", "0", "1", "2", "3", "4", "5",
-        "6", "7", "8", "9", "", "", "", "", "", "", "", "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X",
-        "Y", "Z", "", "Win", "Menu", "", "", "Numpad 0", "Numpad 1", "Numpad 2", "Numpad 3", "Numpad 4", "Numpad 5", "Numpad 6", "Numpad 7", "Numpad 8", "Numpad 9",
-        "Numpad *", "Numpad +", "Numpad Enter", "Numpad -", "Numpad .", "Numpad /", "F1", "F2", "F3", "F4", "F5", "F6", "F7", "F8", "F9", "F10", "F11", "F12", "F13", "F14",
-        "F15", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "NumLock", "ScrLock", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "",
-        "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ";", "=", ",", "-", ".", "/", "`", "", "", "", "", "", "", "", "", "", "",
-        "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "[", "\\", "]", "\'", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "",
+        "[Unset]", "", "", "", "", "", "", "", "Backspace", "Tab", "", "", "Clear", "Enter", "", "Cmd", "Shift", "Ctrl",
+        "Alt", "Pause", "CapsLock", "", "", "", "", "", "",
+        "Esc", "", "", "", "", "Space", "PgUp", "PgDn", "End", "Home", "Left", "Up", "Right", "Down", "", "", "", "",
+        "Insert", "Delete", "", "0", "1", "2", "3", "4", "5",
+        "6", "7", "8", "9", "", "", "", "", "", "", "", "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M",
+        "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X",
+        "Y", "Z", "", "Win", "Menu", "", "", "Numpad 0", "Numpad 1", "Numpad 2", "Numpad 3", "Numpad 4", "Numpad 5",
+        "Numpad 6", "Numpad 7", "Numpad 8", "Numpad 9",
+        "Numpad *", "Numpad +", "Numpad Enter", "Numpad -", "Numpad .", "Numpad /", "F1", "F2", "F3", "F4", "F5", "F6",
+        "F7", "F8", "F9", "F10", "F11", "F12", "F13", "F14",
+        "F15", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "NumLock", "ScrLock", "", "", "", "",
+        "", "", "", "", "", "", "", "", "", "", "", "", "",
+        "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ";", "=", ",", "-",
+        ".", "/", "`", "", "", "", "", "", "", "", "", "", "",
+        "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "[", "\\", "]", "\'", "", "", "", "", "", "",
+        "", "", "", "", "", "", "", "", "", "", "", "", "", "",
         "", "", "", "", "", "", "", "", "", "", "", "", ""
     ];
 
-    public InputSetting Value;
-
     private readonly ColorRect _background;
-    private readonly SimpleText _char;
     private readonly Action _callback;
+    private readonly SimpleText _char;
+    private double _elapsed;
+    private bool _inputMode;
 
     private Scancode _keyCode;
-    private bool _inputMode;
-    private double _elapsed;
+
+    public InputSetting Value;
 
     public KeyCodeBox(InputSetting setting, Action callback) {
         //todo:SetBaseDimensions(BoxWidth, BoxHeight);
@@ -41,7 +48,7 @@ public class KeyCodeBox : Sprite {
         MouseEnabled = true;
 
         _callback = callback;
-        
+
         _keyCode = setting.Key;
 
         Value = setting;
@@ -50,7 +57,9 @@ public class KeyCodeBox : Sprite {
         AddChild(_background);
 
         _char = new SimpleText(new TextConfig {
-            Text = CharCodes[(int)Toolkit.Keyboard.GetKeyFromScancode(_keyCode)], FontSize = 25, FontType = FontType.Bold, X = BoxWidth / 2, Y = BoxHeight / 2, OutlineThickness = 0.5f, Glow = 0, Anchor = UiAnchor.Middle
+            Text = CharCodes[(int)Toolkit.Keyboard.GetKeyFromScancode(_keyCode)], FontSize = 25,
+            FontType = FontType.Bold, X = BoxWidth / 2, Y = BoxHeight / 2, OutlineThickness = 0.5f, Glow = 0,
+            Anchor = UiAnchor.Middle
         });
         AddChild(_char);
 
@@ -61,9 +70,7 @@ public class KeyCodeBox : Sprite {
     }
 
     private void OnFrameEnter() {
-        if (!_inputMode) {
-            return;
-        }
+        if (!_inputMode) return;
 
         _elapsed += Stage.GameTime.ElapsedMs;
         if (_elapsed > 500) {
@@ -73,27 +80,28 @@ public class KeyCodeBox : Sprite {
     }
 
     protected override bool CustomHitbox(Vector2i pos) {
-        if (_inputMode) {
-            return true;
-        }
+        if (_inputMode) return true;
 
         return pos.X > 0 && pos.X < Width && pos.Y > 0 && pos.Y < Height;
     }
 
     private void OnLeftClick() {
         if (_inputMode) {
-            RemoveEventListener(KeyboardEvent.KeyUp, OnKeyPress);
+            Stage.RemoveEventListener(KeyboardEvent.KeyUp, OnKeyPress);
+            UserInput.SetInputDisabled(false);
             Reset();
             return;
         }
 
         _inputMode = true;
         _char.SetText("[Hit Key]");
-        AddEventListener(KeyboardEvent.KeyUp, OnKeyPress);
+        UserInput.SetInputDisabled(true);
+        Stage.AddEventListener(KeyboardEvent.KeyUp, OnKeyPress);
     }
 
     private void OnKeyPress(KeyboardEvent args) {
-        RemoveEventListener(KeyboardEvent.KeyUp, OnKeyPress);
+        Stage.RemoveEventListener(KeyboardEvent.KeyUp, OnKeyPress);
+        UserInput.SetInputDisabled(false);
 
         if (args.Code == Scancode.Escape) {
             Reset();
@@ -102,9 +110,7 @@ public class KeyCodeBox : Sprite {
 
         _keyCode = args.Code;
         Value.Set(_keyCode);
-
         _callback.Invoke();
-
         Reset();
     }
 
@@ -116,9 +122,7 @@ public class KeyCodeBox : Sprite {
     }
 
     public void SetValue(InputSetting setting) {
-        if (setting.Key != Scancode.Unknown) {
-            _keyCode = setting.Key;
-        }
+        if (setting.Key != Scancode.Unknown) _keyCode = setting.Key;
 
         Value = setting;
         Reset();

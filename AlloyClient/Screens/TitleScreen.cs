@@ -3,7 +3,6 @@ using AlloyClient.Data;
 using AlloyClient.Display;
 using AlloyClient.Screens.Components;
 using AlloyClient.Screens.Components.Containers;
-using AlloyClient.Sound;
 using AlloyClient.Ui.Components.Buttons;
 using AlloyClient.UiLib.BuiltIn;
 using AlloyClient.UiLib.Core;
@@ -85,8 +84,6 @@ public class TitleScreen : TitleScreenBase {
             Color = 0xFFFFFF
         });
         AddChild(_developerText);
-
-        Music.PlayMusic("Reclaiming Entropy", 0);
     }
 
     public override void Draw(GameTime gameTime) {
