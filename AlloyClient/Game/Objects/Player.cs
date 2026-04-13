@@ -324,17 +324,18 @@ public class Player : Entity {
                     proj.Reset(bId, dmg, projAngle, this, objProps, projPropsInfo);
                     Map.AddProjectile(proj);
 
-                    if (i == 0)
+                    if (i == 0) {
                         if (!string.IsNullOrEmpty(props.OldSound))
                             SoundManager.PlaySoundEffect(props.OldSound, SoundType.Weapon);
 
-                    shootPacket.Shots.Add(new ShootData {
-                        Time = time,
-                        BulletId = bId,
-                        ItemType = ability.ObjectType,
-                        StartingPos = new Position { X = Position.X, Y = Position.Y },
-                        Angle = projAngle
-                    });
+                        shootPacket.Shots.Add(new ShootData {
+                            Time = time,
+                            BulletId = bId,
+                            ItemType = ability.ObjectType,
+                            StartingPos = new Position { X = Position.X, Y = Position.Y },
+                            Angle = projAngle
+                        });
+                    }
 
                     startCount++;
                     if (startCount % nextCount == 0) projTypeIndex++;
@@ -572,13 +573,14 @@ public class Player : Entity {
         return attFreq;
     }
 
-    public void Shoot(float attackAngle, GameTime gameTime, bool isAbility) {
+public void Shoot(float attackAngle, GameTime gameTime, bool isAbility) {
         if (HasConditionEffect(ConditionEffects.Stunned) || HasConditionEffect(ConditionEffects.Paused)) return;
         var item = Equipment[0];
         if (item == null) return;
 
         var temp = AttackFrequency();
-        AttackPeriod = 1 / temp * (1 / item.RateOfFire);
+        AttackPeriod = (float)((1 / temp * (1 / item.RateOfFire)) * 1.02); 
+        
         if (gameTime.TotalMs < AttackStart + AttackPeriod) return;
 
         AttackAngle = attackAngle;
@@ -604,25 +606,25 @@ public class Player : Entity {
             var rawDmg = seededRand.Next(projDesc.MinDamage, projDesc.MaxDamage + 1);
             var dmg = (int)(rawDmg * (0.5f + Attack / 50f));
 
-            //Logger.Info($"Spawning Projectile: {seededRand} : {bId} : {AccountId} : {dmg}");
             if (!props.ProjectilesDict.TryGetValue(projDesc.BulletType, out var projProps))
                 projProps = props.Projectiles[0];
 
             var proj = ObjectPools.Projectiles.Pop();
             proj.Reset(bId, dmg, angle, this, objProps, projProps);
             Map.AddProjectile(proj);
-
-            if (i == 0)
+            
+            if (i == 0) {
                 if (!string.IsNullOrEmpty(props.OldSound))
                     SoundManager.PlaySoundEffect(props.OldSound, SoundType.Weapon);
 
-            PendingShots.Add(new ShootData {
-                Time = (int)Main.GameTime.TotalMs,
-                BulletId = bId,
-                ItemType = item.ObjectType,
-                StartingPos = new Position { X = Position.X, Y = Position.Y },
-                Angle = attackAngle
-            });
+                PendingShots.Add(new ShootData {
+                    Time = (int)Main.GameTime.TotalMs,
+                    BulletId = bId,
+                    ItemType = item.ObjectType,
+                    StartingPos = new Position { X = Position.X, Y = Position.Y },
+                    Angle = attackAngle
+                });
+            }
 
             startCount++;
             if (startCount % nextCount == 0) projTypeIndex++;

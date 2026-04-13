@@ -116,6 +116,7 @@ public class DebugStats : Sprite {
     private double _lastTime;
 
     public DebugStats() {
+        return;
         AddChild(_fps);
 
         AddChild(_frameTimeTimer);
@@ -163,6 +164,8 @@ public class DebugStats : Sprite {
     }
 
     private void OnFrameEnter() {
+        return;
+
         _fps.SetText($"FPS: {Math.Round(GameScreen.FPS, 1)}");
 
         var gameTime = Stage.GameTime;

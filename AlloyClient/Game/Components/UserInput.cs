@@ -227,11 +227,8 @@ public sealed class UserInput : Sprite {
             }
                 break;
             case true when Settings.Escape.CheckValue(key):
-                if (Map.Name == "Nexus" || Client.IsReconnecting)
-                    break;
-
-                Client.QueuePacket(Escape.CreatePacket());
-                Client.IsReconnecting = true;
+                Client.Disconnect();
+                Map.Reset();
                 break;
             case true when Settings.Interact.CheckValue(key):
                 if (Client.IsReconnecting)

@@ -10,9 +10,13 @@ public class ServerPlayerShoot : IncomingPacket<ServerPlayerShoot> {
     public int BulletId;
     public int OwnerId;
     public int ContainerType;
-    public Position StartingPos;
+    public int Prjtype;
+    
+    public Position StartingPos = new Position();
+    
     public float Angle;
     public short Damage;
+    public bool UsePlayerPos;
 
     public override PacketId PacketId => PacketId.ServerPlayerShoot;
 
@@ -23,34 +27,41 @@ public class ServerPlayerShoot : IncomingPacket<ServerPlayerShoot> {
         StartingPos.Reset();
         Angle = 0;
         Damage = 0;
+        Prjtype = 0;
+        UsePlayerPos = false;
     }
 
     public override void Read(NetworkReader reader) {
         BulletId = reader.ReadInt32();
         OwnerId = reader.ReadInt32();
         ContainerType = reader.ReadInt32();
+        Prjtype = reader.ReadInt32();
         StartingPos.Read(reader);
         Angle = reader.ReadSingle();
         Damage = reader.ReadInt16();
+        UsePlayerPos = reader.ReadBoolean();
     }
 
     public override void Handle() {
         if (!Map.Entities.TryGetValue(OwnerId, out var owner)) return;
         if (!ObjectLibrary.TypeToObjectProps.TryGetValue((ushort)ContainerType, out var itemDesc)) return;
-        
-        var enumerator = itemDesc.Projectiles.GetEnumerator();
-        if (!enumerator.MoveNext()) return;
-        var projDesc = enumerator.Current;
+    
+        if (itemDesc.Projectiles == null || itemDesc.Projectiles.Count == 0) return;
+        var projDesc = itemDesc.Projectiles[0];
+        if (string.IsNullOrEmpty(projDesc.ObjectId)) return;
 
         if (!ObjectLibrary.IdToObjectType.TryGetValue(projDesc.ObjectId, out var projObjType)) return;
         if (!ObjectLibrary.TypeToObjectProps.TryGetValue(projObjType, out var projObjDesc)) return;
 
         var proj = ObjectPools.Projectiles.Pop();
         proj.Reset(BulletId, Damage, Angle, owner, projObjDesc, projDesc);
-        
-        proj.SetStartPosition(new Vector2(StartingPos.X, StartingPos.Y));
-        proj.MarkActive(Map.CurrentTime);
-        
+    
+        if (UsePlayerPos) {
+            proj.SetStartPosition(new Vector2(owner.Position.X, owner.Position.Y));
+        } else {
+            proj.SetStartPosition(new Vector2(StartingPos.X, StartingPos.Y));
+        }
+    
         Map.AddProjectile(proj);
     }
 
