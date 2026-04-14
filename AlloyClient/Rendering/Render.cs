@@ -40,7 +40,6 @@ public static partial class Render {
     private static Shader _shaderObject;
     private static Shader _shaderParticle;
     private static Shader _shaderGroundObject;
-    private static Shader _shaderBackground;
     public static Shader ShaderPostProcess;
 
     // Vertex Objects
@@ -156,8 +155,6 @@ public static partial class Render {
         _elevatedTileBuffer = new StorageBuffer<TileData>(_elevatedTileData.Length);
 
         BuildParticleBuffers();
-
-        _shaderBackground = ContentReader.LoadShader("Shaders/Clouds");
 
         float[] quadVertices = { -1f, 1f, -1f, -1f, 1f, 1f, 1f, -1f };
         _bgVbo = GL.GenBuffer();

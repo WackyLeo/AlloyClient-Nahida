@@ -11,6 +11,7 @@ using AlloyClient.UiLib.Core;
 using AlloyClient.UiLib.Enums;
 using AlloyClient.UiLib.Extra;
 using AlloyClient.Utils;
+using AlloyClient.Sound;
 using Common;
 using OpenTK.Mathematics;
 
@@ -113,12 +114,20 @@ public sealed class ItemTile : Sprite {
     }
 
     public void SetItem(ItemDesc itemDesc) {
+        bool isNewItem = itemDesc != null && itemDesc != ItemDesc;
+        
         ItemDesc = itemDesc;
         if (ItemDesc != null && ItemDesc.ObjectType > 0) {
             _sprite.ChangeTexture(TextureHelper.FromGameAtlas(ItemDesc.ObjectType));
             _background.SetColor(IsUsableByPlayer(ItemDesc) ? _bgColor : 0x5C1D1Du);
             _slotDetail.Visible = false;
             _slotId.Visible = false;
+            if (isNewItem && Owner is Player) {
+                var soundToLoad = !string.IsNullOrEmpty(ItemDesc.OldSound) ? ItemDesc.OldSound : ItemDesc.Sound;
+                if (!string.IsNullOrEmpty(soundToLoad)) {
+                    _ = AudioCache.LoadSfxAsync(soundToLoad, CacheTier.Volatile);
+                }
+            }
         } else {
             _sprite.ChangeTexture(TextureHelper.FromGameAtlas(0x0096));
             _background.SetColor(_bgColor);
@@ -203,7 +212,8 @@ public sealed class ItemTile : Sprite {
 
         _dragStart = GetRelativeMousePosition();
         _checkForDrag = true;
-        _sprite.AddEventListener(MouseEvent.LeftUp, CancelDragCheck);
+        
+        Map.GameSprite.Stage?.AddEventListener(MouseEvent.LeftUp, CancelDragCheck);
     }
 
     private void OnMouseUp(MouseEvent args) {
@@ -330,7 +340,7 @@ public sealed class ItemTile : Sprite {
 
     private void CancelDragCheck() {
         _checkForDrag = false;
-        _sprite.RemoveEventListener(MouseEvent.LeftUp, CancelDragCheck);
+        Map.GameSprite.Stage?.RemoveEventListener(MouseEvent.LeftUp, CancelDragCheck);
     }
 
     private void OnFrameEnter() {
@@ -345,6 +355,7 @@ public sealed class ItemTile : Sprite {
     }
 
     private void OnBeginDrag() {
+        if (_dragging) return;
         _dragging = true;
 
         if (SlotType != 0)
@@ -360,16 +371,21 @@ public sealed class ItemTile : Sprite {
         
         _sprite.Scale = Stage.ScreenScale;
         _sprite.StartDrag();
-        _sprite.AddEventListener(MouseEvent.LeftUp, OnEndDrag);
+        
         Map.GameSprite.AddChild(_sprite);
+        Map.GameSprite.Stage?.AddEventListener(MouseEvent.LeftUp, OnEndDrag);
     }
 
     private void OnEndDrag(MouseEvent args) {
+        Map.GameSprite.Stage?.RemoveEventListener(MouseEvent.LeftUp, OnEndDrag);
+        
+        if (!_dragging) return;
         _dragging = false;
-        _sprite.RemoveEventListener(MouseEvent.LeftUp, OnEndDrag);
+
         _sprite.EndDrag();
         _sprite.Scale = Vector2.One;
         Map.GameSprite.RemoveChild(_sprite);
+        
         AddChild(_sprite);
         AddChild(_tierText);
 

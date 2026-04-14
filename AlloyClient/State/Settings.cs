@@ -156,6 +156,10 @@ public static class Settings {
         EyeCandyParticles.SetValue(true);
         ReducedParticles.SetValue(false);
 
+        // Ally Settings
+        AllyOpacity.SetValue(1.0f);
+        AllyProjOpacity.SetValue(1.0f);
+
         #endregion
     }
 
@@ -460,6 +464,10 @@ public static class Settings {
     // Particle Settings
     public static ValueSetting<bool> EyeCandyParticles = true;
     public static ValueSetting<bool> ReducedParticles = false;
+
+    // Ally Settings
+    public static ValueSetting<float> AllyOpacity = 1.0f;
+    public static ValueSetting<float> AllyProjOpacity = 1.0f;
 
     #endregion
 

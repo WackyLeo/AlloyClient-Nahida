@@ -56,7 +56,7 @@ public static class PacketUtils {
     public static IIncomingPacket CreateIncomingPacket(PacketId packetId) {
         return packetId switch {
             PacketId.AccountList => AccountList.CreatePacket(),
-            //PacketId.AllyShoot => AllyShoot.CreatePacket(),
+            PacketId.AllyShoot => AllyShoot.CreatePacket(),
             PacketId.Aoe => Aoe.CreatePacket(),
             PacketId.BuyResult => BuyResult.CreatePacket(),
             //PacketId.ClientStat => ClientStat.CreatePacket(),

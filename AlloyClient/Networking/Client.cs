@@ -10,9 +10,7 @@ using AlloyClient.Game;
 using AlloyClient.Networking.Packets;
 using AlloyClient.Networking.Packets.Outgoing;
 using AlloyClient.Screens;
-using AlloyClient.Sound;
 using AlloyClient.State;
-using AlloyClient.Utils;
 using Common;
 
 namespace AlloyClient.Networking;
@@ -144,40 +142,50 @@ public static class Client {
         try {
             _receive.SetBuffer(_bytesRead, RECV_BUFFER_SIZE - _bytesRead);
             if (!_socket.ReceiveAsync(_receive)) ProcessReceive(null, _receive);
-            
         } catch {
             // ignored
         }
     }
 
     private static void ProcessReceive(object sender, SocketAsyncEventArgs args) {
-        if (State == ConnectionState.Disconnected || !_socket.Connected) { Disconnect("Unknown Error"); return; }
-        if (args.SocketError != SocketError.Success) { Disconnect($"Socket Error: {args.SocketError}"); return; }
-        if (args.BytesTransferred == 0) { Disconnect("Remote host closed connection."); return; }
+        if (State == ConnectionState.Disconnected || !_socket.Connected) {
+            Disconnect("Unknown Error");
+            return;
+        }
+
+        if (args.SocketError != SocketError.Success) {
+            Disconnect($"Socket Error: {args.SocketError}");
+            return;
+        }
+
+        if (args.BytesTransferred == 0) {
+            Disconnect("Remote host closed connection.");
+            return;
+        }
 
         _bytesRead += args.BytesTransferred;
-        int offset = 0;
+        var offset = 0;
         while (_bytesRead - offset >= 5) {
-            int length = IPAddress.NetworkToHostOrder(BitConverter.ToInt32(_readBuffer, offset));
+            var length = IPAddress.NetworkToHostOrder(BitConverter.ToInt32(_readBuffer, offset));
 
             if (length < 5 || length > RECV_BUFFER_SIZE) {
                 Disconnect($"Invalid packet length: {length}");
                 return;
             }
-            if (_bytesRead - offset < length) {
-                break; 
-            }
+
+            if (_bytesRead - offset < length) break;
 
             offset += 4;
             var packetId = (PacketId)_readBuffer[offset++];
-            int payloadLength = length - 5;
+            var payloadLength = length - 5;
 
             var pkt = PacketUtils.CreateIncomingPacket(packetId);
             try {
-                using (var ms = new MemoryStream(_readBuffer, offset, payloadLength))
-                using (var reader = new NetworkReader(ms, false)) { 
-                    pkt.Read(reader);
-                    IncomingQueue.Enqueue(pkt);
+                using (var ms = new MemoryStream(_readBuffer, offset, payloadLength)) {
+                    using (var reader = new NetworkReader(ms, false)) {
+                        pkt.Read(reader);
+                        IncomingQueue.Enqueue(pkt);
+                    }
                 }
             } catch (Exception e) {
                 Log.Error($"Error parsing {packetId}: {e}");
@@ -186,10 +194,8 @@ public static class Client {
             offset += payloadLength;
         }
 
-        int remaining = _bytesRead - offset;
-        if (remaining > 0 && offset > 0) {
-            Buffer.BlockCopy(_readBuffer, offset, _readBuffer, 0, remaining);
-        }
+        var remaining = _bytesRead - offset;
+        if (remaining > 0 && offset > 0) Buffer.BlockCopy(_readBuffer, offset, _readBuffer, 0, remaining);
         _bytesRead = remaining;
 
         StartReceive();
@@ -296,7 +302,7 @@ public static class Client {
                 await _tcp.ConnectAsync(Settings.GameServerAddress, Settings.GameServerPort);
                 _socket = _tcp.Client;
                 State = ConnectionState.Connected;
-                
+
                 Log.Info("Reconnected to server.");
                 var login = GlobalData.Get<LoginData>();
                 var hello = Hello.CreatePacket();
@@ -327,7 +333,6 @@ public static class Client {
 
         if (IsReconnecting) return;
 
-        Music.Stop();
         Map.Reset();
         ScreenManager.FadeTo(new CharacterListScreen());
     }

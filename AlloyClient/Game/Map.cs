@@ -12,6 +12,7 @@ using AlloyClient.ParticleEffects;
 using AlloyClient.Rendering;
 using AlloyClient.Rendering.Types;
 using AlloyClient.Rendering.VertexData;
+using AlloyClient.Sound;
 using AlloyClient.State;
 using AlloyClient.UiLib.Core;
 using AlloyClient.UiLib.Signals;
@@ -75,7 +76,7 @@ public static class Map {
     private static readonly MapTile[] RebuildData = new MapTile[9];
 
     public static void InitMap(int width, int height, string name, string display, int diff, uint seed, int background,
-                               bool allowTp, bool showDisplays) {
+        bool allowTp, bool showDisplays) {
         Width = width;
         Height = height;
         Name = name;
@@ -86,6 +87,7 @@ public static class Map {
         AllowPlayerTeleport = allowTp;
         ShowDisplays = showDisplays;
         _tiles = new MapTile[width + 1, height + 1];
+
         Minimap.OnNewMap.Dispatch(width, height);
 
         // Pull the DQ Quest data
@@ -150,6 +152,8 @@ public static class Map {
                     entity.RenderBaseType.SetAlpha(0.4f);
                 else if (entity.HasConditionEffect(ConditionEffects.Invisible))
                     entity.RenderBaseType.SetAlpha(0.5f);
+                else if (entity is Player && objectId != LocalPlayerId)
+                    entity.RenderBaseType.SetAlpha(Settings.AllyOpacity);
                 else
                     entity.RenderBaseType.SetAlpha(1.0f);
             }
@@ -319,13 +323,11 @@ public static class Map {
 
         RenderPipeline.BeginEntities();
         Render.StartDrawEntity();
-        for (var i = 0; i < ParticleGenCount; i++) {
+        for (var i = 0; i < ParticleGenCount; i++)
             if (ParticleGenerators[i] is RayCastParticle rcp)
                 rcp.Draw();
-            //if (ParticleGenerators[i] is XMLParticle xmp)
-            //    xmp.Draw();
-        }
-
+        //if (ParticleGenerators[i] is XMLParticle xmp)
+        //    xmp.Draw();
         if (EntityStorage.TryGetValue(ModelType.PbObject, out var entities)) {
             entities.Sort();
             foreach (var type in entities)
@@ -532,6 +534,7 @@ public static class Map {
         ShowDisplays = false;
 
         PartyData.Clear();
+        AudioCache.ClearVolatileCache();
 
         Entities.Clear();
         Players.Clear();
@@ -563,6 +566,20 @@ public static class Map {
 
         LocalPlayer = player;
         MinimapLayer.SetFocus(player);
+
+        var preloadSounds = new List<string>();
+        if (player.Equipment != null)
+            foreach (var slot in player.Equipment) {
+                if (slot == null) continue;
+                if (!string.IsNullOrEmpty(slot.OldSound))
+                    preloadSounds.Add(slot.OldSound);
+                else if (!string.IsNullOrEmpty(slot.Sound))
+                    preloadSounds.Add(slot.Sound);
+            }
+
+        if (preloadSounds.Count > 0)
+            _ = AudioCache.PreloadSoundsAsync(preloadSounds, CacheTier.Volatile);
+
         GameSprite.Hud.CreatePlayerDependentAssets();
         OnPlayerUpdate.Dispatch(player);
     }

@@ -1,9 +1,7 @@
 ﻿using System;
 using AlloyClient.Assets;
 using AlloyClient.Rendering.VertexData;
-using Common;
 using OpenTK.Graphics.OpenGL;
-using OpenTK.Mathematics;
 
 namespace AlloyClient.Rendering;
 
@@ -36,20 +34,6 @@ public static partial class Render {
         _groundObjectCount = 0;
     }
 
-    public static void DrawBackground(GameTime gameTime, Vector2 screenResolution, Vector2 screenCentre) {
-        GL.BindVertexArray(_bgVao);
-        GL.Disable(EnableCap.DepthTest);
-
-        _shaderBackground.Apply();
-        _shaderBackground.SetValue("uTime", (float)(gameTime.TotalMs / 1000.0f));
-        _shaderBackground.SetValue("uResolution", screenResolution);
-        _shaderBackground.SetValue("uMouse", screenCentre);
-        GL.DrawArrays(PrimitiveType.TriangleStrip, 0, 4);
-
-        GL.Enable(EnableCap.DepthTest);
-        GL.BindVertexArray(0);
-    }
-
     #region Render Tile
 
     public static int GroundTileCount;
@@ -61,7 +45,7 @@ public static partial class Render {
         GroundTileCount = 0;
         TopTileCount = 0;
     }
-    
+
     public static void DrawTiles(ReadOnlySpan<TileData> data) {
         var span = new Span<TileData>(_tileData, _tileCount, data.Length);
         data.CopyTo(span);

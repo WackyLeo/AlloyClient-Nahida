@@ -1,18 +1,19 @@
 ﻿using AlloyClient.Assets.Libraries;
 using AlloyClient.Game;
 using AlloyClient.Game.Objects;
+using AlloyClient.State;
 
 namespace AlloyClient.Networking.Packets.Incoming;
 
 public class AllyShoot : IncomingPacket<AllyShoot> {
-
-    public int Size;
-    public int OwnerId;
-    public int[] TimeDiff;
+    public float[] Angles;
     public int[] BulletIds;
     public ushort[] ContainerTypes;
-    public float[] Angles;
+    public int OwnerId;
     public int[] ProjIds;
+
+    public int Size;
+    public int[] TimeDiff;
 
     public override PacketId PacketId => PacketId.AllyShoot;
 
@@ -35,7 +36,7 @@ public class AllyShoot : IncomingPacket<AllyShoot> {
         Angles = new float[Size];
         ProjIds = new int[Size];
 
-        for (int i = 0; i < Size; i++) {
+        for (var i = 0; i < Size; i++) {
             TimeDiff[i] = reader.ReadInt32();
             BulletIds[i] = reader.ReadInt32();
             ContainerTypes[i] = reader.ReadUInt16();
@@ -48,7 +49,7 @@ public class AllyShoot : IncomingPacket<AllyShoot> {
         if (!Map.Entities.TryGetValue(OwnerId, out var owner) || owner is not Player player)
             return;
 
-        for (int i = 0; i < Size; i++) {
+        for (var i = 0; i < Size; i++) {
             var containerType = ContainerTypes[i];
             var bulletType = (byte)(ProjIds[i] & 0xFF);
 
@@ -67,6 +68,8 @@ public class AllyShoot : IncomingPacket<AllyShoot> {
             proj.Reset(BulletIds[i], 0, Angles[i], player, projObjDesc, projProps);
             proj.SetStartPosition(player.Position);
             proj.AddProjDelay(TimeDiff[i]);
+            if (proj.RenderBaseType != null)
+                proj.RenderBaseType.SetAlpha(Settings.AllyProjOpacity);
             Map.AddProjectile(proj);
 
             player.SetAttack(containerType, Angles[i]);
@@ -74,6 +77,7 @@ public class AllyShoot : IncomingPacket<AllyShoot> {
     }
 
     public override string ToString() {
-        return $"Size: {Size}, OwnerId: {OwnerId}, TimeDiff: {TimeDiff}, BulletIds: {BulletIds}, ContainerTypes: {ContainerTypes}, Angles: {Angles}, ProjIds: {ProjIds}";
+        return
+            $"Size: {Size}, OwnerId: {OwnerId}, TimeDiff: {TimeDiff}, BulletIds: {BulletIds}, ContainerTypes: {ContainerTypes}, Angles: {Angles}, ProjIds: {ProjIds}";
     }
 }

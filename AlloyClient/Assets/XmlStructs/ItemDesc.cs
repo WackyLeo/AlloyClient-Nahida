@@ -33,6 +33,7 @@ public class ItemDesc {
     public readonly int NumProjectiles;
     public readonly string ObjectId;
     public readonly ushort ObjectType;
+    public readonly string OldSound;
     public readonly bool Potion;
     public readonly ProjectileDesc Projectiles;
     public readonly int Quantity;
@@ -41,6 +42,8 @@ public class ItemDesc {
     public readonly string SetName;
     public readonly int SlotType;
     public readonly bool Soulbound;
+
+    public readonly string Sound;
     public readonly bool ST;
     public readonly int StartCount;
 
@@ -91,6 +94,9 @@ public class ItemDesc {
         MpEndCost = xml.GetValue<int>("MpEndCost");
         InvUse = xml.HasElement("InvUse");
         TypeOfConsumable = InvUse || Consumable;
+
+        Sound = xml.GetValue<string>("Sound");
+        OldSound = xml.GetValue<string>("OldSound");
 
         StatBoosts = xml.Elements("ActivateOnEquip").Select(i => new StatBoostDesc(i)).ToArray();
         ActivateEffects = xml.Elements("Activate").Select(i => new ActivateEffectDesc(i)).ToArray();

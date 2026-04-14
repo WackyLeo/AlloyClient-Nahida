@@ -24,10 +24,10 @@ public class PlaySound : IncomingPacket<PlaySound> {
 
         if (entity == null) return;
 
-        if (!string.IsNullOrEmpty(entity.Properties.Sound))
-            SoundManager.PlaySoundEffect(entity.Properties.Sound);
-        else if (!string.IsNullOrEmpty(entity.Properties.OldSound))
+        if (!string.IsNullOrEmpty(entity.Properties.OldSound))
             SoundManager.PlaySoundEffect(entity.Properties.OldSound);
+        else if (!string.IsNullOrEmpty(entity.Properties.Sound))
+            SoundManager.PlaySoundEffect(entity.Properties.Sound);
     }
 
     public override string ToString() {

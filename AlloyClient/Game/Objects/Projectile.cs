@@ -287,7 +287,7 @@ public sealed class Projectile : IResettable {
         }
 
         var hitPos = Camera.WorldToDebug2D(new Vector3(_position.X, _position.Y, 0.5f));
-        if (Render.DebugEnabled) {
+        if (Render.DebugEnabled && this._damagePlayers) {
             Render.DebugCircle(hitPos, 0.25f + _projProp.BonusSize, new Vector3(1, 0, 0), 0.05f);
             var worldAngle = Rotation - Camera.CameraAngle - _angleCorrection;
 

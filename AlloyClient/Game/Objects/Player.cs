@@ -327,6 +327,8 @@ public class Player : Entity {
                     if (i == 0) {
                         if (!string.IsNullOrEmpty(props.OldSound))
                             SoundManager.PlaySoundEffect(props.OldSound, SoundType.Weapon);
+                        else if (!string.IsNullOrEmpty(props.Sound))
+                            SoundManager.PlaySoundEffect(props.Sound, SoundType.Weapon);
 
                         shootPacket.Shots.Add(new ShootData {
                             Time = time,
@@ -573,14 +575,14 @@ public class Player : Entity {
         return attFreq;
     }
 
-public void Shoot(float attackAngle, GameTime gameTime, bool isAbility) {
+    public void Shoot(float attackAngle, GameTime gameTime, bool isAbility) {
         if (HasConditionEffect(ConditionEffects.Stunned) || HasConditionEffect(ConditionEffects.Paused)) return;
         var item = Equipment[0];
         if (item == null) return;
 
         var temp = AttackFrequency();
-        AttackPeriod = (float)((1 / temp * (1 / item.RateOfFire)) * 1.02); 
-        
+        AttackPeriod = (float)(1 / temp * (1 / item.RateOfFire) * 1.02);
+
         if (gameTime.TotalMs < AttackStart + AttackPeriod) return;
 
         AttackAngle = attackAngle;
@@ -612,10 +614,12 @@ public void Shoot(float attackAngle, GameTime gameTime, bool isAbility) {
             var proj = ObjectPools.Projectiles.Pop();
             proj.Reset(bId, dmg, angle, this, objProps, projProps);
             Map.AddProjectile(proj);
-            
+
             if (i == 0) {
                 if (!string.IsNullOrEmpty(props.OldSound))
                     SoundManager.PlaySoundEffect(props.OldSound, SoundType.Weapon);
+                else if (!string.IsNullOrEmpty(props.Sound))
+                    SoundManager.PlaySoundEffect(props.Sound, SoundType.Weapon);
 
                 PendingShots.Add(new ShootData {
                     Time = (int)Main.GameTime.TotalMs,

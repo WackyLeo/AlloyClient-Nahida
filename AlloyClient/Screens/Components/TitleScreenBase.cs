@@ -1,11 +1,10 @@
-﻿using AlloyClient.Display;
-using AlloyClient.Rendering;
+﻿using System;
+using AlloyClient.Display;
 using AlloyClient.State;
 using AlloyClient.Ui.Components.Buttons;
 using AlloyClient.UiLib.BuiltIn;
 using AlloyClient.UiLib.Core;
 using AlloyClient.UiLib.Enums;
-using AlloyClient.UiLib.Input;
 using Common;
 using OpenTK.Mathematics;
 
@@ -19,13 +18,12 @@ public abstract class TitleScreenBase : Screen {
     private readonly MusicButton _music = new(new MusicButtonConfig { X = 7, Y = 7, Width = 32, Height = 32 });
 
     public readonly AccountOverlay Overlay;
-
-    private SimpleText? _titleText;
     private Vector2 _textAnchor;
     private Vector2 _textExactPos;
 
-    protected TitleScreenBase(bool title = false) {
+    private readonly SimpleText? _titleText;
 
+    protected TitleScreenBase(bool title = false) {
         if (title) {
             _titleText = new SimpleText(new TextConfig {
                 Text = "ICA'S REALM",
@@ -65,21 +63,17 @@ public abstract class TitleScreenBase : Screen {
     }
 
     public override void Draw(GameTime gameTime) {
-        Vector2 screenCenter = new Vector2(Stage.StageWidth / 2f, Stage.StageHeight / 2f);
-        
-        Render.DrawBackground(gameTime, new Vector2(Stage.StageWidth, Stage.StageHeight), screenCenter);
-        
-        // --- TEXT PARALLAX LOGIC ---
+        var screenCenter = new Vector2(Stage.StageWidth / 2f, Stage.StageHeight / 2f);
+
         if (_titleText != null) {
-            float mouseX = Stage.GetRelativeMousePosition().X; 
+            float mouseX = Stage.GetRelativeMousePosition().X;
             float mouseY = Stage.GetRelativeMousePosition().Y;
 
-            float mouseOffsetX = screenCenter.X - mouseX;
-            float mouseOffsetY = screenCenter.Y - mouseY;
+            var mouseOffsetX = screenCenter.X - mouseX;
+            var mouseOffsetY = screenCenter.Y - mouseY;
 
-            // REDUCED: 0.008f for a subtle background float
-            float targetX = _textAnchor.X + (mouseOffsetX * 0.008f);
-            float targetY = _textAnchor.Y + (mouseOffsetY * 0.008f);
+            var targetX = _textAnchor.X + mouseOffsetX * 0.008f;
+            var targetY = _textAnchor.Y + mouseOffsetY * 0.008f;
 
             _textExactPos.X += (targetX - _textExactPos.X) * 0.05f;
             _textExactPos.Y += (targetY - _textExactPos.Y) * 0.05f;
@@ -87,7 +81,7 @@ public abstract class TitleScreenBase : Screen {
             _titleText.X = (int)_textExactPos.X;
             _titleText.Y = (int)_textExactPos.Y;
         }
-        
+
         base.Draw(gameTime);
     }
 
@@ -99,15 +93,15 @@ public abstract class TitleScreenBase : Screen {
         Overlay.Y = (int)(10 * Stage.ScreenScale.Y);
 
         if (_titleText != null) {
-            float uniformScale = System.Math.Min(Stage.ScreenScale.X, Stage.ScreenScale.Y);
+            var uniformScale = Math.Min(Stage.ScreenScale.X, Stage.ScreenScale.Y);
             _titleText.Scale = new Vector2(uniformScale);
-            float basePlacementY = args.Height * 0.25f; 
+            var basePlacementY = args.Height * 0.25f;
 
             _textAnchor.X = args.Width / 2f;
             _textAnchor.Y = basePlacementY;
 
             _textExactPos = _textAnchor;
-            
+
             _titleText.X = (int)_textExactPos.X;
             _titleText.Y = (int)_textExactPos.Y;
         }
