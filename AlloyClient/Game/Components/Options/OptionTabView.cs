@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using AlloyClient.Game.Components.Options.OptionTypes;
+using AlloyClient.Sound;
 using AlloyClient.State;
 using AlloyClient.State.SettingTypes;
 using AlloyClient.Ui.Components.Scrollbars;
@@ -208,20 +209,21 @@ public class OptionTabView : Container {
             "Sets the opacity of projectiles fired by other players."));
     }
 
-    private void OnLootSfxVolumeChange(float obj) {
-        //throw new NotImplementedException();
+    private void OnLootSfxVolumeChange(float volume) {
+        Settings.LootSfxVolume.SetValue(volume);
     }
 
-    private void OnWeaponSfxVolumeChange(float obj) {
-        //throw new NotImplementedException();
+    private void OnWeaponSfxVolumeChange(float volume) {
+        Settings.WeaponSfxVolume.SetValue(volume);
     }
 
-    private void OnSfxVolumeChange(float obj) {
-        //throw new NotImplementedException();
+    private void OnSfxVolumeChange(float volume) {
+        Settings.SfxVolume.SetValue(volume);
     }
 
-    private void OnMusicVolumeChange(float obj) {
-        //throw new NotImplementedException();
+    private void OnMusicVolumeChange(float volume) {
+        Settings.MusicVolume.SetValue(volume);
+        Music.SetVolume(volume);
     }
 
     private void OnPlayWeaponSoundsChange() {

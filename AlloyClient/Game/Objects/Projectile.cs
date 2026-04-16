@@ -287,7 +287,7 @@ public sealed class Projectile : IResettable {
         }
 
         var hitPos = Camera.WorldToDebug2D(new Vector3(_position.X, _position.Y, 0.5f));
-        if (Render.DebugEnabled && this._damagePlayers) {
+        if (Render.DebugEnabled && _damagePlayers) {
             Render.DebugCircle(hitPos, 0.25f + _projProp.BonusSize, new Vector3(1, 0, 0), 0.05f);
             var worldAngle = Rotation - Camera.CameraAngle - _angleCorrection;
 
@@ -363,8 +363,13 @@ public sealed class Projectile : IResettable {
                 var clr = Entity.GetHitColour(_projProp.Effects, _projProp.ArmorPiercing);
                 Map.AddParticleEffect(new HitEffect(target, clr));
                 NotificationLayer.AddStatusText(target, notification, clr, 1000, 0);
-                if (!string.IsNullOrEmpty(target.Properties.HitSound))
+
+                if (newHealth <= 0) {
+                    if (!string.IsNullOrEmpty(target.Properties.DeathSound))
+                        SoundManager.PlaySoundEffect(target.Properties.DeathSound);
+                } else if (!string.IsNullOrEmpty(target.Properties.HitSound)) {
                     SoundManager.PlaySoundEffect(target.Properties.HitSound);
+                }
             }
 
             Map.PendingPlayerHit.AddHit(_bulletId, _ownerId);
@@ -437,7 +442,12 @@ public sealed class Projectile : IResettable {
                 var clr = Entity.GetHitColour(_projProp.Effects, _projProp.ArmorPiercing);
                 Map.AddParticleEffect(new HitEffect(go, clr));
                 NotificationLayer.AddStatusText(go, notification, clr, 1000, 0);
-                if (!string.IsNullOrEmpty(go.Properties.HitSound)) SoundManager.PlaySoundEffect(go.Properties.HitSound);
+                if (go.PredictedHp <= 0) {
+                    if (!string.IsNullOrEmpty(go.Properties.DeathSound))
+                        SoundManager.PlaySoundEffect(go.Properties.DeathSound);
+                } else if (!string.IsNullOrEmpty(go.Properties.HitSound)) {
+                    SoundManager.PlaySoundEffect(go.Properties.HitSound);
+                }
             }
 
             if (_damagePlayers)
@@ -635,11 +645,17 @@ public sealed class Projectile : IResettable {
                         Map.AddParticleEffect(new HitEffect(target, clr));
                         NotificationLayer.AddStatusText(target, notification, clr, 1000, 0);
                         Map.PendingPlayerHit.AddHit(_bulletId, _ownerId);
-                        if (!string.IsNullOrEmpty(target.Properties.HitSound))
+
+                        if (newHealth <= 0) {
+                            if (!string.IsNullOrEmpty(target.Properties.DeathSound))
+                                SoundManager.PlaySoundEffect(target.Properties.DeathSound);
+                        } else if (!string.IsNullOrEmpty(target.Properties.HitSound)) {
                             SoundManager.PlaySoundEffect(target.Properties.HitSound);
+                        }
                     }
 
                     if (!_projProp.MultiHit) return;
+
                     _hitEntities.Add(target.ObjectId);
                 }
             } else {
@@ -667,8 +683,12 @@ public sealed class Projectile : IResettable {
 
                             Map.AddParticleEffect(new HitEffect(target, clr));
                             NotificationLayer.AddStatusText(target, notification, clr, 1000, 0);
-                            if (!string.IsNullOrEmpty(target.Properties.HitSound))
+                            if (newHealth <= 0) {
+                                if (!string.IsNullOrEmpty(target.Properties.DeathSound))
+                                    SoundManager.PlaySoundEffect(target.Properties.DeathSound);
+                            } else if (!string.IsNullOrEmpty(target.Properties.HitSound)) {
                                 SoundManager.PlaySoundEffect(target.Properties.HitSound);
+                            }
                         }
 
                         if (!_projProp.MultiHit) return;
