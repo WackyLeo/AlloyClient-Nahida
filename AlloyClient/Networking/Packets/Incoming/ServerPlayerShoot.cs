@@ -2,6 +2,7 @@
 using AlloyClient.Game;
 using AlloyClient.Game.Objects;
 using AlloyClient.Networking.Structs.DataObjects;
+using AlloyClient.State;
 using OpenTK.Mathematics;
 
 namespace AlloyClient.Networking.Packets.Incoming;
@@ -45,7 +46,7 @@ public class ServerPlayerShoot : IncomingPacket<ServerPlayerShoot> {
     public override void Handle() {
         if (!Map.Entities.TryGetValue(OwnerId, out var owner)) return;
         if (!ObjectLibrary.TypeToObjectProps.TryGetValue((ushort)ContainerType, out var itemDesc)) return;
-    
+
         if (itemDesc.Projectiles == null || itemDesc.Projectiles.Count == 0) return;
         var projDesc = itemDesc.Projectiles[0];
         if (string.IsNullOrEmpty(projDesc.ObjectId)) return;
@@ -55,13 +56,16 @@ public class ServerPlayerShoot : IncomingPacket<ServerPlayerShoot> {
 
         var proj = ObjectPools.Projectiles.Pop();
         proj.Reset(BulletId, Damage, Angle, owner, projObjDesc, projDesc);
-    
+
         if (UsePlayerPos) {
             proj.SetStartPosition(new Vector2(owner.Position.X, owner.Position.Y));
         } else {
             proj.SetStartPosition(new Vector2(StartingPos.X, StartingPos.Y));
         }
-    
+
+        if (OwnerId != Map.LocalPlayerId)
+            proj.RenderBaseType.SetAlpha(Settings.AllyOpacity);
+
         Map.AddProjectile(proj);
     }
 

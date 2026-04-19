@@ -5,6 +5,7 @@ using AlloyClient.Game.Components.Hud.Chat;
 using AlloyClient.Game.Objects;
 using AlloyClient.Networking;
 using AlloyClient.Networking.Packets.Outgoing;
+using AlloyClient.State;
 using AlloyClient.UiLib;
 using AlloyClient.UiLib.BuiltIn;
 using AlloyClient.UiLib.Core;
@@ -119,8 +120,11 @@ public class PlayerMenuToolTip : Tooltip {
 
     private void OnResizeEvent(ResizeEvent args) {
         Scale = Stage.ScreenScale;
-        X = SpawnMouse.X - (int)(ToolWidth * Scale.X);
-        Y = SpawnMouse.Y - (int)(ToolHeight * Scale.Y);
+        var scaledWidth = (int)(ToolWidth * Scale.X);
+        var scaledHeight = (int)(ToolHeight * Scale.Y);
+
+        X = Math.Clamp(SpawnMouse.X - scaledWidth, 0, Settings.ScreenWidth - scaledWidth);
+        Y = Math.Clamp(SpawnMouse.Y - scaledHeight, 0, Settings.ScreenHeight - scaledHeight);
     }
     
     private class MenuOption : Sprite {
