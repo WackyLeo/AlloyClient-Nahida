@@ -7,7 +7,7 @@ in MODEL_OUT {
     vec4 UV;
     vec3 Extra;
     float Zed;
-} input1;
+} output1;
 
 out vec4 FragColor;
 
@@ -16,13 +16,13 @@ vec2 map(vec2 base, vec2 uvMin, vec2 uvMax) {
 }
 
 void main() {
-    vec2 uv = map(input1.BaseUV, input1.UV.xy, input1.UV.xy + input1.UV.zw);
+    vec2 uv = map(output1.BaseUV, output1.UV.xy, output1.UV.xy + output1.UV.zw);
     vec4 color = texture(GameTexture, uv);
 
     if (color.a < 0.1) discard;
 
     color.rgb /= color.a;
-    color.rgb -= input1.Extra.z * 0.241 * clamp(0.6 - input1.Zed, 0.0, 0.6);
+    color.rgb -= output1.Extra.z * 0.241 * clamp(0.6 - output1.Zed, 0.0, 0.6);
 
     FragColor = color;
 }

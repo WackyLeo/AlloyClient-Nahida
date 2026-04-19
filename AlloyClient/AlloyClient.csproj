@@ -1,6 +1,8 @@
 <Project Sdk="Microsoft.NET.Sdk">
     <PropertyGroup>
-        <OutputType>Exe</OutputType>
+        <OutputType Condition="'$(Configuration)' == 'Release'">Exe</OutputType>
+        <OutputType Condition="'$(Configuration)' == 'Debug'">Exe</OutputType>
+
         <TargetFramework>net10.0</TargetFramework>
         <RollForward>Major</RollForward>
         <PublishReadyToRun>false</PublishReadyToRun>
@@ -12,9 +14,9 @@
         <ApplicationIcon>Icon.ico</ApplicationIcon>
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
         <RunPostBuildEvent>Always</RunPostBuildEvent>
-		<DisableFastUpToDateCheck>True</DisableFastUpToDateCheck>
+        <DisableFastUpToDateCheck>True</DisableFastUpToDateCheck>
     </PropertyGroup>
-    
+
     <ItemGroup>
         <EmbeddedResource Include="Icon.bmp">
             <LogicalName>Icon.bmp</LogicalName>
@@ -23,39 +25,48 @@
             <LogicalName>Icon.ico</LogicalName>
         </EmbeddedResource>
     </ItemGroup>
-    
+
     <ItemGroup>
-        <None Remove="AlloyClient.csproj.DotSettings" />
-        <None Include="..\README.md" />
+        <None Remove="AlloyClient.csproj.DotSettings"/>
+        <None Include="..\README.md"/>
     </ItemGroup>
-    
+
     <ItemGroup>
-        <PackageReference Include="BouncyCastle.Cryptography" Version="2.4.0" />
-        <PackageReference Include="NAudio" Version="2.2.1" />
-        <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
-        <PackageReference Include="OpenTK" Version="5.0.0-pre.15" />
+        <PackageReference Include="BouncyCastle.Cryptography" Version="2.4.0"/>
+        <PackageReference Include="NAudio" Version="2.2.1"/>
+        <PackageReference Include="Newtonsoft.Json" Version="13.0.3"/>
+        <PackageReference Include="OpenTK" Version="5.0.0-pre.15"/>
     </ItemGroup>
-    
+
     <ItemGroup>
-      <ProjectReference Include="..\Common\Common.csproj" />
-      <ProjectReference Include="..\ContentBuilder\ContentBuilder.csproj">
-		<Private>False</Private>
-		<CopyLocalSatelliteAssemblies>False</CopyLocalSatelliteAssemblies>
-		<ReferenceOutputAssembly>False</ReferenceOutputAssembly>
-      </ProjectReference>
-      <ProjectReference Include="..\AlloyClient.UiLib\AlloyClient.UiLib.csproj" />
+        <ProjectReference Include="..\Common\Common.csproj"/>
+        <ProjectReference Include="..\ContentBuilder\ContentBuilder.csproj">
+            <Private>False</Private>
+            <CopyLocalSatelliteAssemblies>False</CopyLocalSatelliteAssemblies>
+            <ReferenceOutputAssembly>False</ReferenceOutputAssembly>
+        </ProjectReference>
+        <ProjectReference Include="..\AlloyClient.UiLib\AlloyClient.UiLib.csproj"/>
     </ItemGroup>
-    
+
+    <ItemGroup>
+        <EmbeddedResource Include="Content\Shaders\**\*.frag">
+            <LogicalName>Shaders/%(Filename)%(Extension)</LogicalName>
+        </EmbeddedResource>
+        <EmbeddedResource Include="Content\Shaders\**\*.vert">
+            <LogicalName>Shaders/%(Filename)%(Extension)</LogicalName>
+        </EmbeddedResource>
+    </ItemGroup>
+
     <Target Name="RestoreDotnetTools" BeforeTargets="Restore">
-        <Message Text="Restoring dotnet tools" Importance="High" />
-        <Exec Command="dotnet tool restore" />
+        <Message Text="Restoring dotnet tools" Importance="High"/>
+        <Exec Command="dotnet tool restore"/>
     </Target>
-    
+
     <Target Name="PostBuild" AfterTargets="PostBuildEvent">
         <Exec Condition="$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::Windows)))"
-              Command="$(SolutionDir)\ContentBuilder\bin\ContentBuilder.exe $(ProjectDir) $(TargetDir) &quot;Content&quot;" />
+              Command="$(SolutionDir)\ContentBuilder\bin\ContentBuilder.exe $(ProjectDir) $(TargetDir) &quot;Content&quot;"/>
 
         <Exec Condition="$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::Linux)))"
-              Command="$(SolutionDir)/ContentBuilder/bin/ContentBuilder $(ProjectDir) $(TargetDir) &quot;Content&quot;" />
+              Command="$(SolutionDir)/ContentBuilder/bin/ContentBuilder $(ProjectDir) $(TargetDir) &quot;Content&quot;"/>
     </Target>
 </Project>

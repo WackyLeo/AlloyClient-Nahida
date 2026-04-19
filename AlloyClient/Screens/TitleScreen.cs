@@ -34,6 +34,7 @@ public class TitleScreen : TitleScreenBase {
         _container.AddChild(play);
         currentY += FontSize + gap + 15;
 
+        /*
         var servers = new MenuBarButton("SERVERS", FontSize, () => ScreenManager.FadeTo(new ServersTitleScreen()));
         servers.X = -servers.Width / 2;
         servers.Y = currentY;
@@ -62,6 +63,8 @@ public class TitleScreen : TitleScreenBase {
         exit.X = -exit.Width / 2;
         exit.Y = currentY;
         _container.AddChild(exit);
+        */
+
         AddChild(_container);
 
         _versionText = new SimpleText(new TextConfig {

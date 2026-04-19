@@ -1,13 +1,17 @@
 ﻿#version 460 core
 precision highp float;
 
-struct extra {
-    float Type; float SortId; float Shade; float Alpha;
-};
-
 in OBJECT_OUT {
-    vec2 BaseUV; vec4 UV; extra Extra; vec4 Color; vec4 Mask1; vec4 Mask2;
-} vsInput;
+    vec2 BaseUV;
+    vec4 UV;
+    flat float ExtraType;
+    flat float ExtraSortId;
+    flat float ExtraShade;
+    flat float ExtraAlpha;
+    vec4 Color;
+    vec4 Mask1;
+    vec4 Mask2;
+} vsOutput;
 
 out vec4 FragColor;
 
@@ -30,22 +34,22 @@ bool inBounds(vec2 uv, vec2 minUV, vec2 maxUV){
 }
 
 vec4 GetGameObject() {
-    vec2 uvMax = vsInput.UV.xy + vsInput.UV.zw;
-    vec2 minUV = vsInput.UV.xy;
-    vec2 uv = map(vsInput.BaseUV, minUV, uvMax);
+    vec2 uvMax = vsOutput.UV.xy + vsOutput.UV.zw;
+    vec2 minUV = vsOutput.UV.xy;
+    vec2 uv = map(vsOutput.BaseUV, minUV, uvMax);
     vec2 dx = dFdx(uv);
     vec2 dy = dFdy(uv);
 
     vec4 color = texture(GameTexture, uv);
-    color.rgb -= vsInput.Extra.Shade * 0.241 * clamp(vsInput.BaseUV.y - 0.4, 0.0, 0.4);
+    color.rgb -= vsOutput.ExtraShade * 0.241 * clamp(vsOutput.BaseUV.y - 0.4, 0.0, 0.4);
 
     if (RenderPass == OpaquePass) {
-        if (color.a < 0.1 || vsInput.Extra.Alpha < 1.0) discard;
+        if (color.a < 0.1 || vsOutput.ExtraAlpha < 1.0) discard;
         return color;
     }
 
     if (color.a >= 0.1) {
-        if (vsInput.Extra.Alpha < 1.0) return vec4(color.rgb, color.a * vsInput.Extra.Alpha);
+        if (vsOutput.ExtraAlpha < 1.0) return vec4(color.rgb, color.a * vsOutput.ExtraAlpha);
         discard;
     }
 
@@ -87,18 +91,18 @@ vec4 GetGameObject() {
         if (foundOpaquePixel) { hitRadius = r; break; }
     }
 
-    if (hitRadius <= 1) return vec4(vsInput.Color.rgb, vsInput.Extra.Alpha);
+    if (hitRadius <= 1) return vec4(vsOutput.Color.rgb, vsOutput.ExtraAlpha);
 
     if (minDist <= float(maxRadius)) {
         float distNorm = clamp((minDist - 1.0) / float(maxRadius - 1), 0.0, 1.0);
-        float glowAlpha = pow(1.0 - distNorm, 1.75) * 0.55 * vsInput.Extra.Alpha;
-        if (glowAlpha > 0.01) return vec4(vsInput.Color.rgb, glowAlpha);
+        float glowAlpha = pow(1.0 - distNorm, 1.75) * 0.55 * vsOutput.ExtraAlpha;
+        if (glowAlpha > 0.01) return vec4(vsOutput.Color.rgb, glowAlpha);
     }
     discard;
 }
 
 vec4 GetText() {
-    vec2 uv = map(vsInput.BaseUV, vsInput.UV.xy, vsInput.UV.xy + vsInput.UV.zw);
+    vec2 uv = map(vsOutput.BaseUV, vsOutput.UV.xy, vsOutput.UV.xy + vsOutput.UV.zw);
     vec4 mtsdf = texture(TextTexture, uv);
     float dist = median(mtsdf.r, mtsdf.g, mtsdf.b) - 0.5;
 
@@ -111,8 +115,8 @@ vec4 GetText() {
     float strokeAlpha = clamp(bodyDist + 1.3, 0.0, 1.0);
     float shadowAlpha = smoothstep(0.0, 0.6, mtsdf.a) * 0.7;
 
-    vec4 finalColor = mix(vec4(0, 0, 0, 1), vsInput.Color, bodyAlpha);
-    float totalAlpha = max(strokeAlpha, shadowAlpha) * vsInput.Extra.Alpha;
+    vec4 finalColor = mix(vec4(0, 0, 0, 1), vsOutput.Color, bodyAlpha);
+    float totalAlpha = max(strokeAlpha, shadowAlpha) * vsOutput.ExtraAlpha;
 
     if (RenderPass == OpaquePass) {
         if (totalAlpha < 1.0) discard;
@@ -130,31 +134,31 @@ bool IsBarSolid(vec2 baseUV, float w, float h) {
 }
 
 vec4 GetBar() {
-    vec2 uv = vsInput.BaseUV;
+    vec2 uv = vsOutput.BaseUV;
     vec2 dx = dFdx(uv);
     vec2 dy = dFdy(uv);
 
-    float w = vsInput.Mask1.x;
-    float h = vsInput.Mask1.y;
-    float fill = vsInput.Mask1.w;
+    float w = vsOutput.Mask1.x;
+    float h = vsOutput.Mask1.y;
+    float fill = vsOutput.Mask1.w;
 
     bool isSolid = IsBarSolid(uv, w, h);
     if (RenderPass == OpaquePass) {
-        if (!isSolid || vsInput.Extra.Alpha < 1.0) discard;
+        if (!isSolid || vsOutput.ExtraAlpha < 1.0) discard;
         float quadW = 60.0;
         float px = uv.x * quadW;
         float offsetX = (quadW - w) / 2.0;
-        vec3 fillColor = (px - offsetX <= w * fill) ? vsInput.Color.rgb : vec3(0.1);
+        vec3 fillColor = (px - offsetX <= w * fill) ? vsOutput.Color.rgb : vec3(0.1);
         return vec4(fillColor, 1.0);
     }
 
     if (isSolid) {
-        if (vsInput.Extra.Alpha < 1.0) {
+        if (vsOutput.ExtraAlpha < 1.0) {
             float quadW = 60.0;
             float px = uv.x * quadW;
             float offsetX = (quadW - w) / 2.0;
-            vec3 fillColor = (px - offsetX <= w * fill) ? vsInput.Color.rgb : vec3(0.1);
-            return vec4(fillColor, vsInput.Extra.Alpha);
+            vec3 fillColor = (px - offsetX <= w * fill) ? vsOutput.Color.rgb : vec3(0.1);
+            return vec4(fillColor, vsOutput.ExtraAlpha);
         }
         discard;
     }
@@ -168,14 +172,12 @@ vec4 GetBar() {
         for (int x = -r; x <= r; x++) {
             vec2 offsetTop = vec2(float(x), float(-r));
             if (IsBarSolid(uv + offsetTop.x * dx + offsetTop.y * dy, w, h)) { minDist = min(minDist, length(offsetTop)); foundSolid = true; }
-
             vec2 offsetBot = vec2(float(x), float(r));
             if (IsBarSolid(uv + offsetBot.x * dx + offsetBot.y * dy, w, h)) { minDist = min(minDist, length(offsetBot)); foundSolid = true; }
         }
         for (int y = -r + 1; y <= r - 1; y++) {
             vec2 offsetLeft = vec2(float(-r), float(y));
             if (IsBarSolid(uv + offsetLeft.x * dx + offsetLeft.y * dy, w, h)) { minDist = min(minDist, length(offsetLeft)); foundSolid = true; }
-
             vec2 offsetRight = vec2(float(r), float(y));
             if (IsBarSolid(uv + offsetRight.x * dx + offsetRight.y * dy, w, h)) { minDist = min(minDist, length(offsetRight)); foundSolid = true; }
         }
@@ -185,15 +187,14 @@ vec4 GetBar() {
     if (hitRadius <= 1) return vec4(0.0, 0.0, 0.0, 1.0);
     if (minDist <= float(maxRadius)) {
         float distNorm = clamp((minDist - 1.0) / float(maxRadius - 1), 0.0, 1.0);
-        float glowAlpha = pow(1.0 - distNorm, 1.75) * 0.55 * vsInput.Extra.Alpha;
+        float glowAlpha = pow(1.0 - distNorm, 1.75) * 0.55 * vsOutput.ExtraAlpha;
         if (glowAlpha > 0.01) return vec4(0.0, 0.0, 0.0, glowAlpha);
     }
     discard;
 }
 
-
 void main() {
-    float id = vsInput.Extra.Type;
+    float id = vsOutput.ExtraType;
     if (id == 0.0 || id == 5.0) FragColor = GetGameObject();
     else if (id == 3.0) FragColor = GetText();
     else if (id == 4.0) FragColor = GetBar();

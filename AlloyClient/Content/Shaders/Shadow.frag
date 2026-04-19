@@ -2,8 +2,8 @@
 
 out vec4 FragColor;
 
-in vec2 BaseUV;
-in flat uint Color;
+layout(location = 0) in vec2 BaseUV;
+layout(location = 1) in flat uint Color;
 
 vec3 unpackColor(uint color) {
     return vec3(

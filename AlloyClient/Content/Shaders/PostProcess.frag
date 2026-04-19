@@ -1,6 +1,6 @@
 ﻿#version 460 core
 out vec4 FragColor;
-in vec2 vertUVs;
+layout(location = 0) in vec2 vertUVs;
 uniform sampler2D colourTexture;
 uniform vec2 uResolution;
 uniform vec2 uGameCenter;

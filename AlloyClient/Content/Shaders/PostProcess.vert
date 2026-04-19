@@ -1,6 +1,6 @@
 ﻿#version 460 core
 
-out vec2 vertUVs;
+layout(location = 0) out vec2 vertUVs;
 
 void main()
 {

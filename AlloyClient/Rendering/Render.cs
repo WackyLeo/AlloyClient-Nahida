@@ -69,6 +69,10 @@ public static partial class Render {
     public static int BlendTileStart;
 
     public static unsafe void FirstTimeInit(Sampler atlas) {
+        Console.WriteLine(GL.GetString(StringName.Renderer));
+        Console.WriteLine(GL.GetString(StringName.Version));
+        Console.WriteLine(GL.GetString(StringName.Vendor));
+        
         ShaderPostProcess = ContentReader.LoadShader("Shaders/PostProcess");
 
         _emptyVao = GL.GenVertexArray();

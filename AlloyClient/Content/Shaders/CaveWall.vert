@@ -9,9 +9,9 @@ layout(location = 1) in vec2 UV;
 layout(location = 2) in float Shade;
 layout(location = 3) in float SortId;
 
-out vec2  vUV;
-out float vShade;
-out float vZ;
+layout(location = 0) out vec2  vUV;
+layout(location = 1) out float vShade;
+layout(location = 2) out float vZ;
 
 void main() {
     vec4 worldPos = vec4(Position, 1.0) * WorldMatrix * ViewMatrix * ProjMatrix;

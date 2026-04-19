@@ -4,8 +4,9 @@ uniform sampler2D GameTexture;
 
 out vec4 FragColor;
 
-in vec2 BaseUV;
-in vec4 Color;
+layout(location = 0) in vec2 BaseUV;
+layout(location = 1) in vec4 Color;
+layout(location = 2) in float Depth;
 
 void main() {
     vec2 dUV = fwidth(BaseUV);

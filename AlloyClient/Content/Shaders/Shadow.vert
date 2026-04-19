@@ -35,8 +35,8 @@ layout(std140) uniform ShadowData {
     InstanceData data[ShadowBuffer];
 } instanceBuffer;
 
-out vec2 BaseUV;
-out flat uint Color;
+layout(location = 0) out vec2 BaseUV;
+layout(location = 1) out flat uint Color;
 
 void main() {
     int instanceId = gl_VertexID / 6;

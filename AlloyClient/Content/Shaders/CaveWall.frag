@@ -2,9 +2,9 @@
 
 uniform sampler2D GameTexture;
 
-in vec2  vUV;
-in float vShade;
-in float vZ;
+layout(location = 0) in vec2  vUV;
+layout(location = 1) in float vShade;
+layout(location = 2) in float vZ;
 
 out vec4 FragColor;
 
@@ -14,6 +14,6 @@ void main() {
 
     color /= color.a;
     color.rgb -= vShade * 0.241 * clamp(0.6 - vZ, 0.0, 0.6);
-    
+
     FragColor = color;
 }

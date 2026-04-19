@@ -46,7 +46,10 @@ layout(std140, binding = 0) readonly buffer InstanceBuffer {
 out OBJECT_OUT {
     vec2 BaseUV;
     vec4 UV;
-    extra Extra;
+    flat float ExtraType;
+    flat float ExtraSortId;
+    flat float ExtraShade;
+    flat float ExtraAlpha;
     vec4 Color;
     vec4 Mask1;
     vec4 Mask2;
@@ -80,7 +83,10 @@ void main() {
 
     vsOutput.BaseUV = GetUV(objUV[verId], data.Rotation.w);
     vsOutput.UV = data.UV;
-    vsOutput.Extra = data.Extra;
+    vsOutput.ExtraType = data.Extra.Type;
+    vsOutput.ExtraSortId = data.Extra.SortId;
+    vsOutput.ExtraShade = data.Extra.Shade;
+    vsOutput.ExtraAlpha = data.Extra.Alpha;
     vsOutput.Color = data.Color;
     vsOutput.Mask1 = data.Mask1;
     vsOutput.Mask2 = data.Mask2;
