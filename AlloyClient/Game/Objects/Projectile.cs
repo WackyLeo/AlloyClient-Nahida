@@ -97,7 +97,7 @@ public sealed class Projectile : IResettable {
     public bool IsInPool { get; set; }
 
     public void Reset(int id, int dmg, float angle, Entity entity, ObjectProperties objDesc,
-        ProjectileProperties projProp) {
+                      ProjectileProperties projProp) {
         _bulletId = id;
         _damage = dmg;
         _angle = angle;
@@ -118,7 +118,7 @@ public sealed class Projectile : IResettable {
         _lifetime = _projProp.LifetimeMs;
         _addLifetime = 0;
         _projDelayMs = _projProp.ProjDelayMs;
-        Size = _projProp.Size > 0 ? _projProp.Size : 100;
+        Size = _projProp.Size != -1 ? _projProp.Size : 100;
 
         _startTime = Main.GameTime.TotalMs;
         _lastHitTest = 0;

@@ -6,84 +6,86 @@ using Common;
 namespace AlloyClient.Assets.XmlStructs;
 
 public sealed class ProjectileProperties {
-    public readonly int BulletType;
-    public readonly string ObjectId;
-    public readonly float LifetimeMs;
-    public readonly float Speed;
-    public readonly float RealSpeed;
-    public readonly int Size;
-    public readonly int MinDamage;
-    public readonly int MaxDamage;
-    public readonly bool MultiHit;
-    public readonly bool PassesCover;
-    public readonly bool ArmorPiercing;
-    public readonly bool ParticleTrail;
-    public readonly bool Wavy;
-    public readonly bool Parametric;
-    public readonly bool Boomerang;
-    public readonly bool NoRotation;
-    public readonly bool PassAll;
-    public readonly bool Asyncrone;
-    public readonly bool NoAlt;
-    public readonly bool Orbiting;
-    public readonly bool ForceOrbiting;
-    public readonly bool OnlyClockwise;
-    public readonly bool OnlyCounterClockwise;
-    public readonly bool DynamicRotationAngle;
-    public readonly bool Falldown;
-    public readonly bool Missile;
-
-    public readonly float Amplitude;
-    public readonly float Frequency;
-    public readonly float StartFrequency;
-    public readonly float Magnitude;
-
     public readonly float Acceleration;
     public readonly float AccelerationDelay;
-    public readonly float MaxAcceleration;
-    public readonly float MinAcceleration;
+    public readonly int AltAnimation;
 
-    public readonly float StartRotationRadius;
-    public readonly float MaxRotationRadius;
-    public readonly float RotationSpeed;
-    public readonly float RadiusIncreaseSpeed;
+    public readonly float Amplitude;
+    public readonly bool Animated;
+    public readonly int AnimationTime;
+    public readonly int ArcAmount;
+    public readonly bool ArcBlade;
+    public readonly bool ArmorPiercing;
+    public readonly bool Asyncrone;
+    public readonly float BonusSize;
+    public readonly bool Boomerang;
+    public readonly int BulletType;
+    public readonly bool CheckRayCast;
+    public readonly bool CircularAngle;
+
+    public readonly bool DynamicAngle;
+    public readonly bool DynamicRotationAngle;
+    public readonly ConditionEffectDesc[] Effects;
+    public readonly int Fade;
+    public readonly bool Falldown;
     public readonly float FixedRotationAngle;
-
-    public readonly float StaticFallAngle;
-    public readonly int ProjDelayMs;
-    public readonly int Ricochet;
+    public readonly bool ForceHit;
+    public readonly bool ForceOrbiting;
+    public readonly float Frequency;
+    public readonly float LifetimeMs;
+    public readonly float Magnitude;
+    public readonly float MaxAcceleration;
+    public readonly int MaxDamage;
+    public readonly float MaxRotationRadius;
+    public readonly float MinAcceleration;
+    public readonly int MinDamage;
+    public readonly bool Missile;
+    public readonly bool MultiHit;
+    public readonly bool NoAlt;
+    public readonly bool NoRotation;
+    public readonly string ObjectId;
+    public readonly bool OnlyClockwise;
+    public readonly bool OnlyCounterClockwise;
+    public readonly bool Orbiting;
+    public readonly bool Parametric;
+    public readonly bool ParticleTrail;
 
     public readonly uint ParticleTrailColor;
-    public readonly int ParticleTrailLifetime;
     public readonly float ParticleTrailIntensity;
+    public readonly int ParticleTrailLifetime;
+    public readonly bool PassAll;
+    public readonly bool PassesCover;
+    public readonly int ProjDelayMs;
+    public readonly float RadiusIncreaseSpeed;
+    public readonly bool RayCast;
 
     public readonly int RCLifetimeMs;
     public readonly int RCSpeed;
+    public readonly float RealSpeed;
     public readonly bool ReturnRayCast;
-    
-    public readonly bool DynamicAngle; 
-    public readonly bool Animated;
-    public readonly int AnimationTime;
-    public readonly int AltAnimation;
-    public readonly float BonusSize;
-    public readonly bool RayCast;
-    public readonly bool CheckRayCast;
-    public readonly int Fade;
-    
+    public readonly int Ricochet;
+    public readonly float RotationSpeed;
+
     public readonly string SecondId;
-    public readonly int ArcAmount;
-    public readonly bool ArcBlade;
-    public readonly bool CircularAngle;
-    public readonly bool ForceHit;
+    public readonly int ShadowSize;
+    public readonly int Size;
+    public readonly float Speed;
+    public readonly float StartFrequency;
+
+    public readonly float StartRotationRadius;
+
+    public readonly float StaticFallAngle;
     public readonly bool VanillaAngle;
-    public readonly ConditionEffectDesc[] Effects; 
+    public readonly bool Wavy;
+
     public ProjectileProperties(XElement e) {
         BulletType = e.GetAttribute<int>("id");
         ObjectId = e.GetValue<string>("ObjectId");
         LifetimeMs = e.GetValue<float>("LifetimeMS");
         RealSpeed = e.GetValue<float>("Speed");
         Speed = RealSpeed / 10000f;
-        Size = e.GetValue<int>("Size", -1);
+        Size = e.GetValue("Size", -1);
+        ShadowSize = e.GetValue("ShadowSize", -1);
         MinDamage = e.HasElement("Damage") ? e.GetValue<int>("Damage") : e.GetValue<int>("MinDamage");
         MaxDamage = e.HasElement("Damage") ? e.GetValue<int>("Damage") : e.GetValue<int>("MaxDamage");
         MultiHit = e.HasElement("MultiHit");
@@ -106,25 +108,25 @@ public sealed class ProjectileProperties {
         Missile = e.HasElement("Missile");
 
         Amplitude = e.GetValue<float>("Amplitude");
-        Frequency = e.GetValue<float>("Frequency", 1f);
-        StartFrequency = e.GetValue<float>("StartFrequency", 0f);
-        Magnitude = e.GetValue<float>("Magnitude", 3f);
-        Fade = e.GetValue<int>("Fade", 0);
-        
-        Acceleration = e.GetValue<float>("Acceleration", 0f);
-        AccelerationDelay = e.GetValue<float>("AccelerationDelay", 0f);
-        MaxAcceleration = e.GetValue<float>("MaxAcceleration", 100000f);
-        MinAcceleration = e.GetValue<float>("MinAcceleration", 0f);
+        Frequency = e.GetValue("Frequency", 1f);
+        StartFrequency = e.GetValue<float>("StartFrequency");
+        Magnitude = e.GetValue("Magnitude", 3f);
+        Fade = e.GetValue<int>("Fade");
 
-        StartRotationRadius = e.GetValue<float>("StartRotationRadius", 0f);
-        MaxRotationRadius = e.GetValue<float>("MaxRotationRadius", 0f);
-        RotationSpeed = e.GetValue<float>("RotationSpeed", 0f);
-        RadiusIncreaseSpeed = e.GetValue<float>("RadiusIncreaseSpeed", 0f);
-        FixedRotationAngle = e.GetValue<float>("FixedRotationAngle", 0f);
+        Acceleration = e.GetValue<float>("Acceleration");
+        AccelerationDelay = e.GetValue<float>("AccelerationDelay");
+        MaxAcceleration = e.GetValue("MaxAcceleration", 100000f);
+        MinAcceleration = e.GetValue<float>("MinAcceleration");
 
-        StaticFallAngle = e.GetValue<float>("StaticFallAngle", -10000f);
-        ProjDelayMs = e.GetValue<int>("ProjdelayMS", 0);
-        Ricochet = e.GetValue<int>("Ricochet", 0);
+        StartRotationRadius = e.GetValue<float>("StartRotationRadius");
+        MaxRotationRadius = e.GetValue<float>("MaxRotationRadius");
+        RotationSpeed = e.GetValue<float>("RotationSpeed");
+        RadiusIncreaseSpeed = e.GetValue<float>("RadiusIncreaseSpeed");
+        FixedRotationAngle = e.GetValue<float>("FixedRotationAngle");
+
+        StaticFallAngle = e.GetValue("StaticFallAngle", -10000f);
+        ProjDelayMs = e.GetValue<int>("ProjdelayMS");
+        Ricochet = e.GetValue<int>("Ricochet");
 
         if (ParticleTrail) {
             var attr = e.Element("ParticleTrail");
@@ -132,28 +134,28 @@ public sealed class ProjectileProperties {
             ParticleTrailLifetime = attr.GetAttribute("lifetimeMS", 600);
             ParticleTrailIntensity = attr.GetAttribute("intensity", 0.3f);
         }
-        
-        RCLifetimeMs = e.GetValue<int>("RCLifetimeMS", 0);
-        RCSpeed = e.GetValue<int>("RCSpeed", 0);
+
+        RCLifetimeMs = e.GetValue<int>("RCLifetimeMS");
+        RCSpeed = e.GetValue<int>("RCSpeed");
         ReturnRayCast = e.HasElement("ReturnRC");
-        
+
         DynamicAngle = e.HasElement("DynamicAngle");
         Animated = e.HasElement("Animated");
-        AnimationTime = e.GetValue<int>("AnimationTime", 0);
-        AltAnimation = e.GetValue<int>("AltAnimation", 0);
-        BonusSize = e.GetValue<float>("BonusSize", 0f);
+        AnimationTime = e.GetValue<int>("AnimationTime");
+        AltAnimation = e.GetValue<int>("AltAnimation");
+        BonusSize = e.GetValue<float>("BonusSize");
         RayCast = e.HasElement("RayCast");
         CheckRayCast = e.HasElement("CheckRC");
-        
-        SecondId = e.GetValue<string>("SecondID", null);
-        ArcAmount = e.GetValue<int>("ArcAmount", 0);
+
+        SecondId = e.GetValue<string>("SecondID");
+        ArcAmount = e.GetValue<int>("ArcAmount");
         ArcBlade = e.HasElement("ArcBlade");
         CircularAngle = e.HasElement("CircularAngle");
         ForceHit = e.HasElement("ForceHit");
-        
+
         Effects = e.Elements("ConditionEffect")
-            .Select(x => new ConditionEffectDesc(x.Value, x.GetAttribute<float>("duration"))).ToArray();
-        
+                   .Select(x => new ConditionEffectDesc(x.Value, x.GetAttribute<float>("duration"))).ToArray();
+
         VanillaAngle = !Orbiting && !DynamicAngle;
     }
 }

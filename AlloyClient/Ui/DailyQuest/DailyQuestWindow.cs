@@ -81,8 +81,9 @@ public class DailyQuestWindow : Sprite {
         _background.AddChild(_cardsContainer);
 
         var refreshText = new SimpleText(new TextConfig {
-            FontSize = 10, Color = 0xFFAAAAAAu, Anchor = UiAnchor.LeftTop
+            FontSize = 10, Color = 0xFFAAAAAAu, Anchor = UiAnchor.LeftTop, FontType = FontType.Bold
         });
+        
         refreshText.SetText("Quests refresh every completion");
         refreshText.X = Pad;
         refreshText.Y = _background.Height - Pad;

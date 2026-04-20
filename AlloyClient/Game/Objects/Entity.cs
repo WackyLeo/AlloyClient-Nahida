@@ -74,6 +74,7 @@ public class Entity {
     public void SetObjectId(int id) {
         ObjectId = id;
         Jitter = Random.Shared.NextSingle() * 0.00002f - 0.00001f;
+
         if (Properties.EffectProperties != null)
             Effect = ParticleEffect.FromProperties(Properties.EffectProperties, this);
 
@@ -116,7 +117,7 @@ public class Entity {
 
         if (props == null) return new TypeNullObject();
 
-        if (props.RealSize != -1) Size = props.RealSize;
+        if (props.Size != -1) Size = props.Size;
 
         if (props.MinSize != props.MaxSize) {
             var maxSteps = (props.MaxSize - props.MinSize) / props.SizeStep;
@@ -534,7 +535,7 @@ public class Entity {
     }
 
     public static int DamageWithDefense(int damage, int defense, bool nodef, Entity entity, int damageMulti = 0,
-        bool isPlayer = false) {
+                                        bool isPlayer = false) {
         if (entity.HasConditionEffect(ConditionEffects.Invulnerable)) return 0;
 
         if (nodef || entity.HasConditionEffect(ConditionEffects.ArmorBroken))
@@ -591,7 +592,7 @@ public class Entity {
     }
 
     public void Damage(int damageAmount, ConditionEffectIndex effect = ConditionEffectIndex.None,
-        bool isArmorPiercing = false) {
+                       bool isArmorPiercing = false) {
         if (HasConditionEffect(ConditionEffects.Invincible) || HasConditionEffect(ConditionEffects.Invulnerable))
             return;
 

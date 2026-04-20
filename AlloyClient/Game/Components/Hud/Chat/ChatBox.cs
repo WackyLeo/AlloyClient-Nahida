@@ -18,20 +18,20 @@ public class ChatBox : Sprite {
     private const int LinePadding = 4;
 
     public static readonly SingleSignal<ChatBoxLineData> AddChatLine = new();
-    
+
     public static readonly Signal<string> OnChatOpen = new();
     public static readonly Signal OnChatHistoryUp = new();
     public static readonly Signal OnChatHistoryDown = new();
 
-    private readonly RollingList<ChatBoxLineData> _lines = new(100);
-
     private readonly Container _chatContainer;
     private readonly TextInput _chatInput;
-    private bool _inFocus;
-    private string _recentTeller = string.Empty;
-    
-    
+
+    private readonly RollingList<ChatBoxLineData> _lines = new(200);
+    private readonly string _recentTeller = string.Empty;
+
+
     private readonly Timer _timer = new(1000);
+    private bool _inFocus;
 
     private int _lineOffset;
     private bool _showMax;
@@ -46,7 +46,7 @@ public class ChatBox : Sprite {
             EnableClip = false
         });
         AddChild(_chatContainer);
-        
+
         _chatInput = new TextInput(new InputConfig {
             Y = MaxHeight,
             FontSize = 18,
@@ -57,11 +57,11 @@ public class ChatBox : Sprite {
             OnFocus = FocusTextInput,
             OnUnfocus = UnfocusTextInput
         });
-        
+
         AddEventListener(Event.AddedToStage, AddHandlers);
         AddEventListener(Event.RemovedFromStage, RemoveHandlers);
     }
-    
+
     private void AddHandlers() {
         AddChatLine.Set(AddChatBoxLine);
         OnChatOpen.Add(HandleChatOpen);
@@ -73,10 +73,10 @@ public class ChatBox : Sprite {
 
     private void RemoveHandlers() {
         if (_inFocus) {
-            _chatInput.UnFocus(false);
+            _chatInput.UnFocus();
             _inFocus = false;
         }
-    
+
         AddChatLine.Remove();
         OnChatOpen.Remove(HandleChatOpen);
         OnChatHistoryUp.Remove(OnPageUp);
@@ -86,22 +86,20 @@ public class ChatBox : Sprite {
     }
 
     private void OnPageUp() {
-        if (_showMax) {
-            _lineOffset = Math.Max(0,Math.Min(_lines.Count - MaxLines ,_lineOffset + MaxLines));
-        } else {
+        if (_showMax)
+            _lineOffset = Math.Max(0, Math.Min(_lines.Count - MaxLines, _lineOffset + MaxLines));
+        else
             _showMax = true;
-        }
-        
+
         Refresh();
     }
 
     private void OnPageDown() {
-        if (_lineOffset == 0) {
+        if (_lineOffset == 0)
             _showMax = false;
-        } else {
+        else
             _lineOffset = Math.Max(0, _lineOffset - MaxLines);
-        }
-        
+
         Refresh();
     }
 
@@ -121,10 +119,8 @@ public class ChatBox : Sprite {
 
         for (var i = startLine; i >= endLine; i--) {
             var line = _lines[i];
-            if (!_showMax && now > line.Time + 20000) {
-                continue;
-            }
-                
+            if (!_showMax && now > line.Time + 20000) continue;
+
             var sprite = line.Sprite;
             sprite.X = 3;
             sprite.Y = yPos -= sprite.Height + LinePadding;
@@ -141,7 +137,7 @@ public class ChatBox : Sprite {
                 textPacket.Text = _chatInput.Text;
                 Client.QueuePacket(textPacket);
             }
-            
+
             OnKeyUnfocus(hasText);
         } else {
             OnKeyFocus();
@@ -154,25 +150,19 @@ public class ChatBox : Sprite {
             return;
         }
 
-        if (text == "/tell " && !string.IsNullOrWhiteSpace(_recentTeller)) {
-            text = $"/tell {_recentTeller} ";
-        }
-        
+        if (text == "/tell " && !string.IsNullOrWhiteSpace(_recentTeller)) text = $"/tell {_recentTeller} ";
+
         _chatInput.SetText(text);
         OnKeyFocus();
     }
 
     private void OnKeyFocus() {
-        if (!Contains(_chatInput)) {
-            AddChild(_chatInput);
-        }
+        if (!Contains(_chatInput)) AddChild(_chatInput);
         _chatInput.Focus();
     }
-    
+
     private void OnKeyUnfocus(bool clear) {
-        if (clear || !_chatInput.HasText(false)) {
-            RemoveChild(_chatInput);
-        }
+        if (clear || !_chatInput.HasText(false)) RemoveChild(_chatInput);
         _chatInput.UnFocus(clear);
     }
 
@@ -187,10 +177,8 @@ public class ChatBox : Sprite {
         Stage?.RemoveEventListener(KeyboardEvent.KeyDown, OnKeyDown);
         _inFocus = false;
     }
-    
+
     private void OnKeyDown(KeyboardEvent args) {
-        if (args.Code == Settings.Chat.Key) {
-            HandleChatKey();
-        }
+        if (args.Code == Settings.Chat.Key) HandleChatKey();
     }
 }

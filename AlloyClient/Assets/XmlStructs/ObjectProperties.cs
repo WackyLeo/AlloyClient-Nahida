@@ -51,10 +51,11 @@ public class ObjectProperties {
     public readonly Dictionary<int, ProjectileProperties> ProjectilesDict;
     public readonly bool ProtectFromGroundDamage;
     public readonly bool ProtectFromSink;
-
-    public readonly int RealSize;
     public readonly float Rotation;
+    public readonly int ShadowSize;
     public readonly bool ShowName;
+
+    public readonly int Size;
     public readonly int SizeStep = 5;
     public readonly bool Skin;
 
@@ -112,7 +113,8 @@ public class ObjectProperties {
         ProtectFromGroundDamage = e.HasElement("ProtectFromGroundDamage");
         ProtectFromSink = e.HasElement("ProtectFromSink");
 
-        RealSize = e.GetValue("RealSize", -1);
+        Size = e.GetValue("Size", -1);
+        ShadowSize = e.GetValue("ShadowSize", 100);
         MinSize = e.GetValue<int>("MinSize");
         MaxSize = e.GetValue<int>("MaxSize");
         SizeStep = e.GetValue("SizeStep", 5);

@@ -51,7 +51,7 @@ public class Player : Entity {
         ObjectLibrary.TypeToObjectProps.TryGetValue(type, out var props);
         if (props == null) return null;
 
-        if (props.RealSize != -1) Size = props.RealSize;
+        if (props.Size != -1) Size = props.Size;
 
         if (props.MinSize != props.MaxSize) {
             var maxSteps = (props.MaxSize - props.MinSize) / props.SizeStep;

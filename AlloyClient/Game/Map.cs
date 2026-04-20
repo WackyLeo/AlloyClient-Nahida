@@ -330,11 +330,15 @@ public static class Map {
         //    xmp.Draw();
         if (EntityStorage.TryGetValue(ModelType.PbObject, out var entities)) {
             entities.Sort();
-            foreach (var type in entities)
+            foreach (var type in entities) {
+                if (type.Entity != null && type.Entity.Properties.Size == 0)
+                    continue;
+                
                 if (type.Visible) {
                     type.Draw();
                     Render.LastDrawCountEntities++;
                 }
+            }
 
             Render.FlushBufferEntity();
         }

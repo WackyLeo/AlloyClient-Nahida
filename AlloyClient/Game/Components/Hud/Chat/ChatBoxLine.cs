@@ -11,17 +11,21 @@ public class ChatBoxLineData {
     public readonly string Recipient;
     public readonly bool ToMe;
     public readonly string Text;
+    public readonly int NameColor;
+    public readonly int TextColor;
 
     public readonly ChatBoxLine Sprite;
 
-    public ChatBoxLineData(double time, string name, int numStars, string recipient, string text) {
+    public ChatBoxLineData(double time, string name, int numStars, string recipient, string text, int nameClr = 1193046, int textClr = 1193046) {
         Time = time;
         Name = name;
         NumStars = numStars;
         Recipient = recipient;
         ToMe = recipient == Map.LocalPlayer?.Name;
         Text = text;
-
+        NameColor = nameClr;
+        TextColor = textClr;
+        
         Sprite = new ChatBoxLine(this);
     }
 }
@@ -102,7 +106,7 @@ public class ChatBoxLine : Container {
 
     private static bool TryGetName(ChatBoxLineData data, out SimpleText text) {
         var color = PlayerColor;
-
+        
         var name = data.Name;
 
         switch (name) {
@@ -131,6 +135,10 @@ public class ChatBoxLine : Container {
                 name = data.Recipient;
             }
         }
+        
+        if (data.NameColor != 1193046) {
+            color = 0xFF000000 + (uint)data.NameColor;
+        }
 
         text = CreateText($"<{name}>  ", color);
         return true;
@@ -158,7 +166,11 @@ public class ChatBoxLine : Container {
         } else if (data.Recipient != string.Empty) {
             color = TellColor;
         }
-
+        
+        if (data.TextColor != 1193046) {
+            color = 0xFF000000 + (uint)data.TextColor;
+        }
+        
         text = CreateText(data.Text, color, maxWidth);
     }
 

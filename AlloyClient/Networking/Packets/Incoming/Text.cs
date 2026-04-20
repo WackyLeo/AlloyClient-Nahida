@@ -48,7 +48,7 @@ public class Text : IncomingPacket<Text> {
         string finalText = string.IsNullOrEmpty(CleanText) ? Txt : CleanText;
         if (string.IsNullOrEmpty(finalText)) return;
 
-        ChatBox.AddChatLine.Dispatch(new ChatBoxLineData(Main.GetTime(), Name, NumStars, Recipient, finalText));
+        ChatBox.AddChatLine.Dispatch(new ChatBoxLineData(Main.GetTime(), Name, NumStars, Recipient, finalText, NameColor, TextColor));
             
         if (Map.Entities.TryGetValue(ObjectId, out var en)) {
             ChatLayer.QueueSpeech(new SpeechData(en, finalText, Recipient));
