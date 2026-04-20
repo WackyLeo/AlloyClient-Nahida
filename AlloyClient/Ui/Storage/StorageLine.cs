@@ -43,7 +43,7 @@ public class StorageLine : Container {
             Cut = 4,
             Color = isEven ? 0xFF2A2A2Au : 0xFF202020u,
             OutlineColor = isEven ? 0xFF3A3A3Au : 0xFF2E2E2Eu,
-            OutlineSize = 1.5f,
+            OutlineSize = 2f,
             ShadowRadius = 0f
         });
         bg.X = 3;
@@ -135,8 +135,8 @@ public class StorageLine : Container {
         if (!ObjectLibrary.TypeToObjectProps.TryGetValue(id, out var props))
             return $"0x{id:X4}";
         return props.DisplayName
-            .Replace("Mark of the ", "")
-            .Replace("Mark of ", "");
+                    .Replace("Mark of the ", "")
+                    .Replace("Mark of ", "");
     }
 
     private static SdfRect MakeButton(string label, int w) {

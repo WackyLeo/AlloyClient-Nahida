@@ -22,7 +22,7 @@ public class StorageWindow : Sprite {
     private const int BottomBarH = 64;
     private const int ScrollbarW = 8;
     private const int TabW = 110;
-    private const int TabSpacing = 6;
+    private const int TabSpacing = 8;
     private const int TabHeightPad = 6;
 
     private const uint ColBg = 0xFF363636u;
@@ -136,10 +136,9 @@ public class StorageWindow : Sprite {
         _screenContainer.AddChildAt(_background, 1);
 
         var listH = BgHeight - Inner * 2 - BottomBarH - Inner;
-
         var listBg = new SdfRect(new SdfRectConfig {
             Width = BgWidth - Inner * 2, Height = listH, Cut = 6,
-            Color = ColListBg, OutlineColor = ColListLine, OutlineSize = 2f, ShadowRadius = 0f
+            Color = 0xFF151515u, OutlineColor = 0xFF121212u, OutlineSize = 5f, ShadowRadius = 0f
         });
         listBg.X = Inner;
         listBg.Y = Inner;
@@ -181,7 +180,7 @@ public class StorageWindow : Sprite {
 
         var bottomBg = new SdfRect(new SdfRectConfig {
             Width = BgWidth - Inner * 2, Height = BottomBarH, Cut = 6,
-            Color = 0xFF2E2E2Eu, OutlineColor = 0xFF555555u, OutlineSize = 1.5f,
+            Color = 0xFF151515u, OutlineColor = 0xFF121212u, OutlineSize = 5f,
             ShadowRadius = 0f, ShadowAlpha = 0.2f
         });
         bottomBg.X = Inner;
@@ -377,7 +376,7 @@ public class StorageWindow : Sprite {
             Cut = 5,
             Color = ColTabInactive,
             OutlineColor = ColTabOutline,
-            OutlineSize = 2f,
+            OutlineSize = 2.5f,
             ShadowRadius = 0f
         });
         tab.X = TabHeightPad + index * (TabW + TabSpacing);
@@ -396,9 +395,10 @@ public class StorageWindow : Sprite {
     }
 
     private SdfRect CreateBottomButton(string label, int slot, SdfRect parent) {
-        const int btnW = 130;
-        const int btnH = 30;
-        const int btnGap = 20;
+        const int btnW = 200;
+        const int btnH = 50;
+
+        const int btnGap = 40;
         var totalW = btnW * 2 + btnGap;
         var startX = ((int)parent.SelfContentWidth - totalW) / 2;
 

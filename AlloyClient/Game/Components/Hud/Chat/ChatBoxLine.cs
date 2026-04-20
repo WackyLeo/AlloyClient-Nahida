@@ -5,18 +5,20 @@ using AlloyClient.UiLib.Enums;
 namespace AlloyClient.Game.Components.Hud.Chat;
 
 public class ChatBoxLineData {
-    public readonly double Time;
     public readonly string Name;
+    public readonly int NameColor;
     public readonly int NumStars;
     public readonly string Recipient;
-    public readonly bool ToMe;
-    public readonly string Text;
-    public readonly int NameColor;
-    public readonly int TextColor;
 
     public readonly ChatBoxLine Sprite;
+    public readonly string Text;
+    public readonly int TextColor;
+    public readonly double Time;
+    public readonly bool ToMe;
 
-    public ChatBoxLineData(double time, string name, int numStars, string recipient, string text, int nameClr = 1193046, int textClr = 1193046) {
+    public ChatBoxLineData(double time, string name, int numStars, string recipient, string text,
+                           int nameClr = 0x123456,
+                           int textClr = 0x123456) {
         Time = time;
         Name = name;
         NumStars = numStars;
@@ -25,13 +27,12 @@ public class ChatBoxLineData {
         Text = text;
         NameColor = nameClr;
         TextColor = textClr;
-        
+
         Sprite = new ChatBoxLine(this);
     }
 }
 
 public class ChatBoxLine : Container {
-    
     private const string ServerChatName = "";
     private const string ClientChatName = "*Client*";
     private const string ErrorChatName = "*Error*";
@@ -53,7 +54,8 @@ public class ChatBoxLine : Container {
 
     private const int LineHeight = 18;
 
-    public ChatBoxLine(ChatBoxLineData data) : base(new ContainerConfig { Width = ChatBox.MaxWidth, Height = LineHeight }) {
+    public ChatBoxLine(ChatBoxLineData data) : base(new ContainerConfig
+        { Width = ChatBox.MaxWidth, Height = LineHeight }) {
         var x = 0;
 
         if (TryGetStar(LineHeight, data, out var fameStar)) {
@@ -85,7 +87,7 @@ public class ChatBoxLine : Container {
     }
 
     private static bool TryGetStar(int size, ChatBoxLineData data, out FameStar star) {
-        if (data.NumStars < 0 || data.Recipient != string.Empty && !data.ToMe) {
+        if (data.NumStars < 0 || (data.Recipient != string.Empty && !data.ToMe)) {
             star = null;
             return false;
         }
@@ -106,7 +108,7 @@ public class ChatBoxLine : Container {
 
     private static bool TryGetName(ChatBoxLineData data, out SimpleText text) {
         var color = PlayerColor;
-        
+
         var name = data.Name;
 
         switch (name) {
@@ -122,28 +124,24 @@ public class ChatBoxLine : Container {
             color = EnemyColor;
             name = name.Substring(1);
         }
-        
+
         if (name.StartsWith(AdminNameChar)) {
             color = AdminColor;
             name = name.Substring(1);
         }
 
-        if (data.Recipient == GuildChatName) {
+        if (data.Recipient == GuildChatName)
             color = GuildColor;
-        } else if (data.Recipient != string.Empty) {
-            if (!data.ToMe) {
+        else if (data.Recipient != string.Empty)
+            if (!data.ToMe)
                 name = data.Recipient;
-            }
-        }
-        
-        if (data.NameColor != 1193046) {
-            color = 0xFF000000 + (uint)data.NameColor;
-        }
+
+        if (data.NameColor != 0x123456) color = 0xFF000000 + (uint)data.NameColor;
 
         text = CreateText($"<{name}>  ", color);
         return true;
     }
-    
+
     private static void GetText(ChatBoxLineData data, int maxWidth, out SimpleText text) {
         var color = DefaultColor;
 
@@ -156,21 +154,15 @@ public class ChatBoxLine : Container {
             HelpChatName => HelpColor,
             _ => color
         };
-        
-        if (name.StartsWith(AdminNameChar)) {
-            color = AdminColor;
-        }
 
-        if (data.Recipient == GuildChatName) {
+        if (name.StartsWith(AdminNameChar)) color = AdminColor;
+
+        if (data.Recipient == GuildChatName)
             color = GuildColor;
-        } else if (data.Recipient != string.Empty) {
-            color = TellColor;
-        }
-        
-        if (data.TextColor != 1193046) {
-            color = 0xFF000000 + (uint)data.TextColor;
-        }
-        
+        else if (data.Recipient != string.Empty) color = TellColor;
+
+        if (data.TextColor != 0x123456) color = 0xFF000000 + (uint)data.TextColor;
+
         text = CreateText(data.Text, color, maxWidth);
     }
 
@@ -184,5 +176,4 @@ public class ChatBoxLine : Container {
             MaxWidth = maxWidth
         });
     }
-    
 }

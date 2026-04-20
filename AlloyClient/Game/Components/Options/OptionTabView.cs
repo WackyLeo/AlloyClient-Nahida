@@ -198,13 +198,13 @@ public class OptionTabView : Container {
 
     private void AddExtraOptions() {
         _options.Add(new ChoiceOption<float>(Settings.AllyOpacity,
-            ["100%", "80%", "60%", "40%", "20%", "Invisible"],
-            [1.0f, 0.8f, 0.6f, 0.4f, 0.2f, 0.0f],
+            ["100%", "80%", "60%", "40%", "20%", "10%", "5%", "Invisible"],
+            [1.0f, 0.8f, 0.6f, 0.4f, 0.2f, 0.1f, 0.05f, 0.0f],
             "Ally Player Opacity",
             "Sets the opacity of other players."));
         _options.Add(new ChoiceOption<float>(Settings.AllyProjOpacity,
-            ["100%", "80%", "60%", "40%", "20%", "Invisible"],
-            [1.0f, 0.8f, 0.6f, 0.4f, 0.2f, 0.0f],
+            ["100%", "80%", "60%", "40%", "20%", "10%", "5%", "Invisible"],
+            [1.0f, 0.8f, 0.6f, 0.4f, 0.2f, 0.1f, 0.05f, 0.0f],
             "Ally Projectile Opacity",
             "Sets the opacity of projectiles fired by other players."));
     }
