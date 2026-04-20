@@ -52,7 +52,7 @@ public static class AtlasBuilder {
     }
 
     private static bool CheckHash(string mainFile, List<StaticSheet> sheets1, List<AnimatedSheet> sheets2,
-        Paths paths) {
+                                  Paths paths) {
         var allSame = HashManager.CheckFileHash(mainFile, paths);
 
         foreach (var sheet in sheets1) allSame = HashManager.CheckFileHash(sheet.File, paths) && allSame;
@@ -84,14 +84,14 @@ public static class AtlasBuilder {
             try {
                 ParseSheet(&stbContext, sheet, atlas);
             } catch (Exception e) {
-                Console.WriteLine($"Failed to add image <{sheet.Lookup}>: {e.Message}");
+                Console.WriteLine($"Failed to add image 2 <{sheet.Lookup}>: {e.Message}");
             }
 
         foreach (var sheet in animated)
             try {
                 ParseAnimated(&stbContext, sheet, atlas);
             } catch (Exception e) {
-                Console.WriteLine($"Failed to add image <{sheet.Lookup}>: {e.Message}");
+                Console.WriteLine($"Failed to add image 1 <{sheet.Lookup}>: {e.Message}");
             }
 
         // this whole thing is jank and i might deal with it later

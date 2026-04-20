@@ -78,7 +78,8 @@
     <Image name="CathProj16"                 w="16" h="16">SRAssets_CathProj16Embed_.png</Image>
     <Image name="CathWalls8"                 w="8"  h="8" >SRAssets_CathWalls8Embed_.png</Image>
     <Image name="production"                 w="8"  h="8" >SRAssets_ProductionEmbed_.png</Image>
-    <Image name="swmp8"                      w="8"  h="8" >SRAssets_swmp8Embed_.png</Image>
+    <Image name="swmap8"                     w="8"  h="8" >swamp8.png</Image>
+    <Image name="swmap16"                    w="16"  h="16" >swamp16.png</Image>
     <Image name="Zeppy"                      w="8"  h="8" >SRAssets_Zeppy8Embed_.png</Image>
     <Image name="WinterObjects8"             w="8"  h="8" >SRAssets_WinterObjects8Embed_.png</Image>
     <Image name="LunarInvasion8"             w="8"  h="8" >SRAssets_LunarInvasionEmbed_.png</Image>
@@ -101,10 +102,15 @@
     <Animated name="chars16x16dEncounters"   w="16" h="16">EmbeddedAssets_chars16x16dEncountersEmbed_.png</Animated>
     <Animated name="chars16x16dEncounters2"  w="16" h="16">EmbeddedAssets_chars16x16dEncounters2Embed_.png</Animated>
     <Animated name="chars16x16rEncounters"   w="16" h="16">EmbeddedAssets_chars16x16rEncountersEmbed_.png</Animated>
-    <Animated name="players"                 w="8"  h="8"  group="Full">EmbeddedAssets_playersEmbed_.png</Animated>
-    <!-- <Animated name="playerskins"             w="8"  h="8"  group="Full">EmbeddedAssets_playersSkinsEmbed_.png</Animated> -->
+    
+	<Animated name="players"                 w="8"  h="8"  group="Full">EmbeddedAssets_playersEmbed_.png</Animated>
     <Animated name="playerskins16"           w="16" h="16" group="Full">EmbeddedAssets_playersSkins16Embed_.png</Animated>
-    <Animated name="chars8x8rPets1"          w="8"  h="8" >EmbeddedAssets_chars8x8rPets1Embed_.png</Animated>
+	<Animated name="SR16x16skins1"           w="16" h="16" group="Full">SRAssets_SR16x16skins1Embed_.png</Animated>
+    <Animated name="SR16x16skins2"           w="16" h="16" group="Full">SRAssets_SR16x16skins2Embed_.png</Animated>
+    <Animated name="SR8x8skins2"             w="8"  h="8"  group="Full">SRAssets_SR8x8Skins2Embed_.png</Animated>
+    <Animated name="playerskins"             w="8"  h="8"  group="Full">SRAssets_skins8x8Embed_.png</Animated>
+	
+	<Animated name="chars8x8rPets1"          w="8"  h="8" >EmbeddedAssets_chars8x8rPets1Embed_.png</Animated>
     <Animated name="chars8x8rPets2"          w="8"  h="8" >EmbeddedAssets_chars8x8rPets2Embed_.png</Animated>
     <Animated name="petsDivine"              w="16" h="16">EmbeddedAssets_petsDivineEmbed_.png</Animated>
     <Animated name="d1chars16x16r"           w="16" h="16">EmbeddedAssets_d1Chars16x16rEmbed_.png</Animated>
@@ -130,15 +136,11 @@
     <Animated name="SR8x8enemiesRight1"      w="8"  h="8" >SRAssets_SR8x8enemiesRight1Embed_.png</Animated>
     <Animated name="SR32x32chars"            w="32" h="32">SRAssets_SR32x32charsEmbed_.png</Animated>
     <Animated name="SROryx3"                 w="32" h="32">SRAssets_Oryx3Embed_.png</Animated>
-    <Animated name="SR16x16skins1"           w="16" h="16">SRAssets_SR16x16skins1Embed_.png</Animated>
-    <Animated name="SR16x16skins2"           w="16" h="16">SRAssets_SR16x16skins2Embed_.png</Animated>
-    <Animated name="SR8x8skins2"             w="8"  h="8" >SRAssets_SR8x8Skins2Embed_.png</Animated>
-    <Animated name="playerskins"             w="8"  h="8"  group="Full">SRAssets_skins8x8Embed_.png</Animated>
     <Animated name="SR16x16enemies1"         w="16" h="16">SRAssets_SR16x16enemies1Embed_.png</Animated>
     <Animated name="SR16x16enemiesRight1"    w="16" h="16">SRAssets_SR16x16enemiesRight1Embed_.png</Animated>
     <Animated name="SR16x16enemies2"         w="16" h="16">SRAssets_SR16x16enemies2Embed_.png</Animated>
-    <Animated name="zombieSkins"             w="8"  h="8" >SRAssets_zombieSkinsEmbed_.png</Animated>
-    <Animated name="bunnySkin"               w="8"  h="8" >SRAssets_bunnySkin_.png</Animated>
+    <Animated name="zombieSkins"             w="8"  h="8">SRAssets_zombieSkinsEmbed_.png</Animated>
+    <Animated name="bunnySkin"               w="8"  h="8">SRAssets_bunnySkin_.png</Animated>
     <Image name="SRAssets"                w="8"  h="8" >SRRandom.png</Image>
     <Image name="SummerObjects16"         w="16" h="16">SummerObjects16.png</Image>
     <Image name="PaintStaff"              w="8"  h="8" >PaintStaff.png</Image>
@@ -156,7 +158,6 @@
     <Image name="SCobj8x8"                w="8"  h="8" >SCobj8x8.png</Image>
     <Image name="SCobj16x16"              w="16" h="16">SCobj16x16.png</Image>
     <Image name="Bird8"                   w="8"  h="8" >Bird8.png</Image>
-    <Image name="Stone8"                  w="8"  h="8" >Stone8.png</Image>
     <Image name="FeroziumTower16x16"      w="16" h="16">FeroziumTower16x16.png</Image>
     <Image name="EclipseShrine8x8"        w="8"  h="8" >Eclipseshrine8x8.png</Image>
     <Image name="Icamiscitems8x8"         w="8"  h="8" >Icamiscitems8x8.png</Image>
@@ -187,24 +188,24 @@
     <Image name="SR16x16objects1"         w="16" h="16">Ica16Obj1.png</Image>
     <Image name="IcaTiered"               w="8"  h="8" >Icatiered.png</Image>
     <Image name="HaloC"                   w="8"  h="8" >HaloC.png</Image>
-    <Image name="Torbjorn"                w="8"  h="8" >Torbjorn.png</Image> 
-    <Image name="partySkin"               w="8"  h="8" >PartySkin.png</Image>
-    <Image name="partySkin"               w="8"  h="8" >ReindeerSkin.png</Image>
-    <Image name="santaSkin"               w="16" h="16">SantaSkin.png</Image>
-    <Image name="rainbowSkin"             w="16" h="16">RainbowSkin.png</Image>
-    <Image name="prodSkins16"             w="16" h="16">ProdSkins16.png</Image>
-    <Image name="SCchars8x8"              w="8"  h="8" >SCchars8x8.png</Image>
-    <Image name="SCchars16x16"            w="16" h="16">SCchars16x16.png</Image>
-    <Image name="skins8"                  w="8"  h="8" >skins8x8.png</Image>
+    <Image name="Torbjorn"                w="8"  h="8"  group="Full">Torbjorn.png</Image> 
+    <Image name="partySkin"               w="8"  h="8"  group="Full">PartySkin.png</Image>
+    <Image name="partySkin"               w="8"  h="8"  group="Full">ReindeerSkin.png</Image>
+    <Image name="santaSkin"               w="16" h="16" group="Full">SantaSkin.png</Image>
+    <Image name="rainbowSkin"             w="16" h="16" group="Full">RainbowSkin.png</Image>
+    <Image name="prodSkins16"             w="16" h="16" group="Full">ProdSkins16.png</Image>
+    <Image name="SCchars8x8"              w="8"  h="8"  group="Full">SCchars8x8.png</Image>
+    <Image name="SCchars16x16"            w="16" h="16" group="Full">SCchars16x16.png</Image>
+    <Image name="skins8"                  w="8"  h="8"  group="Full">skins8x8.png</Image>
     <Image name="swmpMobs8"               w="8"  h="8" >swmpMobs8.png</Image>
     <Image name="swmpMobs16"              w="16" h="16">swmpMobs16.png</Image>
-    <Image name="masks8"                  w="8"  h="8" >masks8x8.png</Image>
+    <Image name="masks8"                  w="8"  h="8"  group="Full">masks8x8.png</Image>
     <Image name="CSEnemies16"             w="16" h="16">CSEnemies16.png</Image>
     <Image name="Feroziumenemies16x16"    w="16" h="16">Feroziumenemies16x16.png</Image>
-    <Image name="EternaBird16"            w="16" h="16">_EternaBird.png</Image>
-    <Image name="Hopeswing8"              w="8"  h="8" >_hopeswingskin.png</Image>
-    <Image name="skins8"                  w="8"  h="8" >skins8x8.png</Image>
-    <Image name="SR32x32charsTrue"        w="32" h="32">SR32x32chars.png</Image>
+    <Image name="EternaBird16"            w="16" h="16" group="Full">_EternaBird.png</Image>
+    <Image name="Hopeswing8"              w="8"  h="8"  group="Full">_hopeswingskin.png</Image>
+    <Image name="skins8"                  w="8"  h="8"  group="Full">skins8x8.png</Image>
+    <Image name="SR32x32charsTrue"        w="32" h="32" group="Full">SR32x32chars.png</Image>
     <Image name="talkingmoraa8"           w="32" h="32">talkingmoraa.png</Image>
     <Image name="DreamBosses"             w="16" h="16">DreamBosses.png</Image>
 </Atlas>

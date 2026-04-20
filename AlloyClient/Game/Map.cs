@@ -76,7 +76,7 @@ public static class Map {
     private static readonly MapTile[] RebuildData = new MapTile[9];
 
     public static void InitMap(int width, int height, string name, string display, int diff, uint seed, int background,
-        bool allowTp, bool showDisplays) {
+                               bool allowTp, bool showDisplays) {
         Width = width;
         Height = height;
         Name = name;
