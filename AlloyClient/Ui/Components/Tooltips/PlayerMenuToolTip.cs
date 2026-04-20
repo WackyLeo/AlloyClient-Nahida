@@ -6,7 +6,6 @@ using AlloyClient.Game.Objects;
 using AlloyClient.Networking;
 using AlloyClient.Networking.Packets.Outgoing;
 using AlloyClient.State;
-using AlloyClient.UiLib;
 using AlloyClient.UiLib.BuiltIn;
 using AlloyClient.UiLib.Core;
 using AlloyClient.UiLib.Enums;
@@ -19,6 +18,7 @@ public class PlayerMenuToolTip : Tooltip {
     private readonly Player _target;
     private int _currentY = 56;
     public Vector2i SpawnMouse;
+
     public PlayerMenuToolTip(Player target) : base(170, 320) {
         _target = target;
         TooltipMode = false;
@@ -33,17 +33,21 @@ public class PlayerMenuToolTip : Tooltip {
         AddChild(portrait);
 
         var nameColor = _target.IsFellowGuild ? 0x00FF00u : 0xFCDF00u; // Green if guild
-        var nameText = new SimpleText(EquipmentToolTip.SimpleConfig(_target.Name ?? "Unknown", 14, FontType.Bold, nameColor, outline: 0x000000, glow: 1.0f, thickness: 0));
+        var nameText = new SimpleText(EquipmentToolTip.SimpleConfig(_target.Name ?? "Unknown", 14, FontType.Bold,
+            nameColor, 0x000000, glow: 1.0f, thickness: 0));
         nameText.X = 46;
         nameText.Y = 10;
         AddChild(nameText);
 
-        var charInfoText = new SimpleText(EquipmentToolTip.SimpleConfig($"({ObjectLibrary.TypeToObjectProps[_target.Type].DisplayName} {_target.Level})", 14, FontType.Normal, nameColor, outline: 0x000000, glow: 1.0f, thickness: 0));
+        var charInfoText = new SimpleText(EquipmentToolTip.SimpleConfig(
+            $"({ObjectLibrary.TypeToObjectProps[_target.Type].DisplayName} {_target.Level})", 14, FontType.Normal,
+            nameColor, 0x000000, glow: 1.0f, thickness: 0));
         charInfoText.X = nameText.X + nameText.Width + 5;
         charInfoText.Y = 10;
         AddChild(charInfoText);
-        
-        var accountIdText = new SimpleText(EquipmentToolTip.SimpleConfig($"Account ID: {_target.AccountId}", 14, FontType.Bold, nameColor, outline: 0x000000, glow: 1.0f, thickness: 0));
+
+        var accountIdText = new SimpleText(EquipmentToolTip.SimpleConfig($"Account ID: {_target.AccountId}", 14,
+            FontType.Bold, nameColor, 0x000000, glow: 1.0f, thickness: 0));
         accountIdText.X = 46;
         accountIdText.Y = 28;
         AddChild(accountIdText);
@@ -54,14 +58,19 @@ public class PlayerMenuToolTip : Tooltip {
             AddOption("Mute Menu", "lofiInterfaceBig", 4, () => { });
         }
 
-        AddOption("Teleport", "lofiInterface2", 3, () => { 
+        AddOption("Teleport", "lofiInterface2", 3, () => {
             var pkt = Teleport.CreatePacket();
             pkt.ObjectId = _target.ObjectId;
             Client.QueuePacket(pkt);
         });
 
         AddOption("Lock", "lofiInterface2", 5, () => {
-            // Lock Logic
+            if (PartyData.LockedPlayers.Contains(_target.AccountId)) {
+                PartyData.UnlockPlayer(_target);
+                return;
+            }
+
+            PartyData.LockPlayer(_target);
         });
 
         AddOption("Trade", "lofiInterfaceBig", 7, () => {
@@ -70,32 +79,31 @@ public class PlayerMenuToolTip : Tooltip {
             Client.QueuePacket(pkt);
         });
 
-        AddOption("Whisper", "lofiInterfaceBig", 21, () => {
-            ChatBox.OnChatOpen.Dispatch($"/tell {_target.Name} ");
-        });
+        AddOption("Whisper", "lofiInterfaceBig", 21, () => { ChatBox.OnChatOpen.Dispatch($"/tell {_target.Name} "); });
 
         AddOption("Block", "lofiInterfaceBig", 8, () => {
-            // Block Logic
+            if (PartyData.IgnoredPlayers.Contains(_target.AccountId)) {
+                PartyData.UnignorePlayer(_target);
+                return;
+            }
+
+            PartyData.IgnorePlayer(_target);
         });
 
         ToolHeight = _currentY + 10;
         DrawSprite();
-        
+
         AddEventListener(Event.AddedToStage, () => {
             Scale = Stage.ScreenScale;
             Stage.AddEventListener(ResizeEvent.Resize, OnResizeEvent);
         });
-        AddEventListener(Event.RemovedFromStage, () => {
-            Stage?.RemoveEventListener(ResizeEvent.Resize, OnResizeEvent);
-        });
-        
-        AddEventListener(Event.AddedToStage, () => {
-            Stage.AddEventListener(MouseEvent.LeftDown, OnStageClick);
-        });
+        AddEventListener(Event.RemovedFromStage,
+            () => { Stage?.RemoveEventListener(ResizeEvent.Resize, OnResizeEvent); });
 
-        AddEventListener(Event.RemovedFromStage, () => {
-            Stage?.RemoveEventListener(MouseEvent.LeftDown, OnStageClick);
-        });
+        AddEventListener(Event.AddedToStage, () => { Stage.AddEventListener(MouseEvent.LeftDown, OnStageClick); });
+
+        AddEventListener(Event.RemovedFromStage,
+            () => { Stage?.RemoveEventListener(MouseEvent.LeftDown, OnStageClick); });
     }
 
     private void AddOption(string text, string atlas, int index, Action onClick) {
@@ -109,9 +117,7 @@ public class PlayerMenuToolTip : Tooltip {
     }
 
     private void OnStageClick(MouseEvent args) {
-        if (!IsInBounds(args.Coords)) {
-            Close();
-        }
+        if (!IsInBounds(args.Coords)) Close();
     }
 
     private void Close() {
@@ -126,13 +132,13 @@ public class PlayerMenuToolTip : Tooltip {
         X = Math.Clamp(SpawnMouse.X - scaledWidth, 0, Settings.ScreenWidth - scaledWidth);
         Y = Math.Clamp(SpawnMouse.Y - scaledHeight, 0, Settings.ScreenHeight - scaledHeight);
     }
-    
+
     private class MenuOption : Sprite {
         public MenuOption(string text, string atlas, int index, int width, Action onClick) {
             MouseEnabled = true;
             var icon = new ObjectRect(new ObjectRectConfig {
                 Texture = TextureHelper.FromGameAtlas(atlas, index, false),
-                Width = 20, Height = 20 
+                Width = 20, Height = 20
             });
             icon.X = 10;
             icon.Y = 2;

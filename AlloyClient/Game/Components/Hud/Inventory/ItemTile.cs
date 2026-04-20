@@ -5,25 +5,26 @@ using AlloyClient.Game.Objects;
 using AlloyClient.Networking;
 using AlloyClient.Networking.Packets.Outgoing;
 using AlloyClient.Networking.Structs.DataObjects;
+using AlloyClient.Sound;
 using AlloyClient.Ui.Components.Tooltips;
 using AlloyClient.UiLib.BuiltIn;
 using AlloyClient.UiLib.Core;
 using AlloyClient.UiLib.Enums;
 using AlloyClient.UiLib.Extra;
 using AlloyClient.Utils;
-using AlloyClient.Sound;
-using Common;
 using OpenTK.Mathematics;
 
 namespace AlloyClient.Game.Components.Hud.Inventory;
 
 public sealed class ItemTile : Sprite {
+    private readonly CutEdgeRect _background;
+    private readonly ObjectRect _slotDetail;
+    private readonly SimpleText _slotId;
 
-    public int Size = 50;
+    private readonly ObjectRect _sprite;
+    private readonly SimpleText _tierText;
 
-    public readonly byte SlotId;
-
-    public readonly byte SlotType;
+    public readonly bool ClassSensitive;
 
     public readonly bool Interactive;
 
@@ -31,23 +32,23 @@ public sealed class ItemTile : Sprite {
 
     public readonly Entity Owner;
 
-    public ItemDesc ItemDesc;
+    public readonly byte SlotId;
 
-    private readonly ObjectRect _sprite;
-    private readonly SimpleText _tierText;
+    public readonly byte SlotType;
+    private readonly uint _bgColor;
+    private bool _checkForDrag;
+    private bool _dragging;
+
+    private Vector2i _dragStart;
 
     private EquipmentToolTip _tooltip;
 
-    private Vector2i _dragStart;
-    private bool _checkForDrag;
-    private bool _dragging;
-    private uint _bgColor;
+    public ItemDesc ItemDesc;
 
-    private readonly CutEdgeRect _background;
-    private readonly ObjectRect _slotDetail;
-    private readonly SimpleText _slotId;
+    public int Size = 50;
 
-    public ItemTile(Entity owner, byte slotId, bool interactive, CutEdges cut, bool oneWay, byte slotType = 0, int tileSize = 50, uint bgcolor = 0x545454) {
+    public ItemTile(Entity owner, byte slotId, bool interactive, CutEdges cut, bool oneWay, byte slotType = 0,
+                    int tileSize = 50, uint bgcolor = 0x545454, bool classSensitive = true) {
         Size = tileSize;
         Owner = owner;
         SlotId = slotId;
@@ -55,11 +56,16 @@ public sealed class ItemTile : Sprite {
         Interactive = interactive;
         OneWay = oneWay;
         _bgColor = bgcolor;
+        ClassSensitive = classSensitive;
 
-        _background = new CutEdgeRect(new CutEdgeConfig {Width = Size, Height = Size, CutX = 4, CutY = 4, Cuts = cut, Color = _bgColor});
+        _background = new CutEdgeRect(new CutEdgeConfig
+            { Width = Size, Height = Size, CutX = 4, CutY = 4, Cuts = cut, Color = _bgColor });
         AddChild(_background);
 
-        _slotDetail = new ObjectRect(new ObjectRectConfig {Texture = TextureHelper.FromGameAtlas(0x0096), Width = Size, Height = Size, OutlineEnabled = false, GlowEnabled = false});
+        _slotDetail = new ObjectRect(new ObjectRectConfig {
+            Texture = TextureHelper.FromGameAtlas(0x0096), Width = Size, Height = Size, OutlineEnabled = false,
+            GlowEnabled = false
+        });
         _slotDetail.Visible = false;
         _slotDetail.ColorTransformation = new ColorTransform(0, 0, 0, 1, 54, 54, 54, 0);
         _slotDetail.SetColorSecondary(0, 0);
@@ -70,35 +76,35 @@ public sealed class ItemTile : Sprite {
             _slotDetail.Visible = true;
         }
 
-        _slotId = new SimpleText(new TextConfig {Text = "", X = Size / 2, Y = Size / 2, FontSize = 32, FontType = FontType.Bold, Color = 0x363636, OutlineColor = 0x363636, Anchor = UiAnchor.Middle, Glow = 0});
+        _slotId = new SimpleText(new TextConfig {
+            Text = "", X = Size / 2, Y = Size / 2, FontSize = 32, FontType = FontType.Bold, Color = 0x363636,
+            OutlineColor = 0x363636, Anchor = UiAnchor.Middle, Glow = 0
+        });
         _slotId.Visible = false;
         AddChild(_slotId);
 
-        if (Owner is Player && SlotType == 0) {
-            _slotId.Visible = true;
-        }
+        if (Owner is Player && SlotType == 0) _slotId.Visible = true;
 
-        _sprite = new ObjectRect(new ObjectRectConfig {Texture = TextureHelper.FromGameAtlas(0x0096), Width = Size, Height = Size});
+        _sprite = new ObjectRect(new ObjectRectConfig
+            { Texture = TextureHelper.FromGameAtlas(0x0096), Width = Size, Height = Size });
         AddChild(_sprite);
 
         _tierText = new SimpleText(new TextConfig {
-            FontSize = 16, 
-            FontType = FontType.Bold, 
-            Text = "", 
+            FontSize = 16,
+            FontType = FontType.Bold,
+            Text = "",
             OutlineThickness = 0.5f,
             Glow = 1.5f,
             OutlineColor = 0x000000
         });
-        
+
         _tierText.Visible = false;
         _tierText.SetAnchor(UiAnchor.RightBottom);
         _tierText.X = Size - 2;
         _tierText.Y = Size;
         AddChild(_tierText);
 
-        if (Owner != null) {
-            SetItem(Owner.Equipment[SlotId]);
-        }
+        if (Owner != null) SetItem(Owner.Equipment[SlotId]);
 
         _sprite.MouseEnabled = true;
 
@@ -114,19 +120,17 @@ public sealed class ItemTile : Sprite {
     }
 
     public void SetItem(ItemDesc itemDesc) {
-        bool isNewItem = itemDesc != null && itemDesc != ItemDesc;
-        
+        var isNewItem = itemDesc != null && itemDesc != ItemDesc;
+
         ItemDesc = itemDesc;
         if (ItemDesc != null && ItemDesc.ObjectType > 0) {
             _sprite.ChangeTexture(TextureHelper.FromGameAtlas(ItemDesc.ObjectType));
-            _background.SetColor(IsUsableByPlayer(ItemDesc) ? _bgColor : 0x5C1D1Du);
+            if (ClassSensitive) _background.SetColor(IsUsableByPlayer(ItemDesc) ? _bgColor : 0x5C1D1Du);
             _slotDetail.Visible = false;
             _slotId.Visible = false;
             if (isNewItem && Owner is Player) {
                 var soundToLoad = !string.IsNullOrEmpty(ItemDesc.OldSound) ? ItemDesc.OldSound : ItemDesc.Sound;
-                if (!string.IsNullOrEmpty(soundToLoad)) {
-                    _ = AudioCache.LoadSfxAsync(soundToLoad, CacheTier.Volatile);
-                }
+                if (!string.IsNullOrEmpty(soundToLoad)) _ = AudioCache.LoadSfxAsync(soundToLoad, CacheTier.Volatile);
             }
         } else {
             _sprite.ChangeTexture(TextureHelper.FromGameAtlas(0x0096));
@@ -136,7 +140,7 @@ public sealed class ItemTile : Sprite {
             if (_tooltip != null) TooltipManager.RemoveTooltip(_tooltip);
         }
 
-        UpdateTierTag(); 
+        UpdateTierTag();
     }
 
     public void SetTileNumber(int slot) {
@@ -156,35 +160,34 @@ public sealed class ItemTile : Sprite {
         var color = 0xFFFFFFu;
         var effects = TextEffect.None;
         var tag = $"T{ItemDesc.Tier}";
-        if (ItemDesc.TributePoints > 0)
-        {
+        if (ItemDesc.TributePoints > 0) {
             if (ItemDesc.ST) {
                 color = 0xFF9900;
                 tag = "ST";
-            }
-            else if (ItemDesc.UnHoly) {
+            } else if (ItemDesc.UnHoly) {
                 color = 0x9E9859;
                 tag = "UH";
-            }
-            else if (ItemDesc.Div) {
+            } else if (ItemDesc.Div) {
                 color = 0xFCE53D;
                 tag = "DIV";
-            }
-            else if (ItemDesc.Ferozium) {
+            } else if (ItemDesc.Ferozium) {
                 color = 0x52DCFF;
                 tag = "FT" + ItemDesc.Tier;
                 effects = TextEffect.Void;
             } else {
                 tag = "UT";
-                if(ItemDesc.TributePoints > 749999){ color = 0x00D287;}
-                else if(ItemDesc.TributePoints > 99999){ color = 0xB2001D;}
-                else { color = 9055202;}
-            } 
+                if (ItemDesc.TributePoints > 749999)
+                    color = 0x00D287;
+                else if (ItemDesc.TributePoints > 99999)
+                    color = 0xB2001D;
+                else
+                    color = 9055202;
+            }
         } else {
             if (ItemDesc.Tier == -1) {
                 tag = "UT";
                 color = 9055202;
-            } else {           
+            } else {
                 tag = "T" + ItemDesc.Tier;
             }
         }
@@ -212,7 +215,7 @@ public sealed class ItemTile : Sprite {
 
         _dragStart = GetRelativeMousePosition();
         _checkForDrag = true;
-        
+
         Map.GameSprite.Stage?.AddEventListener(MouseEvent.LeftUp, CancelDragCheck);
     }
 
@@ -220,96 +223,89 @@ public sealed class ItemTile : Sprite {
         if (_dragging) return;
 
         if (args.ShiftKey) {
-            if (ItemDesc == null ) return;
-            
-            if (ItemDesc.SlotType == ItemConstants.PotionType || ItemDesc.Consumable) {
-                useItem((int) Map.LastGameTime.TotalMs, Owner.ObjectId, SlotId, ItemDesc.ObjectType, Owner.Position.X, Owner.Position.Y, 1);
-            }
+            if (ItemDesc == null) return;
+
+            if (ItemDesc.SlotType == ItemConstants.PotionType || ItemDesc.Consumable)
+                useItem((int)Map.LastGameTime.TotalMs, Owner.ObjectId, SlotId, ItemDesc.ObjectType, Owner.Position.X,
+                    Owner.Position.Y, 1);
             return;
         }
 
         if (args.CtrlKey) {
             // todo: swap to backpack
-            return;
         }
     }
 
     private void OnDoubleClick(MouseEvent args) {
         if (ItemDesc == null || ItemDesc.ObjectType == 0 || _dragging) return;
 
-        if (ItemDesc.ObjectType == ItemConstants.HealthPotion || ItemDesc.ObjectType == ItemConstants.MagicPotion) {
-            if (AddToPotionStack()) {
+        if (ItemDesc.ObjectType == ItemConstants.HealthPotion || ItemDesc.ObjectType == ItemConstants.MagicPotion)
+            if (AddToPotionStack())
                 return;
-            }
-        }
 
-        if (!(Owner is Player)) { 
+        if (!(Owner is Player))
             EquipOrUseContainer();
-        } else { 
+        else
             EquipOrUseInventory();
-        }
     }
 
     private void EquipOrUseContainer() {
-        int freeSlot = GetNextAvailableInventorySlot();
-        if (freeSlot != -1) {
-            SwapItem(Map.LocalPlayer, (byte)freeSlot); 
-        } else {
-            useItem((int)Map.LastGameTime.TotalMs, Owner.ObjectId, SlotId, ItemDesc.ObjectType, Map.LocalPlayer.Position.X, Map.LocalPlayer.Position.Y, 1);
-        }
+        var freeSlot = GetNextAvailableInventorySlot();
+        if (freeSlot != -1)
+            SwapItem(Map.LocalPlayer, (byte)freeSlot);
+        else
+            useItem((int)Map.LastGameTime.TotalMs, Owner.ObjectId, SlotId, ItemDesc.ObjectType,
+                Map.LocalPlayer.Position.X, Map.LocalPlayer.Position.Y, 1);
     }
 
     private void EquipOrUseInventory() {
         if (ItemDesc.Consumable) {
-            useItem((int)Map.LastGameTime.TotalMs, Owner.ObjectId, SlotId, ItemDesc.ObjectType, Map.LocalPlayer.Position.X, Map.LocalPlayer.Position.Y, 1);
+            useItem((int)Map.LastGameTime.TotalMs, Owner.ObjectId, SlotId, ItemDesc.ObjectType,
+                Map.LocalPlayer.Position.X, Map.LocalPlayer.Position.Y, 1);
             return;
         }
+
         if (SlotId < 4) {
-            int freeSlot = GetNextAvailableInventorySlot();
-            if (freeSlot != -1) {
-                SwapItem(Map.LocalPlayer, (byte)freeSlot);
-            }
-        } 
-        else {
-            int equipSlot = GetMatchingEquipmentSlot();
-            if (equipSlot != -1) {
+            var freeSlot = GetNextAvailableInventorySlot();
+            if (freeSlot != -1) SwapItem(Map.LocalPlayer, (byte)freeSlot);
+        } else {
+            var equipSlot = GetMatchingEquipmentSlot();
+            if (equipSlot != -1)
                 SwapItem(Map.LocalPlayer, (byte)equipSlot);
-            } else {
-                useItem((int)Map.LastGameTime.TotalMs, Owner.ObjectId, SlotId, ItemDesc.ObjectType, Map.LocalPlayer.Position.X, Map.LocalPlayer.Position.Y, 1);
-            }
+            else
+                useItem((int)Map.LastGameTime.TotalMs, Owner.ObjectId, SlotId, ItemDesc.ObjectType,
+                    Map.LocalPlayer.Position.X, Map.LocalPlayer.Position.Y, 1);
         }
     }
 
     private int GetNextAvailableInventorySlot() {
         if (Map.LocalPlayer == null) return -1;
-        for (int i = 4; i < 12; i++) {
+        for (var i = 4; i < 12; i++)
             if (Map.LocalPlayer.Equipment.Length > i) {
                 var item = Map.LocalPlayer.Equipment[i];
                 if (item == null || item.ObjectType == 0) return i;
             }
-        }
+
         return -1;
     }
 
     private int GetMatchingEquipmentSlot() {
         if (Map.LocalPlayer == null || ItemDesc == null) return -1;
-        
-        for (int i = 0; i < 4; i++) {
-            if (Map.LocalPlayer.Properties.SlotTypes.Count > i) {
-                if (Map.LocalPlayer.Properties.SlotTypes[i] == ItemDesc.SlotType) {
+
+        for (var i = 0; i < 4; i++)
+            if (Map.LocalPlayer.Properties.SlotTypes.Count > i)
+                if (Map.LocalPlayer.Properties.SlotTypes[i] == ItemDesc.SlotType)
                     return i;
-                }
-            }
-        }
+
         return -1;
     }
 
     private void SwapItem(Entity targetEntity, byte targetSlot) {
         var targetItem = targetEntity.Equipment[targetSlot];
-        ushort targetObjType = targetItem?.ObjectType ?? 0;
+        var targetObjType = targetItem?.ObjectType ?? 0;
 
         var swap = InvSwap.CreatePacket();
-        swap.Time = (int) Map.LastGameTime.TotalMs;
+        swap.Time = (int)Map.LastGameTime.TotalMs;
         swap.Position = new Position { X = Map.LocalPlayer.Position.X, Y = Map.LocalPlayer.Position.Y };
 
         swap.SlotObj1 = new ObjectSlot {
@@ -329,13 +325,9 @@ public sealed class ItemTile : Sprite {
         targetEntity.Equipment[targetSlot] = sourceItem;
 
         SetItem(targetItem);
-        if (targetEntity is Player tPlayer) {
-            tPlayer.InventoryUpdate.Dispatch(targetSlot);
-        }
-        
-        if (Owner is Player oPlayer) {
-            oPlayer.InventoryUpdate.Dispatch(SlotId);
-        }
+        if (targetEntity is Player tPlayer) tPlayer.InventoryUpdate.Dispatch(targetSlot);
+
+        if (Owner is Player oPlayer) oPlayer.InventoryUpdate.Dispatch(SlotId);
     }
 
     private void CancelDragCheck() {
@@ -368,24 +360,24 @@ public sealed class ItemTile : Sprite {
 
         RemoveChild(_sprite);
         RemoveChild(_tierText);
-        
+
         _sprite.Scale = Stage.ScreenScale;
         _sprite.StartDrag();
-        
+
         Map.GameSprite.AddChild(_sprite);
         Map.GameSprite.Stage?.AddEventListener(MouseEvent.LeftUp, OnEndDrag);
     }
 
     private void OnEndDrag(MouseEvent args) {
         Map.GameSprite.Stage?.RemoveEventListener(MouseEvent.LeftUp, OnEndDrag);
-        
+
         if (!_dragging) return;
         _dragging = false;
 
         _sprite.EndDrag();
         _sprite.Scale = Vector2.One;
         Map.GameSprite.RemoveChild(_sprite);
-        
+
         AddChild(_sprite);
         AddChild(_tierText);
 
@@ -396,7 +388,7 @@ public sealed class ItemTile : Sprite {
     }
 
     private void HandleDropTarget() {
-        var list = new[] {typeof(ItemTile), typeof(InventoryGrid), typeof(HudView), typeof(GameScreen)};
+        var list = new[] { typeof(ItemTile), typeof(InventoryGrid), typeof(HudView), typeof(GameScreen) };
 
         var target = _sprite.DropTarget.GetTypeFromList(list);
 
@@ -404,15 +396,13 @@ public sealed class ItemTile : Sprite {
             SetItem(ItemDesc);
             return;
         }
-        
-        if (ItemDesc != null && (ItemDesc.ObjectType == ItemConstants.HealthPotion || ItemDesc.ObjectType == ItemConstants.MagicPotion)) {
-            if (!(target is GameScreen)) {
-                if (AddToPotionStack()) {
+
+        if (ItemDesc != null && (ItemDesc.ObjectType == ItemConstants.HealthPotion ||
+                                 ItemDesc.ObjectType == ItemConstants.MagicPotion))
+            if (!(target is GameScreen))
+                if (AddToPotionStack())
                     return;
-                }
-            }
-        }
-        
+
         switch (target) {
             case ItemTile tile:
                 if (!tile.Interactive) break;
@@ -420,8 +410,8 @@ public sealed class ItemTile : Sprite {
                 if (!CanSwapItems(this, tile)) break;
 
                 var swap = InvSwap.CreatePacket();
-                swap.Time = (int) Map.LastGameTime.TotalMs;
-                swap.Position = new Position {X = Map.LocalPlayer.Position.X, Y = Map.LocalPlayer.Position.Y};
+                swap.Time = (int)Map.LastGameTime.TotalMs;
+                swap.Position = new Position { X = Map.LocalPlayer.Position.X, Y = Map.LocalPlayer.Position.Y };
 
                 swap.SlotObj1 = new ObjectSlot {
                     ObjectId = Owner.ObjectId,
@@ -435,7 +425,7 @@ public sealed class ItemTile : Sprite {
                 };
                 Client.QueuePacket(swap);
                 var draggedItem = ItemDesc;
-                
+
                 Owner.Equipment[SlotId] = tile.ItemDesc;
                 tile.Owner.Equipment[tile.SlotId] = draggedItem;
 
@@ -445,9 +435,9 @@ public sealed class ItemTile : Sprite {
                 if (Owner is Player oPlayer) oPlayer.InventoryUpdate.Dispatch(SlotId);
                 if (tile.Owner is Player tPlayer) tPlayer.InventoryUpdate.Dispatch(tile.SlotId);
 
-                break; 
+                break;
             case InventoryGrid grid:
-                break; 
+                break;
             case GameScreen:
                 var drop = InvDrop.CreatePacket();
                 drop.SlotObject = new ObjectSlot {
@@ -459,11 +449,10 @@ public sealed class ItemTile : Sprite {
                 Client.QueuePacket(drop);
 
                 SetItem(null);
-                break; 
+                break;
             default:
                 SetItem(ItemDesc);
                 break;
-
         }
     }
 
@@ -485,15 +474,15 @@ public sealed class ItemTile : Sprite {
             return true;
 
         var slots = Map.LocalPlayer.Properties.SlotTypes;
-        for (var i = 0; i < slots.Count; i++) {
+        for (var i = 0; i < slots.Count; i++)
             if (slots[i] == slotType)
                 return true;
-        }
 
         return false;
     }
 
-    private static void useItem(int time, int objectId, byte slotId, ushort objectType, float itemUsePosX, float itemUsePosY, byte useType) {
+    private static void useItem(int time, int objectId, byte slotId, ushort objectType, float itemUsePosX,
+                                float itemUsePosY, byte useType) {
         var packet = UseItem.CreatePacket();
 
         packet.Time = time;
@@ -507,22 +496,20 @@ public sealed class ItemTile : Sprite {
 
         Client.QueuePacket(packet);
     }
-    
+
     private bool AddToPotionStack() {
         if (Map.LocalPlayer == null || ItemDesc == null) return false;
 
-        bool isHp = ItemDesc.ObjectType == ItemConstants.HealthPotion;
-        bool isMp = ItemDesc.ObjectType == ItemConstants.MagicPotion;
+        var isHp = ItemDesc.ObjectType == ItemConstants.HealthPotion;
+        var isMp = ItemDesc.ObjectType == ItemConstants.MagicPotion;
 
         if (!isHp && !isMp) return false;
-        int currentCount = isHp ? Map.LocalPlayer.HealthStackCount : Map.LocalPlayer.MagicStackCount;
-        if (currentCount >= 6) { 
-            return false; 
-        }
+        var currentCount = isHp ? Map.LocalPlayer.HealthStackCount : Map.LocalPlayer.MagicStackCount;
+        if (currentCount >= 6) return false;
 
-        byte targetSlot = isHp ? ItemConstants.HpPotionSlot : ItemConstants.MpPotionSlot;
-        var swap = InvSwap.CreatePacket(); 
-        swap.Time = (int) Map.LastGameTime.TotalMs;
+        var targetSlot = isHp ? ItemConstants.HpPotionSlot : ItemConstants.MpPotionSlot;
+        var swap = InvSwap.CreatePacket();
+        swap.Time = (int)Map.LastGameTime.TotalMs;
         swap.Position = new Position { X = Map.LocalPlayer.Position.X, Y = Map.LocalPlayer.Position.Y };
 
         swap.SlotObj1 = new ObjectSlot {
@@ -533,12 +520,12 @@ public sealed class ItemTile : Sprite {
         swap.SlotObj2 = new ObjectSlot {
             ObjectId = Map.LocalPlayer.ObjectId,
             SlotId = targetSlot,
-            ObjectType = 0 
+            ObjectType = 0
         };
         Client.QueuePacket(swap);
         Owner.Equipment[SlotId] = null;
         SetItem(null);
-        
+
         if (Owner is Player oPlayer) {
             oPlayer.InventoryUpdate.Dispatch(SlotId);
             if (isHp) oPlayer.HealthStackCount++;

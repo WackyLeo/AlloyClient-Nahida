@@ -1,10 +1,12 @@
 ﻿using System;
 using AlloyClient.Display;
+using AlloyClient.Engine.Common;
 using AlloyClient.Game.Objects;
 using AlloyClient.Ui.Components.Tooltips;
 using AlloyClient.UiLib.BuiltIn;
 using AlloyClient.UiLib.Core;
 using AlloyClient.UiLib.Enums;
+using AlloyClient.UiLib.Input;
 using AlloyClient.Utils;
 
 namespace AlloyClient.Game.Components.Hud.Panels;
@@ -44,11 +46,11 @@ public sealed class PartyPanel : Panel {
         private const int PortraitSize = 24;
         private const int BarHeight = 6;
         private const int BarWidth = 66;
-
-        private readonly SimpleText _nameText;
+        private readonly ColorRect _hpBar;
 
         private readonly ColorRect _hpBarBg;
-        private readonly ColorRect _hpBar;
+
+        private readonly SimpleText _nameText;
         private readonly ObjectRect _portrait;
 
         public readonly Sprite Root;
@@ -63,7 +65,7 @@ public sealed class PartyPanel : Panel {
             Root.AddEventListener(MouseEvent.MouseOver, OnMouseOver);
             Root.AddEventListener(MouseEvent.MouseOut, OnMouseOut);
             Root.AddEventListener(MouseEvent.LeftClick, OnClick);
-            
+
             _portrait = new ObjectRect(new ObjectRectConfig {
                 Width = PortraitSize,
                 Height = PortraitSize,
@@ -75,8 +77,8 @@ public sealed class PartyPanel : Panel {
             _nameText = new SimpleText(new TextConfig {
                 FontSize = 12,
                 Color = 0xFFFFFFFFu,
-                OutlineColor = 0xFF000000u,
-                OutlineThickness = 0.5f,
+                OutlineThickness = 0.3f,
+                Glow = 1.0f,
                 FontType = FontType.Bold
             }) { X = PortraitSize + 2, Y = 2 };
             Root.AddChild(_nameText);
@@ -91,16 +93,22 @@ public sealed class PartyPanel : Panel {
             _hpBar.Y = SlotHeight - BarHeight - 4;
             Root.AddChild(_hpBar);
 
+            //
+            _nameText.Alpha = 0.5f;
+            _portrait.Alpha = 0.5f;
+            _hpBarBg.Alpha = 0.5f;
+            _hpBar.Alpha = 0.5f;
+
             Root.Visible = false;
         }
 
         private void OnClick() {
             if (_player == null) return;
-            OnMouseOut(); 
+            OnMouseOut();
 
             var menu = new PlayerMenuToolTip(_player);
-            var mousePos = AlloyClient.UiLib.Input.MouseInput.GetMousePosition();
-    
+            var mousePos = MouseInput.GetMousePosition();
+
             menu.X = mousePos.X - menu.ToolWidth;
             menu.Y = mousePos.Y - menu.ToolHeight;
 
@@ -109,7 +117,7 @@ public sealed class PartyPanel : Panel {
             menu.Y = mousePos.Y - (int)(menu.ToolHeight * Stage.ScreenScale.Y);
             Map.GameSprite.AddChild(menu);
         }
-        
+
         private void OnMouseOver() {
             if (_player == null) return;
             _tooltip = new PlayerToolTip(_player);
@@ -124,6 +132,16 @@ public sealed class PartyPanel : Panel {
         }
 
         public void SetPlayer(Player player) {
+            if (PartyData.LockedPlayers != null && player != null) {
+                bool opaque = PartyData.LockedPlayers.Contains(player.AccountId);
+                float opacity = opaque ? 1f : 0.5f;
+                
+                _nameText.Alpha = opacity;
+                _portrait.Alpha = opacity;
+                _hpBarBg.Alpha = opacity;
+                _hpBar.Alpha = opacity;
+            }
+            
             _player = player;
             Root.Visible = player != null;
         }
@@ -143,13 +161,14 @@ public sealed class PartyPanel : Panel {
                 if (_lowHealthStart == 0) _lowHealthStart = Stage.GameTime.TotalMs;
                 var intensity = (float)(Math.Abs(Math.Sin(_lowHealthStart / 200.0)) * 10) / 10f;
                 var offset = (int)(intensity * 128);
-                Root.Color = new Engine.Common.Color((uint)((255 << 24) | (Math.Min(255, 255 + offset) << 16) | (Math.Max(0, 255 - offset) << 8) | Math.Max(0, 255 - offset)));
+                Root.Color = new Color((uint)((255 << 24) | (Math.Min(255, 255 + offset) << 16) |
+                                              (Math.Max(0, 255 - offset) << 8) | Math.Max(0, 255 - offset)));
             } else {
                 _lowHealthStart = 0;
-                Root.Color = Engine.Common.Color.White;
+                Root.Color = Color.White;
             }
 
-            float hpRatio = _player.MaxHp > 0 ? Math.Clamp((float)_player.Hp / _player.MaxHp, 0f, 1f) : 0f;
+            var hpRatio = _player.MaxHp > 0 ? Math.Clamp((float)_player.Hp / _player.MaxHp, 0f, 1f) : 0f;
             var barColor = hpRatio > 0.5f
                 ? LerpColor(0xFF00FF00u, 0xFFFFFF00u, 1f - (hpRatio - 0.5f) * 2f)
                 : LerpColor(0xFFFFFF00u, 0xFFFF0000u, 1f - hpRatio * 2f);
