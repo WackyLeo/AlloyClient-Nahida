@@ -24,8 +24,6 @@ public static class UiRender {
 
     internal static Vector2i DefaultScreen;
 
-    public static Vector2i Screen;
-
     public static int LastRenderCount = 0;
 
     public static BitmapFamily MyriadPro;
@@ -33,6 +31,19 @@ public static class UiRender {
     public static Matrix4 ViewMatrix = new(0f, 0f, 0f, 0f, 0f, 0f, 0f, 0f, 0f, 0f, -0.5f, 0f, -1f, 1f, 0.5f, 1f);
 
     internal static Shader UiShader;
+
+
+    // TODO: Look into why we'd be going negative...
+    public static Vector2i Screen {
+        get;
+        private set {
+            // ReSharper disable once ArrangeAccessorOwnerBody
+            field = new Vector2i(
+                Math.Clamp(value.X, 0, int.MaxValue),
+                Math.Clamp(value.Y, 0, int.MaxValue)
+            );
+        }
+    }
 
     public static void ConfigureAndLoad(UiSettings settings, out Stage stage) {
         if (Stage != null) {
@@ -76,7 +87,7 @@ public static class UiRender {
                 break;
             case TextureType.Text:
                 throw new ArgumentOutOfRangeException(nameof(textureId), textureId,
-                                                      "Text is handled through 'RegisterFont'");
+                    "Text is handled through 'RegisterFont'");
             default:
                 throw new ArgumentOutOfRangeException(nameof(textureId), textureId, "Type has no texture association");
         }

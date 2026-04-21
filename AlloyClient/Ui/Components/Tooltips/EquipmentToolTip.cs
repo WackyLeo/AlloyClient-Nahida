@@ -25,6 +25,9 @@ public sealed class EquipmentToolTip : Tooltip {
     private readonly ItemDesc _itemDesc;
     private readonly bool _usable;
     private readonly uint ColorGreen = 0x00FF00;
+
+    // 
+    private ItemDesc _compareItemDesc;
     private int _currentY;
 
     public EquipmentToolTip(ItemDesc itemDesc) : base(260, 100,
@@ -35,7 +38,7 @@ public sealed class EquipmentToolTip : Tooltip {
 
         // Like this is just silly
         _usable = IsUsableByPlayer(itemDesc);
-        if (!_usable) ColorGreen = ColorKhaki;
+        if (_usable && Map.LocalPlayer != null) SetComparison(itemDesc.SlotType);
 
         AddHeader();
         AddDescription();
@@ -49,6 +52,20 @@ public sealed class EquipmentToolTip : Tooltip {
         AddTribute();
         ToolHeight = _currentY + 12;
         DrawSprite();
+    }
+
+    // Please 
+    private void SetComparison(int slotType) {
+        var curSlotIndex = 0;
+        for (curSlotIndex = 0; curSlotIndex < 4; curSlotIndex++) {
+            if (curSlotIndex == 0 && slotType == 0)
+                break;
+            if (Map.LocalPlayer.Properties.SlotTypes[curSlotIndex] == slotType)
+                break;
+        }
+
+
+        if (Map.LocalPlayer.Equipment[curSlotIndex] != null) _compareItemDesc = Map.LocalPlayer.Equipment[curSlotIndex];
     }
 
     private void AddHeader() {
@@ -141,21 +158,65 @@ public sealed class EquipmentToolTip : Tooltip {
         if (_itemDesc.Doses > 0) AddSplitRow("Doses: ", $"{_itemDesc.Doses}", ColorKhaki);
         if (_itemDesc.Quantity > 0) AddSplitRow("Quantity: ", $"{_itemDesc.Quantity}", ColorKhaki);
 
-        if (_itemDesc.NumProjectiles > 1)
-            AddTextLine("Projectile 1", ColorDefault, FontType.Bold, 14);
+        if (_itemDesc.NumProjectiles > 1) {
+            AddTextLine($"Projectiles: {_itemDesc.NumProjectiles}", ColorDefault, FontType.Bold, 14);
+
+            // something here
+
+            var i = 0;
+        }
 
         if (_itemDesc.AllProjectiles != null && _itemDesc.AllProjectiles.Length > 0) {
             var proj = _itemDesc.AllProjectiles[0];
 
+            var dmgClr = _usable ? ColorGreen : ColorKhaki;
+            var curDmg = (proj.MinDamage + proj.MaxDamage) / 2;
+
+            if (_usable && _compareItemDesc != null) {
+                var comparProj = _compareItemDesc.AllProjectiles[0];
+                var compDmg = (comparProj.MinDamage + comparProj.MaxDamage) / 2;
+
+                if (curDmg > compDmg)
+                    dmgClr = ColorGreen;
+                else if (Math.Abs(curDmg - compDmg) < 0.001)
+                    dmgClr = ColorKhaki;
+                else if (curDmg < compDmg)
+                    dmgClr = ColorRed;
+            }
+
             var dmgStr = proj.MinDamage == proj.MaxDamage
                 ? $"{proj.MinDamage}"
                 : $"{proj.MinDamage} - {proj.MaxDamage}";
-            AddSplitRow("Damage: ", dmgStr, ColorKhaki);
+            AddSplitRow("Damage: ", dmgStr, dmgClr);
 
+            var rangeClr = _usable ? ColorGreen : ColorKhaki;
             var range = proj.Speed * proj.LifetimeMS / 10000f;
-            AddSplitRow("Range: ", $"{MathF.Round(range, 1):0.0}", ColorKhaki);
 
-            AddSplitRow("Rate of Fire: ", $"{MathF.Round(_itemDesc.RateOfFire * 100)}%", ColorKhaki);
+            if (_usable && _compareItemDesc != null) {
+                var comparProj = _compareItemDesc.AllProjectiles[0];
+                var compRange = comparProj.Speed * comparProj.LifetimeMS / 10000f;
+
+                if (range > compRange)
+                    rangeClr = ColorGreen;
+                else if (Math.Abs(range - compRange) < 0.001)
+                    rangeClr = ColorKhaki;
+                else if (range < compRange)
+                    rangeClr = ColorRed;
+            }
+
+            AddSplitRow("Range: ", $"{MathF.Round(range, 1):0.0}", rangeClr);
+
+            var rateClr = _usable ? ColorGreen : ColorKhaki;
+            if (_usable && _compareItemDesc != null) {
+                if (_itemDesc.RateOfFire > _compareItemDesc.RateOfFire)
+                    rateClr = ColorGreen;
+                else if (Math.Abs(_itemDesc.RateOfFire - _compareItemDesc.RateOfFire) < 0.001)
+                    rateClr = ColorKhaki;
+                else if (_itemDesc.RateOfFire < _compareItemDesc.RateOfFire)
+                    rateClr = ColorRed;
+            }
+
+            AddSplitRow("Rate of Fire: ", $"{MathF.Round(_itemDesc.RateOfFire * 100)}%", rateClr);
 
             if (proj.MultiHit) AddTextLine("Shots hit multiple targets", ColorKhaki, FontType.Bold, 14);
             if (proj.PassesCover) AddTextLine("Shots pass through obstacles", ColorKhaki, FontType.Bold, 14);
@@ -271,14 +332,37 @@ public sealed class EquipmentToolTip : Tooltip {
     private void AddEquipStats() {
         if (_itemDesc.StatBoosts != null && _itemDesc.StatBoosts.Length > 0) {
             AddTextLine("On Equip:", ColorDefault, FontType.Bold, 14);
-            foreach (var stat in _itemDesc.StatBoosts) {
+            for (var i = 0; i < _itemDesc.StatBoosts.Length; i++) {
+                var stat = _itemDesc.StatBoosts[i];
                 var prefix = stat.Amount >= 0 ? "+" : "";
-                var color = stat.Amount >= 0 ? ColorGreen : ColorRed;
+                var color = _usable ? stat.Amount >= 0 ? ColorGreen : ColorRed : ColorKhaki;
+                if (_usable && _compareItemDesc != null) {
+                    var amount = -1;
+                    foreach (var stat2 in _compareItemDesc.StatBoosts)
+                        if (stat2.Stat == stat.Stat)
+                            amount = stat2.Amount;
+
+                    // Here
+                    if (stat.Amount > amount)
+                        color = ColorGreen;
+                    else if (stat.Amount == amount)
+                        color = ColorKhaki;
+                    else if (stat.Amount < amount)
+                        color = ColorRed;
+                }
+
                 AddTextLine($"{prefix}{stat.Amount} {StatsUtil.FromId(stat.Stat)}", color, FontType.Bold, 14);
             }
         }
 
-        if (_itemDesc.FameBonus > 0) AddSplitRow("Fame Bonus: ", $"{_itemDesc.FameBonus}%", ColorGreen);
+        if (_itemDesc.FameBonus > 0) {
+            var color = _usable ? ColorGreen : ColorKhaki;
+
+            if (_usable && _compareItemDesc != null)
+                color = _compareItemDesc.FameBonus >= _itemDesc.FameBonus ? ColorKhaki : ColorGreen;
+
+            AddSplitRow("Fame Bonus: ", $"{_itemDesc.FameBonus}%", color);
+        }
     }
 
     private void AddRestrictions() {
@@ -304,18 +388,35 @@ public sealed class EquipmentToolTip : Tooltip {
         }*/
     }
 
+    private uint GetDivinityColour(string divinity) {
+        switch (divinity) {
+            case "Azamoth": return 0xC06B00;
+            case "Serleon": return 0xE4E300;
+            case "Arcanios": return 0xE400D8;
+            case "Celeste": return 0x160040;
+            case "Singigna": return 0x130017;
+            case "Neracia": return 0x08C037;
+            case "Siera": return 0x8F8894;
+            case "Paradox": return 0xFFFFFF;
+        }
+
+        return 0xffffffffu;
+    }
+
     private void AddTribute() {
         if (_itemDesc.TributePoints > 0) {
             _currentY += 4;
-            AddSplitRow("Sacrificial Value: ", $"{_itemDesc.TributePoints}", ColorGreen);
+
+            var clr = GetDivinityColour(_itemDesc.Divinity);
+            AddTextLine($"Sacrificial Value: {_itemDesc.TributePoints}", clr, FontType.Bold, 14);
 
             if (!string.IsNullOrEmpty(_itemDesc.Divinity))
-                AddTextLine($"({_itemDesc.Divinity})", ColorGreen, FontType.Bold, 14);
+                AddTextLine($"({_itemDesc.Divinity})", clr, FontType.Bold, 14);
         }
     }
 
     private SimpleText AddTextLine(string text, uint color, FontType font, int fontSize, int xOffset = 12,
-        int? yOverride = null, int maxWidth = 320, float glow = 0.5f, int effect = 0) {
+                                   int? yOverride = null, int maxWidth = 320, float glow = 0.5f, int effect = 0) {
         var config = SimpleConfig(text, fontSize, font, color, 0x000000, 0f, maxWidth, glow, effect);
         config.X = xOffset;
         config.Y = yOverride ?? _currentY;
@@ -347,8 +448,8 @@ public sealed class EquipmentToolTip : Tooltip {
     }
 
     public static TextConfig SimpleConfig(string text = "", int size = 14, FontType type = FontType.Bold,
-        uint color = 0xFFFFFFFFu, uint outline = 0xFF000000u, float thickness = 1f,
-        int maxWidth = 320, float glow = 0.5f, int effect = 0) {
+                                          uint color = 0xFFFFFFFFu, uint outline = 0xFF000000u, float thickness = 1f,
+                                          int maxWidth = 320, float glow = 0.5f, int effect = 0) {
         return new TextConfig {
             FontSize = size,
             FontType = type,

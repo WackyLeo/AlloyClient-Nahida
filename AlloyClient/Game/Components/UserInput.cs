@@ -405,11 +405,17 @@ public sealed class UserInput : Sprite {
         }
 
         var equipSlot = -1;
-        for (var i = 0; i < 4; i++)
+        for (var i = 0; i < 4; i++) {
+            if (i == 0 && item.SlotType == 0) {
+                equipSlot = i;
+                break;
+            }
+
             if (player.Properties.SlotTypes.Count > i && player.Properties.SlotTypes[i] == item.SlotType) {
                 equipSlot = i;
                 break;
             }
+        }
 
         if (equipSlot != -1) {
             var targetItem = player.Equipment[equipSlot];

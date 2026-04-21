@@ -18,6 +18,7 @@ namespace AlloyClient.Game.Components.Hud.Inventory;
 
 public sealed class ItemTile : Sprite {
     private readonly CutEdgeRect _background;
+    private readonly uint _bgColor;
     private readonly ObjectRect _slotDetail;
     private readonly SimpleText _slotId;
 
@@ -35,7 +36,6 @@ public sealed class ItemTile : Sprite {
     public readonly byte SlotId;
 
     public readonly byte SlotType;
-    private readonly uint _bgColor;
     private bool _checkForDrag;
     private bool _dragging;
 
@@ -291,7 +291,7 @@ public sealed class ItemTile : Sprite {
 
     private int GetMatchingEquipmentSlot() {
         if (Map.LocalPlayer == null || ItemDesc == null) return -1;
-
+        if (ItemDesc.SlotType == 0) return 0;
         for (var i = 0; i < 4; i++)
             if (Map.LocalPlayer.Properties.SlotTypes.Count > i)
                 if (Map.LocalPlayer.Properties.SlotTypes[i] == ItemDesc.SlotType)
@@ -461,12 +461,14 @@ public sealed class ItemTile : Sprite {
     }
 
     private bool CanHoldItem(ItemDesc itemDesc) {
-        return (itemDesc?.ObjectType ?? 0) == 0 || SlotType == 0 || SlotType == itemDesc.SlotType;
+        return (itemDesc?.ObjectType ?? 0) == 0 || SlotType == 0 || SlotType == itemDesc.SlotType ||
+               itemDesc.SlotType == 0;
     }
 
     private static bool IsUsableByPlayer(ItemDesc itemDesc) {
         if (Map.LocalPlayer == null || itemDesc == null) return true;
         if (itemDesc.ObjectType == 0) return false;
+        if (itemDesc.SlotType == 0) return true;
 
         var slotType = itemDesc.SlotType;
 
