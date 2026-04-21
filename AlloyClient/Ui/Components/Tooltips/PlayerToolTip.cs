@@ -1,4 +1,5 @@
-﻿using AlloyClient.Assets.Libraries;
+﻿using System;
+using AlloyClient.Assets.Libraries;
 using AlloyClient.Assets.XmlStructs;
 using AlloyClient.Game.Components.Hud;
 using AlloyClient.Game.Components.Hud.Inventory;
@@ -14,6 +15,7 @@ namespace AlloyClient.Ui.Components.Tooltips;
 public sealed class PlayerToolTip : Tooltip {
     private const int BaseWidth = 235;
     private const int BaseHeight = 260;
+    private const int BaseHeightNoGuild = 230;
     private readonly EquippedGrid _eGrid;
     private readonly StatusBar _hpBar;
     private readonly StatusBar _mpBar;
@@ -21,7 +23,8 @@ public sealed class PlayerToolTip : Tooltip {
 
     private readonly ObjectRect _portrait;
 
-    public PlayerToolTip(Player player) : base(BaseWidth, BaseHeight, 0xBF161616u) {
+    public PlayerToolTip(Player player) : base(BaseWidth, String.IsNullOrEmpty(player.Guild) ? BaseHeightNoGuild : BaseHeight,
+        0xBF161616u) {
         _player = player;
         _portrait = new ObjectRect(new ObjectRectConfig {
             Width = 32, Height = 32, GlowEnabled = true, OutlineEnabled = true
@@ -48,12 +51,14 @@ public sealed class PlayerToolTip : Tooltip {
             FontType.Bold, nameColor, 0x000000, glow: 1.0f, thickness: 0));
         accountIdText.X = 46;
         accountIdText.Y = 28;
+
         AddChild(accountIdText);
 
         var rankText = new SimpleText(EquipmentToolTip.SimpleConfig("Rank:", 19, FontType.Normal, 0xB3B3B3, 0x000000,
             glow: 0.5f, thickness: 0));
         rankText.X = 10;
         rankText.Y = 50;
+
         AddChild(rankText);
 
         var star = new FameStar(16, player.Stars);
@@ -61,20 +66,26 @@ public sealed class PlayerToolTip : Tooltip {
         star.Y = rankText.Y + rankText.Height / 2 - star.Height / 2;
         AddChild(star);
 
-        var guiltText = new GuildText(player.Guild ?? "Null", player.GuildRank);
-        guiltText.X = 10;
-        guiltText.Y = 75;
-        AddChild(guiltText);
+        int tempY = 75;
+        if (!String.IsNullOrEmpty(player.Guild)) {
+            var guiltText = new GuildText(player.Guild ?? "Null", player.GuildRank);
+            guiltText.X = 10;
+            guiltText.Y = tempY;
+            AddChild(guiltText);
+            tempY += 35;
+        }
 
         _hpBar = new StatusBar(BaseWidth - 20, 24, 0xE03838, 0x545454, 0x363636, "HP");
         _hpBar.X = 10;
-        _hpBar.Y = 110;
+        _hpBar.Y = tempY;
         AddChild(_hpBar);
+        tempY += 30;
 
         _mpBar = new StatusBar(BaseWidth - 20, 24, 0x6084E0, 0x545454, 0x363636, "MP");
         _mpBar.X = 10;
-        _mpBar.Y = 140;
+        _mpBar.Y = tempY;
         AddChild(_mpBar);
+        tempY += 30;
 
         var items = new ItemDesc[4];
         CutEdges[] Cuts = [CutEdges.Left, CutEdges.None, CutEdges.None, CutEdges.Right];
@@ -84,16 +95,18 @@ public sealed class PlayerToolTip : Tooltip {
             var slot = new ItemTile(null, i, false, Cuts[i], true, (byte)_player.Properties.SlotTypes[i], 49, 0x454545,
                 false);
             slot.X = 10 + i % 4 * (49 + 4) + 3;
-            slot.Y = 170 + i / 4 * (49 + 4) + 3;
+            slot.Y = tempY + i / 4 * (49 + 4) + 3;
             slot.SetItem(items[i]);
             AddChild(slot);
         }
 
+        tempY += 65;
+        
         var clickMsg = new SimpleText(EquipmentToolTip.SimpleConfig("(Click to open menu)", 14, FontType.Bold, 0xB3B3B3,
             thickness: 0, glow: 0.5f, outline: 0x000000));
         clickMsg.SetAnchor(UiAnchor.MiddleTop);
         clickMsg.X = ToolWidth / 2;
-        clickMsg.Y = 235;
+        clickMsg.Y = tempY;
         AddChild(clickMsg);
 
         DrawSprite();
