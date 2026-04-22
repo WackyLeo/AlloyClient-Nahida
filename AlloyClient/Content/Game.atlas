@@ -78,8 +78,8 @@
     <Image name="CathProj16"                 w="16" h="16">SRAssets_CathProj16Embed_.png</Image>
     <Image name="CathWalls8"                 w="8"  h="8" >SRAssets_CathWalls8Embed_.png</Image>
     <Image name="production"                 w="8"  h="8" >SRAssets_ProductionEmbed_.png</Image>
-    <Image name="swmap8"                     w="8"  h="8" >swamp8.png</Image>
-    <Image name="swmap16"                    w="16"  h="16" >swamp16.png</Image>
+    <Image name="swamp8"                     w="8"  h="8" >swamp8.png</Image>
+    <Image name="swamp16"                    w="16"  h="16" >swamp16.png</Image>
     <Image name="Zeppy"                      w="8"  h="8" >SRAssets_Zeppy8Embed_.png</Image>
     <Image name="WinterObjects8"             w="8"  h="8" >SRAssets_WinterObjects8Embed_.png</Image>
     <Image name="LunarInvasion8"             w="8"  h="8" >SRAssets_LunarInvasionEmbed_.png</Image>
