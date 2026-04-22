@@ -1,5 +1,7 @@
 ﻿using System;
 using AlloyClient.Assets.Libraries;
+using AlloyClient.Display;
+using AlloyClient.Ui.Components.Tooltips;
 using AlloyClient.UiLib.BuiltIn;
 using AlloyClient.UiLib.Core;
 using AlloyClient.UiLib.Enums;
@@ -51,6 +53,21 @@ public class StorageLine : Container {
         AddChild(bg);
 
         if (ObjectLibrary.TypeToTextureData.ContainsKey(item.Id)) {
+            var iconHitArea = new SdfRect(new SdfRectConfig {
+                Width = IconSize,
+                Height = IconSize,
+                Cut = 3,
+                Color = 0x00000000u,
+                OutlineSize = 0f,
+                ShadowRadius = 0f,
+                Alpha = 0,
+                ShadowAlpha = 0
+            });
+            iconHitArea.X = (rowH - IconSize) / 2;
+            iconHitArea.Y = (rowH - IconSize) / 2;
+            iconHitArea.MouseEnabled = true;
+            AddChild(iconHitArea);
+
             var icon = new ObjectRect(new ObjectRectConfig {
                 Texture = TextureHelper.FromGameAtlas(item.Id),
                 Width = IconSize,
@@ -58,9 +75,21 @@ public class StorageLine : Container {
                 OutlineEnabled = false,
                 GlowEnabled = false
             });
-            icon.X = (rowH - IconSize) / 2;
-            icon.Y = (rowH - IconSize) / 2;
+            icon.X = iconHitArea.X;
+            icon.Y = iconHitArea.Y;
             AddChild(icon);
+
+            EquipmentToolTip tooltip = null;
+            iconHitArea.AddEventListener(MouseEvent.MouseOver, () => {
+                if (!ObjectLibrary.TypeToItem.TryGetValue(item.Id, out var desc)) return;
+                tooltip = new EquipmentToolTip(desc);
+                TooltipManager.AddTooltip(tooltip);
+            });
+            iconHitArea.AddEventListener(MouseEvent.MouseOut, () => {
+                if (tooltip == null) return;
+                TooltipManager.RemoveTooltip(tooltip);
+                tooltip = null;
+            });
         }
 
         var nameText = new SimpleText(new TextConfig {
@@ -97,6 +126,17 @@ public class StorageLine : Container {
             AddChild(_maxBtn);
             _maxBtn.AddEventListener(MouseEvent.LeftClick, () => onMax(item.Id));
             rightEdge -= BtnGap;
+
+            SimpleTooltip maxTip = null;
+            _maxBtn.AddEventListener(MouseEvent.MouseOver, () => {
+                maxTip = new SimpleTooltip("Pull enough to fill your inventory to the stack cap");
+                TooltipManager.AddTooltip(maxTip);
+            });
+            _maxBtn.AddEventListener(MouseEvent.MouseOut, () => {
+                if (maxTip == null) return;
+                TooltipManager.RemoveTooltip(maxTip);
+                maxTip = null;
+            });
         }
 
         if (item.IsToken) {
@@ -106,6 +146,17 @@ public class StorageLine : Container {
             _combineBtn.Y = btnY;
             AddChild(_combineBtn);
             _combineBtn.AddEventListener(MouseEvent.LeftClick, () => onCombine(item.Id));
+
+            SimpleTooltip combineTip = null;
+            _combineBtn.AddEventListener(MouseEvent.MouseOver, () => {
+                combineTip = new SimpleTooltip("Combine 100 tokens into a single item");
+                TooltipManager.AddTooltip(combineTip);
+            });
+            _combineBtn.AddEventListener(MouseEvent.MouseOut, () => {
+                if (combineTip == null) return;
+                TooltipManager.RemoveTooltip(combineTip);
+                combineTip = null;
+            });
         }
 
         Refresh();
@@ -135,8 +186,8 @@ public class StorageLine : Container {
         if (!ObjectLibrary.TypeToObjectProps.TryGetValue(id, out var props))
             return $"0x{id:X4}";
         return props.DisplayName
-                    .Replace("Mark of the ", "")
-                    .Replace("Mark of ", "");
+            .Replace("Mark of the ", "")
+            .Replace("Mark of ", "");
     }
 
     private static SdfRect MakeButton(string label, int w) {

@@ -15,8 +15,8 @@ using AlloyClient.Utils;
 namespace AlloyClient.Ui.DailyQuest;
 
 public class DailyQuestWindow : Sprite {
-    private const int BgWidth = 860;
-    private const int BgHeight = 460;
+    private const int BgWidth = 840;
+    private const int BgHeight = 420;
     private const int Pad = 20;
     private const int TabIslandH = 35;
     private const int TabIslandGap = 18;
@@ -105,7 +105,7 @@ public class DailyQuestWindow : Sprite {
 
         var totalCardsWidth = sideCardW * 2 + midCardW + spacing * 2;
         var currentX = (_background.Width - totalCardsWidth) / 2;
-        var baseStartY = 30;
+        var baseStartY = 15;
 
         for (var i = 0; i < Math.Min(3, quests.Count); i++) {
             var isMiddle = i == 1;
