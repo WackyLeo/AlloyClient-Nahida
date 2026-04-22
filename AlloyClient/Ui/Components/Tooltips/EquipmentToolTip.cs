@@ -54,7 +54,28 @@ public sealed class EquipmentToolTip : Tooltip {
         DrawSprite();
     }
 
-    // Please 
+    private float CalcDps(ItemDesc item, int defense) {
+        if (item?.AllProjectiles == null || item.AllProjectiles.Length == 0) return 0f;
+
+        var attackFreq = 0.0015f + Map.LocalPlayer.Dexterity / 75f * (0.008f - 0.0015f);
+        var shotsPerSec = 1000f * attackFreq * item.RateOfFire / 1.02f;
+
+        var avgRawDmg = 0f;
+        foreach (var proj in item.AllProjectiles)
+            avgRawDmg += (proj.MinDamage + proj.MaxDamage) / 2f;
+        avgRawDmg /= item.AllProjectiles.Length;
+
+        var dmgMult = 0.5f + Map.LocalPlayer.Attack / 50f;
+        var rawPerShot = avgRawDmg * dmgMult;
+
+        var armorPiercing = item.AllProjectiles[0].ArmorPiercing;
+        var actualDef = armorPiercing ? 0 : defense;
+        var limit = rawPerShot * 0.15f;
+        var dmgAfterDef = rawPerShot - actualDef < limit ? limit : rawPerShot - actualDef;
+
+        return dmgAfterDef * item.NumProjectiles * shotsPerSec;
+    }
+
     private void SetComparison(int slotType) {
         var curSlotIndex = 0;
         for (curSlotIndex = 0; curSlotIndex < 4; curSlotIndex++) {
@@ -172,7 +193,7 @@ public sealed class EquipmentToolTip : Tooltip {
             var dmgClr = _usable ? ColorGreen : ColorKhaki;
             var curDmg = (proj.MinDamage + proj.MaxDamage) / 2;
 
-            if (_usable && _compareItemDesc != null) {
+            if (_usable && _compareItemDesc != null && _compareItemDesc.AllProjectiles.Length > 0) {
                 var comparProj = _compareItemDesc.AllProjectiles[0];
                 var compDmg = (comparProj.MinDamage + comparProj.MaxDamage) / 2;
 
@@ -192,7 +213,7 @@ public sealed class EquipmentToolTip : Tooltip {
             var rangeClr = _usable ? ColorGreen : ColorKhaki;
             var range = proj.Speed * proj.LifetimeMS / 10000f;
 
-            if (_usable && _compareItemDesc != null) {
+            if (_usable && _compareItemDesc != null && _compareItemDesc.AllProjectiles.Length > 0) {
                 var comparProj = _compareItemDesc.AllProjectiles[0];
                 var compRange = comparProj.Speed * comparProj.LifetimeMS / 10000f;
 
@@ -221,6 +242,38 @@ public sealed class EquipmentToolTip : Tooltip {
             if (proj.MultiHit) AddTextLine("Shots hit multiple targets", ColorKhaki, FontType.Bold, 14);
             if (proj.PassesCover) AddTextLine("Shots pass through obstacles", ColorKhaki, FontType.Bold, 14);
             if (proj.ArmorPiercing) AddTextLine("Armor Piercing", ColorKhaki, FontType.Bold, 14);
+
+            var dps0 = CalcDps(_itemDesc, 0);
+            var dps75 = CalcDps(_itemDesc, 75);
+            if (dps0 > 0) {
+                var dpsGreenClr = ColorKhaki;
+                var dpsPurpleClr = 0xCC88FFu;
+                if (_usable && _compareItemDesc != null) {
+                    var compDps0 = CalcDps(_compareItemDesc, 0);
+                    dpsGreenClr = dps0 > compDps0 ? ColorGreen : dps0 < compDps0 ? ColorRed : ColorKhaki;
+                }
+
+                var lbl = new SimpleText(SimpleConfig("DPS: ", 14, FontType.Bold, ColorDefault, thickness: 0f,
+                    glow: 0.5f));
+                lbl.X = 12;
+                lbl.Y = _currentY;
+                AddChild(lbl);
+
+                var x = 12 + lbl.Width + 2;
+                var green = new SimpleText(SimpleConfig($"{MathF.Round(dps0)}", 14, FontType.Bold, dpsGreenClr,
+                    thickness: 0f, glow: 1f));
+                green.X = x;
+                green.Y = _currentY;
+                AddChild(green);
+
+                x += green.Width + 4;
+                var purple = new SimpleText(SimpleConfig($"({MathF.Round(dps75)})", 14, FontType.Bold, dpsPurpleClr,
+                    thickness: 0f, glow: 1f));
+                purple.X = x;
+                purple.Y = _currentY;
+                AddChild(purple);
+                _currentY += Math.Max(lbl.Height, green.Height) + 4;
+            }
 
             // Ported: Projectile Condition Effects
             if (proj.Effects != null)
@@ -416,7 +469,7 @@ public sealed class EquipmentToolTip : Tooltip {
     }
 
     private SimpleText AddTextLine(string text, uint color, FontType font, int fontSize, int xOffset = 12,
-                                   int? yOverride = null, int maxWidth = 320, float glow = 0.5f, int effect = 0) {
+        int? yOverride = null, int maxWidth = 320, float glow = 0.5f, int effect = 0) {
         var config = SimpleConfig(text, fontSize, font, color, 0x000000, 0f, maxWidth, glow, effect);
         config.X = xOffset;
         config.Y = yOverride ?? _currentY;
@@ -448,8 +501,8 @@ public sealed class EquipmentToolTip : Tooltip {
     }
 
     public static TextConfig SimpleConfig(string text = "", int size = 14, FontType type = FontType.Bold,
-                                          uint color = 0xFFFFFFFFu, uint outline = 0xFF000000u, float thickness = 1f,
-                                          int maxWidth = 320, float glow = 0.5f, int effect = 0) {
+        uint color = 0xFFFFFFFFu, uint outline = 0xFF000000u, float thickness = 1f,
+        int maxWidth = 320, float glow = 0.5f, int effect = 0) {
         return new TextConfig {
             FontSize = size,
             FontType = type,

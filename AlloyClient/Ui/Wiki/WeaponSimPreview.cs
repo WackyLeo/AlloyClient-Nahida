@@ -74,16 +74,6 @@ public class WeaponSimPreview : Container {
 
         RedrawGrid();
 
-        _hintText = new SimpleText(new TextConfig {
-            FontSize = 9,
-            Color = 0xFF666666u,
-            Anchor = UiAnchor.LeftTop
-        });
-        _hintText.X = 10;
-        _hintText.Y = height - 18;
-        AddChild(_hintText);
-        _hintText.SetText("Hold to fire · Scroll to zoom");
-
         AddEventListener(MouseEvent.LeftDown, new Action<MouseEvent>(OnMouseDown));
         AddEventListener(MouseEvent.LeftUp, OnMouseUp);
         AddEventListener(MouseEvent.MouseMove, new Action<MouseEvent>(OnMouseMove));
@@ -98,9 +88,6 @@ public class WeaponSimPreview : Container {
         _timeSinceLastShot = GetFireRateMs();
         _simTimeMs = 0f;
         _lastTickTime = Environment.TickCount64;
-
-        var numProj = Math.Max(1, weapon.NumProjectiles);
-        _hintText.SetText($"Hold to fire · Scroll to zoom · {numProj} proj · {weapon.ArcGap:F2}° arc");
     }
 
     private void OnMouseDown(MouseEvent e) {
