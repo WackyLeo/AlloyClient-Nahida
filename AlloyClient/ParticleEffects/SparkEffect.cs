@@ -1,4 +1,5 @@
-﻿using AlloyClient.Game;
+﻿using System;
+using AlloyClient.Game;
 using AlloyClient.Rendering.VertexData;
 using OpenTK.Mathematics;
 
@@ -37,6 +38,10 @@ public class SparkEffect : ParticleEffect {
         _particle.Position.X += _dx * delta;
         _particle.Position.Y += _dy * delta;
         _particle.Position.W = ParticleW(_startingSize) * (float)(_timeLeft / _lifeTime);
+        
+        var c = _particle.Color;
+        c.W = Math.Abs(Alpha - 1f) < 0.001f ? -1f : Alpha;
+        _particle.Color = c;
 
         Map.AddParticle(_particle);
         return true;

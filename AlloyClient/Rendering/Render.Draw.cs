@@ -169,7 +169,9 @@ public static partial class Render {
 
         GL.DepthMask(true);
         GL.DepthFunc(DepthFunction.Less);
-        GL.Disable(EnableCap.Blend);
+        GL.Enable(EnableCap.Blend);
+        GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
+        
         _shaderObject.SetValue("RenderPass", 0);
         GL.DrawArrays(PrimitiveType.Triangles, 0, _entityCount * 6);
 
@@ -177,6 +179,7 @@ public static partial class Render {
         GL.DepthFunc(DepthFunction.Lequal);
         GL.Enable(EnableCap.Blend);
         GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
+        
         _shaderObject.SetValue("RenderPass", 1);
         GL.DrawArrays(PrimitiveType.Triangles, 0, _entityCount * 6);
 

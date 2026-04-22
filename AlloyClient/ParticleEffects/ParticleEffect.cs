@@ -6,6 +6,7 @@ namespace AlloyClient.ParticleEffects;
 
 public abstract class ParticleEffect {
     protected Vector2 _position;
+    public float Alpha = 1f;
 
     public void SetEntityPosition(Vector2 pos) {
         _position = pos;
@@ -13,11 +14,11 @@ public abstract class ParticleEffect {
 
     public abstract bool Update(double time, double dt);
 
-    protected Vector4 GetColor(uint rgb) {
+    protected Vector4 GetColor(uint rgb, float alpha = 1f) {
         var r = (byte)(rgb >> 16);
         var g = (byte)(rgb >> 8);
         var b = (byte)rgb;
-        return new Vector4(r / 255f, g / 255f, b / 255f, -1);
+        return new Vector4(r / 255f, g / 255f, b / 255f, -alpha); 
     }
 
     public static ParticleEffect FromProperties(EffectProperties properties, Entity entity) {

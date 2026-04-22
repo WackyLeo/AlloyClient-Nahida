@@ -7,6 +7,7 @@ using AlloyClient.ParticleEffects;
 using AlloyClient.Rendering;
 using AlloyClient.Rendering.Types;
 using AlloyClient.Sound;
+using AlloyClient.State;
 using AlloyClient.Ui.Character;
 using AlloyClient.Utils;
 using Common.Structs;
@@ -220,6 +221,31 @@ public sealed class Projectile : IResettable {
 
         if (curLifetime > _lifetime) return false;
 
+        float targetAlpha = (!_damagePlayers && _ownerId != Map.LocalPlayerId) ? Settings.AllyProjOpacity : 1.0f;
+        if (_projProp.Fade > 0) {
+            if (!_fadeOff) {
+                RenderBaseType.SetAlpha(0.2f * targetAlpha);
+                if (curLifetime >= _projProp.Fade) {
+                    _fadeOff = true;
+                    RenderBaseType.SetAlpha(1.0f * targetAlpha);
+                }
+            }
+            
+        }
+
+        /*
+        if (_projProp.Fade > 0) {
+            if (curLifetime < _projProp.Fade) {
+                float fadeRatio = Math.Clamp(curLifetime / _projProp.Fade, 0f, 1f);
+                RenderBaseType.SetAlpha(targetAlpha * fadeRatio);
+            } else {
+                _fadeOff = true;
+                RenderBaseType.SetAlpha(targetAlpha);
+            }
+        } else {
+            RenderBaseType.SetAlpha(targetAlpha);
+        }*/
+
         if (_projProp.Fade > 0)
             if (!_fadeOff) {
                 RenderBaseType.SetAlpha(0.2f);
@@ -277,9 +303,8 @@ public sealed class Projectile : IResettable {
             RenderBaseType.SetRotation(Rotation);
             RenderBaseType.SetTexture(GetTexture(curLifetime));
         }
-
         // Projectile debug + hit pos
-
+        
         if (_damagePlayers && _damage <= 0 &&
             (_projProp.Effects == null || _projProp.Effects.Length == 0)) {
             RenderBaseType.SetVisibility(false);
@@ -293,15 +318,15 @@ public sealed class Projectile : IResettable {
 
             if (_objDesc.Rotation != 0)
                 worldAngle = _angle;
-
-            //Render.DebugArrow(hitPos, worldAngle, 1f, new Vector3(1, 0, 0), 0.05f);
         }
 
-        if (_projProp.ParticleTrail && doHitTest)
-            Map.AddParticleEffect(new SparkEffect(100, _projProp.ParticleTrailColor, _projProp.ParticleTrailLifetime,
-                0.5f,
-                MathUtils.RandomPlusMinus(3), MathUtils.RandomPlusMinus(3), newPos.X,
-                newPos.Y));
+        if (_projProp.ParticleTrail && doHitTest) {
+            var spark = new SparkEffect(100, _projProp.ParticleTrailColor, _projProp.ParticleTrailLifetime, 0.5f,
+                MathUtils.RandomPlusMinus(3), MathUtils.RandomPlusMinus(3), newPos.X, newPos.Y) {
+                Alpha = targetAlpha
+            };
+            Map.AddParticleEffect(spark);
+        }
 
         return true;
     }
@@ -424,36 +449,36 @@ public sealed class Projectile : IResettable {
                 go.HasConditionEffect(ConditionEffects.Paused))
                 continue;
 
-            var scaledDamage = _damage;
-            if (!_damagePlayers && Map.LocalPlayer != null)
-                scaledDamage = scaledDamage * (Map.LocalPlayer.AllDamageMultiplier + 100) / 100;
+            bool isAllyShot = (!_damagePlayers && _ownerId != Map.LocalPlayerId);
 
-            var actualDamage = Entity.DamageWithDefense(scaledDamage, go.Defense, _projProp.ArmorPiercing, enemy);
+            if (!isAllyShot) {
+                var scaledDamage = _damage;
+                if (!_damagePlayers && Map.LocalPlayer != null)
+                    scaledDamage = scaledDamage * (Map.LocalPlayer.AllDamageMultiplier + 100) / 100;
 
-            var oldPredicted = go.PredictedHp;
-            //Logger.Info(
-            //    $"[CLIENT HIT] BulletId: {_bulletId} | Entity: {go.ObjectId} | BaseDmg: {_damage} | ActualDmg: {actualDamage} | HP: {oldPredicted} -> {oldPredicted - actualDamage}");
+                var actualDamage = Entity.DamageWithDefense(scaledDamage, go.Defense, _projProp.ArmorPiercing, enemy);
 
-            go.PredictedHp -= actualDamage;
-            if (go.PredictedHp <= 0 && !_damagePlayers) go.SetTransparency(0.4f);
+                go.PredictedHp -= actualDamage;
+                if (go.PredictedHp <= 0 && !_damagePlayers) go.SetTransparency(0.4f);
 
-            if (actualDamage > 0 || (_projProp.Effects != null && _projProp.Effects.Length > 0)) {
-                var notification = $"-{actualDamage} [{go.PredictedHp}]";
-                var clr = Entity.GetHitColour(_projProp.Effects, _projProp.ArmorPiercing);
-                Map.AddParticleEffect(new HitEffect(go, clr));
-                NotificationLayer.AddStatusText(go, notification, clr, 1000, 0);
-                if (go.PredictedHp <= 0) {
-                    if (!string.IsNullOrEmpty(go.Properties.DeathSound))
-                        SoundManager.PlaySoundEffect(go.Properties.DeathSound);
-                } else if (!string.IsNullOrEmpty(go.Properties.HitSound)) {
-                    SoundManager.PlaySoundEffect(go.Properties.HitSound);
+                if (actualDamage > 0 || (_projProp.Effects != null && _projProp.Effects.Length > 0)) {
+                    var notification = $"-{actualDamage} [{go.PredictedHp}]";
+                    var clr = Entity.GetHitColour(_projProp.Effects, _projProp.ArmorPiercing);
+                    Map.AddParticleEffect(new HitEffect(go, clr));
+                    NotificationLayer.AddStatusText(go, notification, clr, 1000, 0);
+                    if (go.PredictedHp <= 0) {
+                        if (!string.IsNullOrEmpty(go.Properties.DeathSound))
+                            SoundManager.PlaySoundEffect(go.Properties.DeathSound);
+                    } else if (!string.IsNullOrEmpty(go.Properties.HitSound)) {
+                        SoundManager.PlaySoundEffect(go.Properties.HitSound);
+                    }
                 }
-            }
 
-            if (_damagePlayers)
-                Map.PendingPlayerHit.AddHit(_bulletId, _ownerId);
-            else
-                Map.PendingEnemyHit.AddHit((int)time, _bulletId, go.ObjectId, go.PredictedHp <= 0);
+                if (_damagePlayers)
+                    Map.PendingPlayerHit.AddHit(_bulletId, _ownerId);
+                else
+                    Map.PendingEnemyHit.AddHit((int)time, _bulletId, go.ObjectId, go.PredictedHp <= 0);
+            }
 
             _hitEntities.Add(go.ObjectId);
             hitSomething = true;
@@ -630,8 +655,12 @@ public sealed class Projectile : IResettable {
             var angle = t == 0 ? _angle : MathF.Atan2(pos.Y - _startPosition.Y, pos.X - _startPosition.X);
             var projPos = Camera.WorldToDebug2D(new Vector3(pos.X, pos.Y, 0.5f));
 
-            if (t % 50 == 0)
-                Map.AddParticleEffect(new RayCastParticle(texture, pos, angle, _angleCorrection, Size));
+            if (t % 50 == 0) {
+                var rcp = new RayCastParticle(texture, pos, angle, _angleCorrection, Size) {
+                    Alpha = (!_damagePlayers && _ownerId != Map.LocalPlayerId) ? Settings.AllyProjOpacity : 1f
+                };
+                Map.AddParticleEffect(rcp);
+            }
 
             if (_damagePlayers) {
                 var target = EntityUtils.GetPlayerHit(projPos, hitRadius);
@@ -672,22 +701,25 @@ public sealed class Projectile : IResettable {
                             target.HasConditionEffect(ConditionEffects.Paused))
                             continue;
 
-                        var actualDamage =
-                            Entity.DamageWithDefense(_damage, target.Defense, _projProp.ArmorPiercing, target);
-                        Map.PendingEnemyHit.AddHit((int)time, _bulletId, target.ObjectId, false);
+                        bool isAllyShot = (!_damagePlayers && _ownerId != Map.LocalPlayerId);
 
-                        if (actualDamage > 0 || (_projProp.Effects != null && _projProp.Effects.Length > 0)) {
-                            var newHealth = target.Hp - actualDamage;
-                            var notification = $"-{actualDamage} [{newHealth}]";
-                            var clr = Entity.GetHitColour(_projProp.Effects, _projProp.ArmorPiercing);
+                        if (!isAllyShot) {
+                            var actualDamage = Entity.DamageWithDefense(_damage, target.Defense, _projProp.ArmorPiercing, target);
+                            Map.PendingEnemyHit.AddHit((int)time, _bulletId, target.ObjectId, false);
 
-                            Map.AddParticleEffect(new HitEffect(target, clr));
-                            NotificationLayer.AddStatusText(target, notification, clr, 1000, 0);
-                            if (newHealth <= 0) {
-                                if (!string.IsNullOrEmpty(target.Properties.DeathSound))
-                                    SoundManager.PlaySoundEffect(target.Properties.DeathSound);
-                            } else if (!string.IsNullOrEmpty(target.Properties.HitSound)) {
-                                SoundManager.PlaySoundEffect(target.Properties.HitSound);
+                            if (actualDamage > 0 || (_projProp.Effects != null && _projProp.Effects.Length > 0)) {
+                                var newHealth = target.Hp - actualDamage;
+                                var notification = $"-{actualDamage} [{newHealth}]";
+                                var clr = Entity.GetHitColour(_projProp.Effects, _projProp.ArmorPiercing);
+
+                                Map.AddParticleEffect(new HitEffect(target, clr));
+                                NotificationLayer.AddStatusText(target, notification, clr, 1000, 0);
+                                if (newHealth <= 0) {
+                                    if (!string.IsNullOrEmpty(target.Properties.DeathSound))
+                                        SoundManager.PlaySoundEffect(target.Properties.DeathSound);
+                                } else if (!string.IsNullOrEmpty(target.Properties.HitSound)) {
+                                    SoundManager.PlaySoundEffect(target.Properties.HitSound);
+                                }
                             }
                         }
 
@@ -721,6 +753,4 @@ public sealed class Projectile : IResettable {
 
         return closest;
     }
-
-    // Debuggin Tools
 }

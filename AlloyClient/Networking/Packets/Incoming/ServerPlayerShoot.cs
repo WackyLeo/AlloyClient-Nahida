@@ -64,7 +64,7 @@ public class ServerPlayerShoot : IncomingPacket<ServerPlayerShoot> {
         }
 
         if (OwnerId != Map.LocalPlayerId)
-            proj.RenderBaseType.SetAlpha(Settings.AllyOpacity);
+            proj.RenderBaseType.SetAlpha(Settings.AllyProjOpacity);
 
         Map.AddProjectile(proj);
     }

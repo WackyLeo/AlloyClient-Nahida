@@ -46,10 +46,16 @@ public static class PartyData {
         var i = 0;
         
         foreach (var player in Map.Players.Values) {
+            player.Locked = LockedPlayers.Contains(player.AccountId);
+            player.Ignored = IgnoredPlayers.Contains(player.AccountId);
+
             var dist = MathUtils.GetDistanceSquared(localPosition, player.Position);
-            if (dist < MaxDistance) {
+            if (dist < MaxDistance || player.Locked) {
                 Members[i] = new PartyInfo(player, player.Locked, dist, player.ObjectId);
                 i++;
+                
+                if (i >= Members.Length)
+                    break;
             }
         }
         

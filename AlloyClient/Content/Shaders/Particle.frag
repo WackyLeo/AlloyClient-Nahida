@@ -9,16 +9,16 @@ layout(location = 1) in vec4 Color;
 layout(location = 2) in float Depth;
 
 void main() {
+    float alpha = Color.w < 0.0 ? abs(Color.w) : 1.0;  
+
     vec2 dUV = fwidth(BaseUV);
-    float outlineThickness = 1.0;
-    vec2 border = dUV * outlineThickness;
+    vec2 border = dUV * 1.0;
     if (BaseUV.x < border.x || BaseUV.x > 1.0 - border.x ||
     BaseUV.y < border.y || BaseUV.y > 1.0 - border.y) {
-        FragColor = vec4(0, 0, 0, 1);
-
-    } else if (Color.w > -1) {
+        FragColor = vec4(0, 0, 0, alpha);
+    } else if (Color.w > -1.0) {
         FragColor = texture(GameTexture, Color.xy);
     } else {
-        FragColor = vec4(Color.xyz, 1);
+        FragColor = vec4(Color.xyz, alpha);
     }
 }

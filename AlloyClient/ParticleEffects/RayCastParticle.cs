@@ -13,7 +13,6 @@ public class RayCastParticle : ParticleEffect {
     private readonly AtlasData _texture;
     private readonly float _angle;
     private readonly int _size;
-    private float _alpha = 1f;
     private float _angleCorrection = 1f;
     private readonly Vector2 _pos;
 
@@ -29,8 +28,8 @@ public class RayCastParticle : ParticleEffect {
     }
 
     public override bool Update(double time, double dt) {
-        _alpha -= (float)(dt * 0.004f);
-        if (_alpha <= 0) return false;
+        Alpha -= (float)(dt * 0.004f);
+        if (Alpha <= 0) return false;
         _needsDraw = true;
         return true;
     }
@@ -55,9 +54,12 @@ public class RayCastParticle : ParticleEffect {
         var rotation = new Vector4(s, c, k, -1f);
 
         var extra = new ExtraData(RenderConfig.TypeGameObject, RenderConfig.Shade);
-        extra.Alpha = _alpha;
+        extra.Alpha = Alpha;
 
         var pos3 = new Vector3(_pos.X, _pos.Y, 0.5f);
-        Render.DrawEntity(new VertexObject(pos3, uv, scale, rotation, extra.Data, Color.Black));
+        
+        // Pass Alpha into the Color struct so the shader correctly fades the outline
+        var color = new Color( (byte)0,  (byte)0,  (byte)0, (byte)(Alpha * 255));
+        Render.DrawEntity(new VertexObject(pos3, uv, scale, rotation, extra.Data, color));
     }
 }
