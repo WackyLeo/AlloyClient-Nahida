@@ -3,41 +3,39 @@ using AlloyClient.Networking.Structs.DataObjects;
 
 namespace AlloyClient.Networking.Packets.Outgoing;
 
-public struct ShootData 
-{
+public struct ShootData {
     public int Time;
     public int BulletId;
     public ushort ItemType;
     public Position StartingPos;
+    public Position CursorPos;
     public float Angle;
 }
 
 public class PlayerShoot : OutgoingPacket<PlayerShoot> {
-    public List<ShootData> Shots = new List<ShootData>();
+    public List<ShootData> Shots = new();
 
     public override PacketId PacketId => PacketId.PlayerShoot;
 
-    public override void Reset() 
-    {
+    public override void Reset() {
         Shots.Clear();
     }
 
-    public override void Write(NetworkWriter writer) 
-    {
-        writer.Write(Shots.Count); 
-        foreach (var shot in Shots) 
-        {
+    public override void Write(NetworkWriter writer) {
+        writer.Write(Shots.Count);
+        foreach (var shot in Shots) {
             writer.Write(shot.Time);
             writer.Write(shot.BulletId);
             writer.Write(shot.ItemType);
             writer.Write((double)shot.StartingPos.X);
             writer.Write((double)shot.StartingPos.Y);
             writer.Write(shot.Angle);
+            writer.Write((double)shot.CursorPos.X);
+            writer.Write((double)shot.CursorPos.Y);
         }
     }
 
-    public override string ToString() 
-    {
+    public override string ToString() {
         return $"PlayerShoot Stacked Shots: {Shots.Count}";
     }
 }

@@ -21,9 +21,7 @@ public sealed class TypeGameObject : RenderBase {
         Entity = entity;
         SetTexture(entity.GetTexture());
         Extra = new ExtraData(RenderConfig.TypeGameObject, RenderConfig.Shade);
-
-        if (entity.Size == 0 || entity.Properties.Size == 0) Logger.Info("sda");
-
+        
         _name = new TypeName(this, entity);
         _hpBar = new TypeHpBar(this, entity);
         _effects = new TypeEffects(this, entity);
@@ -47,12 +45,13 @@ public sealed class TypeGameObject : RenderBase {
     }
 
     public override void SetDepth(float depth) {
-        Extra.SortId = depth;
+        base.SetDepth(depth);
         _name.SetDepth(depth);
         _hpBar.SetDepth(depth);
         _effects.SetDepth(depth);
         _lootPreview?.SetDepth(depth);
     }
+
 
     public override void SetAlpha(float alpha) {
         Extra.Alpha = alpha;

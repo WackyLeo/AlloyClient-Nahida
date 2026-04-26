@@ -64,6 +64,8 @@ public sealed class TypeProjectile : RenderBase, IResettable {
     public override void SetName(string name) { }
 
     public override void Draw() {
+        if (Extra.Alpha <= 0f) return;
+
         if (IsFalldown || IsMissile) {
             DrawWithHeight();
             return;

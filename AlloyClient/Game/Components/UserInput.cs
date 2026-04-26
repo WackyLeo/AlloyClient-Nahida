@@ -318,7 +318,7 @@ public sealed class UserInput : Sprite {
                 break;
             case true when Settings.PartyChat.CheckValue(key):
                 ClearMovement();
-                ChatBox.OnChatOpen.Dispatch("/p ");
+                ChatBox.OnChatOpen.Dispatch("/npp ");
                 break;
             case true when Settings.ChatHistoryUp.CheckValue(key):
                 ChatBox.OnChatHistoryUp.Dispatch();

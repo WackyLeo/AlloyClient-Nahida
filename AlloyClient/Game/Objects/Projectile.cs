@@ -222,6 +222,7 @@ public sealed class Projectile : IResettable {
         if (curLifetime > _lifetime) return false;
 
         float targetAlpha = (!_damagePlayers && _ownerId != Map.LocalPlayerId) ? Settings.AllyProjOpacity : 1.0f;
+        if (targetAlpha <= 0f) return false;
         if (_projProp.Fade > 0) {
             if (!_fadeOff) {
                 RenderBaseType.SetAlpha(0.2f * targetAlpha);

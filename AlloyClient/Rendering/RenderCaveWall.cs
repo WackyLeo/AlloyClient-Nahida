@@ -55,6 +55,19 @@ public static partial class Render {
         _caveWallCount += needed;
     }
 
+    public static void DrawConnectedWall(TypeConnectedWall wall) {
+        var tris = wall.Triangles;
+        var needed = tris.Count;
+
+        if (needed == 0) return;
+
+        if (_caveWallCount + needed > _caveWallData.Length) FlushCaveWall();
+
+        for (var i = 0; i < needed; i++) _caveWallData[_caveWallCount + i] = tris[i];
+        _caveWallCount += needed;
+    }
+
+
     public static void FlushCaveWall() {
         if (_caveWallCount == 0) return;
         _caveWallVertexBuffer.SetData(_caveWallData.AsSpan(0, _caveWallCount));

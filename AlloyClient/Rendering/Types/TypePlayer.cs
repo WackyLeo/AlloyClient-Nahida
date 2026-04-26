@@ -38,7 +38,7 @@ public sealed class TypePlayer : RenderBase {
     public override void SetVisibility(bool visible) => Visible = visible;
 
     public override void SetDepth(float depth) {
-        Extra.SortId = depth;
+        base.SetDepth(depth);
         _typeName.SetDepth(depth);
         _hpBar.SetDepth(depth);
         _effects.SetDepth(depth);

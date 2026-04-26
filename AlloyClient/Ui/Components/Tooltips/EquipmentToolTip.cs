@@ -56,7 +56,8 @@ public sealed class EquipmentToolTip : Tooltip {
 
     private float CalcDps(ItemDesc item, int defense) {
         if (item?.AllProjectiles == null || item.AllProjectiles.Length == 0) return 0f;
-
+        if (Map.LocalPlayer == null) return 0f; 
+        
         var attackFreq = 0.0015f + Map.LocalPlayer.Dexterity / 75f * (0.008f - 0.0015f);
         var shotsPerSec = 1000f * attackFreq * item.RateOfFire / 1.02f;
 

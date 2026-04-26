@@ -50,9 +50,9 @@ public sealed class TypeCaveWall : RenderBase {
 
     public override void SetVisibility(bool visible) => Visible = visible;
 
-    public override void SetDepth(float depth) { 
+    public override void SetDepth(float depth) {
         if (Math.Abs(Extra.SortId - depth) < 0.001f) return;
-        Extra.SortId = depth;
+        base.SetDepth(depth);
         _geometryDirty = true;
     }
     

@@ -136,6 +136,8 @@ public class Entity {
             "DoubleWall2" => new TypeWall(this, ModelType.PbDoubleWall),
             "TripleWall" => new TypeWall(this, ModelType.PbDoubleWall),
             "CaveWall" => new TypeCaveWall(this),
+            "ConnectedWall" => new TypeConnectedWall(this, Properties.BaseIndent, Properties.TopIndent,
+                Properties.Height),
             _ => new TypeGameObject(this)
         };
     }
@@ -322,15 +324,22 @@ public class Entity {
                     InventoryUpdate.Dispatch(index);
                     break;
                 case StatsType.Effects:
-                    ConditionEffects = (ConditionEffects)stat.Value;
+                    var lower = (ulong)(uint)stat.Value & 0x7FFFFFFFul;
+                    ConditionEffects = (ConditionEffects)(((ulong)ConditionEffects & ~0x7FFFFFFFul) | lower);
 
-                    if (HasConditionEffect(ConditionEffects.Invulnerable) ||
-                        HasConditionEffect(ConditionEffects.Invincible)) {
+                    if (HasConditionEffect(ConditionEffects.Invulnerable) || HasConditionEffect(ConditionEffects.Invincible)) {
                         if (PredictedHp <= 0 && Hp > 0)
                             NotificationLayer.AddStatusText(this, "Immune", 0x00FF00, 1000, 0);
                         PredictedHp = Hp;
                     }
+                    SetTransparency(IsPredictedDead ? 0.4f :
+                        HasConditionEffect(ConditionEffects.Invisible) ? 0.5f : 1.0f);
+                    break;
 
+                case StatsType.Effects2:
+                    var upper = (ulong)(uint)stat.Value << 31;
+                    ConditionEffects = (ConditionEffects)(((ulong)ConditionEffects & 0x7FFFFFFFul) | upper);
+    
                     SetTransparency(IsPredictedDead ? 0.4f :
                         HasConditionEffect(ConditionEffects.Invisible) ? 0.5f : 1.0f);
                     break;
@@ -411,6 +420,7 @@ public class Entity {
                     break;
                 case StatsType.ObjectConnection:
                     ConnectType = stat.Value;
+                    (RenderBaseType as TypeConnectedWall)?.SetConnectType(stat.Value);
                     (RenderBaseType as TypeCaveWall)?.SetConnectType(stat.Value);
                     break;
             }
@@ -535,7 +545,7 @@ public class Entity {
     }
 
     public static int DamageWithDefense(int damage, int defense, bool nodef, Entity entity, int damageMulti = 0,
-                                        bool isPlayer = false) {
+        bool isPlayer = false) {
         if (entity.HasConditionEffect(ConditionEffects.Invulnerable)) return 0;
 
         if (nodef || entity.HasConditionEffect(ConditionEffects.ArmorBroken))
@@ -592,7 +602,7 @@ public class Entity {
     }
 
     public void Damage(int damageAmount, ConditionEffectIndex effect = ConditionEffectIndex.None,
-                       bool isArmorPiercing = false) {
+        bool isArmorPiercing = false) {
         if (HasConditionEffect(ConditionEffects.Invincible) || HasConditionEffect(ConditionEffects.Invulnerable))
             return;
 

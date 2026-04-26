@@ -76,7 +76,7 @@ public static class Map {
     private static readonly MapTile[] RebuildData = new MapTile[9];
 
     public static void InitMap(int width, int height, string name, string display, int diff, uint seed, int background,
-                               bool allowTp, bool showDisplays) {
+        bool allowTp, bool showDisplays) {
         Width = width;
         Height = height;
         Name = name;
@@ -331,9 +331,9 @@ public static class Map {
         if (EntityStorage.TryGetValue(ModelType.PbObject, out var entities)) {
             entities.Sort();
             foreach (var type in entities) {
-                if (type.Entity != null && type.Entity.Properties.Size == 0)
+                if (type.Entity != null && type.Entity.Size == 0)
                     continue;
-                
+
                 if (type.Visible) {
                     type.Draw();
                     Render.LastDrawCountEntities++;

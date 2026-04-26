@@ -12,6 +12,8 @@
     public abstract class RenderBase : IComparable<RenderBase> {
         public abstract ModelType ModelType { get; }
         
+        private readonly float _depthJitter = Random.Shared.NextSingle() * 0.0002f - 0.0001f;
+        
         public abstract bool HasShadow { get; }
 
         public bool Visible;
@@ -61,7 +63,10 @@
 
         public abstract void SetVisibility(bool visible);
 
-        public abstract void SetDepth(float depth);
+        public virtual void SetDepth(float depth) {
+            Extra.SortId = depth + _depthJitter;
+        }
+        
         public abstract void SetName(string name);
         public abstract void SetAlpha(float alpha);
         

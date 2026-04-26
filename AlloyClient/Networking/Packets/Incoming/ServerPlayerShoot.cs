@@ -8,15 +8,14 @@ using OpenTK.Mathematics;
 namespace AlloyClient.Networking.Packets.Incoming;
 
 public class ServerPlayerShoot : IncomingPacket<ServerPlayerShoot> {
-    public int BulletId;
-    public int OwnerId;
-    public int ContainerType;
-    public int Prjtype;
-    
-    public Position StartingPos = new Position();
-    
     public float Angle;
+    public int BulletId;
+    public int ContainerType;
     public short Damage;
+    public int OwnerId;
+    public int Prjtype;
+
+    public Position StartingPos;
     public bool UsePlayerPos;
 
     public override PacketId PacketId => PacketId.ServerPlayerShoot;
@@ -44,24 +43,31 @@ public class ServerPlayerShoot : IncomingPacket<ServerPlayerShoot> {
     }
 
     public override void Handle() {
-        if (!Map.Entities.TryGetValue(OwnerId, out var owner)) return;
-        if (!ObjectLibrary.TypeToObjectProps.TryGetValue((ushort)ContainerType, out var itemDesc)) return;
+        if (Settings.AllyProjOpacity == 0 && OwnerId != Map.LocalPlayerId)
+            return;
+        if (!Map.Entities.TryGetValue(OwnerId, out var owner))
+            return;
+        if (!ObjectLibrary.TypeToObjectProps.TryGetValue((ushort)ContainerType, out var itemDesc))
+            return;
 
-        if (itemDesc.Projectiles == null || itemDesc.Projectiles.Count == 0) return;
+        if (itemDesc.Projectiles == null || itemDesc.Projectiles.Count == 0)
+            return;
         var projDesc = itemDesc.Projectiles[0];
-        if (string.IsNullOrEmpty(projDesc.ObjectId)) return;
+        if (string.IsNullOrEmpty(projDesc.ObjectId))
+            return;
 
-        if (!ObjectLibrary.IdToObjectType.TryGetValue(projDesc.ObjectId, out var projObjType)) return;
-        if (!ObjectLibrary.TypeToObjectProps.TryGetValue(projObjType, out var projObjDesc)) return;
+        if (!ObjectLibrary.IdToObjectType.TryGetValue(projDesc.ObjectId, out var projObjType))
+            return;
+        if (!ObjectLibrary.TypeToObjectProps.TryGetValue(projObjType, out var projObjDesc))
+            return;
 
         var proj = ObjectPools.Projectiles.Pop();
         proj.Reset(BulletId, Damage, Angle, owner, projObjDesc, projDesc);
 
-        if (UsePlayerPos) {
+        if (UsePlayerPos)
             proj.SetStartPosition(new Vector2(owner.Position.X, owner.Position.Y));
-        } else {
+        else
             proj.SetStartPosition(new Vector2(StartingPos.X, StartingPos.Y));
-        }
 
         if (OwnerId != Map.LocalPlayerId)
             proj.RenderBaseType.SetAlpha(Settings.AllyProjOpacity);
@@ -70,6 +76,7 @@ public class ServerPlayerShoot : IncomingPacket<ServerPlayerShoot> {
     }
 
     public override string ToString() {
-        return $"BulletId: {BulletId}, OwnerId: {OwnerId}, ContainerType: {ContainerType}, StartingPos: {StartingPos}, Angle: {Angle}, Damage: {Damage}";
+        return
+            $"BulletId: {BulletId}, OwnerId: {OwnerId}, ContainerType: {ContainerType}, StartingPos: {StartingPos}, Angle: {Angle}, Damage: {Damage}";
     }
 }

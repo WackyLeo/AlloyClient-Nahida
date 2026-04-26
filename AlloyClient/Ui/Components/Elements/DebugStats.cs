@@ -1,6 +1,8 @@
 ﻿using System;
 using AlloyClient.Game;
+using AlloyClient.Game.Components.Hud;
 using AlloyClient.Rendering;
+using AlloyClient.State;
 using AlloyClient.UiLib;
 using AlloyClient.UiLib.BuiltIn;
 using AlloyClient.UiLib.Core;
@@ -10,7 +12,12 @@ namespace AlloyClient.Ui.Components.Elements;
 
 public class DebugStats : Sprite {
     private const float Outline = 0.5f;
-
+    
+    private readonly SimpleText _devBuild = new(new TextConfig {
+        Text = "IR DEVELOPMENT BUILD", FontSize = 28, FontType = FontType.Bold, OutlineThickness = 1.0f,
+        Anchor = UiAnchor.MiddleTop
+    });
+    
     private readonly SimpleText _allocRate = new(new TextConfig {
         Text = "Alloc rate: 0 MB/s", X = 8, FontSize = 16, FontType = FontType.Bold, OutlineThickness = Outline,
         Anchor = UiAnchor.LeftTop
@@ -116,7 +123,6 @@ public class DebugStats : Sprite {
     private double _lastTime;
 
     public DebugStats() {
-        return;
         AddChild(_fps);
 
         AddChild(_frameTimeTimer);
@@ -139,7 +145,11 @@ public class DebugStats : Sprite {
         AddChild(_lohSize);
         AddChild(_allocRate);
         AddEventListener(Event.EnterFrame, OnFrameEnter);
-
+        
+        AddChild(_devBuild);
+        _devBuild.Y = -36;
+        _devBuild.X = Settings.DefaultScreenWidth / 2;
+        
         _fps.Y = 4;
         _frameTimeTimer.Y = _fps.Y + _fps.Height + 4;
         _avgFrameTime.Y = _frameTimeTimer.Y + _frameTimeTimer.Height + 4;
@@ -164,8 +174,6 @@ public class DebugStats : Sprite {
     }
 
     private void OnFrameEnter() {
-        return;
-
         _fps.SetText($"FPS: {Math.Round(GameScreen.FPS, 1)}");
 
         var gameTime = Stage.GameTime;
@@ -220,5 +228,9 @@ public class DebugStats : Sprite {
         _entities.SetText($"Entities: {Render.LastDrawCountEntities}");
         _particles.SetText($"Particles: {Render.LastDrawParticleCount}");
         _ui.SetText($"Ui: {UiRender.LastRenderCount}");
+        if (Stage != null) {
+            _devBuild.X = (Stage.StageWidth / 2) - (HudView.Width / 2);
+            _devBuild.Y = 6;
+        }
     }
 }
