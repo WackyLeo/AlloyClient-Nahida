@@ -8,7 +8,6 @@ public struct ShootData {
     public int BulletId;
     public ushort ItemType;
     public Position StartingPos;
-    public Position CursorPos;
     public float Angle;
 }
 
@@ -30,8 +29,6 @@ public class PlayerShoot : OutgoingPacket<PlayerShoot> {
             writer.Write((double)shot.StartingPos.X);
             writer.Write((double)shot.StartingPos.Y);
             writer.Write(shot.Angle);
-            writer.Write((double)shot.CursorPos.X);
-            writer.Write((double)shot.CursorPos.Y);
         }
     }
 

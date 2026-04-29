@@ -36,6 +36,7 @@ out GROUND_OUTPUT {
     vec4 UV;
     vec4 Mask;
     float Swizzle;
+    vec2 WorldPos;
 } vsOutput;
 
 void main() {
@@ -55,4 +56,5 @@ void main() {
     vsOutput.UV = data.UV;
     vsOutput.Mask = data.Mask;
     vsOutput.Swizzle = data.Temp.x;
+    vsOutput.WorldPos = inputPosition.xy;
 }

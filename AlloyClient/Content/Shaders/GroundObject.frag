@@ -4,6 +4,8 @@
 
 uniform sampler2D GameTexture;
 uniform vec4 AlphaBlends[8];
+uniform vec2 uPlayerPos;
+uniform float uSightRadius;
 
 in GROUND_OUTPUT {
     vec2 baseUV;
@@ -11,6 +13,7 @@ in GROUND_OUTPUT {
     vec4 UV;
     vec4 Mask;
     float Swizzle;
+    vec2 WorldPos;
 } vsOutput;
 
 out vec4 FragColor;
@@ -31,6 +34,22 @@ void main() {
         ogColor.a = alpha;
     }
     
+    //if (ogColor.a < 0.1) discard;
+    //FragColor = ogColor;
+    
     if (ogColor.a < 0.1) discard;
+    vec2 tileCenter = floor(vsOutput.WorldPos) + vec2(0.5);
+    vec2 playerTile = floor(uPlayerPos) + vec2(0.5);
+
+    float dist = distance(tileCenter, playerTile);
+    float fogStart = uSightRadius - 3.0;
+    float fogEnd = uSightRadius;
+
+    float fogFactor = clamp((dist - fogStart) / (fogEnd - fogStart), 0.0, 1.0);
+    float steps = 5.0;
+    fogFactor = floor(fogFactor * steps) / steps;
+
+    float brightness = mix(1.0, 0.4, fogFactor);
+    ogColor.rgb *= brightness;
     FragColor = ogColor;
 }

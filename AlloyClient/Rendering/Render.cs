@@ -219,12 +219,16 @@ public static partial class Render {
         _shaderModel.SetValue("WorldMatrix", Camera.WorldMatrix);
         _shaderModel.SetValue("ViewMatrix", Camera.ViewMatrix);
         _shaderModel.SetValue("ProjMatrix", Camera.ProjectionMatrix);
-
+        _shaderModel.SetValue("uPlayerPos", playerPos);
+        _shaderModel.SetValue("uSightRadius", sightRadius);
+        
         _shaderObject.SetValue("WorldMatrix", Camera.WorldMatrix);
         _shaderObject.SetValue("ViewMatrix", Camera.ViewMatrix);
         _shaderObject.SetValue("ProjMatrix", Camera.ProjectionMatrix);
         _shaderObject.SetValue("BillMatrix", Camera.BillboardMatrix);
-
+        _shaderObject.SetValue("uPlayerPos", playerPos);
+        _shaderObject.SetValue("uSightRadius", sightRadius);
+        
         _shaderParticle.SetValue("WorldMatrix", Camera.WorldMatrix);
         _shaderParticle.SetValue("ViewMatrix", Camera.ViewMatrix);
         _shaderParticle.SetValue("ProjMatrix", Camera.ProjectionMatrix);
@@ -234,8 +238,10 @@ public static partial class Render {
         _shaderGroundObject.SetValue("ViewMatrix", Camera.ViewMatrix);
         _shaderGroundObject.SetValue("ProjMatrix", Camera.ProjectionMatrix);
         _shaderGroundObject.SetValue("GameTime", timeObj);
-
-        SetCaveWallShaderParams();
+        _shaderGroundObject.SetValue("uPlayerPos", playerPos);
+        _shaderGroundObject.SetValue("uSightRadius", sightRadius);
+        
+        SetCaveWallShaderParams(playerPos, sightRadius);
     }
 
     public static void SetTileElevation(float elevation) {

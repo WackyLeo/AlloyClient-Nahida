@@ -21,7 +21,7 @@ public static class Settings {
     private const string SettingsPath = "settings.json";
 
     // App-Engine connection info
-    public const string BuildVersion = "localhostreal";
+    public const string BuildVersion = "localhost";
     public const string BuildLabel = $"Version {BuildVersion}";
 
     private const string AppEngineAddress = "135.125.181.109"; // 135.125.181.109

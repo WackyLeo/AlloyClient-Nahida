@@ -53,6 +53,7 @@ out OBJECT_OUT {
     vec4 Color;
     vec4 Mask1;
     vec4 Mask2;
+    vec2 WorldPos;
 } vsOutput;
 
 vec2 GetUV(vec2 uv, float flip) {
@@ -90,4 +91,5 @@ void main() {
     vsOutput.Color = data.Color;
     vsOutput.Mask1 = data.Mask1;
     vsOutput.Mask2 = data.Mask2;
+    vsOutput.WorldPos = data.Position.xy;
 }

@@ -6,6 +6,7 @@ using AlloyClient.Rendering.Types;
 using AlloyClient.Rendering.VertexData;
 using Common.ContentReaders;
 using OpenTK.Graphics.OpenGL;
+using OpenTK.Mathematics;
 
 namespace AlloyClient.Rendering;
 
@@ -75,9 +76,11 @@ public static partial class Render {
         _caveWallCount = 0;
     }
 
-    public static void SetCaveWallShaderParams() {
+    public static void SetCaveWallShaderParams(Vector2 playerPos, float sightRadius) {
         _shaderCaveWall.SetValue("WorldMatrix", Camera.WorldMatrix);
         _shaderCaveWall.SetValue("ViewMatrix", Camera.ViewMatrix);
         _shaderCaveWall.SetValue("ProjMatrix", Camera.ProjectionMatrix);
+        _shaderCaveWall.SetValue("uPlayerPos", playerPos);
+        _shaderCaveWall.SetValue("uSightRadius", sightRadius);
     }
 }

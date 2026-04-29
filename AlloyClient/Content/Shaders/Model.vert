@@ -16,6 +16,7 @@ out MODEL_OUT {
     vec4 UV;
     vec3 Extra;
     float Zed;
+    vec2 WorldPos;
 } output1;
 
 void main() {
@@ -30,6 +31,7 @@ void main() {
     output1.UV = iUV;
     output1.Extra = iExtra;
     output1.Zed = pos.z;
+    output1.WorldPos = pos.xy;
 
     pos = pos * WorldMatrix * ViewMatrix * ProjMatrix;
     pos.z = iExtra.y;

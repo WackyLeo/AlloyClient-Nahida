@@ -11,6 +11,7 @@ in OBJECT_OUT {
     vec4 Color;
     vec4 Mask1;
     vec4 Mask2;
+    vec2 WorldPos;
 } vsOutput;
 
 out vec4 FragColor;
@@ -20,6 +21,8 @@ uniform int RenderPass;
 uniform float PixelRange;
 uniform vec2 TextTextureSize;
 uniform sampler2D TextTexture;
+uniform vec2 uPlayerPos;
+uniform float uSightRadius;
 
 const int OpaquePass = 0;
 
@@ -45,6 +48,19 @@ vec4 GetGameObject() {
 
     if (RenderPass == OpaquePass) {
         if (color.a < 0.1 || vsOutput.ExtraAlpha < 1.0) discard;
+        vec2 tileCenter = floor(vsOutput.WorldPos) + vec2(0.5);
+        vec2 playerTile = floor(uPlayerPos) + vec2(0.5);
+
+        float dist = distance(tileCenter, playerTile);
+        float fogStart = uSightRadius - 3.0;
+        float fogEnd = uSightRadius;
+
+        float fogFactor = clamp((dist - fogStart) / (fogEnd - fogStart), 0.0, 1.0);
+        float steps = 5.0;
+        fogFactor = floor(fogFactor * steps) / steps;
+
+        float brightness = mix(1.0, 0.4, fogFactor);
+        color.rgb *= brightness;
         return color;
     }
 

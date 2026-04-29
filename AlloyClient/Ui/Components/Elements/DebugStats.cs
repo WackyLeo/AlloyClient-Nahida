@@ -125,7 +125,7 @@ public class DebugStats : Sprite {
     public DebugStats() {
         AddChild(_fps);
 
-        AddChild(_frameTimeTimer);
+        /* AddChild(_frameTimeTimer);
         AddChild(_avgFrameTime);
         AddChild(_p90FrameTime);
         AddChild(_p99FrameTime);
@@ -143,7 +143,7 @@ public class DebugStats : Sprite {
         AddChild(_gcGen2Count);
         AddChild(_heapSize);
         AddChild(_lohSize);
-        AddChild(_allocRate);
+        AddChild(_allocRate); */
         AddEventListener(Event.EnterFrame, OnFrameEnter);
         
         AddChild(_devBuild);
@@ -151,7 +151,7 @@ public class DebugStats : Sprite {
         _devBuild.X = Settings.DefaultScreenWidth / 2;
         
         _fps.Y = 4;
-        _frameTimeTimer.Y = _fps.Y + _fps.Height + 4;
+        /* _frameTimeTimer.Y = _fps.Y + _fps.Height + 4;
         _avgFrameTime.Y = _frameTimeTimer.Y + _frameTimeTimer.Height + 4;
         _p90FrameTime.Y = _avgFrameTime.Y + _avgFrameTime.Height + 4;
         _p99FrameTime.Y = _p90FrameTime.Y + _p90FrameTime.Height + 4;
@@ -170,26 +170,24 @@ public class DebugStats : Sprite {
         _shadows.Y = _tiles.Y + _tiles.Height + 4;
         _entities.Y = _shadows.Y + _shadows.Height + 4;
         _particles.Y = _entities.Y + _entities.Height + 4;
-        _ui.Y = _particles.Y + _particles.Height + 4;
+        _ui.Y = _particles.Y + _particles.Height + 4; */
     }
 
     private void OnFrameEnter() {
-        _fps.SetText($"FPS: {Math.Round(GameScreen.FPS, 1)}");
-
         var gameTime = Stage.GameTime;
         var deltaMs = gameTime.TotalMs - _lastTime;
         if (deltaMs < 1000) return;
 
         _lastTime = gameTime.TotalMs;
 
-        _avgFrameTime.SetText($"Avg: {Math.Round(GameScreen.AvgFrameTime, 3)} ms");
+        /* _avgFrameTime.SetText($"Avg: {Math.Round(GameScreen.AvgFrameTime, 3)} ms");
         _p90FrameTime.SetText($"P90: {Math.Round(GameScreen.P90FrameTime, 3)} ms");
         _p99FrameTime.SetText($"P99: {Math.Round(GameScreen.P99FrameTime, 3)} ms");
-        _maxFrameTime.SetText($"Max: {Math.Round(GameScreen.MaxFrameTime, 3)} ms");
+        _maxFrameTime.SetText($"Max: {Math.Round(GameScreen.MaxFrameTime, 3)} ms"); */
         _fps.SetText($"FPS: {Math.Round(GameScreen.FPS, 1)}");
 
         // Total live memory
-        var totalMemory = GC.GetTotalMemory(false);
+        /* var totalMemory = GC.GetTotalMemory(false);
         _gcAlloc.SetText($"Total: {Math.Round(totalMemory / 1_000_000f, 2)} MB");
 
         // Allocation tracking
@@ -227,7 +225,7 @@ public class DebugStats : Sprite {
         _shadows.SetText($"Shadows: {Render.LastDrawCountShadows}");
         _entities.SetText($"Entities: {Render.LastDrawCountEntities}");
         _particles.SetText($"Particles: {Render.LastDrawParticleCount}");
-        _ui.SetText($"Ui: {UiRender.LastRenderCount}");
+        _ui.SetText($"Ui: {UiRender.LastRenderCount}"); */
         if (Stage != null) {
             _devBuild.X = (Stage.StageWidth / 2) - (HudView.Width / 2);
             _devBuild.Y = 6;

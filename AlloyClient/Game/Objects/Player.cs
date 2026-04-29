@@ -129,7 +129,7 @@ public class Player : Entity {
         var nextX = Position.X + physicsDt * MovementVector.X;
         var nextY = Position.Y + physicsDt * MovementVector.Y;
 
-        if (!double.IsNaN(nextX) && !double.IsNaN(nextY)) {
+        if (!double.IsNaN(nextX) && !double.IsNaN(nextY)) {     
             var pos = ModifyMove(nextX, nextY);
             MoveTo(pos.X, pos.Y, true);
 

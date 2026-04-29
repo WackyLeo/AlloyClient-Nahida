@@ -42,8 +42,6 @@ public class AllyShoot : IncomingPacket<AllyShoot> {
             ContainerTypes[i] = reader.ReadUInt16();
             Angles[i] = reader.ReadSingle();
             ProjIds[i] = reader.ReadInt32();
-            reader.ReadInt32();
-            reader.ReadInt32();
         }
     }
 

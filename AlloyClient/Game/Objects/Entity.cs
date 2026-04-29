@@ -104,31 +104,38 @@ public class Entity {
     public void SetTransparency(float alpha) {
         Alpha = Math.Clamp(alpha, 0f, 1f);
 
-        if (RenderBaseType != null) RenderBaseType.Extra.Alpha = Alpha;
+        if (RenderBaseType != null)
+            RenderBaseType.Extra.Alpha = Alpha;
     }
 
     public Color GetDominateColor() {
-        if (RenderBaseType is TypeWall) return TextureData.TopTexture.DominantColor;
+        if (RenderBaseType is TypeWall)
+            return TextureData.TopTexture.DominantColor;
         return TextureData.DominantColor;
     }
 
     protected virtual RenderBase GetRenderType(ushort type) {
         ObjectLibrary.TypeToObjectProps.TryGetValue(type, out var props);
 
-        if (props == null) return new TypeNullObject();
+        if (props == null)
+            return new TypeNullObject();
 
-        if (props.Size != -1) Size = props.Size;
+        if (props.Size != -1)
+            Size = props.Size;
 
         if (props.MinSize != props.MaxSize) {
             var maxSteps = (props.MaxSize - props.MinSize) / props.SizeStep;
             Size = props.MinSize + (int)(Random.Shared.NextSingle() * maxSteps) * props.SizeStep;
         }
 
-        if (IsBigBag(type)) Size = 120;
+        if (IsBigBag(type))
+            Size = 120;
 
-        if (!string.IsNullOrEmpty(props.Model)) return new TypeModel3D(props.Model, this);
+        if (!string.IsNullOrEmpty(props.Model))
+            return new TypeModel3D(props.Model, this);
 
-        if (props.DrawOnGround) return new TypeGroundObject(this);
+        if (props.DrawOnGround)
+            return new TypeGroundObject(this);
 
         return props.Class switch {
             "Wall" => new TypeWall(this),
@@ -162,18 +169,21 @@ public class Entity {
                 var pX = PositionAtTick.X + tickDt * MovementVector.X;
                 var pY = PositionAtTick.Y + tickDt * MovementVector.Y;
                 MoveTo((float)pX, (float)pY, false);
-            } else {
+            }
+            else {
                 MovementVector.X = 0;
                 MovementVector.Y = 0;
                 MoveTo(TickPosition.X, TickPosition.Y, false);
             }
-        } else {
+        }
+        else {
             MovementVector.X = 0;
             MovementVector.Y = 0;
         }
 
         // add wall support here at some point
-        if (TextureData.HasAnimationData) AnimateCharacter(time);
+        if (TextureData.HasAnimationData)
+            AnimateCharacter(time);
 
         if (AnimationSpeed > 0) {
             if (_animationMinOld != AnimationMin) {
@@ -184,31 +194,39 @@ public class Entity {
             ClientAnimation(time);
         }
 
-        if (Effect != null && !Effect.Update(time, dt)) Effect = null;
+        if (Effect != null && !Effect.Update(time, dt))
+            Effect = null;
 
         RenderBaseType.SetPosition(Position.X, Position.Y, Z);
         return true;
     }
 
     private void ClientAnimation(double time) {
-        if (AnimationMax <= 0) return;
+        if (AnimationMax <= 0)
+            return;
 
         var frame = (int)(Math.Floor((time - _animationStart) / AnimationSpeed) % AnimationMax) + AnimationMin;
 
-        if (frame == _lastAltTex) return;
+        if (frame == _lastAltTex)
+            return;
         _lastAltTex = frame;
 
         SetAltTexture(frame);
     }
 
     public void UpdateVisibility(ref Matrix4 matrix) {
-        var dx = Position.X - Camera.Position.X;
-        var dy = Position.Y + Camera.Position.Y;
-        var distanceSquared = dx * dx + dy * dy;
-        var playerSightRadiusSquared = Map.LocalPlayer.UpdateRadius * Map.LocalPlayer.UpdateRadius;
+        if (Properties.Static) {
+            RenderBaseType.SetVisibility(true);
+        }
+        else {
+            var dx = Position.X - Camera.Position.X;
+            var dy = Position.Y + Camera.Position.Y;
+            var distanceSquared = dx * dx + dy * dy;
+            var playerSightRadiusSquared = Map.LocalPlayer.UpdateRadius * Map.LocalPlayer.UpdateRadius;
 
-        var visible = distanceSquared <= playerSightRadiusSquared;
-        RenderBaseType.SetVisibility(visible);
+            var visible = distanceSquared <= playerSightRadiusSquared;
+            RenderBaseType.SetVisibility(visible);
+        }
 
         //TODO: double check mg to make sure
         //var sort = Vector3.Transform(new Vector3(Position.X, Position.Y, 0), matrix).Y;
@@ -219,16 +237,19 @@ public class Entity {
     public bool MoveTo(float x, float y, bool isPlayer) {
         var tile = Map.GetTile((int)x, (int)y);
 
-        if (tile == null) return false;
+        if (tile == null)
+            return false;
 
-        if (isPlayer && tile.OccupiedObject != null && tile.OccupiedObject.Properties.OccupySquare) return false;
+        if (isPlayer && tile.OccupiedObject != null && tile.OccupiedObject.Properties.OccupySquare)
+            return false;
 
         Position.X = x;
         Position.Y = y;
         Z = tile.ZOffset;
 
         if (Properties.Static) {
-            if (Tile != null) Tile.OccupiedObject = null;
+            if (Tile != null)
+                Tile.OccupiedObject = null;
 
             tile.OccupiedObject = this;
         }
@@ -239,7 +260,8 @@ public class Entity {
     }
 
     public void OnTickPosition(float x, float y, double tickTime, int tickId, bool isPlayer, double now) {
-        if (!isPlayer && LastTickId < Map.LastTickId) MoveTo(TickPosition.X, TickPosition.Y, false);
+        if (!isPlayer && LastTickId < Map.LastTickId)
+            MoveTo(TickPosition.X, TickPosition.Y, false);
 
         TickPosition.X = x;
         TickPosition.Y = y;
@@ -275,19 +297,23 @@ public class Entity {
                         }
 
                         PredictedHp += serverHp - Hp;
-                    } else if (serverHp < Hp) {
-                        if (PredictedHp > serverHp) PredictedHp = serverHp;
+                    }
+                    else if (serverHp < Hp) {
+                        if (PredictedHp > serverHp)
+                            PredictedHp = serverHp;
                     }
 
                     Hp = serverHp;
                     //Logger.Info($"[CLIENT SYNC] Entity {ObjectId} Server HP: {Hp} | Prediction: {PredictedHp}");
 
-                    if (!IsPredictedDead) SetTransparency(HasConditionEffect(ConditionEffects.Invisible) ? 0.5f : 1.0f);
+                    if (!IsPredictedDead)
+                        SetTransparency(HasConditionEffect(ConditionEffects.Invisible) ? 0.5f : 1.0f);
                     break;
 
                 case StatsType.MaximumHp:
                     MaxHp = stat.Value;
-                    if (!_hpInitialized && PredictedHp == 0) PredictedHp = MaxHp;
+                    if (!_hpInitialized && PredictedHp == 0)
+                        PredictedHp = MaxHp;
                     break;
                 case StatsType.Defense:
                     Defense = stat.Value;
@@ -313,8 +339,9 @@ public class Entity {
                     var index = stat.Type - StatsType.Inventory0;
                     if (stat.Value == -1) {
                         Equipment[index] = null;
-                    } else if (Equipment[index] == null ||
-                               (Equipment[index] != null && stat.Value != Equipment[index].ObjectType)) {
+                    }
+                    else if (Equipment[index] == null ||
+                             (Equipment[index] != null && stat.Value != Equipment[index].ObjectType)) {
                         if (ObjectLibrary.TypeToItem.TryGetValue((ushort)stat.Value, out var b))
                             Equipment[index] = b;
                         else
@@ -324,14 +351,16 @@ public class Entity {
                     InventoryUpdate.Dispatch(index);
                     break;
                 case StatsType.Effects:
-                    var lower = (ulong)(uint)stat.Value & 0x7FFFFFFFul;
+                    var lower = (uint)stat.Value & 0x7FFFFFFFul;
                     ConditionEffects = (ConditionEffects)(((ulong)ConditionEffects & ~0x7FFFFFFFul) | lower);
 
-                    if (HasConditionEffect(ConditionEffects.Invulnerable) || HasConditionEffect(ConditionEffects.Invincible)) {
+                    if (HasConditionEffect(ConditionEffects.Invulnerable) ||
+                        HasConditionEffect(ConditionEffects.Invincible)) {
                         if (PredictedHp <= 0 && Hp > 0)
                             NotificationLayer.AddStatusText(this, "Immune", 0x00FF00, 1000, 0);
                         PredictedHp = Hp;
                     }
+
                     SetTransparency(IsPredictedDead ? 0.4f :
                         HasConditionEffect(ConditionEffects.Invisible) ? 0.5f : 1.0f);
                     break;
@@ -339,7 +368,7 @@ public class Entity {
                 case StatsType.Effects2:
                     var upper = (ulong)(uint)stat.Value << 31;
                     ConditionEffects = (ConditionEffects)(((ulong)ConditionEffects & 0x7FFFFFFFul) | upper);
-    
+
                     SetTransparency(IsPredictedDead ? 0.4f :
                         HasConditionEffect(ConditionEffects.Invisible) ? 0.5f : 1.0f);
                     break;
@@ -351,14 +380,16 @@ public class Entity {
 
                     break;
                 case StatsType.Texture1:
-                    if (stat.Value == Texture1Id) break;
+                    if (stat.Value == Texture1Id)
+                        break;
 
                     Texture1Id = stat.Value;
                     // TexturingCache = new Dict;
                     // Portrait = null;
                     break;
                 case StatsType.Texture2:
-                    if (stat.Value == Texture2Id) break;
+                    if (stat.Value == Texture2Id)
+                        break;
 
                     Texture2Id = stat.Value;
                     // TexturingCache = new Dict;
@@ -371,7 +402,8 @@ public class Entity {
                     SetAltTexture(stat.Value);
                     break;
                 case StatsType.AltItemId:
-                    if (stat.Value <= 0) break;
+                    if (stat.Value <= 0)
+                        break;
 
                     AltItemID = (ushort)stat.Value;
                     if (!ObjectLibrary.TypeToTextureData.TryGetValue(AltItemID, out var textureData))
@@ -393,8 +425,9 @@ public class Entity {
                     index = 12 + stat.Type - StatsType.BackPack0;
                     if (stat.Value == -1) {
                         Equipment[index] = null;
-                    } else if (Equipment[index] == null ||
-                               (Equipment[index] != null && stat.Value != Equipment[index].ObjectType)) {
+                    }
+                    else if (Equipment[index] == null ||
+                             (Equipment[index] != null && stat.Value != Equipment[index].ObjectType)) {
                         if (ObjectLibrary.TypeToItem.TryGetValue((ushort)stat.Value, out var b))
                             Equipment[index] = b;
                         else
@@ -468,7 +501,8 @@ public class Entity {
                 action = AnimationType.Attack;
                 idx = (time - AttackStart) % AttackPeriod / AttackPeriod;
                 FacingAngle = AttackAngle;
-            } else if (MovementVector != Vector2.Zero) {
+            }
+            else if (MovementVector != Vector2.Zero) {
                 var walkPer = 0.5f / (MovementVector.Length * 4);
                 walkPer = walkPer + (400 - walkPer % 400);
 
@@ -476,7 +510,8 @@ public class Entity {
                     MovementVector.Y < NegZeroLimit) {
                     FacingAngle = MathF.Atan2(MovementVector.Y, MovementVector.X);
                     action = AnimationType.Walk;
-                } else {
+                }
+                else {
                     action = AnimationType.Stand;
                 }
 
@@ -498,10 +533,12 @@ public class Entity {
     }
 
     private void SetAltTexture(int index) {
-        if (!ObjectLibrary.TypeToTextureData.TryGetValue(Type, out var baseTextureData)) return;
+        if (!ObjectLibrary.TypeToTextureData.TryGetValue(Type, out var baseTextureData))
+            return;
         if (index == 0 || index == -1) {
             TextureData = baseTextureData;
-        } else {
+        }
+        else {
             if (baseTextureData.GetAltTexture(index, out var altData))
                 TextureData = altData;
             else
@@ -530,7 +567,8 @@ public class Entity {
 
     public void OnRemovedFromMap() {
         if (Properties.Static && Tile != null) {
-            if (Tile.OccupiedObject == this) Tile.OccupiedObject = null;
+            if (Tile.OccupiedObject == this)
+                Tile.OccupiedObject = null;
 
             Tile = null;
         }
@@ -546,11 +584,13 @@ public class Entity {
 
     public static int DamageWithDefense(int damage, int defense, bool nodef, Entity entity, int damageMulti = 0,
         bool isPlayer = false) {
-        if (entity.HasConditionEffect(ConditionEffects.Invulnerable)) return 0;
+        if (entity.HasConditionEffect(ConditionEffects.Invulnerable))
+            return 0;
 
         if (nodef || entity.HasConditionEffect(ConditionEffects.ArmorBroken))
             defense = 0;
-        else if (entity.HasConditionEffect(ConditionEffects.Armored)) defense = defense * 2;
+        else if (entity.HasConditionEffect(ConditionEffects.Armored))
+            defense = defense * 2;
 
         var limit = damage * 0.15f; // Magic Number
         var ret = 0;
@@ -560,10 +600,14 @@ public class Entity {
         else
             ret = damage - defense;
 
-        if (entity.HasConditionEffect(ConditionEffects.Exposed)) ret += 20;
-        if (entity.HasConditionEffect(ConditionEffects.Petrify)) ret = (int)(ret * 0.9f);
-        if (entity.HasConditionEffect(ConditionEffects.Curse)) ret = (int)(ret * 1.2f);
-        if (entity.HasConditionEffect(ConditionEffects.Protected)) ret = (int)(ret * (isPlayer ? 0.5f : 0.25f));
+        if (entity.HasConditionEffect(ConditionEffects.Exposed))
+            ret += 20;
+        if (entity.HasConditionEffect(ConditionEffects.Petrify))
+            ret = (int)(ret * 0.9f);
+        if (entity.HasConditionEffect(ConditionEffects.Curse))
+            ret = (int)(ret * 1.2f);
+        if (entity.HasConditionEffect(ConditionEffects.Protected))
+            ret = (int)(ret * (isPlayer ? 0.5f : 0.25f));
         return ret;
     }
 
@@ -578,26 +622,46 @@ public class Entity {
 
     public static uint GetHitColour(ConditionEffectIndex effect, bool armorBreak) {
         switch (effect) {
-            case ConditionEffectIndex.Quiet: return 0xe6e6e6u;
-            case ConditionEffectIndex.Weak: return 0xa8a8a8u;
-            case ConditionEffectIndex.Slowed: return 0xaabf71u;
-            case ConditionEffectIndex.Sick: return 0x0f4512u;
-            case ConditionEffectIndex.Dazed: return 0xc5c977u;
-            case ConditionEffectIndex.Stunned: return 0xe3b540u;
-            case ConditionEffectIndex.Blind: return 0x0f0f0fu;
-            case ConditionEffectIndex.Hallucinating: return 0xff00fbu;
-            case ConditionEffectIndex.Drunk: return 0x8c9c43u;
-            case ConditionEffectIndex.Paralyzed: return 0xe0e0b4u;
-            case ConditionEffectIndex.Bleeding: return 0x330c0cu;
-            case ConditionEffectIndex.Stasis: return 0x363636u;
-            case ConditionEffectIndex.ArmorBroken: return 0x28184au;
-            case ConditionEffectIndex.Unstable: return 0x764bd1u;
-            case ConditionEffectIndex.Darkness: return 0x000000u;
-            case ConditionEffectIndex.Petrify: return 0x171717u;
-            case ConditionEffectIndex.Curse: return 0x4a1d1du;
-            case ConditionEffectIndex.Exposed: return 0xd1dfe0u;
-            case ConditionEffectIndex.Silenced: return 0xffffffu;
-            default: return armorBreak ? 0x9000FFu : 0xFF0000u;
+            case ConditionEffectIndex.Quiet:
+                return 0xe6e6e6u;
+            case ConditionEffectIndex.Weak:
+                return 0xa8a8a8u;
+            case ConditionEffectIndex.Slowed:
+                return 0xaabf71u;
+            case ConditionEffectIndex.Sick:
+                return 0x0f4512u;
+            case ConditionEffectIndex.Dazed:
+                return 0xc5c977u;
+            case ConditionEffectIndex.Stunned:
+                return 0xe3b540u;
+            case ConditionEffectIndex.Blind:
+                return 0x0f0f0fu;
+            case ConditionEffectIndex.Hallucinating:
+                return 0xff00fbu;
+            case ConditionEffectIndex.Drunk:
+                return 0x8c9c43u;
+            case ConditionEffectIndex.Paralyzed:
+                return 0xe0e0b4u;
+            case ConditionEffectIndex.Bleeding:
+                return 0x330c0cu;
+            case ConditionEffectIndex.Stasis:
+                return 0x363636u;
+            case ConditionEffectIndex.ArmorBroken:
+                return 0x28184au;
+            case ConditionEffectIndex.Unstable:
+                return 0x764bd1u;
+            case ConditionEffectIndex.Darkness:
+                return 0x000000u;
+            case ConditionEffectIndex.Petrify:
+                return 0x171717u;
+            case ConditionEffectIndex.Curse:
+                return 0x4a1d1du;
+            case ConditionEffectIndex.Exposed:
+                return 0xd1dfe0u;
+            case ConditionEffectIndex.Silenced:
+                return 0xffffffu;
+            default:
+                return armorBreak ? 0x9000FFu : 0xFF0000u;
         }
     }
 
@@ -606,9 +670,11 @@ public class Entity {
         if (HasConditionEffect(ConditionEffects.Invincible) || HasConditionEffect(ConditionEffects.Invulnerable))
             return;
 
-        if (Map.LocalPlayer == null) return;
+        if (Map.LocalPlayer == null)
+            return;
 
-        if (effect != ConditionEffectIndex.None) ConditionEffects |= (ConditionEffects)(1UL << (int)effect);
+        if (effect != ConditionEffectIndex.None)
+            ConditionEffects |= (ConditionEffects)(1UL << (int)effect);
 
         if (damageAmount > 0) {
             var newHealth = Map.LocalPlayer.Hp - damageAmount;
@@ -680,4 +746,5 @@ public class Entity {
     public bool PortalUsable;
 
     #endregion
+
 }
