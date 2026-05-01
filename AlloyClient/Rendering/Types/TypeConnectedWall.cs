@@ -4,7 +4,6 @@ using AlloyClient.Assets;
 using AlloyClient.Game.Objects;
 using AlloyClient.Rendering.VertexData;
 using Common.Structs;
-using OpenTK.Mathematics;
 
 namespace AlloyClient.Rendering.Types;
 
@@ -13,7 +12,6 @@ public sealed class TypeConnectedWall : RenderBase {
     private readonly float _h;
     private readonly float _tI;
 
-    private readonly Vector4 _uvDot, _uvShortLine, _uvL, _uvLine, _uvT, _uvCross;
     internal readonly List<CaveWallVertex> Triangles = new(128);
     private bool _geometryDirty = true;
     private int _lastConnectType = -1;
@@ -28,13 +26,7 @@ public sealed class TypeConnectedWall : RenderBase {
         _tI = tI;
         _h = h;
         Extra = new ExtraData(RenderConfig.TypeWall, RenderConfig.Shade);
-        var props = entity.Properties;
-        _uvDot = props.DotTexture.W > 0 ? props.DotTexture.ToVector4(true) : UV;
-        _uvShortLine = props.ShortLineTexture.W > 0 ? props.ShortLineTexture.ToVector4(true) : UV;
-        _uvL = props.LTexture.W > 0 ? props.LTexture.ToVector4(true) : UV;
-        _uvLine = props.LineTexture.W > 0 ? props.LineTexture.ToVector4(true) : UV;
-        _uvT = props.TTexture.W > 0 ? props.TTexture.ToVector4(true) : UV;
-        _uvCross = props.CrossTexture.W > 0 ? props.CrossTexture.ToVector4(true) : UV;
+
         SetTexture(entity.GetTexture());
     }
 
@@ -48,7 +40,8 @@ public sealed class TypeConnectedWall : RenderBase {
 
         var newTileX = (int)x;
         var newTileY = (int)y;
-        if (_positionSet && newTileX == _tileX && newTileY == _tileY) return;
+        if (_positionSet && newTileX == _tileX && newTileY == _tileY)
+            return;
         _tileX = newTileX;
         _tileY = newTileY;
         _positionSet = true;
@@ -56,7 +49,8 @@ public sealed class TypeConnectedWall : RenderBase {
     }
 
     public void SetConnectType(int connectType) {
-        if (Entity.ConnectType == connectType && !_geometryDirty) return;
+        if (Entity.ConnectType == connectType && !_geometryDirty)
+            return;
         Entity.ConnectType = connectType;
         _geometryDirty = true;
     }
@@ -66,7 +60,8 @@ public sealed class TypeConnectedWall : RenderBase {
     }
 
     public override void SetDepth(float depth) {
-        if (Math.Abs(Extra.SortId - depth) < 0.001f) return;
+        if (Math.Abs(Extra.SortId - depth) < 0.001f)
+            return;
         base.SetDepth(depth);
         _geometryDirty = true;
     }
@@ -91,16 +86,24 @@ public sealed class TypeConnectedWall : RenderBase {
 
         if (_geometryDirty && _positionSet) {
             Triangles.Clear();
+            var props = Entity.Properties;
+            var uvDot = props.DotTexture.W > 0 ? props.DotTexture.ToVector4(true) : UV;
+            var uvShortLine = props.ShortLineTexture.W > 0 ? props.ShortLineTexture.ToVector4(true) : UV;
+            var uvL = props.LTexture.W > 0 ? props.LTexture.ToVector4(true) : UV;
+            var uvLine = props.LineTexture.W > 0 ? props.LineTexture.ToVector4(true) : UV;
+            var uvT = props.TTexture.W > 0 ? props.TTexture.ToVector4(true) : UV;
+            var uvCross = props.CrossTexture.W > 0 ? props.CrossTexture.ToVector4(true) : UV;
             TypeConnectedWallGeo.Build(
                 Position.X, Position.Y,
                 Entity.ConnectType,
                 UV, Extra.SortId,
                 Triangles,
                 _bI, _tI, _h,
-                _uvDot, _uvShortLine, _uvL, _uvLine, _uvT, _uvCross);
+                uvDot, uvShortLine, uvL, uvLine, uvT, uvCross);
             _geometryDirty = false;
         }
 
-        if (Triangles.Count > 0) Render.DrawConnectedWall(this);
+        if (Triangles.Count > 0)
+            Render.DrawConnectedWall(this);
     }
 }

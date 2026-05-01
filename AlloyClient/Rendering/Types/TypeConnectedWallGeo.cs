@@ -98,12 +98,9 @@ public static class TypeConnectedWallGeo {
     private ref struct Builder {
         private readonly float _posX, _posY;
         private readonly int _rot;
-        private readonly Vector4 _atlas;
-        private readonly Vector4 _topAtlas;
+        private readonly Vector4 _atlas, _topAtlas;
         private readonly List<CaveWallVertex> _verts;
-        private readonly float _sortId;
-        private readonly float _bI, _tI, _h;
-        private readonly float _uvOff;
+        private readonly float _sortId, _bI, _tI, _h, _uvOff;
 
         public Builder(float posX, float posY, int rot, Vector4 atlas, Vector4 topAtlas,
             List<CaveWallVertex> verts, float sortId, float bI, float tI, float h) {
@@ -117,7 +114,6 @@ public static class TypeConnectedWallGeo {
             _bI = bI;
             _tI = tI;
             _h = h;
-            var diff = bI - tI;
             _uvOff = 0f;
         }
 
@@ -165,12 +161,14 @@ public static class TypeConnectedWallGeo {
             var t3 = P(0.5f, -_tI, _h);
             var t4 = P(0.5f, _tI, _h);
             var t5 = P(-_tI, _tI, _h);
-            SideQuad(t2, t1, b1, b2, true, true);
-            SideQuad(t3, t2, b2, b3, true, true);
+            SideQuad(t2, t1, b1, b2, true, false);
+            SideQuad(t3, t2, b2, b3, false, false);
             SideQuad(t5, t4, b4, b5, true, false);
             SideQuad(t0, t5, b5, b0, false, true);
-            BottomTri(b2, b1, b3);
-            TopFan(t0, t1, t2, t3, t4, t5);
+            TopTriUV(t5, t0, t1);
+            TopTriUV(t5, t1, t2);
+            TopTriUV(t5, t2, t4);
+            TopTriUV(t2, t3, t4);
         }
 
         public void BuildLine() {
@@ -204,14 +202,17 @@ public static class TypeConnectedWallGeo {
             var t5 = P(-0.5f, _tI, _h);
             var t6 = P(-0.5f, -_tI, _h);
             var t7 = P(-_tI, -_tI, _h);
-            SideQuad(t2, t1, b1, b2, true, true);
-            SideQuad(t3, t2, b2, b3, true, true);
+            SideQuad(t2, t1, b1, b2, true, false);
+            SideQuad(t3, t2, b2, b3, false, false);
             SideQuad(t5, t4, b4, b5, false, false);
-            SideQuad(t7, t6, b6, b7, true, true);
-            SideQuad(t0, t7, b7, b0, true, true);
-            BottomTri(b2, b1, b3);
-            BottomTri(b7, b6, b0);
-            TopFan(t0, t1, t2, t3, t4, t5, t6, t7);
+            SideQuad(t7, t6, b6, b7, true, false);
+            SideQuad(t0, t7, b7, b0, false, false);
+            TopTriUV(t7, t0, t1);
+            TopTriUV(t7, t1, t2);
+            TopTriUV(t2, t3, t4);
+            TopTriUV(t5, t6, t7);
+            TopTriUV(t7, t2, t4);
+            TopTriUV(t7, t4, t5);
         }
 
         public void BuildCross() {
@@ -239,74 +240,37 @@ public static class TypeConnectedWallGeo {
             var t9 = P(-0.5f, _tI, _h);
             var t10 = P(-0.5f, -_tI, _h);
             var t11 = P(-_tI, -_tI, _h);
-            SideQuad(t2, t1, b1, b2, true, true);
-            SideQuad(t3, t2, b2, b3, true, true);
-            SideQuad(t5, t4, b4, b5, true, true);
-            SideQuad(t6, t5, b5, b6, true, true);
-            SideQuad(t8, t7, b7, b8, true, true);
-            SideQuad(t9, t8, b8, b9, true, true);
-            SideQuad(t11, t10, b10, b11, true, true);
-            SideQuad(t0, t11, b11, b0, true, true);
-            BottomTri(b2, b1, b3);
-            BottomTri(b5, b4, b6);
-            BottomTri(b8, b7, b9);
-            BottomTri(b11, b10, b0);
-            TopFan(t0, t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11);
+            SideQuad(t2, t1, b1, b2, true, false);
+            SideQuad(t3, t2, b2, b3, false, false);
+            SideQuad(t5, t4, b4, b5, true, false);
+            SideQuad(t6, t5, b5, b6, false, false);
+            SideQuad(t8, t7, b7, b8, true, false);
+            SideQuad(t9, t8, b8, b9, false, false);
+            SideQuad(t11, t10, b10, b11, true, false);
+            SideQuad(t0, t11, b11, b0, false, false);
+            TopTriUV(t11, t0, t1);
+            TopTriUV(t11, t1, t2);
+            TopTriUV(t2, t3, t4);
+            TopTriUV(t2, t4, t5);
+            TopTriUV(t5, t6, t7);
+            TopTriUV(t5, t7, t8);
+            TopTriUV(t8, t9, t10);
+            TopTriUV(t8, t10, t11);
+            TopTriUV(t11, t2, t5);
+            TopTriUV(t11, t5, t8);
         }
 
         private void SideQuad(Vector3 tl, Vector3 tr, Vector3 br, Vector3 bl,
             bool taperLeft, bool taperRight) {
             var offL = taperLeft ? _uvOff : 0f;
             var offR = taperRight ? _uvOff : 0f;
-
-            Tri(tl, 0f, 0f,
-                tr, 1f, 0f,
-                br, 1f + offR, 1f);
-
-            Tri(tl, 0f, 0f,
-                br, 1f + offR, 1f,
-                bl, 0f + offL, 1f);
-        }
-
-        private void BottomTri(Vector3 a, Vector3 b, Vector3 c) {
-            Tri(a, 0f, 0f, b, 1f, 0f, c, 0.5f, 1f);
+            Tri(tl, 0f, 0f, tr, 1f, 0f, br, 1f + offR, 1f);
+            Tri(tl, 0f, 0f, br, 1f + offR, 1f, bl, 0f + offL, 1f);
         }
 
         private void TopFan(Vector3 p0, Vector3 p1, Vector3 p2, Vector3 p3) {
             TopTriUV(p0, p1, p2);
             TopTriUV(p0, p2, p3);
-        }
-
-        private void TopFan(Vector3 p0, Vector3 p1, Vector3 p2, Vector3 p3, Vector3 p4, Vector3 p5) {
-            TopTriUV(p0, p1, p2);
-            TopTriUV(p0, p2, p3);
-            TopTriUV(p0, p3, p4);
-            TopTriUV(p0, p4, p5);
-        }
-
-        private void TopFan(Vector3 p0, Vector3 p1, Vector3 p2, Vector3 p3,
-            Vector3 p4, Vector3 p5, Vector3 p6, Vector3 p7) {
-            TopTriUV(p0, p1, p2);
-            TopTriUV(p0, p2, p3);
-            TopTriUV(p0, p3, p4);
-            TopTriUV(p0, p4, p5);
-            TopTriUV(p0, p5, p6);
-            TopTriUV(p0, p6, p7);
-        }
-
-        private void TopFan(Vector3 p0, Vector3 p1, Vector3 p2, Vector3 p3,
-            Vector3 p4, Vector3 p5, Vector3 p6, Vector3 p7,
-            Vector3 p8, Vector3 p9, Vector3 p10, Vector3 p11) {
-            TopTriUV(p0, p1, p2);
-            TopTriUV(p0, p2, p3);
-            TopTriUV(p0, p3, p4);
-            TopTriUV(p0, p4, p5);
-            TopTriUV(p0, p5, p6);
-            TopTriUV(p0, p6, p7);
-            TopTriUV(p0, p7, p8);
-            TopTriUV(p0, p8, p9);
-            TopTriUV(p0, p9, p10);
-            TopTriUV(p0, p10, p11);
         }
 
         private void TopTriUV(Vector3 a, Vector3 b, Vector3 c) {
@@ -339,17 +303,17 @@ public static class TypeConnectedWallGeo {
         private void Tri(Vector3 v1, float u1, float f1,
             Vector3 v2, float u2, float f2,
             Vector3 v3, float u3, float f3) {
-            _verts.Add(new CaveWallVertex(v1, AtlasUV(u1, f1), 1f, _sortId));
-            _verts.Add(new CaveWallVertex(v2, AtlasUV(u2, f2), 1f, _sortId));
-            _verts.Add(new CaveWallVertex(v3, AtlasUV(u3, f3), 1f, _sortId));
+            _verts.Add(new CaveWallVertex(v1, AtlasUV(u1, f1), 1f, _sortId - v1.Z * 0.001f));
+            _verts.Add(new CaveWallVertex(v2, AtlasUV(u2, f2), 1f, _sortId - v2.Z * 0.001f));
+            _verts.Add(new CaveWallVertex(v3, AtlasUV(u3, f3), 1f, _sortId - v3.Z * 0.001f));
         }
 
         private void TopTri(Vector3 v1, Vector2 uv1,
             Vector3 v2, Vector2 uv2,
             Vector3 v3, Vector2 uv3) {
-            _verts.Add(new CaveWallVertex(v1, TopAtlasUV(uv1.X, uv1.Y), 1f, _sortId));
-            _verts.Add(new CaveWallVertex(v2, TopAtlasUV(uv2.X, uv2.Y), 1f, _sortId));
-            _verts.Add(new CaveWallVertex(v3, TopAtlasUV(uv3.X, uv3.Y), 1f, _sortId));
+            _verts.Add(new CaveWallVertex(v1, TopAtlasUV(uv1.X, uv1.Y), 1f, _sortId - v1.Z * 0.001f));
+            _verts.Add(new CaveWallVertex(v2, TopAtlasUV(uv2.X, uv2.Y), 1f, _sortId - v2.Z * 0.001f));
+            _verts.Add(new CaveWallVertex(v3, TopAtlasUV(uv3.X, uv3.Y), 1f, _sortId - v3.Z * 0.001f));
         }
 
         private Vector2 AtlasUV(float u, float v) {

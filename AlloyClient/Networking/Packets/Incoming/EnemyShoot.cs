@@ -3,6 +3,7 @@ using AlloyClient.Assets.XmlStructs;
 using AlloyClient.Game;
 using AlloyClient.Game.Objects;
 using AlloyClient.Networking.Structs.DataObjects;
+using AlloyClient.Ui.Character;
 using Common;
 using OpenTK.Mathematics;
 
@@ -67,14 +68,21 @@ public class EnemyShoot : IncomingPacket<EnemyShoot> {
         if (en.Properties.Projectiles != null && BulletType < en.Properties.Projectiles.Count)
             projDesc = en.Properties.Projectiles[BulletType];
         else if (en.Properties.ProjectilesDict != null &&
-                 en.Properties.ProjectilesDict.TryGetValue(BulletType, out var dictProj)) projDesc = dictProj;
+                 en.Properties.ProjectilesDict.TryGetValue(BulletType, out var dictProj))
+            projDesc = dictProj;
         if (projDesc == null) {
             Logger.Error($"Projectile '{BulletType}' missing on '{en.Properties.DisplayName}'. Skipping shot.",
-                         "EnemyShoot");
+                "EnemyShoot");
             return;
         }
 
-        if (en.Hp < 0) return;
+        if (en.Hp < 0)
+            return;
+        if (en.PredictedHp < 0) {
+            NotificationLayer.AddStatusText(en, "[Invalid-Projectile]", 0xFFFFFF, 1000, 0);
+            return;
+        }
+
         if (!ObjectLibrary.IdToObjectType.TryGetValue(projDesc.ObjectId, out type) ||
             !ObjectLibrary.TypeToObjectProps.TryGetValue(type, out objDesc)) {
             Logger.Error($"Failed to find Object properties for projectile '{projDesc.ObjectId}'", "EnemyShoot");

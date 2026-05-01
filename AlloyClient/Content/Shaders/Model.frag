@@ -10,6 +10,7 @@ in MODEL_OUT {
     vec3 Extra;
     float Zed;
     vec2 WorldPos;
+    vec3 WorldPos3D;
 } output1;
 
 out vec4 FragColor;
@@ -22,13 +23,6 @@ void main() {
     vec2 uv = map(output1.BaseUV, output1.UV.xy, output1.UV.xy + output1.UV.zw);
     vec4 color = texture(GameTexture, uv);
 
-    //if (color.a < 0.1) discard;
-
-    //color.rgb /= color.a;
-    //color.rgb -= output1.Extra.z * 0.241 * clamp(0.6 - output1.Zed, 0.0, 0.6);
-
-    //FragColor = color;
-
     if (color.a < 0.1) discard;
     vec2 tileCenter = floor(output1.WorldPos) + vec2(0.5);
     vec2 playerTile = floor(uPlayerPos) + vec2(0.5);
@@ -40,8 +34,24 @@ void main() {
     float fogFactor = clamp((dist - fogStart) / (fogEnd - fogStart), 0.0, 1.0);
     float steps = 5.0;
     fogFactor = floor(fogFactor * steps) / steps;
-
     float brightness = mix(1.0, 0.4, fogFactor);
+
+    vec3 dx = dFdx(output1.WorldPos3D);
+    vec3 dy = dFdy(output1.WorldPos3D);
+    vec3 normal = normalize(cross(dy, dx));
+
+    vec3 absN = abs(normal);
+    vec3 snappedNormal = vec3(0.0);
+    if (absN.x > absN.y && absN.x > absN.z) snappedNormal.x = sign(normal.x);
+    else if (absN.y > absN.x && absN.y > absN.z) snappedNormal.y = sign(normal.y);
+    else snappedNormal.z = sign(normal.z);
+
+    vec3 lightDir = normalize(vec3(1.0, 3.0, 2.0));
+    float dotLight = max(0.0, dot(snappedNormal, lightDir));
+    float calculatedShade = 0.75 + 0.25 * dotLight;
+    float finalShade = mix(1.0, calculatedShade, step(0.5, output1.Extra.z));
+
     color.rgb *= brightness;
+    color.rgb *= finalShade;
     FragColor = color;
 }

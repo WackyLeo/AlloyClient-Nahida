@@ -17,6 +17,7 @@ out MODEL_OUT {
     vec3 Extra;
     float Zed;
     vec2 WorldPos;
+    vec3 WorldPos3D;
 } output1;
 
 void main() {
@@ -26,15 +27,16 @@ void main() {
     vec4 pos = vec4(Position.xy * mat2(c, -s, s, c), Position.z, 1);
     pos = vec4((pos.xy - 0.5) * 1.005 + 0.5, pos.zw);
     pos.xyz += iPosition;
-    
+
     output1.BaseUV = BaseUV;
     output1.UV = iUV;
     output1.Extra = iExtra;
     output1.Zed = pos.z;
     output1.WorldPos = pos.xy;
+    output1.WorldPos3D = pos.xyz;
 
     pos = pos * WorldMatrix * ViewMatrix * ProjMatrix;
     pos.z = iExtra.y;
-    
+
     gl_Position = pos;
 }

@@ -1,54 +1,51 @@
-﻿using System.Collections.Concurrent;
-using AlloyClient.Assets.Libraries;
+﻿using AlloyClient.Assets.Libraries;
 using AlloyClient.Game;
 using AlloyClient.Game.Objects;
 using AlloyClient.Networking.Packets.Outgoing;
 using AlloyClient.Networking.Structs.DataObjects;
-using AlloyClient.Utils;
 using Common;
 using OpenTK.Mathematics;
 
 namespace AlloyClient.Networking.Packets.Incoming;
 
 public class Update : IncomingPacket<Update> {
-    
-    public override PacketId PacketId => PacketId.Update;
-    
-    private static TileData[]  _tilesBuffer   = new TileData[256];
+
+    private static TileData[] _tilesBuffer = new TileData[256];
     private static ObjectDef[] _newObjsBuffer = new ObjectDef[256];
-    private static int[]       _dropsBuffer   = new int[256];
+    private static int[] _dropsBuffer = new int[256];
+    public int DropCount;
+    public int NewObjCount;
 
     public int TileCount;
-    public int NewObjCount;
-    public int DropCount;
 
-    public TileData[]  Tiles   => _tilesBuffer;
+    public override PacketId PacketId => PacketId.Update;
+
+    public TileData[] Tiles => _tilesBuffer;
     public ObjectDef[] NewObjs => _newObjsBuffer;
-    public int[]       Drops   => _dropsBuffer;
+    public int[] Drops => _dropsBuffer;
 
     public override void Reset() {
         TileCount = NewObjCount = DropCount = 0;
     }
 
-    public override void Read(NetworkReader reader)
-    {
+    public override void Read(NetworkReader reader) {
         ObjectDef.StatsPoolIndex = 0;
 
         TileCount = reader.ReadInt16();
         EnsureCapacity(ref _tilesBuffer, TileCount);
-        for (int i = 0; i < TileCount; i++)
+        for (var i = 0; i < TileCount; i++)
             _tilesBuffer[i].Read(reader);
 
         Logger.Debug($"[Update] After tiles: tileCount={TileCount} pos={reader.BaseStream.Position}");
 
         NewObjCount = reader.ReadInt16();
         EnsureCapacity(ref _newObjsBuffer, NewObjCount);
-        for (int i = 0; i < NewObjCount; i++)
+        for (var i = 0; i < NewObjCount; i++)
             _newObjsBuffer[i].Read(reader);
 
         DropCount = reader.ReadInt16();
         EnsureCapacity(ref _dropsBuffer, DropCount);
-        for (int i = 0; i < DropCount; i++)
+        for (var i = 0; i < DropCount; i++)
             _dropsBuffer[i] = reader.ReadInt32();
     }
 
@@ -60,13 +57,13 @@ public class Update : IncomingPacket<Update> {
     public override void Handle() {
         Client.QueuePacket(UpdateAck.CreatePacket());
 
-        for (int i = 0; i < TileCount; i++)
+        for (var i = 0; i < TileCount; i++)
             Map.SetTileData(Tiles[i].X, Tiles[i].Y, Tiles[i].Type);
 
-        for (int i = 0; i < DropCount; i++)
+        for (var i = 0; i < DropCount; i++)
             Map.RemoveEntity(Drops[i]);
-    
-        for (int i = 0; i < NewObjCount; i++) {
+
+        for (var i = 0; i < NewObjCount; i++) {
             var newObj = NewObjs[i];
             Entity entity;
 
@@ -74,6 +71,13 @@ public class Update : IncomingPacket<Update> {
                 Logger.Warn($"[Update] Unable to parse props for id: {newObj.ObjectType:x4}");
                 props = ObjectLibrary.TypeToObjectProps[0x600]; //Pirate Placeholder
             }
+
+            /*if (true || props.Class == "Wall" || props.Class == "ConnectedWall" || props.Class == "CaveWall") {
+                var tile = Map.GetTile((int)newObj.Position.X, (int)newObj.Position.Y);
+                if (true || tile == null || tile.Type == Const.DefaultTile) {
+                    Map.SetTileData((int)newObj.Position.X, (int)newObj.Position.Y, 0xfa);
+                }
+            } */
 
             if (props.IsPlayer) {
                 entity = new Player();
@@ -86,7 +90,6 @@ public class Update : IncomingPacket<Update> {
             }
 
             entity.Properties = props;
-
             entity.SetObjectId(newObj.Id);
             entity.SetType(newObj.ObjectType);
             Map.AddEntity(entity, newObj.Position);
@@ -99,7 +102,7 @@ public class Update : IncomingPacket<Update> {
             entity.LastTickId = Map.LastTickId;
             entity.LastTickUpdateTime = Map.LastGameTime.TotalMs;
             entity.MovementVector = Vector2.Zero;
-            
+
             if (newObj.Id == Map.LocalPlayerId) {
                 Map.OnLocalPlayerCreated(entity);
             }

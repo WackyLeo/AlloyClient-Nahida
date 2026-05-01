@@ -13,6 +13,7 @@ layout(location = 0) out vec2  vUV;
 layout(location = 1) out float vShade;
 layout(location = 2) out float vZ;
 layout(location = 3) out vec2  vWorldPos;
+layout(location = 4) out vec3  vWorldPos3D;
 
 void main() {
     vec4 worldPos = vec4(Position, 1.0) * WorldMatrix * ViewMatrix * ProjMatrix;
@@ -23,4 +24,5 @@ void main() {
     vShade = Shade;
     vZ = Position.z;
     vWorldPos = Position.xy;
+    vWorldPos3D = Position;
 }

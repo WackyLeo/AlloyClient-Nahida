@@ -75,6 +75,10 @@ public static class Map {
     private static readonly List<MapTile> VisibleTopTiles = [];
 
     private static Vector2 _lastPosition = Vector2.Zero;
+    private static float _lastCameraZoom;
+    private static float _lastCameraAngle;
+    private static int _lastScreenHeight;
+    private static int _lastScreenWidth;
 
     private static readonly List<(Projectile proj, double spawnAt)> PendingProjectiles = [];
 
@@ -155,7 +159,7 @@ public static class Map {
                     if ((entity.Position - LocalPlayer.Position).LengthSquared > darknessRadiusSq)
                         entity.RenderBaseType.Visible = false;
 
-                if (entity.IsPredictedDead && entity.Properties != null && !entity.Properties.IsPlayer)
+                if (entity.IsPredictedDead && entity.Properties != null && !entity.Properties.IsEnemy)
                     entity.RenderBaseType.SetAlpha(0.4f);
                 else if (entity.HasConditionEffect(ConditionEffects.Invisible))
                     entity.RenderBaseType.SetAlpha(0.5f);
@@ -228,7 +232,15 @@ public static class Map {
         }
 
         var pos = Vector2.Floor(LocalPlayer.Position);
-        if (pos != _lastPosition || TilesDirty) {
+        var dirtyRotation = Math.Abs(_lastCameraAngle - Settings.CameraAngle) > 0.001f;
+        var dirtyZoom = Math.Abs(_lastCameraZoom - Settings.CameraAngle) > 0.001f;
+        var dirtySize = _lastScreenHeight != Settings.ScreenHeight || _lastScreenWidth != Settings.ScreenWidth;
+
+        if (pos != _lastPosition || TilesDirty || dirtyRotation || dirtyZoom || dirtySize) {
+            _lastCameraAngle = Settings.CameraAngle;
+            _lastCameraZoom = Settings.CameraZoom;
+            _lastScreenHeight = Settings.ScreenHeight;
+            _lastScreenWidth = Settings.ScreenWidth;
             _lastPosition = pos;
             TilesDirty = false;
             BuildTileVisibility();
