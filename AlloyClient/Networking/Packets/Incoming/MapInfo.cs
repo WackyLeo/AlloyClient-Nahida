@@ -73,7 +73,7 @@ public class MapInfo : IncomingPacket<MapInfo> {
         Map.Reset();
 
         Map.InitMap(Width, Height, Name, DisplayName, Difficulty, Seed, Background,
-            AllowPlayerTeleport, ShowDisplays);
+            AllowPlayerTeleport, ShowDisplays, MusicFile);
 
         LoadOrCreate();
 

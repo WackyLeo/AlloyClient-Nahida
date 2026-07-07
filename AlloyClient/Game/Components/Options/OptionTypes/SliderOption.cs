@@ -11,7 +11,7 @@ public class SliderOption : Option {
     private const int TrackWidth = 420;
     private const int TrackHeight = 8;
     private const int HandleSize = 20;
-    private const int OptionHeight = 50;
+    private const int OptionHeight = 75;
     private readonly Action<float> _callback;
 
     private readonly ColorRect _handle;
@@ -24,7 +24,7 @@ public class SliderOption : Option {
 
     private bool _dragging;
 
-    public SliderOption(ValueSetting<float> setting, string label, Action<float> sliderCallback)
+    public SliderOption(ValueSetting<float> setting, string label, string overviewLabel, Action<float> sliderCallback)
         : base(setting, null, null) {
         _setting = setting;
         _callback = sliderCallback;
@@ -83,6 +83,19 @@ public class SliderOption : Option {
             Y = (OptionHeight - 20) / 2
         });
         AddChild(_valueText);
+
+        var overviewLabelText = new SimpleText(new TextConfig {
+            Text = overviewLabel,
+            FontSize = 28,
+            FontType = FontType.Bold,
+            OutlineThickness = 0,
+            Glow = 0.5f,
+            Color = 0xABABAB,
+            X = (trackX + TrackWidth + 12) / 2,
+            Y = 10,
+            Anchor = UiAnchor.Middle,
+        });
+        AddChild(overviewLabelText);
 
         MouseEnabled = true;
         _trackBg.MouseEnabled = true;

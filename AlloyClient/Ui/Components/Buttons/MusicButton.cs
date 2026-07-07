@@ -22,15 +22,16 @@ public struct MusicButtonConfig {
 public class MusicButton : Sprite {
     private readonly IconButton _button;
     private readonly TextureInfo _musicOff;
-
     private readonly TextureInfo _musicOn;
 
     private bool _state;
+    private float _musicVolume;
 
     //TODO: turn into its own thing instead of having icon child
 
     public MusicButton(MusicButtonConfig config) {
-        _state = Settings.PlayMusic.Value;
+        _state = Settings.MusicVolume == 0;
+        _musicVolume = Settings.MusicVolume;
         _musicOn = TextureHelper.FromGameAtlas("lofiInterfaceBig", 3, 4);
         _musicOff = TextureHelper.FromGameAtlas("lofiInterfaceBig", 4, 4);
 
@@ -50,8 +51,16 @@ public class MusicButton : Sprite {
 
     private void OnClick() {
         _state = !_state;
-        Settings.PlayMusic = _state;
+
         _button.ChangeTexture(_state ? _musicOn : _musicOff);
+
+        if (_state)
+        {
+            Settings.MusicVolume = _musicVolume;
+            return;
+        }
+
+        Settings.MusicVolume = 0;
     }
 
     private void OnMouseOver() {

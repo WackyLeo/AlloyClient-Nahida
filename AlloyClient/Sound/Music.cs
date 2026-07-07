@@ -13,7 +13,9 @@ public static class Music {
     private static GameMusicProvider _currentMusicProvider;
 
     public static void PlayMusic(string name, float fadeDurationSecs = 2f) {
-        if (!Settings.PlayMusic || _currentSongName == name) return;
+        if (Settings.MusicVolume == 0 || _currentSongName == name) {
+            return;
+        }
 
         Log.Info($"Playing song {name}");
         _currentSongName = name;
@@ -40,6 +42,10 @@ public static class Music {
 
     public static void SetVolume(float volume) {
         if (_currentMusicProvider != null) _currentMusicProvider.TargetVolume = volume;
+    }
+
+    public static bool GetIsMusicPlaying() {
+        return !(_currentSongName == null);
     }
 }
 

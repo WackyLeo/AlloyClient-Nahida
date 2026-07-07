@@ -26,12 +26,13 @@ public static class SoundManager {
     }
 
     public static void PlaySoundEffect(string name, SoundType soundType = SoundType.Sfx) {
-        var volume = soundType switch {
-            SoundType.Sfx => Settings.PlaySfx ? Settings.SfxVolume : 0f,
-            SoundType.Weapon => Settings.PlayWeaponSfx ? Settings.WeaponSfxVolume : 0f,
-            SoundType.Loot => Settings.PlayLootSfx ? Settings.LootSfxVolume : 0f,
-            _ => 0f
-        };
+        var volume = 0.0f;
+        switch (soundType) {
+            case SoundType.Sfx: volume = Settings.SfxVolume; break;
+            case SoundType.Weapon: volume = Settings.WeaponSfxVolume; break;
+            case SoundType.Loot: volume = Settings.LootSfxVolume; break;
+            default: volume = 0.0f; break;
+        }
 
         if (volume <= 0f) return;
 

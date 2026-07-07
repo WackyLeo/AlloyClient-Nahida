@@ -36,8 +36,8 @@ public class WikiPanel : Panel {
     }
 
     protected override void OnInteractKey() {
-        var wiki = new WikiWindow();
-        Stage.AddChild(wiki);
-        UserInput.SetInputDisabled(true);
+        //var wiki = new WikiWindow();
+        //Stage.AddChild(wiki);
+        //UserInput.SetInputDisabled(true);
     }
 }

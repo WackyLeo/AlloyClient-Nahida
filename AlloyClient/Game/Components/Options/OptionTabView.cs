@@ -46,17 +46,6 @@ public class OptionTabView : Container {
 
         PositionChildren();
 
-        if (_container.Height >= Height) {
-            _scrollbar = new VerticalScrollBar(this, new VerticalScrollBarConfig {
-                X = Settings.DefaultScreenWidth - 15,
-                Width = 15,
-                Height = Height,
-                TotalContentHeight = _container.Height,
-                VisibleContentHeight = Height,
-                OnValueChanged = val => _container.Y = -val
-            });
-            AddChild(_scrollbar);
-        }
     }
 
     private void PositionChildren() {
@@ -180,20 +169,27 @@ public class OptionTabView : Container {
     }
 
     private void AddSoundOptions() {
-        _options.Add(new ChoiceOption<bool>(Settings.PlayMusic, OnOffLabels, OnOffValues, "Play Music",
-            "This toggles whether music is played", OnPlayMusicChange));
-        _options.Add(new SliderOption(Settings.MusicVolume, "Vol:", OnMusicVolumeChange));
-        _options.Add(new ChoiceOption<bool>(Settings.PlaySfx, OnOffLabels, OnOffValues, "Play Sound Effects",
-            "This toggles whether sound effects are played",
-            OnPlaySoundEffectsChange));
-        _options.Add(new SliderOption(Settings.SfxVolume, "Vol:", OnSfxVolumeChange));
-        _options.Add(new ChoiceOption<bool>(Settings.PlayWeaponSfx, OnOffLabels, OnOffValues, "Play Weapon Sounds",
-            "This toggles whether weapon sounds are played",
-            OnPlayWeaponSoundsChange));
-        _options.Add(new SliderOption(Settings.WeaponSfxVolume, "Vol:", OnWeaponSfxVolumeChange));
-        _options.Add(new ChoiceOption<bool>(Settings.PlayLootSfx, OnOffLabels, OnOffValues, "Play Loot Sounds",
-            "This toggles whether LG/DC/AC/CS loot drop sounds are played"));
-        _options.Add(new SliderOption(Settings.LootSfxVolume, "Vol:", OnLootSfxVolumeChange));
+        // I've commented out the buttons and added some overview text alongside these sliders, 
+        // 0% can act as the isplaying check
+
+        //_options.Add(new ChoiceOption<bool>(Settings.PlayMusic, OnOffLabels, OnOffValues, "Play Music",
+        //    "This toggles whether music is played", OnPlayMusicChange));
+
+        _options.Add(new SliderOption(Settings.MusicVolume, "Vol:", "MUSIC", OnMusicVolumeChange));
+        //_options.Add(new ChoiceOption<bool>(Settings.PlaySfx, OnOffLabels, OnOffValues, "Play Sound Effects",
+        //    "This toggles whether sound effects are played",
+        //    OnPlaySoundEffectsChange));
+
+        _options.Add(new SliderOption(Settings.SfxVolume, "Vol:", "SFX", OnSfxVolumeChange));
+        //_options.Add(new ChoiceOption<bool>(Settings.PlayWeaponSfx, OnOffLabels, OnOffValues, "Play Weapon Sounds",
+        //    "This toggles whether weapon sounds are played",
+        //    OnPlayWeaponSoundsChange));
+
+        _options.Add(new SliderOption(Settings.WeaponSfxVolume, "Vol:", "WEAPONS", OnWeaponSfxVolumeChange));
+        //_options.Add(new ChoiceOption<bool>(Settings.PlayLootSfx, OnOffLabels, OnOffValues, "Play Loot Sounds",
+        //    "This toggles whether LG/DC/AC/CS loot drop sounds are played"));
+
+        _options.Add(new SliderOption(Settings.LootSfxVolume, "Vol:", "LOOT", OnLootSfxVolumeChange));
     }
 
     private void AddExtraOptions() {
@@ -222,20 +218,20 @@ public class OptionTabView : Container {
     }
 
     private void OnMusicVolumeChange(float volume) {
+        if(Settings.MusicVolume <= 0.01f && volume > 0f || (!Music.GetIsMusicPlaying() && volume > 0f)) {
+            // Special case
+            Settings.MusicVolume.SetValue(volume);
+            Music.SetVolume(volume);
+            Music.PlayMusic(Map.MusicName);
+            return;
+        }   
+        if (volume < 0.01f) {
+            // Special case 2
+            Music.StopMusic(0.0f);
+        }
+
         Settings.MusicVolume.SetValue(volume);
         Music.SetVolume(volume);
-    }
-
-    private void OnPlayWeaponSoundsChange() {
-        //throw new NotImplementedException();
-    }
-
-    private void OnPlaySoundEffectsChange() {
-        //throw new NotImplementedException();
-    }
-
-    private void OnPlayMusicChange() {
-        //throw new NotImplementedException();
     }
 
     private void OnChatVisible() {

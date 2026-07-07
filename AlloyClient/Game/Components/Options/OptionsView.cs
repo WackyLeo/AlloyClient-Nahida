@@ -53,7 +53,7 @@ public sealed class OptionsView : Overlay {
             { X = 0, Y = 120, Width = Settings.DefaultScreenWidth, Height = 2, Color = 0x5E5E5E });
         AddChild(header);
 
-        var continueButton = new MenuBarButton(new TextButtonConfig {
+        /*var continueButton = new MenuBarButton(new TextButtonConfig {
             Text = "continue",
             FontSize = 57,
             OnClicked = CloseOverlay,
@@ -61,7 +61,7 @@ public sealed class OptionsView : Overlay {
             Y = Settings.DefaultScreenHeight - 40,
             Anchor = UiAnchor.Middle
         }, true);
-        AddChild(continueButton);
+        AddChild(continueButton); */
 
         var resetButton = new MenuBarButton(new TextButtonConfig {
             Text = "reset to defaults",

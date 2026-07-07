@@ -24,7 +24,7 @@ namespace AlloyClient.Game;
 
 public static class Map {
     public const int TileRenderDistance = 20;
-
+    public static string MusicName = "Reclaiming Entropy";
     public static GameTime LastGameTime;
     public static GameSprite GameSprite;
     public static double CurrentTime;
@@ -85,7 +85,7 @@ public static class Map {
     private static readonly MapTile[] RebuildData = new MapTile[9];
 
     public static void InitMap(int width, int height, string name, string display, int diff, uint seed, int background,
-        bool allowTp, bool showDisplays) {
+        bool allowTp, bool showDisplays, string musicName) {
         Width = width;
         Height = height;
         Name = name;
@@ -95,6 +95,7 @@ public static class Map {
         Background = background;
         AllowPlayerTeleport = allowTp;
         ShowDisplays = showDisplays;
+        MusicName = musicName;
         _tiles = new MapTile[width + 1, height + 1];
 
         Minimap.OnNewMap.Dispatch(width, height);
@@ -398,6 +399,10 @@ public static class Map {
 
         for (var x = -renderDist; x < renderDist; x++) {
             for (var y = -renderDist; y < renderDist; y++) {
+                if (LocalPlayer == null) {
+                    return;
+                }
+
                 var tile = GetTile(x + (int)LocalPlayer.Position.X, y + (int)LocalPlayer.Position.Y);
                 if (tile != null && tile.Type != 0xFF) {
                     if (tile.ZOffset != 0f) {

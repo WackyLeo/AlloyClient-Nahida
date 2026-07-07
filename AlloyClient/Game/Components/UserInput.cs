@@ -250,9 +250,9 @@ public sealed class UserInput : Sprite {
                 Render.DebugEnabled = !Render.DebugEnabled;
                 break;
             case true when Settings.Debug2.CheckValue(key):
-                var wiki = new WikiWindow();
-                Stage.AddChild(wiki);
-                SetInputDisabled(true);
+                //var wiki = new WikiWindow();
+                //Stage.AddChild(wiki);
+                //SetInputDisabled(true);
                 break;
             case true when Settings.Debug3.CheckValue(key):
                 var storage = new StorageWindow();

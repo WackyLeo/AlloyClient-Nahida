@@ -135,11 +135,6 @@ public static class Settings {
         WeaponSfxVolume.SetValue(0.5f);
         LootSfxVolume.SetValue(0.5f);
 
-        PlayMusic.SetValue(true);
-        PlaySfx.SetValue(true);
-        PlayWeaponSfx.SetValue(true);
-        PlayLootSfx.SetValue(true);
-
         // Personal Preferences
         ToggleLeftToMax.SetValue(true);
         ToggleBarText.SetValue(true);
@@ -443,11 +438,6 @@ public static class Settings {
     public static ValueSetting<float> SfxVolume = 0.5f;
     public static ValueSetting<float> WeaponSfxVolume = 0.5f;
     public static ValueSetting<float> LootSfxVolume = 0.5f;
-
-    public static ValueSetting<bool> PlayMusic = true;
-    public static ValueSetting<bool> PlaySfx = true;
-    public static ValueSetting<bool> PlayWeaponSfx = true;
-    public static ValueSetting<bool> PlayLootSfx = true;
 
     // Personal Preferences
     public static ValueSetting<bool> ToggleLeftToMax = true;
