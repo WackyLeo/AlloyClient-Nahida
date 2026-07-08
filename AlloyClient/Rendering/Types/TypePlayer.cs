@@ -64,7 +64,9 @@ public sealed class TypePlayer : RenderBase {
         Rotation = new Vector4(s, c, k, f);
         
         Entity.HeightOffset = -0.5f * Scale.Y * k + Scale.W * k;
-        Render.DrawEntity(new VertexObject(Position, UV, Scale, Rotation, Extra.Data, Color));
+        var obj = new VertexObject(Position, UV, Scale, Rotation, Extra.Data, Color);
+        obj.Mask1 = Entity.FlashColor;
+        Render.DrawEntity(obj);
         var y = 0.125f;
         
         if (_player != Map.LocalPlayer) {

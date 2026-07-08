@@ -6,7 +6,8 @@ using OpenTK.Mathematics;
 
 namespace AlloyClient.Networking.Packets.Incoming;
 
-public class ShowEffect : IncomingPacket<ShowEffect> {
+public class ShowEffect : IncomingPacket<ShowEffect>
+{
     public uint Color;
     public float Duration;
     public EffectType EffectType;
@@ -17,7 +18,8 @@ public class ShowEffect : IncomingPacket<ShowEffect> {
 
     public override PacketId PacketId => PacketId.ShowEffect;
 
-    public override void Reset() {
+    public override void Reset()
+    {
         EffectType = default;
         TargetObjectId = 0;
         Color = 0;
@@ -27,7 +29,8 @@ public class ShowEffect : IncomingPacket<ShowEffect> {
         Strength = 0;
     }
 
-    public override void Read(NetworkReader reader) {
+    public override void Read(NetworkReader reader)
+    {
         EffectType = (EffectType)reader.ReadByte();
         TargetObjectId = reader.ReadInt32();
         Pos1.Read(reader);
@@ -37,14 +40,16 @@ public class ShowEffect : IncomingPacket<ShowEffect> {
         Strength = reader.ReadSingle();
     }
 
-    public override void Handle() {
+    public override void Handle()
+    {
         ParticleEffect effect = null;
         Map.Entities.TryGetValue(TargetObjectId, out var entity);
 
         var pos1 = new Vector2(Pos1.X, Pos1.Y);
         var pos2 = new Vector2(Pos2.X, Pos2.Y);
 
-        switch (EffectType) {
+        switch (EffectType)
+        {
             case EffectType.Heal:
                 if (entity == null) return;
                 effect = new HealEffect(entity, Color);
@@ -98,14 +103,14 @@ public class ShowEffect : IncomingPacket<ShowEffect> {
                 effect = new ConeBlastEffect(entity, pos1, Pos2.X, Color);
                 break;
             case EffectType.Jitter:
-                // Todo: Jitta
+                Camera.StartJitter();
                 return;
             case EffectType.Flashing:
-                // Todo: Flashin
+                if (entity == null) return;
+                entity.StartFlash(Color, Pos1.X, Pos1.Y);
                 return;
             case EffectType.ThrowProjectile:
-                // Todo: Throwa
-                effect = new ThrowEffect(pos2, pos1, Color, Duration > 0 ? (int)(Duration * 1000) : 1500);
+                effect = new ThrownProjectileEffect(Color, pos2, pos1);
                 break;
             case EffectType.Shocker:
                 if (entity == null) return;
@@ -139,7 +144,8 @@ public class ShowEffect : IncomingPacket<ShowEffect> {
         Map.AddParticleEffect(effect);
     }
 
-    public override string ToString() {
+    public override string ToString()
+    {
         return
             $"EffectType: {EffectType}, TargetObjectId: {TargetObjectId}, Pos1: {Pos1}, Pos2: {Pos2}, Color: {Color}";
     }

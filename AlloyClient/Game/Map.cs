@@ -299,8 +299,8 @@ public static class Map {
         RenderPipeline.BeginEntities();
         Render.StartDrawEntity();
         for (var i = 0; i < ParticleGenCount; i++)
-            if (ParticleGenerators[i] is RayCastParticle rcp)
-                rcp.Draw();
+            if (ParticleGenerators[i] is IDrawableParticleEffect drawableParticle)
+                drawableParticle.Draw();
 
         _sortBuffer.Clear();
         foreach (var storage in AllStorages)

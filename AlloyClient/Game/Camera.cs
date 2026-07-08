@@ -21,6 +21,11 @@ public static class Camera {
 
     public static float CameraAngle;
 
+    private const float MaxJitter = 0.5f;
+    private const float JitterBuildUpMs = 10000f;
+    private static bool _isJittering;
+    private static float _jitter;
+
     public static Vector3 Position;
 
     static Camera() {
@@ -29,6 +34,8 @@ public static class Camera {
 
     public static void Reset(bool includeHud = true) {
         CameraAngle = 0f;
+        _isJittering = false;
+        _jitter = 0f;
         Position = new Vector3(0f, 0f, 12);
 
         WorldMatrix = Matrix4.CreateRotationX(MathHelper.DegreesToRadians(180));
@@ -66,8 +73,26 @@ public static class Camera {
             -10000f, 10000f);
     }
 
+    public static void StartJitter() {
+        _isJittering = true;
+        _jitter = 0f;
+    }
+
+    public static void StopJitter() {
+        _isJittering = false;
+        _jitter = 0f;
+    }
+
     public static void Update(float x, float y) {
         CameraAngle = -Settings.CameraAngle;
+
+        if (_isJittering) {
+            _jitter += (float)(AlloyClient.Main.GameTime.ElapsedMs * MaxJitter / JitterBuildUpMs);
+            if (_jitter > MaxJitter) _jitter = MaxJitter;
+
+            x += (Random.Shared.NextSingle() * 2f - 1f) * _jitter;
+            y += (Random.Shared.NextSingle() * 2f - 1f) * _jitter;
+        }
 
         Position.X = x;
         Position.Y = -y;

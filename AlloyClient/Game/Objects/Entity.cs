@@ -37,6 +37,9 @@ public class Entity {
 
     public float FacingAngle;
 
+    public Vector4 FlashColor;
+    private EntityFlashDescription _flashDescription;
+
     public bool Flipped;
 
     public float HeightOffset;
@@ -99,6 +102,43 @@ public class Entity {
             Texture = TextureData.GetTexture(true);
 
         RenderBaseType = GetRenderType(type);
+    }
+
+    public void StartFlash(uint color, float periodSeconds, float repeats) {
+        if (periodSeconds <= 0f || repeats <= 0f) {
+            _flashDescription = default;
+            FlashColor = Vector4.Zero;
+            return;
+        }
+
+        _flashDescription = new EntityFlashDescription(
+            AlloyClient.Main.GameTime.TotalMs,
+            color,
+            periodSeconds * 1000f,
+            Math.Max(1, (int)MathF.Ceiling(repeats)));
+    }
+
+    private void UpdateFlash(double time) {
+        if (!_flashDescription.Active) {
+            FlashColor = Vector4.Zero;
+            return;
+        }
+
+        var elapsed = (float)(time - _flashDescription.StartTimeMs);
+        var total = _flashDescription.PeriodMs * _flashDescription.Repeats;
+        if (elapsed > total) {
+            _flashDescription = default;
+            FlashColor = Vector4.Zero;
+            return;
+        }
+
+        var local = elapsed % _flashDescription.PeriodMs;
+        var intensity = MathF.Sin(local / _flashDescription.PeriodMs * MathF.PI) * 0.5f;
+        FlashColor = new Vector4(
+            _flashDescription.R / 255f,
+            _flashDescription.G / 255f,
+            _flashDescription.B / 255f,
+            intensity);
     }
 
     public void SetTransparency(float alpha) {
@@ -196,6 +236,8 @@ public class Entity {
 
         if (Effect != null && !Effect.Update(time, dt))
             Effect = null;
+
+        UpdateFlash(time);
 
         RenderBaseType.SetPosition(Position.X, Position.Y, Z);
         return true;
@@ -757,3 +799,27 @@ public class Entity {
     #endregion
 
 }
+
+
+internal readonly struct EntityFlashDescription {
+    public readonly bool Active;
+    public readonly double StartTimeMs;
+    public readonly uint Color;
+    public readonly float PeriodMs;
+    public readonly int Repeats;
+    public readonly float R;
+    public readonly float G;
+    public readonly float B;
+
+    public EntityFlashDescription(double startTimeMs, uint color, float periodMs, int repeats) {
+        Active = true;
+        StartTimeMs = startTimeMs;
+        Color = color;
+        PeriodMs = Math.Max(1f, periodMs);
+        Repeats = Math.Max(1, repeats);
+        R = (color >> 16) & 0xFF;
+        G = (color >> 8) & 0xFF;
+        B = color & 0xFF;
+    }
+}
+

@@ -46,6 +46,10 @@ vec4 GetGameObject() {
     vec4 color = texture(GameTexture, uv);
     color.rgb -= vsOutput.ExtraShade * 0.241 * clamp(vsOutput.BaseUV.y - 0.4, 0.0, 0.4);
 
+    if (vsOutput.Mask1.w > 0.0) {
+        color.rgb = mix(color.rgb, vsOutput.Mask1.rgb, clamp(vsOutput.Mask1.w, 0.0, 1.0));
+    }
+
     if (RenderPass == OpaquePass) {
         if (color.a < 0.1 || vsOutput.ExtraAlpha < 1.0) discard;
         vec2 tileCenter = floor(vsOutput.WorldPos) + vec2(0.5);
