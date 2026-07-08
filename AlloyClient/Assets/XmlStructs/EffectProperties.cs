@@ -1,4 +1,5 @@
 using System;
+using System.Globalization;
 using System.Xml.Linq;
 using Common;
 
@@ -6,6 +7,8 @@ namespace AlloyClient.Assets.XmlStructs;
 
 public sealed class EffectProperties {
     public readonly int Amount;
+    public readonly string BitmapFile;
+    public readonly int BitmapIndex;
     public readonly uint Color;
     public readonly uint Color2;
     public readonly float Cooldown;
@@ -32,11 +35,9 @@ public sealed class EffectProperties {
     public EffectProperties(XElement e) {
         Id = e.Value;
         Particle = e.GetAttribute<string>("particle");
-        Cooldown = e.GetAttribute("Cooldown", 0f);
-        var clr1 = e.GetAttribute<string>("color");
-        var clr2 = e.GetAttribute<string>("color2");
-        Color = string.IsNullOrEmpty(clr1) ? 0x000000 : Convert.ToUInt32(clr1, 16);
-        Color2 = string.IsNullOrEmpty(clr2) ? 0x000000 : Convert.ToUInt32(clr2, 16);
+        Cooldown = e.GetAttribute("cooldown", 0f);
+        Color = ParseColor(e.GetAttribute<string>("color"));
+        Color2 = ParseColor(e.GetAttribute<string>("color2"));
         Rate = e.GetAttribute("rate", 5f);
         Speed = e.GetAttribute("speed", 0f);
         MoveSpeed = e.GetAttribute("moveSpeed", 1f);
@@ -55,5 +56,22 @@ public sealed class EffectProperties {
         MinRadius = e.GetAttribute("minRadius", 0f);
         MaxRadius = e.GetAttribute("maxRadius", 1.0f);
         Amount = e.GetAttribute("amount", 1);
+        BitmapFile = e.GetAttribute<string>("bitmapFile");
+        BitmapIndex = e.GetAttribute("bitmapIndex", 0);
+    }
+
+    private static uint ParseColor(string value) {
+        if (string.IsNullOrWhiteSpace(value))
+            return 0;
+
+        value = value.Trim();
+        if (value.StartsWith("0x", StringComparison.OrdinalIgnoreCase))
+            value = value[2..];
+        if (value.StartsWith("#"))
+            value = value[1..];
+
+        return uint.TryParse(value, NumberStyles.HexNumber, CultureInfo.InvariantCulture, out var color)
+            ? color
+            : 0;
     }
 }

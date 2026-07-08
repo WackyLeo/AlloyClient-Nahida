@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using AlloyClient.Assets.XmlStructs;
 using AlloyClient.Game;
 using AlloyClient.Game.Objects;
@@ -48,7 +48,7 @@ public class ParticleGenerator : ParticleEffect {
 
             _data[_count] = new GeneratorParticle(life, spdX, spdY, rise, spawnX, spawnY, spawnZ);
 
-            var color = GetColor(_props.Color);
+            var color = GetColor(RandomColor(_props.Color, _props.Color2));
             _particles[_count] = new ParticleData(new Vector3(spawnX, spawnY, spawnZ), color);
             _particles[_count].Position.W = _props.Size / 8f;
             _count++;

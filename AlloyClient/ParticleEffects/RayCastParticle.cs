@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using AlloyClient.Engine.Common;
 using AlloyClient.Game;
 using AlloyClient.Rendering;
@@ -9,7 +9,7 @@ using OpenTK.Mathematics;
 
 namespace AlloyClient.ParticleEffects;
 
-public class RayCastParticle : ParticleEffect {
+public class RayCastParticle : ParticleEffect, IDrawableParticleEffect {
     private readonly AtlasData _texture;
     private readonly float _angle;
     private readonly int _size;

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using AlloyClient.Assets.Libraries;
 using AlloyClient.Assets.XmlStructs;
 using AlloyClient.Engine.Common;
@@ -10,7 +10,7 @@ using OpenTK.Mathematics;
 
 namespace AlloyClient.ParticleEffects;
 
-public class XMLParticle : ParticleEffect {
+public class XMLParticle : ParticleEffect, IDrawableParticleEffect {
     private readonly float _dx;
     private readonly float _dy;
     private readonly ParticleProperties _particleProps;
@@ -59,7 +59,7 @@ public class XMLParticle : ParticleEffect {
         var padW = 1.0f + AtlasConfig.Padding * 3 / _texture.RawW();
         var padH = 1.0f + AtlasConfig.Padding * 3 / _texture.RawH();
 
-        var sizeMult = 1;
+        var sizeMult = _particleProps != null && _particleProps.Size > 0 ? _particleProps.Size / 100f : 1f;
         var widthScale = 0.75f * (w / 8f) * padW * sizeMult;
         var heightScale = 0.75f * (h / 8f) * padH * sizeMult;
         var scale = new Vector4(widthScale, heightScale, 0f, 0f);
