@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using AlloyClient.Assets;
 using AlloyClient.Assets.Libraries;
 using AlloyClient.Assets.XmlStructs;
@@ -214,7 +214,16 @@ public class Entity {
         SetAltTexture(frame);
     }
 
-    public void UpdateVisibility(ref Matrix4 matrix) {
+    public void UpdateVisibility(ref Matrix4 matrix, float renderRadiusSquared = -1f) {
+        if (Map.LocalPlayer != null && this != Map.LocalPlayer && renderRadiusSquared > 0f) {
+            var renderDx = Position.X - Map.LocalPlayer.Position.X;
+            var renderDy = Position.Y - Map.LocalPlayer.Position.Y;
+            if (renderDx * renderDx + renderDy * renderDy > renderRadiusSquared) {
+                RenderBaseType.SetVisibility(false);
+                return;
+            }
+        }
+
         if (Properties.Static) {
             RenderBaseType.SetVisibility(true);
         }

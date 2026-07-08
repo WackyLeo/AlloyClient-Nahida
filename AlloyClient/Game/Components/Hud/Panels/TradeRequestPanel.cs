@@ -1,4 +1,4 @@
-﻿using AlloyClient.Networking;
+using AlloyClient.Networking;
 using AlloyClient.Networking.Packets.Outgoing;
 using AlloyClient.UiLib.BuiltIn;
 using AlloyClient.UiLib.BuiltIn.Buttons;
@@ -48,7 +48,8 @@ public class TradeRequestPanel : Panel {
         });
         AddChild(acceptBtn);
 
-        AddEventListener(Event.EnterFrame, OnFrameEnter);
+        AddEventListener(Event.AddedToStage, OnAddedToStage);
+        AddEventListener(Event.RemovedFromStage, OnRemovedFromStage);
     }
 
     private void Accept() {
@@ -66,9 +67,19 @@ public class TradeRequestPanel : Panel {
         InteractPanel.AddOverride.Dispatch(null);
     }
 
+    
+    private void OnAddedToStage() {
+        AddEventListener(Event.EnterFrame, OnFrameEnter);
+    }
+
+    private void OnRemovedFromStage() {
+        RemoveEventListener(Event.EnterFrame, OnFrameEnter);
+    }
+
     private void OnFrameEnter() {
         if (Stage.GameTime.TotalMs - _startTime > WaitTime) {
             Close();
         }
     }
 }
+

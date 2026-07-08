@@ -1,4 +1,4 @@
-﻿using AlloyClient.Game.Components.Hud.Inventory;
+using AlloyClient.Game.Components.Hud.Inventory;
 using AlloyClient.State;
 using AlloyClient.UiLib.BuiltIn;
 using AlloyClient.UiLib.Core;
@@ -48,7 +48,8 @@ public sealed class HudView : Sprite {
         _bars.X = 10;
         _bars.Y = _details.Y + _details.Height;
         AddChild(_bars);
-        AddEventListener(Event.EnterFrame, OnFrameEnter);
+        AddEventListener(Event.AddedToStage, OnAddedToStage);
+        AddEventListener(Event.RemovedFromStage, OnRemovedFromStage);
     }
 
     public void CreatePlayerDependentAssets() {
@@ -73,6 +74,15 @@ public sealed class HudView : Sprite {
         AddChild(_interactPanel);
     }
 
+    
+    private void OnAddedToStage() {
+        AddEventListener(Event.EnterFrame, OnFrameEnter);
+    }
+
+    private void OnRemovedFromStage() {
+        RemoveEventListener(Event.EnterFrame, OnFrameEnter);
+    }
+
     private void OnFrameEnter() {
         if (Map.LocalPlayer == null) return;
 
@@ -91,3 +101,4 @@ public sealed class HudView : Sprite {
         }
     }
 }
+

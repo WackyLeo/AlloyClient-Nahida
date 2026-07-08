@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using AlloyClient.Game.Objects;
 using AlloyClient.UiLib;
@@ -51,14 +51,25 @@ public class PlayerGroupToolTip : Tooltip {
         ToolHeight = y + (players.Count == 1 ? 20 : 10);
         DrawSprite();
 
-        AddEventListener(Event.EnterFrame, () => {
-            var mouse = MouseInput.GetMousePosition();
-            var s = Stage.ScreenScale;
-            X = mouse.X - (int)(ToolWidth * s.X);
-            Y = mouse.Y;
-            X = Math.Clamp(X, 0, UiRender.Screen.X - (int)(ToolWidth * s.X));
-            Y = Math.Clamp(Y, 0, UiRender.Screen.Y - (int)(ToolHeight * s.Y));
-        });
+        AddEventListener(Event.AddedToStage, OnAddedToStage);
+        AddEventListener(Event.RemovedFromStage, OnRemovedFromStage);
+    }
+
+    private void OnAddedToStage() {
+        AddEventListener(Event.EnterFrame, OnFrameEnter);
+    }
+
+    private void OnRemovedFromStage() {
+        RemoveEventListener(Event.EnterFrame, OnFrameEnter);
+    }
+
+    private void OnFrameEnter() {
+        var mouse = MouseInput.GetMousePosition();
+        var s = Stage.ScreenScale;
+        X = mouse.X - (int)(ToolWidth * s.X);
+        Y = mouse.Y;
+        X = Math.Clamp(X, 0, UiRender.Screen.X - (int)(ToolWidth * s.X));
+        Y = Math.Clamp(Y, 0, UiRender.Screen.Y - (int)(ToolHeight * s.Y));
     }
 
     public bool Matches(List<Player> other) {
@@ -69,3 +80,4 @@ public class PlayerGroupToolTip : Tooltip {
         return true;
     }
 }
+

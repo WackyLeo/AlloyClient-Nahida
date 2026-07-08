@@ -37,10 +37,21 @@ public class ClassContainer : Overlay {
         var slotButton = new TextButton(slotConfig);
         
         AddChild(slotButton);
-        AddEventListener(Event.EnterFrame, OnFrameEnter);
+        AddEventListener(Event.AddedToStage, OnAddedToStage);
+        AddEventListener(Event.RemovedFromStage, OnRemovedFromStage);
     }
     
+    
+    private void OnAddedToStage() {
+        AddEventListener(Event.EnterFrame, OnFrameEnter);
+    }
+
+    private void OnRemovedFromStage() {
+        RemoveEventListener(Event.EnterFrame, OnFrameEnter);
+    }
+
     private void OnFrameEnter() {
         ClassInfo.Update(Stage.GameTime, CharacterWheel.SelectedClass);
     }
 }
+

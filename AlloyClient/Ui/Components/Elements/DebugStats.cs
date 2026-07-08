@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using AlloyClient.Game;
 using AlloyClient.Game.Components.Hud;
 using AlloyClient.Rendering;
@@ -144,7 +144,8 @@ public class DebugStats : Sprite {
         AddChild(_heapSize);
         AddChild(_lohSize);
         AddChild(_allocRate); */
-        AddEventListener(Event.EnterFrame, OnFrameEnter);
+        AddEventListener(Event.AddedToStage, OnAddedToStage);
+        AddEventListener(Event.RemovedFromStage, OnRemovedFromStage);
         
         AddChild(_devBuild);
         _devBuild.Y = -36;
@@ -171,6 +172,15 @@ public class DebugStats : Sprite {
         _entities.Y = _shadows.Y + _shadows.Height + 4;
         _particles.Y = _entities.Y + _entities.Height + 4;
         _ui.Y = _particles.Y + _particles.Height + 4; */
+    }
+
+    
+    private void OnAddedToStage() {
+        AddEventListener(Event.EnterFrame, OnFrameEnter);
+    }
+
+    private void OnRemovedFromStage() {
+        RemoveEventListener(Event.EnterFrame, OnFrameEnter);
     }
 
     private void OnFrameEnter() {
@@ -232,3 +242,4 @@ public class DebugStats : Sprite {
         }
     }
 }
+

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using AlloyClient.Assets.Libraries;
 using AlloyClient.Assets.XmlStructs;
 using AlloyClient.Game.Components.Hud;
@@ -110,7 +110,17 @@ public sealed class PlayerToolTip : Tooltip {
         AddChild(clickMsg);
 
         DrawSprite();
+        AddEventListener(Event.AddedToStage, OnAddedToStage);
+        AddEventListener(Event.RemovedFromStage, OnRemovedFromStage);
+    }
+
+    
+    private void OnAddedToStage() {
         AddEventListener(Event.EnterFrame, OnFrameEnter);
+    }
+
+    private void OnRemovedFromStage() {
+        RemoveEventListener(Event.EnterFrame, OnFrameEnter);
     }
 
     private void OnFrameEnter() {
@@ -120,3 +130,4 @@ public sealed class PlayerToolTip : Tooltip {
         _mpBar.Update(_player.Mp, _player.MaxMp, _player.MaxMpBoost, -1, _player.Level);
     }
 }
+

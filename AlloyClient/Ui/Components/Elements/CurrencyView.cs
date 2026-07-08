@@ -1,4 +1,4 @@
-﻿using AlloyClient.Assets;
+using AlloyClient.Assets;
 using AlloyClient.Game;
 using AlloyClient.UiLib.BuiltIn;
 using AlloyClient.UiLib.Core;
@@ -38,7 +38,8 @@ public sealed class CurrencyView : Sprite {
         AddChild(_creditsText);
         AddChild(creditsIcon);
 
-        AddEventListener(Event.EnterFrame, OnFrameEnter);
+        AddEventListener(Event.AddedToStage, OnAddedToStage);
+        AddEventListener(Event.RemovedFromStage, OnRemovedFromStage);
     }
 
     private static ObjectRect MakeIcon(string sheet, int index, int x, int y) {
@@ -63,6 +64,15 @@ public sealed class CurrencyView : Sprite {
         });
     }
 
+    
+    private void OnAddedToStage() {
+        AddEventListener(Event.EnterFrame, OnFrameEnter);
+    }
+
+    private void OnRemovedFromStage() {
+        RemoveEventListener(Event.EnterFrame, OnFrameEnter);
+    }
+
     private void OnFrameEnter() {
         var player = Map.LocalPlayer;
         if (player == null) return;
@@ -72,3 +82,4 @@ public sealed class CurrencyView : Sprite {
         _tributeText.SetText(player.Tribute.ToString());
     }
 }
+

@@ -87,8 +87,8 @@ public abstract class DisplayContainer : EventManager {
     public T RemoveChild<T>(T child) where T : Sprite {
         if (child == null || child.Parent != this)
             return child;
-        
-        DispatchEvent(new Event(Event.Removed));
+
+        child.DispatchEvent(new Event(Event.Removed));
 
         if (Stage != null) {
             //TODO[FOCUS]: clear focus if child matches

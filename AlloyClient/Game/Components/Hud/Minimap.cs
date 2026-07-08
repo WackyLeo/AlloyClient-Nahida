@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using AlloyClient.Display;
 using AlloyClient.State;
 using AlloyClient.Ui.Components.Panels;
@@ -68,7 +68,8 @@ public sealed class Minimap : Sprite {
         _arrow.ColorTransformation = new ColorTransform(0f, 0f, 1f, 1f);
         AddChild(_arrow);
 
-        AddEventListener(Event.EnterFrame, OnFrameEnter);
+        AddEventListener(Event.AddedToStage, OnAddedToStage);
+        AddEventListener(Event.RemovedFromStage, OnRemovedFromStage);
         AddEventListener(MouseEvent.LeftClick, new Action(OnMapClick)); // Click event for the menu
     }
 
@@ -144,6 +145,15 @@ public sealed class Minimap : Sprite {
         Map.GameSprite.AddChild(menu);
     }
 
+    
+    private void OnAddedToStage() {
+        AddEventListener(Event.EnterFrame, OnFrameEnter);
+    }
+
+    private void OnRemovedFromStage() {
+        RemoveEventListener(Event.EnterFrame, OnFrameEnter);
+    }
+
     private void OnFrameEnter() {
         if (Map.LocalPlayer == null) return;
 
@@ -179,3 +189,4 @@ public sealed class Minimap : Sprite {
         }
     }
 }
+

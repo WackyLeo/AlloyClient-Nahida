@@ -1,4 +1,4 @@
-﻿using AlloyClient.Assets.Libraries;
+using AlloyClient.Assets.Libraries;
 using AlloyClient.Game;
 using AlloyClient.Game.Objects;
 using AlloyClient.Networking.Packets.Outgoing;
@@ -92,7 +92,20 @@ public class Update : IncomingPacket<Update> {
             entity.Properties = props;
             entity.SetObjectId(newObj.Id);
             entity.SetType(newObj.ObjectType);
-            Map.AddEntity(entity, newObj.Position);
+
+            if (!Map.AddEntity(entity, newObj.Position)) {
+                if (Map.TryGetEntity(newObj.Id, out var existing)) {
+                    existing.SetPos(newObj.Position.X, newObj.Position.Y);
+                    existing.UpdateStats(ObjectDef.StatsPool, newObj.StatOffset, newObj.StatCount);
+                    existing.TickPosition = new Vector2(newObj.Position.X, newObj.Position.Y);
+                    existing.PositionAtTick = new Vector2(newObj.Position.X, newObj.Position.Y);
+                    existing.LastTickId = Map.LastTickId;
+                    existing.LastTickUpdateTime = Map.LastGameTime.TotalMs;
+                    existing.MovementVector = Vector2.Zero;
+                }
+
+                continue;
+            }
 
             entity.SetPos(newObj.Position.X, newObj.Position.Y);
             entity.UpdateStats(ObjectDef.StatsPool, newObj.StatOffset, newObj.StatCount);

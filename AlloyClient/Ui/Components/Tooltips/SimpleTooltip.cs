@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using AlloyClient.UiLib;
 using AlloyClient.UiLib.BuiltIn;
 using AlloyClient.UiLib.Core;
@@ -27,14 +27,25 @@ public sealed class SimpleTooltip : Tooltip {
         ToolHeight = label.Height + Pad * 2;
         DrawSprite();
 
-        AddEventListener(Event.EnterFrame, () => {
-            var mouse = MouseInput.GetMousePosition();
-            var s = Stage.ScreenScale;
-            X = Math.Clamp(mouse.X - (int)(ToolWidth * s.X) - 6,
-                0, UiRender.Screen.X - (int)(ToolWidth * s.X));
-            Y = Math.Clamp(mouse.Y + 14,
-                0, UiRender.Screen.Y - (int)(ToolHeight * s.Y));
-        });
+        AddEventListener(Event.AddedToStage, OnAddedToStage);
+        AddEventListener(Event.RemovedFromStage, OnRemovedFromStage);
+    }
+
+    private void OnAddedToStage() {
+        AddEventListener(Event.EnterFrame, OnFrameEnter);
+    }
+
+    private void OnRemovedFromStage() {
+        RemoveEventListener(Event.EnterFrame, OnFrameEnter);
+    }
+
+    private void OnFrameEnter() {
+        var mouse = MouseInput.GetMousePosition();
+        var s = Stage.ScreenScale;
+        X = Math.Clamp(mouse.X - (int)(ToolWidth * s.X) - 6,
+            0, UiRender.Screen.X - (int)(ToolWidth * s.X));
+        Y = Math.Clamp(mouse.Y + 14,
+            0, UiRender.Screen.Y - (int)(ToolHeight * s.Y));
     }
 
     private static uint Darken(uint argb) {
@@ -53,3 +64,4 @@ public sealed class SimpleTooltip : Tooltip {
         return (a << 24) | (r << 16) | (g << 8) | b;
     }
 }
+

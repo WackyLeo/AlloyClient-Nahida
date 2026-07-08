@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using AlloyClient.Game.Objects;
 using AlloyClient.Networking;
 using AlloyClient.Networking.Packets.Outgoing;
@@ -138,10 +138,21 @@ public sealed class InventoryGrid : Sprite {
             _mpSlotOutline.AddEventListener(MouseEvent.LeftClick, UseMpPot);
         }
         
-        AddEventListener(Event.EnterFrame, OnEnterFrame);
+        AddEventListener(Event.AddedToStage, OnAddedToStage);
+        AddEventListener(Event.RemovedFromStage, OnRemovedFromStage);
         UpdatePotions();
     }
     
+    
+    private void OnAddedToStage() {
+        AddEventListener(Event.EnterFrame, OnEnterFrame);
+    }
+
+    private void OnRemovedFromStage() {
+        RemoveEventListener(Event.EnterFrame, OnEnterFrame);
+        _owner.InventoryUpdate.Remove(OnInventoryChange);
+    }
+
     private void OnInventoryChange(int slot) 
     {
         if (!Visible) //Unsure how reliable this is, its to stop issues with the Backpack & Inventory trying to update when hidden
@@ -223,3 +234,4 @@ public sealed class InventoryGrid : Sprite {
     }
     
 }
+

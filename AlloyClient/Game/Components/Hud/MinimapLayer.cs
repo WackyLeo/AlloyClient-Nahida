@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using AlloyClient.Engine.Common;
 using AlloyClient.Game.Objects;
@@ -36,7 +36,8 @@ public sealed class MinimapLayer : Container {
         SelfContentHeight = Minimap.MapSize;
         UpdateBounds();
         
-        AddEventListener(Event.EnterFrame, OnFrameEnter);
+        AddEventListener(Event.AddedToStage, OnAddedToStage);
+        AddEventListener(Event.RemovedFromStage, OnRemovedFromStage);
     }
 
     private void ResizeBackBuffer() {
@@ -70,6 +71,15 @@ public sealed class MinimapLayer : Container {
 
         _count++;
         OverridePrimCount += 2;
+    }
+
+    
+    private void OnAddedToStage() {
+        AddEventListener(Event.EnterFrame, OnFrameEnter);
+    }
+
+    private void OnRemovedFromStage() {
+        RemoveEventListener(Event.EnterFrame, OnFrameEnter);
     }
 
     private void OnFrameEnter() {
@@ -135,3 +145,4 @@ public sealed class MinimapLayer : Container {
         }
     }
 }
+

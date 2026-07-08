@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using AlloyClient.Ui.Components.Dialogs;
 using AlloyClient.UiLib.Core;
 using AlloyClient.UiLib.Extra;
@@ -12,10 +12,20 @@ public sealed class DialogManager : Sprite {
     private static Dialog _current;
 
     public DialogManager() {
-        AddEventListener(Event.EnterFrame, OnFrameEnter);
+        AddEventListener(Event.AddedToStage, OnAddedToStage);
+        AddEventListener(Event.RemovedFromStage, OnRemovedFromStage);
     }
 
     public static void Enqueue(Dialog dialog) => Dialogs.Enqueue(dialog);
+
+    
+    private void OnAddedToStage() {
+        AddEventListener(Event.EnterFrame, OnFrameEnter);
+    }
+
+    private void OnRemovedFromStage() {
+        RemoveEventListener(Event.EnterFrame, OnFrameEnter);
+    }
 
     private void OnFrameEnter() {
         if (_current == null && !TryStart()) return;
@@ -41,3 +51,4 @@ public sealed class DialogManager : Sprite {
     }
 
 }
+

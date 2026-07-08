@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using AlloyClient.Assets.XmlStructs;
 using AlloyClient.Display;
 using AlloyClient.Game.Objects;
@@ -116,7 +116,31 @@ public sealed class ItemTile : Sprite {
 
         _sprite.AddEventListener(MouseEvent.MouseOver, OnMouseOver);
         _sprite.AddEventListener(MouseEvent.MouseOut, OnMouseOut);
+        AddEventListener(Event.AddedToStage, OnAddedToStage);
+        AddEventListener(Event.RemovedFromStage, OnRemovedFromStage);
+    }
+
+    
+    private void OnAddedToStage() {
         AddEventListener(Event.EnterFrame, OnFrameEnter);
+    }
+
+    private void OnRemovedFromStage() {
+        RemoveEventListener(Event.EnterFrame, OnFrameEnter);
+        Map.GameSprite.Stage?.RemoveEventListener(MouseEvent.LeftUp, CancelDragCheck);
+        Map.GameSprite.Stage?.RemoveEventListener(MouseEvent.LeftUp, OnEndDrag);
+
+        if (_tooltip != null) {
+            TooltipManager.RemoveTooltip(_tooltip);
+            _tooltip = null;
+        }
+
+        if (_dragging) {
+            _sprite.EndDrag();
+            _dragging = false;
+        }
+
+        _checkForDrag = false;
     }
 
     public void SetItem(ItemDesc itemDesc) {
@@ -537,3 +561,4 @@ public sealed class ItemTile : Sprite {
         return true;
     }
 }
+

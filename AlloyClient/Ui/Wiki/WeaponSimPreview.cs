@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using AlloyClient.Assets.Libraries;
 using AlloyClient.Assets.XmlStructs;
@@ -78,7 +78,20 @@ public class WeaponSimPreview : Container {
         AddEventListener(MouseEvent.LeftUp, OnMouseUp);
         AddEventListener(MouseEvent.MouseMove, new Action<MouseEvent>(OnMouseMove));
         AddEventListener(MouseEvent.ScrollVertical, new Action<MouseEvent>(OnMouseScroll));
+        AddEventListener(Event.AddedToStage, OnAddedToStage);
+        AddEventListener(Event.RemovedFromStage, OnRemovedFromStage);
+    }
+
+    
+    private void OnAddedToStage() {
+        _lastTickTime = Environment.TickCount64;
         AddEventListener(Event.EnterFrame, OnTick);
+    }
+
+    private void OnRemovedFromStage() {
+        RemoveEventListener(Event.EnterFrame, OnTick);
+        ClearProjectiles();
+        _isHolding = false;
     }
 
     public void LoadWeapon(ItemDesc weapon) {
@@ -581,3 +594,4 @@ public class WeaponSimPreview : Container {
         public float TimeLeft;
     }
 }
+

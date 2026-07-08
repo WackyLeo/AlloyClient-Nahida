@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using AlloyClient.Assets;
 using AlloyClient.Game.Components;
@@ -24,6 +24,13 @@ namespace AlloyClient.Game;
 
 public static class Map {
     public const int TileRenderDistance = 20;
+    private const float EntityRenderPaddingTiles = 4f;
+
+    public static int LastLoadedEntityCount;
+    public static int LastStaticEntityCount;
+    public static int LastVisibleEntityCount;
+    public static int LastFarCulledEntityCount;
+    public static float LastEntityRenderRadius;
     public static string MusicName = "Reclaiming Entropy";
     public static GameTime LastGameTime;
     public static GameSprite GameSprite;
@@ -115,6 +122,14 @@ public static class Map {
 
         var hasDarkness = LocalPlayer?.HasConditionEffect(ConditionEffects.Darkness) ?? false;
         var darknessRadiusSq = 49f;
+        var entityRenderRadius = GetEntityRenderRadius();
+        var entityRenderRadiusSq = entityRenderRadius * entityRenderRadius;
+
+        LastEntityRenderRadius = entityRenderRadius;
+        LastLoadedEntityCount = Entities.Count;
+        LastStaticEntityCount = 0;
+        LastVisibleEntityCount = 0;
+        LastFarCulledEntityCount = 0;
 
         var updateRadius = hasDarkness ? 7 : TileRenderDistance;
         if (LocalPlayer != null && LocalPlayer.UpdateRadius != updateRadius) {
@@ -123,6 +138,15 @@ public static class Map {
         }
 
         foreach (var (objectId, entity) in Entities) {
+            if (entity.Properties.Static)
+                LastStaticEntityCount++;
+
+            if (ShouldSkipFarEntityUpdate(entity, entityRenderRadiusSq)) {
+                entity.RenderBaseType?.SetVisibility(false);
+                LastFarCulledEntityCount++;
+                continue;
+            }
+
             if (!entity.Update(time, dt)) {
                 if (!entity.Properties.Static && !entity.Properties.IsEnemy)
                     EntitiesToRemove.Add(objectId);
@@ -137,22 +161,7 @@ public static class Map {
                 continue;
             }
 
-            if (LocalPlayer != null && !entity.Properties.Static && !entity.Properties.AlwaysLoaded &&
-                entity.Properties.IsEnemy && !entity.Properties.IsQuest) {
-                if (entity.RenderBaseType is TypeWall ||
-                    entity.RenderBaseType is TypeCaveWall ||
-                    entity.RenderBaseType is TypeWallTop)
-                    continue;
-
-                var dx = entity.Position.X - LocalPlayer.Position.X;
-                var dy = entity.Position.Y - LocalPlayer.Position.Y;
-                if (dx * dx + dy * dy > TileRenderDistance * TileRenderDistance) {
-                    entity.RenderBaseType.Visible = false;
-                    continue;
-                }
-            }
-
-            entity.UpdateVisibility(ref fullMatrix);
+            entity.UpdateVisibility(ref fullMatrix, entityRenderRadiusSq);
 
             var allowTransparency = entity.RenderBaseType is TypeGameObject || entity.RenderBaseType is TypePlayer;
             if (allowTransparency) {
@@ -169,6 +178,9 @@ public static class Map {
                 else
                     entity.RenderBaseType.SetAlpha(1.0f);
             }
+
+            if (entity.RenderBaseType?.Visible == true)
+                LastVisibleEntityCount++;
         }
 
         foreach (var id in EntitiesToRemove)
@@ -234,7 +246,7 @@ public static class Map {
 
         var pos = Vector2.Floor(LocalPlayer.Position);
         var dirtyRotation = Math.Abs(_lastCameraAngle - Settings.CameraAngle) > 0.001f;
-        var dirtyZoom = Math.Abs(_lastCameraZoom - Settings.CameraAngle) > 0.001f;
+        var dirtyZoom = Math.Abs(_lastCameraZoom - Settings.CameraZoom) > 0.001f;
         var dirtySize = _lastScreenHeight != Settings.ScreenHeight || _lastScreenWidth != Settings.ScreenWidth;
 
         if (pos != _lastPosition || TilesDirty || dirtyRotation || dirtyZoom || dirtySize) {
@@ -347,7 +359,7 @@ public static class Map {
             if (!storage.TryGetValue(ModelType.PbObject, out var objs))
                 continue;
             foreach (var type in objs)
-                if (elevated ? type.IsElevated : type.Position.Z == 0f && type.Visible)
+                if (type.Visible && (elevated ? type.IsElevated : type.Position.Z == 0f))
                     type.DrawShadow();
         }
 
@@ -440,6 +452,39 @@ public static class Map {
         Render.EndNewDrawTile();
     }
 
+    private static float GetEntityRenderRadius() {
+        if (LocalPlayer == null)
+            return TileRenderDistance;
+
+        var zoom = Math.Max((float)Settings.CameraZoom, 0.001f);
+        var halfWidthTiles = Settings.ScreenWidth / (100f * zoom);
+        var halfHeightTiles = Settings.ScreenHeight / (100f * zoom);
+
+        return MathF.Ceiling(MathF.Sqrt(halfWidthTiles * halfWidthTiles + halfHeightTiles * halfHeightTiles))
+               + EntityRenderPaddingTiles;
+    }
+
+    private static bool ShouldSkipFarEntityUpdate(Entity entity, float renderRadiusSq) {
+        if (LocalPlayer == null || entity == LocalPlayer || entity.Properties == null)
+            return false;
+
+        if (!entity.Properties.Static && (entity.Properties.AlwaysLoaded || entity.Properties.IsQuest || entity is Player))
+            return false;
+
+        var dx = entity.Position.X - LocalPlayer.Position.X;
+        var dy = entity.Position.Y - LocalPlayer.Position.Y;
+        var far = dx * dx + dy * dy > renderRadiusSq;
+
+        if (!far)
+            return false;
+
+        return entity.Properties.Static || entity.Properties.IsEnemy;
+    }
+
+    public static bool TryGetEntity(int id, out Entity entity) {
+        return Entities.TryGetValue(id, out entity);
+    }
+
     public static void FlushEnemyHits() {
         if (PendingEnemyHit.Stack > 0) {
             Client.QueuePacket(PendingEnemyHit);
@@ -507,9 +552,9 @@ public static class Map {
         ParticleGenCount++;
     }
 
-    public static void AddEntity(Entity en, Position position) {
+    public static bool AddEntity(Entity en, Position position) {
         if (!Entities.TryAdd(en.ObjectId, en))
-            return;
+            return false;
 
         if (en.Properties.Static && !en.Properties.IsEnemy) {
             StaticEntityStorage.Add(en);
@@ -530,19 +575,22 @@ public static class Map {
             InteractiveObjects.TryAdd(en.ObjectId, en);
 
         en.OnAddedToMap(position);
+        return true;
     }
 
     public static void RemoveEntity(int id) {
         if (!Entities.TryGetValue(id, out var en))
             return;
 
-        if (en.Properties.Static && !en.Properties.IsEnemy)
-            return;
-
         Entities.Remove(id);
         Players.Remove(id);
         InteractiveObjects.Remove(id);
-        EntityStorage.Remove(en);
+
+        if (en.Properties.Static && !en.Properties.IsEnemy)
+            StaticEntityStorage.Remove(en);
+        else
+            EntityStorage.Remove(en);
+
         en.OnRemovedFromMap();
     }
 
@@ -596,10 +644,33 @@ public static class Map {
         PendingProjectiles.Clear();
         DailyQuests.Clear();
 
+        ParticleGenerators.Clear();
+        ParticleGenCount = 0;
+        _particleCount = 0;
+        EntitiesToRemove.Clear();
+        VisibleTopTiles.Clear();
+        foreach (var list in VisibleElevatedTiles.Values)
+            list.Clear();
+        VisibleElevatedTiles.Clear();
+        _sortBuffer.Clear();
+
+        LastLoadedEntityCount = 0;
+        LastStaticEntityCount = 0;
+        LastVisibleEntityCount = 0;
+        LastFarCulledEntityCount = 0;
+        LastEntityRenderRadius = 0f;
+
         LocalPlayerId = 0;
         LocalPlayer = null;
 
         LastTickId = 0;
+
+        TilesDirty = true;
+        _lastPosition = new Vector2(float.NaN, float.NaN);
+        _lastCameraZoom = float.NaN;
+        _lastCameraAngle = float.NaN;
+        _lastScreenHeight = 0;
+        _lastScreenWidth = 0;
 
         _tiles = null;
     }

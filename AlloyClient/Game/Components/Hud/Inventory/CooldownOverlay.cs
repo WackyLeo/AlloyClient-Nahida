@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using AlloyClient.Game.Objects;
 using AlloyClient.UiLib.BuiltIn;
 using AlloyClient.UiLib.Core;
@@ -40,7 +40,17 @@ public sealed class CooldownOverlay : Sprite {
         AddChild(_cdText);
 
         Visible = false;
+        AddEventListener(Event.AddedToStage, OnAddedToStage);
+        AddEventListener(Event.RemovedFromStage, OnRemovedFromStage);
+    }
+
+    
+    private void OnAddedToStage() {
         AddEventListener(Event.EnterFrame, OnFrameEnter);
+    }
+
+    private void OnRemovedFromStage() {
+        RemoveEventListener(Event.EnterFrame, OnFrameEnter);
     }
 
     private void OnFrameEnter() {
@@ -66,3 +76,4 @@ public sealed class CooldownOverlay : Sprite {
         _cdText.SetText(remaining.ToString("F1") + "s");
     }
 }
+

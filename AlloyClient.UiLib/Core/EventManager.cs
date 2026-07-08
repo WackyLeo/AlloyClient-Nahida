@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using AlloyClient.UiLib.Enums;
@@ -137,14 +137,10 @@ public abstract class EventManager {
             return;
         }
         
-        if (IsBroadcast(pending.Type)) {
-            HandleBroadcastListener(new BroadcastData(pending.Type, this, pending.State));
-        }
-
         var hasType = _eventMap.TryGetValue(pending.Type, out var listeners);
         if (pending.State == QueueState.Add && !hasType)
             _eventMap[pending.Type] = listeners = [];
-            
+
         switch (pending.State) {
             case QueueState.Add:
                 listeners!.Add(pending.Listener);
@@ -152,6 +148,11 @@ public abstract class EventManager {
             case QueueState.Remove when hasType:
                 listeners.Remove(pending.Listener);
                 break;
+        }
+
+        if (IsBroadcast(pending.Type)) {
+            var hasListeners = _eventMap.TryGetValue(pending.Type, out var updatedListeners) && updatedListeners.Count > 0;
+            HandleBroadcastListener(new BroadcastData(pending.Type, this, hasListeners ? QueueState.Add : QueueState.Remove));
         }
     }
 
@@ -166,13 +167,20 @@ public abstract class EventManager {
         
         switch (pending.State) {
             case QueueState.Add:
-                managers!.Add(pending.Manager);
+                if (!managers!.Contains(pending.Manager))
+                    managers.Add(pending.Manager);
                 break;
             case QueueState.Remove when hasType:
                 managers.Remove(pending.Manager);
                 break;
         }
     }
+
+    public static int GetBroadcastListenerCount(string type) {
+        return BroadcastMap.TryGetValue(type, out var managers) ? managers.Count : 0;
+    }
+
+    public static int EnterFrameListenerCount => GetBroadcastListenerCount(Event.EnterFrame);
 
     private static bool IsBroadcast(string id) => id switch {
         Event.EnterFrame => true,
@@ -391,3 +399,4 @@ public abstract class EventManager {
         return false;
     }
 }
+

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using AlloyClient.State.SettingTypes;
 using AlloyClient.UiLib.BuiltIn;
 using AlloyClient.UiLib.Core;
@@ -66,7 +66,23 @@ public class KeyCodeBox : Sprite {
         AddEventListener(MouseEvent.MouseOver, () => _background.SetColor(11776947));
         AddEventListener(MouseEvent.MouseOut, () => _background.SetColor(4473924));
         AddEventListener(MouseEvent.LeftClick, OnLeftClick);
+        AddEventListener(Event.AddedToStage, OnAddedToStage);
+        AddEventListener(Event.RemovedFromStage, OnRemovedFromStage);
+    }
+
+    
+    private void OnAddedToStage() {
         AddEventListener(Event.EnterFrame, OnFrameEnter);
+    }
+
+    private void OnRemovedFromStage() {
+        RemoveEventListener(Event.EnterFrame, OnFrameEnter);
+
+        if (_inputMode) {
+            Stage?.RemoveEventListener(KeyboardEvent.KeyUp, OnKeyPress);
+            UserInput.SetInputDisabled(false);
+            Reset();
+        }
     }
 
     private void OnFrameEnter() {
@@ -128,3 +144,4 @@ public class KeyCodeBox : Sprite {
         Reset();
     }
 }
+

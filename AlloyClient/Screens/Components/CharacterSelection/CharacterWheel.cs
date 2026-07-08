@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using AlloyClient.Assets.Libraries;
@@ -54,7 +54,8 @@ public class CharacterWheel : Container {
         var backcfg = new TextButtonConfig { Text = "Back", FontSize = 50, OnClicked = RotateToPreviousCharacter, FontType = FontType.Normal, X = 75, Y = 560 };
         var spinBackButton = new TextButton(backcfg);
         AddChild(spinBackButton);
-        AddEventListener(Event.EnterFrame, OnFrameEnter);
+        AddEventListener(Event.AddedToStage, OnAddedToStage);
+        AddEventListener(Event.RemovedFromStage, OnRemovedFromStage);
     }
 
     private void UpdateCharacterWheel(float angle) {
@@ -111,6 +112,15 @@ public class CharacterWheel : Container {
         _isAnimating = true;
     }
 
+    
+    private void OnAddedToStage() {
+        AddEventListener(Event.EnterFrame, OnFrameEnter);
+    }
+
+    private void OnRemovedFromStage() {
+        RemoveEventListener(Event.EnterFrame, OnFrameEnter);
+    }
+
     private void OnFrameEnter() {
         var gameTime = Stage.GameTime;
         UpdateCharacterWheel(0);
@@ -136,3 +146,4 @@ public class CharacterWheel : Container {
         }
     }
 }
+

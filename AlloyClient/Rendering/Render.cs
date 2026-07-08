@@ -1,9 +1,10 @@
-﻿using System;
+using System;
 using AlloyClient.Assets;
 using AlloyClient.Engine.Graphics;
 using AlloyClient.Engine.Graphics.Buffers;
 using AlloyClient.Game;
 using AlloyClient.Rendering.VertexData;
+using AlloyClient.State;
 using AlloyClient.UiLib;
 using Common;
 using Common.ContentReaders;
