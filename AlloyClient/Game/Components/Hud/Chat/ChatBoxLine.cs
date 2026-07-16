@@ -172,7 +172,7 @@ public class ChatBoxLine : Container {
             FontSize = LineHeight,
             FontType = FontType.Bold,
             Color = color,
-            OutlineThickness = 0.5f,
+            OutlineThickness = 0.2f,
             MaxWidth = maxWidth
         });
     }

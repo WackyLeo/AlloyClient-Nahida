@@ -51,7 +51,7 @@ public class ChatBox : Sprite {
             Y = MaxHeight,
             FontSize = 18,
             FontType = FontType.Bold,
-            OutlineThickness = 3,
+            OutlineThickness = 1,
             ClickToActivate = true,
             Width = MaxWidth,
             OnFocus = FocusTextInput,

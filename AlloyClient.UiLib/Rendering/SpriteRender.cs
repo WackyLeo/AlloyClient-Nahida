@@ -6,10 +6,11 @@ using OpenTK.Graphics.OpenGL;
 
 namespace AlloyClient.UiLib.Rendering;
 
-public static class SpriteRender {
-    private const int InstanceBufferSize = 1000;
-    private const int IndexBufferSize = InstanceBufferSize * 6; // Most sprites are a quad which has 6 indices
-    private const int VertexBufferSize = InstanceBufferSize * 4; // Most sprites are a quad which has 4 vertices
+public static class SpriteRender
+{
+    private const int InstanceBufferSize = 3000;
+    private const int IndexBufferSize = InstanceBufferSize * 6;
+    private const int VertexBufferSize = InstanceBufferSize * 4;
 
     private static ushort _instanceCount;
     private static SpriteInstanceData[] _instanceData;
@@ -25,7 +26,8 @@ public static class SpriteRender {
 
     private static VertexArrayObject _vao;
 
-    internal static void Init() {
+    internal static void Init()
+    {
         _instanceData = new SpriteInstanceData[InstanceBufferSize];
         _instanceBuffer = new StorageBuffer<SpriteInstanceData>(InstanceBufferSize);
 
@@ -43,7 +45,8 @@ public static class SpriteRender {
         GL.BindVertexArray(0);
     }
 
-    internal static void StartDraw() {
+    internal static void StartDraw()
+    {
         _vao.Bind();
         _instanceBuffer.BindToIndex(0);
 
@@ -58,7 +61,8 @@ public static class SpriteRender {
         _vertexCount = 0;
     }
 
-    internal static void Draw(SpriteInstanceData data, ReadOnlySpan<ushort> indices, ReadOnlySpan<VertexUi> vertices) {
+    internal static void Draw(SpriteInstanceData data, ReadOnlySpan<ushort> indices, ReadOnlySpan<VertexUi> vertices)
+    {
         if (_instanceCount + 1 > InstanceBufferSize || _indexCount + indices.Length > IndexBufferSize ||
             _vertexCount + vertices.Length > VertexBufferSize)
             Flush();
@@ -76,15 +80,19 @@ public static class SpriteRender {
         UiRender.LastRenderCount++;
     }
 
-    internal static void EndDraw() {
+    internal static void EndDraw()
+    {
         Flush();
         GL.BindVertexArray(0);
     }
 
-    private static void Flush() {
-        _instanceBuffer.SetData(_instanceData.AsSpan());
-        _indexBuffer.SetData(_indices.AsSpan());
-        _vertexBuffer.SetData(_vertices.AsSpan());
+    private static void Flush()
+    {
+        if (_instanceCount == 0) return;
+
+        _instanceBuffer.SetData(_instanceData.AsSpan(0, _instanceCount));
+        _indexBuffer.SetData(_indices.AsSpan(0, _indexCount));
+        _vertexBuffer.SetData(_vertices.AsSpan(0, _vertexCount));
 
         GL.DrawElements(PrimitiveType.Triangles, _indexCount, DrawElementsType.UnsignedShort, 0);
 

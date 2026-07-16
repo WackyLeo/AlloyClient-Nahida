@@ -49,7 +49,9 @@ public static class SoundManager {
 
     private static void PlayFromMemory(float[] samples, float volume) {
         var provider = new FloatArraySampleProvider(samples, MixerFormat, volume);
-        Mixer.AddMixerInput(provider);
+
+
+        //Mixer.AddMixerInput(provider);
     }
 
     internal static void AddToMixer(ISampleProvider provider) {

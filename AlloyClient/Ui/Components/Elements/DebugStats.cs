@@ -10,111 +10,216 @@ using AlloyClient.UiLib.Enums;
 
 namespace AlloyClient.Ui.Components.Elements;
 
-public class DebugStats : Sprite {
+public class DebugStats : Sprite
+{
     private const float Outline = 0.5f;
-    
-    private readonly SimpleText _devBuild = new(new TextConfig {
-        Text = "IR DEVELOPMENT BUILD", FontSize = 28, FontType = FontType.Bold, OutlineThickness = 1.0f,
+
+    private readonly SimpleText _devBuild = new(new TextConfig
+    {
+        Text = "IR ALPHA BUILD",
+        FontSize = 28,
+        FontType = FontType.Bold,
+        OutlineThickness = 1.0f,
         Anchor = UiAnchor.MiddleTop
     });
-    
-    private readonly SimpleText _allocRate = new(new TextConfig {
-        Text = "Alloc rate: 0 MB/s", X = 8, FontSize = 16, FontType = FontType.Bold, OutlineThickness = Outline,
+
+    private readonly SimpleText _allocRate = new(new TextConfig
+    {
+        Text = "Alloc rate: 0 MB/s",
+        X = 8,
+        FontSize = 16,
+        FontType = FontType.Bold,
+        OutlineThickness = Outline,
         Anchor = UiAnchor.LeftTop
     });
 
-    private readonly SimpleText _avgFrameTime = new(new TextConfig {
-        Text = "Avg: 0 ms", X = 8, FontSize = 16, FontType = FontType.Bold, OutlineThickness = Outline,
+    private readonly SimpleText _avgFrameTime = new(new TextConfig
+    {
+        Text = "Avg: 0 ms",
+        X = 8,
+        FontSize = 16,
+        FontType = FontType.Bold,
+        OutlineThickness = Outline,
         Anchor = UiAnchor.LeftTop
     });
 
-    private readonly SimpleText _entities = new(new TextConfig {
-        Text = "Entities: 0", X = 2, FontSize = 16, FontType = FontType.Bold, OutlineThickness = Outline,
+    private readonly SimpleText _entities = new(new TextConfig
+    {
+        Text = "Entities: 0",
+        X = 2,
+        FontSize = 16,
+        FontType = FontType.Bold,
+        OutlineThickness = Outline,
         Anchor = UiAnchor.LeftTop
     });
 
-    private readonly SimpleText _fps = new(new TextConfig {
-        Text = "FPS: 0", X = 2, FontSize = 16, FontType = FontType.Bold, OutlineThickness = Outline,
+    private readonly SimpleText _fps = new(new TextConfig
+    {
+        Text = "FPS: 0",
+        X = 2,
+        FontSize = 16,
+        FontType = FontType.Bold,
+        OutlineThickness = Outline,
         Anchor = UiAnchor.LeftTop
     });
 
-    private readonly SimpleText _frameTimeTimer = new(new TextConfig {
-        Text = "Frame time over the last 30 seconds", X = 2, FontSize = 16, FontType = FontType.Bold,
-        OutlineThickness = Outline, Anchor = UiAnchor.LeftTop
-    });
-
-    private readonly SimpleText _gcAlloc = new(new TextConfig {
-        Text = "Allocated: 0 MB", X = 8, FontSize = 16, FontType = FontType.Bold, OutlineThickness = Outline,
+    private readonly SimpleText _frameTimeTimer = new(new TextConfig
+    {
+        Text = "Frame time over the last 30 seconds",
+        X = 2,
+        FontSize = 16,
+        FontType = FontType.Bold,
+        OutlineThickness = Outline,
         Anchor = UiAnchor.LeftTop
     });
 
-    private readonly SimpleText _gcAllocDelta = new(new TextConfig {
-        Text = "Allocated delta: 0 B", X = 8, FontSize = 16, FontType = FontType.Bold, OutlineThickness = Outline,
+    private readonly SimpleText _gcAlloc = new(new TextConfig
+    {
+        Text = "Allocated: 0 MB",
+        X = 8,
+        FontSize = 16,
+        FontType = FontType.Bold,
+        OutlineThickness = Outline,
         Anchor = UiAnchor.LeftTop
     });
 
-    private readonly SimpleText _gcGen0Count = new(new TextConfig {
-        Text = "Gen0 count: 0", X = 8, FontSize = 16, FontType = FontType.Bold, OutlineThickness = Outline,
+    private readonly SimpleText _gcAllocDelta = new(new TextConfig
+    {
+        Text = "Allocated delta: 0 B",
+        X = 8,
+        FontSize = 16,
+        FontType = FontType.Bold,
+        OutlineThickness = Outline,
         Anchor = UiAnchor.LeftTop
     });
 
-    private readonly SimpleText _gcGen1Count = new(new TextConfig {
-        Text = "Gen1 count: 0", X = 8, FontSize = 16, FontType = FontType.Bold, OutlineThickness = Outline,
+    private readonly SimpleText _gcGen0Count = new(new TextConfig
+    {
+        Text = "Gen0 count: 0",
+        X = 8,
+        FontSize = 16,
+        FontType = FontType.Bold,
+        OutlineThickness = Outline,
         Anchor = UiAnchor.LeftTop
     });
 
-    private readonly SimpleText _gcGen2Count = new(new TextConfig {
-        Text = "Gen2 count: 0", X = 8, FontSize = 16, FontType = FontType.Bold, OutlineThickness = Outline,
+    private readonly SimpleText _gcGen1Count = new(new TextConfig
+    {
+        Text = "Gen1 count: 0",
+        X = 8,
+        FontSize = 16,
+        FontType = FontType.Bold,
+        OutlineThickness = Outline,
         Anchor = UiAnchor.LeftTop
     });
 
-    private readonly SimpleText _heapSize = new(new TextConfig {
-        Text = "Heap: 0 MB", X = 8, FontSize = 16, FontType = FontType.Bold, OutlineThickness = Outline,
+    private readonly SimpleText _gcGen2Count = new(new TextConfig
+    {
+        Text = "Gen2 count: 0",
+        X = 8,
+        FontSize = 16,
+        FontType = FontType.Bold,
+        OutlineThickness = Outline,
         Anchor = UiAnchor.LeftTop
     });
 
-    private readonly SimpleText _lohSize = new(new TextConfig {
-        Text = "LOH: 0 MB", X = 8, FontSize = 16, FontType = FontType.Bold, OutlineThickness = Outline,
+    private readonly SimpleText _heapSize = new(new TextConfig
+    {
+        Text = "Heap: 0 MB",
+        X = 8,
+        FontSize = 16,
+        FontType = FontType.Bold,
+        OutlineThickness = Outline,
         Anchor = UiAnchor.LeftTop
     });
 
-    private readonly SimpleText _maxFrameTime = new(new TextConfig {
-        Text = "Max: 0 ms", X = 8, FontSize = 16, FontType = FontType.Bold, OutlineThickness = Outline,
+    private readonly SimpleText _lohSize = new(new TextConfig
+    {
+        Text = "LOH: 0 MB",
+        X = 8,
+        FontSize = 16,
+        FontType = FontType.Bold,
+        OutlineThickness = Outline,
         Anchor = UiAnchor.LeftTop
     });
 
-    private readonly SimpleText _memory = new(new TextConfig {
-        Text = "Memory", X = 2, FontSize = 16, FontType = FontType.Bold, OutlineThickness = Outline,
+    private readonly SimpleText _maxFrameTime = new(new TextConfig
+    {
+        Text = "Max: 0 ms",
+        X = 8,
+        FontSize = 16,
+        FontType = FontType.Bold,
+        OutlineThickness = Outline,
         Anchor = UiAnchor.LeftTop
     });
 
-    private readonly SimpleText _p90FrameTime = new(new TextConfig {
-        Text = "P90: 0 ms", X = 8, FontSize = 16, FontType = FontType.Bold, OutlineThickness = Outline,
+    private readonly SimpleText _memory = new(new TextConfig
+    {
+        Text = "Memory",
+        X = 2,
+        FontSize = 16,
+        FontType = FontType.Bold,
+        OutlineThickness = Outline,
         Anchor = UiAnchor.LeftTop
     });
 
-    private readonly SimpleText _p99FrameTime = new(new TextConfig {
-        Text = "P99: 0 ms", X = 8, FontSize = 16, FontType = FontType.Bold, OutlineThickness = Outline,
+    private readonly SimpleText _p90FrameTime = new(new TextConfig
+    {
+        Text = "P90: 0 ms",
+        X = 8,
+        FontSize = 16,
+        FontType = FontType.Bold,
+        OutlineThickness = Outline,
         Anchor = UiAnchor.LeftTop
     });
 
-    private readonly SimpleText _particles = new(new TextConfig {
-        Text = "Particles: 0", X = 2, FontSize = 16, FontType = FontType.Bold, OutlineThickness = Outline,
+    private readonly SimpleText _p99FrameTime = new(new TextConfig
+    {
+        Text = "P99: 0 ms",
+        X = 8,
+        FontSize = 16,
+        FontType = FontType.Bold,
+        OutlineThickness = Outline,
         Anchor = UiAnchor.LeftTop
     });
 
-    private readonly SimpleText _shadows = new(new TextConfig {
-        Text = "Shadows: 0", X = 2, FontSize = 16, FontType = FontType.Bold, OutlineThickness = Outline,
+    private readonly SimpleText _particles = new(new TextConfig
+    {
+        Text = "Particles: 0",
+        X = 2,
+        FontSize = 16,
+        FontType = FontType.Bold,
+        OutlineThickness = Outline,
         Anchor = UiAnchor.LeftTop
     });
 
-    private readonly SimpleText _tiles = new(new TextConfig {
-        Text = "Tiles: 0", X = 2, FontSize = 16, FontType = FontType.Bold, OutlineThickness = Outline,
+    private readonly SimpleText _shadows = new(new TextConfig
+    {
+        Text = "Shadows: 0",
+        X = 2,
+        FontSize = 16,
+        FontType = FontType.Bold,
+        OutlineThickness = Outline,
         Anchor = UiAnchor.LeftTop
     });
 
-    private readonly SimpleText _ui = new(new TextConfig {
-        Text = "Ui: 0", X = 2, FontSize = 16, FontType = FontType.Bold, OutlineThickness = Outline,
+    private readonly SimpleText _tiles = new(new TextConfig
+    {
+        Text = "Tiles: 0",
+        X = 2,
+        FontSize = 16,
+        FontType = FontType.Bold,
+        OutlineThickness = Outline,
+        Anchor = UiAnchor.LeftTop
+    });
+
+    private readonly SimpleText _ui = new(new TextConfig
+    {
+        Text = "Ui: 0",
+        X = 2,
+        FontSize = 16,
+        FontType = FontType.Bold,
+        OutlineThickness = Outline,
         Anchor = UiAnchor.LeftTop
     });
 
@@ -122,10 +227,11 @@ public class DebugStats : Sprite {
 
     private double _lastTime;
 
-    public DebugStats() {
+    public DebugStats()
+    {
         AddChild(_fps);
 
-        /* AddChild(_frameTimeTimer);
+        /*AddChild(_frameTimeTimer);
         AddChild(_avgFrameTime);
         AddChild(_p90FrameTime);
         AddChild(_p99FrameTime);
@@ -146,11 +252,11 @@ public class DebugStats : Sprite {
         AddChild(_allocRate); */
         AddEventListener(Event.AddedToStage, OnAddedToStage);
         AddEventListener(Event.RemovedFromStage, OnRemovedFromStage);
-        
+
         AddChild(_devBuild);
         _devBuild.Y = -36;
         _devBuild.X = Settings.DefaultScreenWidth / 2;
-        
+
         _fps.Y = 4;
         /* _frameTimeTimer.Y = _fps.Y + _fps.Height + 4;
         _avgFrameTime.Y = _frameTimeTimer.Y + _frameTimeTimer.Height + 4;
@@ -174,16 +280,19 @@ public class DebugStats : Sprite {
         _ui.Y = _particles.Y + _particles.Height + 4; */
     }
 
-    
-    private void OnAddedToStage() {
+
+    private void OnAddedToStage()
+    {
         AddEventListener(Event.EnterFrame, OnFrameEnter);
     }
 
-    private void OnRemovedFromStage() {
+    private void OnRemovedFromStage()
+    {
         RemoveEventListener(Event.EnterFrame, OnFrameEnter);
     }
 
-    private void OnFrameEnter() {
+    private void OnFrameEnter()
+    {
         var gameTime = Stage.GameTime;
         var deltaMs = gameTime.TotalMs - _lastTime;
         if (deltaMs < 1000) return;
@@ -236,7 +345,8 @@ public class DebugStats : Sprite {
         _entities.SetText($"Entities: {Render.LastDrawCountEntities}");
         _particles.SetText($"Particles: {Render.LastDrawParticleCount}");
         _ui.SetText($"Ui: {UiRender.LastRenderCount}"); */
-        if (Stage != null) {
+        if (Stage != null)
+        {
             _devBuild.X = (Stage.StageWidth / 2) - (HudView.Width / 2);
             _devBuild.Y = 6;
         }
