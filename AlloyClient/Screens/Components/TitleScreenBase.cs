@@ -26,7 +26,7 @@ public abstract class TitleScreenBase : Screen {
     protected TitleScreenBase(bool title = false) {
         if (title) {
             _titleText = new SimpleText(new TextConfig {
-                Text = "ICA'S REALM",
+                Text = "meow",
                 FontSize = 120,
                 FontType = FontType.Bold,
                 OutlineThickness = 1.0f,
