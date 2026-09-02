@@ -21,7 +21,7 @@ public static class Settings {
     private const string SettingsPath = "settings.json";
 
     // App-Engine connection info
-    public const string BuildVersion = "localhost";
+    public const string BuildVersion = "114.50";
     public const string BuildLabel = $"Version {BuildVersion}";
 
     private const string AppEngineAddress = "127.0.0.1"; // 135.125.181.109
@@ -32,7 +32,7 @@ public static class Settings {
 
     // World-Engine connection info
     public const string GameServerAddress = "127.0.0.1"; // 116.255.20.214
-    public const ushort GameServerPort = 61005; // 26959
+    public const ushort GameServerPort = 2053; // 26959
 
     // Screen-Information
     public const int DefaultScreenWidth = 1280;

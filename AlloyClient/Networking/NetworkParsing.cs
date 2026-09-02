@@ -207,7 +207,8 @@ public class NetworkWriter : BinaryWriter {
             Write((ushort)0);
         } else {
             var bytes = Encoding.UTF8.GetBytes(str);
-            Write(bytes);
+            Write((ushort)bytes.Length);
+            base.Write(bytes); // raw bytes, base.Write(byte[]) is fine here since length is already written
         }
     }
 

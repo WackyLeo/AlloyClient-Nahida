@@ -20,6 +20,34 @@ public enum ConnectionState {
     Connected
 }
 
+public class Rc4 {
+    private readonly byte[] _s = new byte[256];
+    private int _i;
+    private int _j;
+
+    public Rc4(byte[] key) {
+        for (var idx = 0; idx < 256; idx++) _s[idx] = (byte)idx;
+
+        int j = 0;
+        for (var idx = 0; idx < 256; idx++) {
+            j = (j + _s[idx] + key[idx % key.Length]) & 0xFF;
+            (_s[idx], _s[j]) = (_s[j], _s[idx]);
+        }
+    }
+
+    // Apply keystream in place; call is symmetric (same for encrypt and decrypt)
+    public void Apply(byte[] buffer, int offset, int count) {
+        for (var n = 0; n < count; n++) {
+            _i = (_i + 1) & 0xFF;
+            _j = (_j + _s[_i]) & 0xFF;
+            (_s[_i], _s[_j]) = (_s[_j], _s[_i]);
+            var k = _s[(_s[_i] + _s[_j]) & 0xFF];
+            buffer[offset + n] ^= k;
+        }
+    }
+    
+}
+
 public class SocketSendState {
     public SocketSendState() {
         Stream = new MemoryStream();
@@ -42,8 +70,20 @@ public class SocketSendState {
 
     public void PacketEnd(int begin, PacketId pkt) {
         var length = (int)Stream.Position - begin;
+        var bodyStart = begin + 5;
+        var bodyLength = length - 5;
+
+        var plaintextCopy = new byte[bodyLength];
+        Array.Copy(Stream.GetBuffer(), bodyStart, plaintextCopy, 0, bodyLength);
+        Console.WriteLine($"PRE-ENCRYPT [{pkt}]: {BitConverter.ToString(plaintextCopy)}");
+
+        Client.OutgoingCipher.Apply(Stream.GetBuffer(), bodyStart, bodyLength);
+
+        var ciphertextCopy = new byte[bodyLength];
+        Array.Copy(Stream.GetBuffer(), bodyStart, ciphertextCopy, 0, bodyLength);
+        Console.WriteLine($"POST-ENCRYPT [{pkt}]: {BitConverter.ToString(ciphertextCopy)}");
+
         Stream.Position -= length;
-        // Write length big-endian (network byte order)
         var lengthBytes = BitConverter.GetBytes(IPAddress.HostToNetworkOrder(length));
         Stream.Write(lengthBytes, 0, 4);
         Writer.Write((byte)pkt);
@@ -62,7 +102,15 @@ public class SocketSendState {
     }
 }
 
-public static class Client {
+public static class Client 
+{
+    internal static Rc4 OutgoingCipher;
+    internal static Rc4 IncomingCipher;
+
+    private static void ResetCiphers() {
+        OutgoingCipher = new Rc4(HexToBytes("C637F2BE483C466AAE20DB2AC4733A67"));
+        IncomingCipher = new Rc4(HexToBytes("450FF6F2D26F2EC99DC6388217906414"));
+    }
     public const int RECV_BUFFER_SIZE = 0x40000;
     public const int SEND_BUFFER_SIZE = 0x10000;
 
@@ -129,6 +177,7 @@ public static class Client {
 
         Log.Info("Connected to server.");
 
+        ResetCiphers();
         SendHello();
 
         StartReceive();
@@ -174,10 +223,14 @@ public static class Client {
             }
 
             if (_bytesRead - offset < length) break;
-
+            
             offset += 4;
             var packetId = (PacketId)_readBuffer[offset++];
             var payloadLength = length - 5;
+
+            IncomingCipher.Apply(_readBuffer, offset, payloadLength); // decrypt in place
+            
+            Log.Info($"RECV [{packetId}] declared_len={length} payload_len={payloadLength} bytes={BitConverter.ToString(_readBuffer, offset, payloadLength)}");
 
             var pkt = PacketUtils.CreateIncomingPacket(packetId);
             try {
@@ -282,7 +335,10 @@ public static class Client {
             var begin = SendState.PacketBegin();
             pkt.Write(SendState.Writer);
             SendState.PacketEnd(begin, pkt.PacketId);
-            // Log.Debug($"SENDING {pkt.PacketId}");
+
+            var buf = SendState.Stream.GetBuffer();
+            var end = (int)SendState.Stream.Position;
+            Log.Info($"RAW PACKET [{pkt.PacketId}]: {BitConverter.ToString(buf, begin, end - begin)}");
         }
     }
 
@@ -351,5 +407,12 @@ public static class Client {
         hello.Key = Array.Empty<byte>();
         hello.Key2 = 0;
         QueuePacket(hello);
+    }
+    
+    private static byte[] HexToBytes(string hex) {
+        var bytes = new byte[hex.Length / 2];
+        for (var i = 0; i < bytes.Length; i++)
+            bytes[i] = Convert.ToByte(hex.Substring(i * 2, 2), 16);
+        return bytes;
     }
 }
