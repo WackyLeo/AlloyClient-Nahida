@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using AlloyClient.Game.Components.Options.OptionTypes;
-using AlloyClient.Sound;
 using AlloyClient.State;
 using AlloyClient.State.SettingTypes;
 using AlloyClient.Ui.Components.Scrollbars;
@@ -172,6 +171,8 @@ public class OptionTabView : Container {
         // I've commented out the buttons and added some overview text alongside these sliders, 
         // 0% can act as the isplaying check
 
+        _options.Add(new SliderOption(Settings.MasterVolume, "Vol:", "MASTER", OnMasterVolumeChange));
+        
         //_options.Add(new ChoiceOption<bool>(Settings.PlayMusic, OnOffLabels, OnOffValues, "Play Music",
         //    "This toggles whether music is played", OnPlayMusicChange));
 
@@ -186,10 +187,6 @@ public class OptionTabView : Container {
         //    OnPlayWeaponSoundsChange));
 
         _options.Add(new SliderOption(Settings.WeaponSfxVolume, "Vol:", "WEAPONS", OnWeaponSfxVolumeChange));
-        //_options.Add(new ChoiceOption<bool>(Settings.PlayLootSfx, OnOffLabels, OnOffValues, "Play Loot Sounds",
-        //    "This toggles whether LG/DC/AC/CS loot drop sounds are played"));
-
-        _options.Add(new SliderOption(Settings.LootSfxVolume, "Vol:", "LOOT", OnLootSfxVolumeChange));
     }
 
     private void AddExtraOptions() {
@@ -205,33 +202,24 @@ public class OptionTabView : Container {
             "Sets the opacity of projectiles fired by other players."));
     }
 
-    private void OnLootSfxVolumeChange(float volume) {
-        Settings.LootSfxVolume.SetValue(volume);
+    private void OnMasterVolumeChange(float obj) {
+        Settings.MasterVolume.SetValue(obj);
+        Audio.SetMasterVolume(Settings.MasterVolume);
     }
 
     private void OnWeaponSfxVolumeChange(float volume) {
         Settings.WeaponSfxVolume.SetValue(volume);
+        Audio.SetMasterVolume(Settings.WeaponSfxVolume);
     }
 
     private void OnSfxVolumeChange(float volume) {
         Settings.SfxVolume.SetValue(volume);
+        Audio.SetMasterVolume(Settings.SfxVolume);
     }
 
-    private void OnMusicVolumeChange(float volume) {
-        if(Settings.MusicVolume <= 0.01f && volume > 0f || (!Music.GetIsMusicPlaying() && volume > 0f)) {
-            // Special case
-            Settings.MusicVolume.SetValue(volume);
-            Music.SetVolume(volume);
-            Music.PlayMusic(Map.MusicName);
-            return;
-        }   
-        if (volume < 0.01f) {
-            // Special case 2
-            Music.StopMusic(0.0f);
-        }
-
-        Settings.MusicVolume.SetValue(volume);
-        Music.SetVolume(volume);
+    private void OnMusicVolumeChange(float obj) {
+        Settings.MusicVolume.SetValue(obj);
+        Audio.MusicChannel.SetVolume(Settings.MusicVolume);
     }
 
     private void OnChatVisible() {

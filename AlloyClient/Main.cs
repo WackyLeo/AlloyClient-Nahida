@@ -8,9 +8,9 @@ using AlloyClient.Assets.Libraries;
 using AlloyClient.Display;
 using AlloyClient.Engine.Graphics;
 using AlloyClient.Game.Components;
+using AlloyClient.Logging;
 using AlloyClient.Rendering;
 using AlloyClient.Screens;
-using AlloyClient.Sound;
 using AlloyClient.State;
 using AlloyClient.Ui;
 using AlloyClient.UiLib;
@@ -20,6 +20,7 @@ using AlloyClient.UiLib.Extra;
 using AlloyClient.UiLib.Signals;
 using Common;
 using Common.ContentReaders;
+using Microsoft.Extensions.Logging;
 using OpenTK.Graphics;
 using OpenTK.Graphics.OpenGL;
 using OpenTK.Mathematics;
@@ -68,7 +69,7 @@ public class Main {
         GLLoader.LoadBindings(Toolkit.OpenGL.GetBindingsContext(Context));
 
         EnableDebugOutput();
-        EventQueue.EventRaised += HandleEvents;
+        Toolkit.Event.EventRaised += HandleEvents;
 
         Initialize();
         LoadContent();
@@ -85,17 +86,24 @@ public class Main {
 
         var mode = Settings.Fullscreen ? WindowMode.WindowedFullscreen : WindowMode.Normal;
         Toolkit.Window.SetMode(Window, mode);
-
+        
+        // Audio Setup
+        Audio.Init(ILogger.Factory, Path.CombineAlt(AppDomain.CurrentDomain.BaseDirectory, @"Content\Sound"));
+        Audio.Start();
+        Audio.SetMasterVolume(Settings.MasterVolume);
+        Audio.MusicChannel.SetVolume(Settings.MusicVolume);
+        Audio.SfxChannel.SetVolume(Settings.SfxVolume);
+        
         switch (mode) {
             case WindowMode.Hidden:
             case WindowMode.Minimized:
             case WindowMode.Normal:
             case WindowMode.Maximized:
                 var display = Toolkit.Window.GetDisplay(Window);
-                Toolkit.Display.GetResolution(display, out var width, out var height);
+                var resolution = Toolkit.Display.GetResolution(display);
                 Toolkit.Window.SetClientPosition(Window,
-                    new Vector2i(width / 2 - Settings.ScreenWidth / 2,
-                        height / 2 - Settings.ScreenHeight / 2));
+                    new Vector2i(resolution.X / 2 - Settings.ScreenWidth / 2,
+                        resolution.Y / 2 - Settings.ScreenHeight / 2));
                 break;
             case WindowMode.ExclusiveFullscreen:
             case WindowMode.WindowedFullscreen:
@@ -206,8 +214,8 @@ public class Main {
         GL.Enable(EnableCap.Blend);
         GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
         GL.Disable(EnableCap.FramebufferSrgb);
-
-        Music.PlayMusic("Reclaiming Entropy", 0);
+        
+        Audio.MusicChannel.FadeTo("Reclaiming Entropy", 0f);
 
         while (true) {
             var elapsedMs = sw.Elapsed.TotalMilliseconds;
@@ -231,7 +239,7 @@ public class Main {
         }
     }
 
-    private void HandleEvents(PalHandle handle, PlatformEventType type, EventArgs args) {
+    private void HandleEvents(EventArgs args) {
         switch (args) {
             case CloseEventArgs:
                 Toolkit.Window.Destroy(Window);

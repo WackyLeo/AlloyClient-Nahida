@@ -5,7 +5,6 @@ using AlloyClient.Game.Objects;
 using AlloyClient.Networking;
 using AlloyClient.Networking.Packets.Outgoing;
 using AlloyClient.Networking.Structs.DataObjects;
-using AlloyClient.Sound;
 using AlloyClient.Ui.Components.Tooltips;
 using AlloyClient.UiLib.BuiltIn;
 using AlloyClient.UiLib.Core;
@@ -152,10 +151,6 @@ public sealed class ItemTile : Sprite {
             if (ClassSensitive) _background.SetColor(IsUsableByPlayer(ItemDesc) ? _bgColor : 0x5C1D1Du);
             _slotDetail.Visible = false;
             _slotId.Visible = false;
-            if (isNewItem && Owner is Player) {
-                var soundToLoad = !string.IsNullOrEmpty(ItemDesc.OldSound) ? ItemDesc.OldSound : ItemDesc.Sound;
-                if (!string.IsNullOrEmpty(soundToLoad)) _ = AudioCache.LoadSfxAsync(soundToLoad, CacheTier.Volatile);
-            }
         } else {
             _sprite.ChangeTexture(TextureHelper.FromGameAtlas(0x0096));
             _background.SetColor(_bgColor);

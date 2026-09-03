@@ -130,10 +130,10 @@ public static class Settings {
         Fullscreen.SetValue(false);
 
         // Sounds Settings
+        MasterVolume.SetValue(0.5f);
         MusicVolume.SetValue(0.5f);
         SfxVolume.SetValue(0.5f);
         WeaponSfxVolume.SetValue(0.5f);
-        LootSfxVolume.SetValue(0.5f);
 
         // Personal Preferences
         ToggleLeftToMax.SetValue(true);
@@ -434,10 +434,10 @@ public static class Settings {
     public static ValueSetting<int> NonFullscreenHeight = DefaultScreenHeight;
 
     // Sounds Settings
+    public static ValueSetting<float> MasterVolume = 0.5f;
     public static ValueSetting<float> MusicVolume = 0.5f;
     public static ValueSetting<float> SfxVolume = 0.5f;
     public static ValueSetting<float> WeaponSfxVolume = 0.5f;
-    public static ValueSetting<float> LootSfxVolume = 0.5f;
 
     // Personal Preferences
     public static ValueSetting<bool> ToggleLeftToMax = true;

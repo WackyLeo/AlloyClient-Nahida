@@ -85,15 +85,15 @@ public static partial class Render {
         GL.BindFramebuffer(FramebufferTarget.Framebuffer, _Fbo);
 
         GL.GenTexture(out _FboTID);
-        GL.BindTexture(TextureTarget.Texture2d, _FboTID);
+        GL.BindTexture(TextureTarget.Texture2D, _FboTID);
 
-        GL.TexImage2D(TextureTarget.Texture2d, 0, InternalFormat.Rgba16f, 800, 600,
+        GL.TexImage2D(TextureTarget.Texture2D, 0, InternalFormat.Rgba16f, 800, 600,
             0, PixelFormat.Rgba, PixelType.Float, IntPtr.Zero);
 
-        GL.TexParameteri(TextureTarget.Texture2d, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Linear);
-        GL.TexParameteri(TextureTarget.Texture2d, TextureParameterName.TextureMagFilter, (int)TextureMinFilter.Linear);
+        GL.TexParameteri(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Linear);
+        GL.TexParameteri(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)TextureMinFilter.Linear);
 
-        GL.BindTexture(TextureTarget.Texture2d, 0);
+        GL.BindTexture(TextureTarget.Texture2D, 0);
         GL.BindTextureUnit(atlas.TextureUnit, atlas.TextureHandle);
 
         GL.FramebufferTexture(FramebufferTarget.Framebuffer, FramebufferAttachment.ColorAttachment0, _FboTID, 0);
@@ -181,8 +181,8 @@ public static partial class Render {
     public static void ResizeFbo(int width, int height) {
         if (width == 0 || height == 0 || _Fbo == 0) return;
 
-        GL.BindTexture(TextureTarget.Texture2d, _FboTID);
-        GL.TexImage2D(TextureTarget.Texture2d, 0, InternalFormat.Rgba16f, width, height, 0, PixelFormat.Rgba,
+        GL.BindTexture(TextureTarget.Texture2D, _FboTID);
+        GL.TexImage2D(TextureTarget.Texture2D, 0, InternalFormat.Rgba16f, width, height, 0, PixelFormat.Rgba,
             PixelType.Float, IntPtr.Zero);
 
         GL.BindRenderbuffer(RenderbufferTarget.Renderbuffer, _RboID);
@@ -191,7 +191,7 @@ public static partial class Render {
         if (Main.gameAtlasSampler != null)
             GL.BindTextureUnit(Main.gameAtlasSampler.TextureUnit, Main.gameAtlasSampler.TextureHandle);
         else
-            GL.BindTexture(TextureTarget.Texture2d, 0);
+            GL.BindTexture(TextureTarget.Texture2D, 0);
 
         GL.BindRenderbuffer(RenderbufferTarget.Renderbuffer, 0);
     }

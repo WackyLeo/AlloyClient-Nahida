@@ -6,7 +6,6 @@ using AlloyClient.Game.Objects.Util;
 using AlloyClient.ParticleEffects;
 using AlloyClient.Rendering;
 using AlloyClient.Rendering.Types;
-using AlloyClient.Sound;
 using AlloyClient.State;
 using AlloyClient.Ui.Character;
 using AlloyClient.Utils;
@@ -392,9 +391,9 @@ public sealed class Projectile : IResettable {
 
                 if (newHealth <= 0) {
                     if (!string.IsNullOrEmpty(target.Properties.DeathSound))
-                        SoundManager.PlaySoundEffect(target.Properties.DeathSound);
+                        Audio.PlaySfx(target.Properties.DeathSound);
                 } else if (!string.IsNullOrEmpty(target.Properties.HitSound)) {
-                    SoundManager.PlaySoundEffect(target.Properties.HitSound);
+                    Audio.PlaySfx(target.Properties.HitSound);
                 }
             }
 
@@ -469,9 +468,9 @@ public sealed class Projectile : IResettable {
                     NotificationLayer.AddStatusText(go, notification, clr, 1000, 0);
                     if (go.PredictedHp <= 0) {
                         if (!string.IsNullOrEmpty(go.Properties.DeathSound))
-                            SoundManager.PlaySoundEffect(go.Properties.DeathSound);
+                            Audio.PlaySfx(go.Properties.DeathSound);
                     } else if (!string.IsNullOrEmpty(go.Properties.HitSound)) {
-                        SoundManager.PlaySoundEffect(go.Properties.HitSound);
+                        Audio.PlaySfx(go.Properties.HitSound);
                     }
                 }
 
@@ -678,9 +677,9 @@ public sealed class Projectile : IResettable {
 
                         if (newHealth <= 0) {
                             if (!string.IsNullOrEmpty(target.Properties.DeathSound))
-                                SoundManager.PlaySoundEffect(target.Properties.DeathSound);
+                                Audio.PlaySfx(target.Properties.DeathSound);
                         } else if (!string.IsNullOrEmpty(target.Properties.HitSound)) {
-                            SoundManager.PlaySoundEffect(target.Properties.HitSound);
+                            Audio.PlaySfx(target.Properties.HitSound);
                         }
                     }
 
@@ -717,9 +716,9 @@ public sealed class Projectile : IResettable {
                                 NotificationLayer.AddStatusText(target, notification, clr, 1000, 0);
                                 if (newHealth <= 0) {
                                     if (!string.IsNullOrEmpty(target.Properties.DeathSound))
-                                        SoundManager.PlaySoundEffect(target.Properties.DeathSound);
+                                        Audio.PlaySfx(target.Properties.DeathSound);
                                 } else if (!string.IsNullOrEmpty(target.Properties.HitSound)) {
-                                    SoundManager.PlaySoundEffect(target.Properties.HitSound);
+                                    Audio.PlaySfx(target.Properties.HitSound);
                                 }
                             }
                         }

@@ -145,6 +145,7 @@ public static class Client
         _pendingSend = false;
         _reader.BaseStream.Seek(0, SeekOrigin.Begin);
         SendState.Reset();
+        ResetCiphers();
     }
 
     public static async void Connect(string ip, ushort port) {
@@ -177,7 +178,6 @@ public static class Client
 
         Log.Info("Connected to server.");
 
-        ResetCiphers();
         SendHello();
 
         StartReceive();
@@ -230,8 +230,6 @@ public static class Client
 
             IncomingCipher.Apply(_readBuffer, offset, payloadLength); // decrypt in place
             
-            Log.Info($"RECV [{packetId}] declared_len={length} payload_len={payloadLength} bytes={BitConverter.ToString(_readBuffer, offset, payloadLength)}");
-
             var pkt = PacketUtils.CreateIncomingPacket(packetId);
             try {
                 using (var ms = new MemoryStream(_readBuffer, offset, payloadLength)) {

@@ -12,7 +12,6 @@ using AlloyClient.ParticleEffects;
 using AlloyClient.Rendering;
 using AlloyClient.Rendering.Types;
 using AlloyClient.Rendering.VertexData;
-using AlloyClient.Sound;
 using AlloyClient.State;
 using AlloyClient.UiLib.Core;
 using AlloyClient.UiLib.Signals;
@@ -632,7 +631,6 @@ public static class Map {
         ShowDisplays = false;
 
         PartyData.Clear();
-        AudioCache.ClearVolatileCache();
 
         Entities.Clear();
         Players.Clear();
@@ -699,9 +697,6 @@ public static class Map {
                 else if (!string.IsNullOrEmpty(slot.Sound))
                     preloadSounds.Add(slot.Sound);
             }
-
-        if (preloadSounds.Count > 0)
-            _ = AudioCache.PreloadSoundsAsync(preloadSounds, CacheTier.Volatile);
 
         GameSprite.Hud.CreatePlayerDependentAssets();
         OnPlayerUpdate.Dispatch(player);

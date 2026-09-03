@@ -1,6 +1,5 @@
 ﻿using AlloyClient.Game;
 using AlloyClient.Game.Objects;
-using NAudio.CoreAudioApi;
 using OpenTK.Mathematics;
 using System;
 using System.Collections.Generic;

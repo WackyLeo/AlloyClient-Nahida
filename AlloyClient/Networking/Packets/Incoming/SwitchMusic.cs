@@ -14,7 +14,7 @@ public class SwitchMusic : IncomingPacket<SwitchMusic> {
     }
 
     public override void Handle() {
-        Sound.Music.PlayMusic(Music);
+        Audio.MusicChannel.Play(Music);
     }
 
     public override string ToString() {

@@ -1,5 +1,4 @@
 ﻿using AlloyClient.Game;
-using AlloyClient.Sound;
 
 namespace AlloyClient.Networking.Packets.Incoming;
 
@@ -25,9 +24,9 @@ public class PlaySound : IncomingPacket<PlaySound> {
         if (entity == null) return;
 
         if (!string.IsNullOrEmpty(entity.Properties.OldSound))
-            SoundManager.PlaySoundEffect(entity.Properties.OldSound);
+            Audio.SfxChannel.Play(entity.Properties.OldSound);
         else if (!string.IsNullOrEmpty(entity.Properties.Sound))
-            SoundManager.PlaySoundEffect(entity.Properties.Sound);
+            Audio.SfxChannel.Play(entity.Properties.Sound);
     }
 
     public override string ToString() {

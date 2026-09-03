@@ -56,7 +56,7 @@ public static class UiRender {
 
         KeyboardInput.Register(Stage);
 
-        EventQueue.EventRaised += HandleEvents;
+        Toolkit.Event.EventRaised += HandleEvents;
 
         UiShader = ContentReader.LoadShader("Shaders/Ui");
 
@@ -129,7 +129,7 @@ public static class UiRender {
         IsFocused = focus;
     }
 
-    private static void HandleEvents(PalHandle handle, PlatformEventType type, EventArgs args) {
+    private static void HandleEvents(EventArgs args) {
         if (args is FocusEventArgs fea) SetFocus(fea.GotFocus);
         if (!IsFocused) return;
 

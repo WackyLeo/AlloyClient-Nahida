@@ -11,7 +11,6 @@ using AlloyClient.Networking.Structs.DataObjects;
 using AlloyClient.ParticleEffects;
 using AlloyClient.Rendering;
 using AlloyClient.Rendering.Types;
-using AlloyClient.Sound;
 using AlloyClient.State;
 using AlloyClient.Ui.Character;
 using AlloyClient.Utils;
@@ -570,9 +569,9 @@ public class Player : Entity {
 
                     if (i == 0) {
                         if (!string.IsNullOrEmpty(props.OldSound))
-                            SoundManager.PlaySoundEffect(props.OldSound, SoundType.Weapon);
+                            Audio.PlaySfx(props.OldSound);
                         else if (!string.IsNullOrEmpty(props.Sound))
-                            SoundManager.PlaySoundEffect(props.Sound, SoundType.Weapon);
+                            Audio.PlaySfx(props.Sound);
 
                         shootPacket.Shots.Add(new ShootData {
                             Time = time,
@@ -862,9 +861,9 @@ public class Player : Entity {
 
             if (i == 0) {
                 if (!string.IsNullOrEmpty(props.OldSound))
-                    SoundManager.PlaySoundEffect(props.OldSound, SoundType.Weapon);
+                    Audio.PlaySfx(props.OldSound);
                 else if (!string.IsNullOrEmpty(props.Sound))
-                    SoundManager.PlaySoundEffect(props.Sound, SoundType.Weapon);
+                    Audio.PlaySfx(props.Sound);
 
                 PendingShots.Add(new ShootData {
                     Time = (int)Main.GameTime.TotalMs,

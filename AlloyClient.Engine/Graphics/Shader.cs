@@ -47,7 +47,7 @@ public sealed class Shader {
     }
 
     public void SetValue(string uniform, Sampler sampler) {
-        GL.ProgramUniform1i(Handle, GetLocation(uniform, UniformType.Sampler2d), (int)sampler.TextureUnit);
+        GL.ProgramUniform1i(Handle, GetLocation(uniform, UniformType.Sampler2D), (int)sampler.TextureUnit);
     }
 
     private int GetLocation(string uniform, UniformType type) {
