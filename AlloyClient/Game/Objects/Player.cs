@@ -815,70 +815,100 @@ public class Player : Entity {
 
         return attFreq;
     }
-
+    public readonly Dictionary<int, Projectile> PendingLocalProjectiles = new();
     public void Shoot(float attackAngle, GameTime gameTime, bool isAbility) {
-        if (HasConditionEffect(ConditionEffects.Stunned) || HasConditionEffect(ConditionEffects.Paused))
-            return;
-        var item = Equipment[0];
-        if (item == null)
-            return;
+    if (HasConditionEffect(ConditionEffects.Stunned) || HasConditionEffect(ConditionEffects.Paused))
+        return;
+    var item = Equipment[0];
+    if (item == null)
+        return;
 
-        var temp = AttackFrequency();
-        AttackPeriod = (float)(1 / temp * (1 / item.RateOfFire) * 1.02);
+    var temp = AttackFrequency();
+    AttackPeriod = (float)(1 / temp * (1 / item.RateOfFire) * 1.02);
 
-        if (gameTime.TotalMs < AttackStart + AttackPeriod)
-            return;
+    if (gameTime.TotalMs < AttackStart + AttackPeriod)
+        return;
 
-        AttackAngle = attackAngle;
-        AttackStart = gameTime.TotalMs;
+    AttackAngle = attackAngle;
+    AttackStart = gameTime.TotalMs;
 
-        var props = ObjectLibrary.TypeToObjectProps[item.ObjectType];
+    var props = ObjectLibrary.TypeToObjectProps[item.ObjectType];
 
-        var arc = MathHelper.DegreesToRadians(props.ArcGap) * (props.NumProjectiles - 1);
-        var startAngle = attackAngle - arc / 2;
+    var arc = MathHelper.DegreesToRadians(props.ArcGap) * (props.NumProjectiles - 1);
+    var startAngle = attackAngle - arc / 2;
 
-        var startCount = item.StartCount;
-        var nextCount = item.NextCount;
-        var projTypeIndex = 0;
+    var startCount = item.StartCount;
+    var nextCount = item.NextCount;
+    var projTypeIndex = 0;
 
-        for (var i = 0; i < props.NumProjectiles; i++) {
-            var projDesc = item.AllProjectiles[projTypeIndex % item.AllProjectiles.Length];
-            var projObjType = ObjectLibrary.IdToObjectType[projDesc.ObjectId];
-            var objProps = ObjectLibrary.TypeToObjectProps[projObjType];
-            var angle = startAngle + MathHelper.DegreesToRadians(props.ArcGap) * i;
-            var bId = GetBulletId();
+    for (var i = 0; i < props.NumProjectiles; i++) {
+        var projDesc = item.AllProjectiles[projTypeIndex % item.AllProjectiles.Length];
+        var projObjType = ObjectLibrary.IdToObjectType[projDesc.ObjectId];
+        var objProps = ObjectLibrary.TypeToObjectProps[projObjType];
+        var angle = startAngle + MathHelper.DegreesToRadians(props.ArcGap) * i;
+        var bId = GetBulletId();
 
-            var seededRand = new Random(bId + AccountId);
-            var rawDmg = seededRand.Next(projDesc.MinDamage, projDesc.MaxDamage + 1);
-            var dmg = (int)(rawDmg * (0.5f + Attack / 50f));
+        var rawDmg = Map.Random.NextIntRange((uint)projDesc.MinDamage, (uint)projDesc.MaxDamage);
 
-            if (!props.ProjectilesDict.TryGetValue(projDesc.BulletType, out var projProps))
-                projProps = props.Projectiles[0];
-
-            var proj = ObjectPools.Projectiles.Pop();
-            proj.Reset(bId, dmg, angle, this, objProps, projProps);
-            Map.AddProjectile(proj);
-
-            if (i == 0) {
-                if (!string.IsNullOrEmpty(props.OldSound))
-                    Audio.PlaySfx(props.OldSound);
-                else if (!string.IsNullOrEmpty(props.Sound))
-                    Audio.PlaySfx(props.Sound);
-
-                PendingShots.Add(new ShootData {
-                    Time = (int)Main.GameTime.TotalMs,
-                    BulletId = bId,
-                    ItemType = item.ObjectType,
-                    StartingPos = new Position { X = Position.X, Y = Position.Y },
-                    Angle = attackAngle
-                });
-            }
-
-            startCount++;
-            if (startCount % nextCount == 0)
-                projTypeIndex++;
+        float mult;
+        if (HasConditionEffect(ConditionEffects.Weak)) {
+            mult = 0.5f;
+        } else {
+            mult = 0.5f + Attack / 250f * 1.5f;
+            if (HasConditionEffect(ConditionEffects.Damaging))
+                mult *= 1.25f;
         }
+
+        var dmg = (int)(rawDmg * mult);
+
+        if (!props.ProjectilesDict.TryGetValue(projDesc.BulletType, out var projProps))
+            projProps = props.Projectiles[0];
+
+        var proj = ObjectPools.Projectiles.Pop();
+        proj.Reset(bId, dmg, angle, this, objProps, projProps);
+        Map.AddProjectile(proj);
+
+        if (i == 0) {
+            if (!string.IsNullOrEmpty(props.OldSound))
+                Audio.PlaySfx(props.OldSound);
+            else if (!string.IsNullOrEmpty(props.Sound))
+                Audio.PlaySfx(props.Sound);
+
+            PendingShots.Add(new ShootData {
+                Time = (int)Main.GameTime.TotalMs,
+                BulletId = bId,
+                ItemType = item.ObjectType,
+                StartingPos = new Position { X = Position.X, Y = Position.Y },
+                Angle = attackAngle
+            });
+        }
+
+        startCount++;
+        if (startCount % nextCount == 0)
+            projTypeIndex++;
     }
+}
+    public uint NextIntRange(uint arg1, uint arg2)
+    {
+        return arg1 == arg2 ? arg1 : (arg1 + (Gen() % (arg2 - arg1)));
+    }
+
+    private uint Gen()
+    {
+        uint seed = (uint)new Random().Next();
+        uint local2 = 16807 * (seed & 0xFFFF);
+        uint local1 = 16807 * (seed >> 16);
+        local2 = local2 + ((local1 & 32767) << 16);
+        local2 = local2 + (local1 >> 15);
+    
+        if (local2 > 2147483647)
+        {
+            local2 = local2 - 2147483647;
+        }
+    
+        return seed = local2;
+    }
+
 
     public int GetBulletId() {
         var ret = NextBulletId;

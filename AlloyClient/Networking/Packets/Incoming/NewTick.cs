@@ -73,7 +73,7 @@ public class NewTick : IncomingPacket<NewTick> {
 
     private void ProcessObjectStats(ObjectStats stats, bool isPlayer, double now) {
         if (!Map.Entities.TryGetValue(stats.Id, out var en)) {
-            Logger.Warn($"[NewTick] Unable to lookup id pos {stats.Position}: {stats.Id}");
+            Logger.Debug($"[NewTick] Skipping stats for not yet created id: {stats.Id}");
             return;
         }
 

@@ -1,4 +1,5 @@
-﻿using AlloyClient.Assets.Libraries;
+﻿using System;
+using AlloyClient.Assets.Libraries;
 using AlloyClient.Game;
 using AlloyClient.Game.Objects;
 using AlloyClient.Networking.Structs.DataObjects;
@@ -8,14 +9,13 @@ using OpenTK.Mathematics;
 namespace AlloyClient.Networking.Packets.Incoming;
 
 public class ServerPlayerShoot : IncomingPacket<ServerPlayerShoot> {
-    public float Angle;
     public int BulletId;
-    public int ContainerType;
-    public short Damage;
     public int OwnerId;
-    public int Prjtype;
-
+    public int ContainerType;
     public Position StartingPos;
+    public float Angle;
+    public short Damage;
+    public int ProjectileIndex;
     public bool UsePlayerPos;
 
     public override PacketId PacketId => PacketId.ServerPlayerShoot;
@@ -27,7 +27,7 @@ public class ServerPlayerShoot : IncomingPacket<ServerPlayerShoot> {
         StartingPos.Reset();
         Angle = 0;
         Damage = 0;
-        Prjtype = 0;
+        ProjectileIndex = 0;
         UsePlayerPos = false;
     }
 
@@ -35,10 +35,10 @@ public class ServerPlayerShoot : IncomingPacket<ServerPlayerShoot> {
         BulletId = reader.ReadInt32();
         OwnerId = reader.ReadInt32();
         ContainerType = reader.ReadInt32();
-        Prjtype = reader.ReadInt32();
         StartingPos.Read(reader);
         Angle = reader.ReadSingle();
         Damage = reader.ReadInt16();
+        ProjectileIndex = reader.ReadInt32();
         UsePlayerPos = reader.ReadBoolean();
     }
 
@@ -47,12 +47,23 @@ public class ServerPlayerShoot : IncomingPacket<ServerPlayerShoot> {
             return;
         if (!Map.Entities.TryGetValue(OwnerId, out var owner))
             return;
+
+        if (OwnerId == Map.LocalPlayerId &&
+            Map.LocalPlayer.PendingLocalProjectiles.TryGetValue(BulletId, out var existingProj)) {
+            Map.LocalPlayer.PendingLocalProjectiles.Remove(BulletId);
+
+            if (!existingProj.IsInPool) {
+                existingProj.SetDamage(Damage);
+                return;
+            }
+            // Fell out of the pool already (expired/recycled) — fall through and spawn fresh below.
+        }
+
         if (!ObjectLibrary.TypeToObjectProps.TryGetValue((ushort)ContainerType, out var itemDesc))
             return;
-
         if (itemDesc.Projectiles == null || itemDesc.Projectiles.Count == 0)
             return;
-        var projDesc = itemDesc.Projectiles[0];
+        var projDesc = itemDesc.Projectiles[Math.Clamp(ProjectileIndex, 0, itemDesc.Projectiles.Count - 1)];
         if (string.IsNullOrEmpty(projDesc.ObjectId))
             return;
 

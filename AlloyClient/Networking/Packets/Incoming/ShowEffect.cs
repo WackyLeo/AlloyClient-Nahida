@@ -13,7 +13,6 @@ public class ShowEffect : IncomingPacket<ShowEffect>
     public EffectType EffectType;
     public Position Pos1;
     public Position Pos2;
-    public float Strength;
     public int TargetObjectId;
 
     public override PacketId PacketId => PacketId.ShowEffect;
@@ -26,7 +25,6 @@ public class ShowEffect : IncomingPacket<ShowEffect>
         Pos1.Reset();
         Pos2.Reset();
         Duration = 0;
-        Strength = 0;
     }
 
     public override void Read(NetworkReader reader)
@@ -37,7 +35,6 @@ public class ShowEffect : IncomingPacket<ShowEffect>
         Pos2.Read(reader);
         Color = reader.ReadUInt32();
         Duration = reader.ReadSingle();
-        Strength = reader.ReadSingle();
     }
 
     public override void Handle()
@@ -126,7 +123,7 @@ public class ShowEffect : IncomingPacket<ShowEffect>
                 break;
             case EffectType.NecroLine:
                 if (entity == null || Map.LocalPlayer == null) return;
-                effect = new NecroLineEffect(Map.LocalPlayer.Position, entity, Color, Strength);
+                effect = new NecroLineEffect(Map.LocalPlayer.Position, entity, Color, 0);
                 break;
             case EffectType.NecroRadius:
                 if (Map.LocalPlayer == null) return;

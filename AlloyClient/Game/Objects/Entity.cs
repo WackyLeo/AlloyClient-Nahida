@@ -680,6 +680,7 @@ public class Entity {
         if (entity.HasConditionEffect(ConditionEffects.Protected))
             ret *= 0.25f;
 
+        Log.Info(ret);
         return (int)ret;
     }
 

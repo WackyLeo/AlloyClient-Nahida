@@ -761,4 +761,7 @@ public sealed class Projectile : IResettable {
 
         return closest;
     }
+    public void SetDamage(int dmg) {
+        _damage = dmg;
+    }
 }

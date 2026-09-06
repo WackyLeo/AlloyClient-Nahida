@@ -85,6 +85,7 @@ public static class Map {
     private static float _lastCameraAngle;
     private static int _lastScreenHeight;
     private static int _lastScreenWidth;
+    public static RandomSeed Random;
 
     private static readonly List<(Projectile proj, double spawnAt)> PendingProjectiles = [];
 
@@ -98,6 +99,7 @@ public static class Map {
         DisplayName = display;
         Difficulty = diff;
         Seed = seed;
+        Random = new RandomSeed(seed);
         Background = background;
         AllowPlayerTeleport = allowTp;
         ShowDisplays = showDisplays;
