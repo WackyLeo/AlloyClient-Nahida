@@ -2,13 +2,16 @@
 using System.Collections.Generic;
 using AlloyClient.Assets.Libraries;
 using AlloyClient.Assets.XmlStructs;
+using AlloyClient.Game.Components.Hud.Chat;
 using AlloyClient.Game.Objects.Util;
+using AlloyClient.Networking.Packets.Incoming;
 using AlloyClient.ParticleEffects;
 using AlloyClient.Rendering;
 using AlloyClient.Rendering.Types;
 using AlloyClient.State;
 using AlloyClient.Ui.Character;
 using AlloyClient.Utils;
+using Common;
 using Common.Structs;
 using OpenTK.Mathematics;
 
@@ -16,6 +19,7 @@ namespace AlloyClient.Game.Objects;
 
 public sealed class Projectile : IResettable {
     private const double HitTestDelayMs = 16;
+    private static readonly Logger Log = new(nameof(Projectile));
 
     private readonly HashSet<int> _hitEntities = [];
 
@@ -480,6 +484,9 @@ public sealed class Projectile : IResettable {
                     Map.PendingEnemyHit.AddHit((int)time, _bulletId, go.ObjectId, go.PredictedHp <= 0);
             }
 
+            
+            ChatBox.AddChatLine.Dispatch(new ChatBoxLineData(0, "*Error*", -1, null, _bulletId.ToString()));
+            Log.Info(_bulletId);
             _hitEntities.Add(go.ObjectId);
             hitSomething = true;
 
@@ -507,6 +514,7 @@ public sealed class Projectile : IResettable {
         else
             phase = _bulletId % 2 * MathF.PI;
 
+        
         if (_projProp.Wavy) {
             var period = 6 * MathF.PI;
             var amp = MathF.PI / 64f;

@@ -306,7 +306,7 @@ public sealed class UserInput : Sprite {
                 break;
             case true when Settings.ChatCommand.CheckValue(key):
                 ClearMovement();
-                ChatBox.OnChatOpen.Dispatch("/");
+                ChatBox.OnChatOpen.Dispatch("");
                 break;
             case true when Settings.TellKey.CheckValue(key):
                 ClearMovement();

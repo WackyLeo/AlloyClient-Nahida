@@ -296,8 +296,8 @@ public class WeaponSimPreview : Container {
 
         var dex = Map.LocalPlayer?.Dexterity ?? 75;
         var minAttackFreq = 0.0015f;
-        var maxAttackFreq = 0.008f;
-        var attackFreq = minAttackFreq + dex / 75f * (maxAttackFreq - minAttackFreq);
+        var maxAttackFreq = 0.0065f;
+        var attackFreq = minAttackFreq + (dex / 250f) * minAttackFreq;
 
         if (Map.LocalPlayer != null) {
             if (Map.LocalPlayer.HasConditionEffect(ConditionEffects.Berserk)) attackFreq *= 1.25f;

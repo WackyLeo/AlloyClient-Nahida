@@ -36,7 +36,7 @@ public class Update : IncomingPacket<Update> {
         for (var i = 0; i < TileCount; i++)
             _tilesBuffer[i].Read(reader);
 
-        Logger.Debug($"[Update] After tiles: tileCount={TileCount} pos={reader.BaseStream.Position}");
+        //Logger.Debug($"[Update] After tiles: tileCount={TileCount} pos={reader.BaseStream.Position}");
 
         NewObjCount = reader.ReadInt16();
         EnsureCapacity(ref _newObjsBuffer, NewObjCount);

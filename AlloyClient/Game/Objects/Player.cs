@@ -808,7 +808,7 @@ public class Player : Entity {
         if (HasConditionEffect(ConditionEffects.Dazed))
             return MinAttackFreq;
 
-        var attFreq = MinAttackFreq + Dexterity / 75f * (MaxAttackFreq - MinAttackFreq);
+        var attFreq = MinAttackFreq + Dexterity / 250f * (MaxAttackFreq - MinAttackFreq);
 
         if (HasConditionEffect(ConditionEffects.Berserk))
             attFreq *= 1.25f;

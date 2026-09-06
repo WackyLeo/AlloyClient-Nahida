@@ -1,4 +1,6 @@
-﻿using System.Numerics;
+﻿using System;
+using System.Numerics;
+using AlloyClient.Game;
 using AlloyClient.Game.Objects.Util;
 
 namespace AlloyClient.Networking.Packets.Incoming;
@@ -12,7 +14,6 @@ public class Damage : IncomingPacket<Damage> {
     public int ObjectId;
 
     public override PacketId PacketId => PacketId.Damage;
-
 
     public override void Reset() {
         TargetId = 0;
@@ -38,6 +39,15 @@ public class Damage : IncomingPacket<Damage> {
     }
 
     public override void Handle() {
+        if (!Map.Entities.TryGetValue(TargetId, out var target))
+            return;
+
+        if (Kill) {
+            target.Hp = -1;
+            target.PredictedHp = Math.Min(target.PredictedHp, -1);
+        } else if (target.Hp > 0) {
+            target.Hp -= DamageAmount;
+        }
     }
 
     public override string ToString() {

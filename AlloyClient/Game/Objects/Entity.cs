@@ -60,6 +60,14 @@ public class Entity {
     public Vector2 PositionAtTick;
     public int PredictedHp;
     public ObjectProperties Properties;
+    
+    // Effect multipliers
+    public int effectMult;
+    public int quietMult;
+    public int ArmorBreakMult;
+    public int ExposedMult;
+    public int CurseMult;
+    public int healingMult;
 
     public RenderBase RenderBaseType;
     public float Rotation;
@@ -353,7 +361,10 @@ public class Entity {
                         if (PredictedHp > serverHp)
                             PredictedHp = serverHp;
                     }
-
+                    
+                    if (serverHp > 0 && PredictedHp <= 0)
+                        PredictedHp = serverHp;
+                    
                     Hp = serverHp;
                     //Logger.Info($"[CLIENT SYNC] Entity {ObjectId} Server HP: {Hp} | Prediction: {PredictedHp}");
 
@@ -633,33 +644,43 @@ public class Entity {
         // Dispose
     }
 
-    public static int DamageWithDefense(int damage, int defense, bool nodef, Entity entity, int damageMulti = 0,
-        bool isPlayer = false) {
-        if (entity.HasConditionEffect(ConditionEffects.Invulnerable))
+    public static int DamageWithDefense(int damage, int defense, bool nodef, Entity entity, int penetration = 0) {
+        if (entity.HasConditionEffect(ConditionEffects.Invulnerable) ||
+            entity.HasConditionEffect(ConditionEffects.Invincible))
             return 0;
 
-        if (nodef || entity.HasConditionEffect(ConditionEffects.ArmorBroken))
+        if (entity.HasConditionEffect(ConditionEffects.Armored))
+            defense *= 2;
+
+        if (nodef) {
             defense = 0;
-        else if (entity.HasConditionEffect(ConditionEffects.Armored))
-            defense = defense * 2;
+        } else if (entity.HasConditionEffect(ConditionEffects.ArmorBroken)) {
+            defense = entity.ArmorBreakMult > 0
+                ? defense - (int)(defense * (entity.ArmorBreakMult * 0.01f))
+                : 0;
+        }
 
-        var limit = damage * 0.15f; // Magic Number
-        var ret = 0;
+        if (penetration > 0)
+            defense = (int)(defense * (1 - penetration * 0.01f));
 
-        if (damage - defense < limit)
-            ret = (int)limit;
+        var limit = damage * 0.15f;
+        float ret;
+
+        if (entity.HasConditionEffect(ConditionEffects.Exposed))
+            ret = entity.ExposedMult > 0 ? damage - (defense - entity.ExposedMult) : damage - (defense - 20);
         else
             ret = damage - defense;
 
-        if (entity.HasConditionEffect(ConditionEffects.Exposed))
-            ret += 20;
-        if (entity.HasConditionEffect(ConditionEffects.Petrify))
-            ret = (int)(ret * 0.9f);
+        if (damage - defense < limit)
+            ret = limit;
+
         if (entity.HasConditionEffect(ConditionEffects.Curse))
-            ret = (int)(ret * 1.2f);
+            ret = entity.CurseMult > 0 ? ret * (1 + entity.CurseMult * 0.01f) : ret * 1.2f;
+
         if (entity.HasConditionEffect(ConditionEffects.Protected))
-            ret = (int)(ret * (isPlayer ? 0.5f : 0.25f));
-        return ret;
+            ret *= 0.25f;
+
+        return (int)ret;
     }
 
     public static uint GetHitColour(ConditionEffectDesc[] effects, bool armorBreak) {
