@@ -43,8 +43,7 @@ public class Damage : IncomingPacket<Damage> {
             return;
 
         if (Kill) {
-            target.Hp = -1;
-            target.PredictedHp = Math.Min(target.PredictedHp, -1);
+            target.PredictedHp = Math.Min(target.PredictedHp, 0);
         } else if (target.Hp > 0) {
             target.Hp -= DamageAmount;
         }

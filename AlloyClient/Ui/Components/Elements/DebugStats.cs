@@ -16,7 +16,7 @@ public class DebugStats : Sprite
 
     private readonly SimpleText _devBuild = new(new TextConfig
     {
-        Text = "IR ALPHA BUILD",
+        Text = "MEOW",
         FontSize = 28,
         FontType = FontType.Bold,
         OutlineThickness = 1.0f,

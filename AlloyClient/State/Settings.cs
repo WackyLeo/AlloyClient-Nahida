@@ -24,14 +24,14 @@ public static class Settings {
     public const string BuildVersion = "114.50";
     public const string BuildLabel = $"Version {BuildVersion}";
 
-    private const string AppEngineAddress = "127.0.0.1"; // 135.125.181.109
+    private const string AppEngineAddress = "127.0.0.1"; // 76.92.234.253
     private const string AppEnginePort = "61005"; // 65001
 
     public const string AppEngineUrl = $"http://{AppEngineAddress}:{AppEnginePort}";
     public const int AppEngineTimeout = 10000;
 
     // World-Engine connection info
-    public const string GameServerAddress = "127.0.0.1"; // 116.255.20.214
+    public const string GameServerAddress = "127.0.0.1"; // 76.92.234.253
     public const ushort GameServerPort = 2053; // 26959
 
     // Screen-Information

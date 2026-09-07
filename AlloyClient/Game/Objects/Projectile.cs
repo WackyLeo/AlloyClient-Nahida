@@ -384,8 +384,8 @@ public sealed class Projectile : IResettable {
                 target.HasConditionEffect(ConditionEffects.Stasis) ||
                 target.HasConditionEffect(ConditionEffects.Paused))
                 return false;
-
-            var actualDamage = Entity.DamageWithDefense(_damage, target.Defense, _projProp.ArmorPiercing, target);
+            
+            var actualDamage = Entity.DamageWithDefense(_damage, target.Defense, _projProp.ArmorPiercing, target, _projProp.Penetration);
             if (actualDamage > 0 || (_projProp.Effects != null && _projProp.Effects.Length > 0)) {
                 var newHealth = target.Hp - actualDamage;
                 var notification = $"-{actualDamage} [{newHealth}]";
@@ -424,7 +424,6 @@ public sealed class Projectile : IResettable {
             if (_damagePlayers && !go.Properties.IsPlayer) continue;
             if (!_damagePlayers && !go.Properties.IsEnemy) continue;
 
-            if (go.IsPredictedDead && !_damagePlayers) continue;
             if (_hitEntities.Contains(go.ObjectId)) continue;
 
             var goPos = Camera.WorldToDebug2D(new Vector3(go.Position.X, go.Position.Y, 0.5f));
@@ -459,8 +458,8 @@ public sealed class Projectile : IResettable {
                 var scaledDamage = _damage;
                 if (!_damagePlayers && Map.LocalPlayer != null)
                     scaledDamage = scaledDamage * (Map.LocalPlayer.AllDamageMultiplier + 100) / 100;
-
-                var actualDamage = Entity.DamageWithDefense(scaledDamage, go.Defense, _projProp.ArmorPiercing, enemy);
+                
+                var actualDamage = Entity.DamageWithDefense(scaledDamage, go.Defense, _projProp.ArmorPiercing, go, _projProp.Penetration);
 
                 go.PredictedHp -= actualDamage;
                 if (go.PredictedHp <= 0 && !_damagePlayers) go.SetTransparency(0.4f);

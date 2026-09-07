@@ -68,7 +68,7 @@ public class TitleScreen : TitleScreenBase {
         AddChild(_container);
 
         _versionText = new SimpleText(new TextConfig {
-            Text = "Ica's Realm: 1.0.0",
+            Text = "Nahida Realm: 1.0.0",
             FontSize = 16,
             FontType = FontType.Bold,
             OutlineThickness = 0.0f,
@@ -78,7 +78,7 @@ public class TitleScreen : TitleScreenBase {
         });
         AddChild(_versionText);
         _developerText = new SimpleText(new TextConfig {
-            Text = "Developed by @HaloCelsius",
+            Text = "",
             FontSize = 16,
             FontType = FontType.Bold,
             OutlineThickness = 0.0f,

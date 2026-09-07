@@ -39,6 +39,7 @@ public sealed class ProjectileProperties {
     public readonly float MaxRotationRadius;
     public readonly float MinAcceleration;
     public readonly int MinDamage;
+    public readonly int Penetration;
     public readonly bool Missile;
     public readonly bool MultiHit;
     public readonly bool NoAlt;
@@ -88,6 +89,7 @@ public sealed class ProjectileProperties {
         ShadowSize = e.GetValue("ShadowSize", -1);
         MinDamage = e.HasElement("Damage") ? e.GetValue<int>("Damage") : e.GetValue<int>("MinDamage");
         MaxDamage = e.HasElement("Damage") ? e.GetValue<int>("Damage") : e.GetValue<int>("MaxDamage");
+        Penetration = e.HasElement("Penetration") ? e.GetValue<int>("Penetration") : 0;
         MultiHit = e.HasElement("MultiHit");
         PassesCover = e.HasElement("PassesCover");
         ArmorPiercing = e.HasElement("ArmorPiercing");

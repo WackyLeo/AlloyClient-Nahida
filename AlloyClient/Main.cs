@@ -81,7 +81,7 @@ public class Main {
         // More OpenGL & Toolkit Initialisation
         GL.Viewport(0, 0, Settings.ScreenWidth, Settings.ScreenHeight);
         Toolkit.Window.SetClientSize(Window, new Vector2i(Settings.ScreenWidth, Settings.ScreenHeight));
-        Toolkit.Window.SetTitle(Window, "Ica's Client");
+        Toolkit.Window.SetTitle(Window, "meow");
         Toolkit.Window.SetMinClientSize(Window, 800, 600);
 
         var mode = Settings.Fullscreen ? WindowMode.WindowedFullscreen : WindowMode.Normal;
