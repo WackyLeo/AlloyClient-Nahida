@@ -384,7 +384,16 @@ public class Entity {
                     Size = stat.Value;
                     break;
                 case StatsType.Level:
+                    var oldLevel = Level;
                     Level = stat.Value;
+
+                    if (oldLevel != -1 && Level > oldLevel && Properties.IsPlayer)
+                    {
+                        if (this == Map.LocalPlayer)
+                            Audio.PlaySfx("level_up");
+                        Map.AddParticleEffect(new LevelUpEffect(this, 0x00FF00));
+                        NotificationLayer.AddStatusText(this, "Level Up!", 0x00FF00, 2000, 0);
+                    }
                     break;
                 case StatsType.Inventory0:
                 case StatsType.Inventory1:
@@ -528,6 +537,7 @@ public class Entity {
 
     public virtual void Reset() {
         ObjectId = 0;
+        Level = -1;
 
         Position.X = 0;
         Position.Y = 0;
@@ -783,7 +793,7 @@ public class Entity {
     public int Hp;
     public int Defense;
     public int Size = 100;
-    public int Level;
+    public int Level = -1;
 
     public int AnimationMin = -1;
     public int AnimationMax = -1;
