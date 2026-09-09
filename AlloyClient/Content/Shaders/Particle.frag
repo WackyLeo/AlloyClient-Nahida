@@ -9,7 +9,11 @@ layout(location = 1) in vec4 Color;
 layout(location = 2) in float Depth;
 
 void main() {
-    float alpha = Color.w < 0.0 ? abs(Color.w) : 1.0;  
+    float alpha = Color.w < 0.0 ? abs(Color.w) : 1.0;
+
+    if (alpha < 0.01) {
+        discard;
+    }
 
     vec2 dUV = fwidth(BaseUV);
     vec2 border = dUV * 1.0;
