@@ -2,6 +2,7 @@
 using AlloyClient.Engine.Common;
 using AlloyClient.Engine.Graphics;
 using Common.Structs;
+using ReFuel.Stb;
 
 namespace Common.ContentReaders;
 
@@ -65,23 +66,30 @@ public class Atlas {
         return new Color(0);
     }
 
-    internal static Atlas Read(BinaryReader reader) {
+    internal static Atlas Read(BinaryReader reader)
+    {
         var length = reader.ReadInt32();
         var png = ArrayPool<byte>.Shared.Rent(length);
         reader.Read(png, 0, length);
-        var texture = new Texture(png);
+
+        var image = StbImage.Load(png.AsSpan(0, length), StbiImageFormat.Rgba);
+        var texture = new Texture(image);
+        var pixels = image.AsSpan<Color>();
+        var imageWidth = image.Width;
+        var imageHeight = image.Height;
+
         ArrayPool<byte>.Shared.Return(png);
 
         var atlasMapStatic = new Dictionary<string, AtlasData[]>();
         var atlasDataMapCount = reader.ReadInt32();
 
-        for (var i = 0; i < atlasDataMapCount; i++) {
+        for (var i = 0; i < atlasDataMapCount; i++)
+        {
             var key = reader.ReadString();
             var value = new AtlasData[reader.ReadInt32()];
 
-            for (var j = 0; j < value.Length; j++) {
+            for (var j = 0; j < value.Length; j++)
                 value[j] = reader.ReadAtlasData();
-            }
 
             atlasMapStatic[key] = value;
         }
@@ -89,35 +97,35 @@ public class Atlas {
         var atlasMapAnimation = new Dictionary<string, AnimationAtlasData[]>();
         var animationMapCount = reader.ReadInt32();
 
-        for (var i = 0; i < animationMapCount; i++) {
+        for (var i = 0; i < animationMapCount; i++)
+        {
             var key = reader.ReadString();
             var animData = new AnimationAtlasData[reader.ReadInt32()];
 
-            for (var j = 0; j < animData.Length; j++) {
+            for (var j = 0; j < animData.Length; j++)
+            {
                 var data = new AnimationAtlasData();
-                var right = new AtlasData[reader.ReadInt32()];
 
-                for (var k = 0; k < right.Length; k++) {
+                var right = new AtlasData[reader.ReadInt32()];
+                for (var k = 0; k < right.Length; k++)
+                {
                     right[k] = reader.ReadAtlasData();
                 }
-
                 data.FaceRight = right;
 
                 var down = new AtlasData[reader.ReadInt32()];
-
-                for (var k = 0; k < down.Length; k++) {
+                for (var k = 0; k < down.Length; k++)
                     down[k] = reader.ReadAtlasData();
-                }
-
                 data.FaceDown = down;
 
                 var up = new AtlasData[reader.ReadInt32()];
-
-                for (var k = 0; k < up.Length; k++) {
+                for (var k = 0; k < up.Length; k++)
                     up[k] = reader.ReadAtlasData();
-                }
-
                 data.FaceUp = up;
+
+                SubstituteBlankAttackFrames(data.FaceRight, pixels, imageWidth, imageHeight);
+                SubstituteBlankAttackFrames(data.FaceDown, pixels, imageWidth, imageHeight);
+                SubstituteBlankAttackFrames(data.FaceUp, pixels, imageWidth, imageHeight);
 
                 animData[j] = data;
             }
@@ -128,17 +136,61 @@ public class Atlas {
         var dominantColors = new Dictionary<string, Color[]>();
         var dominantColorsCount = reader.ReadInt32();
 
-        for (var i = 0; i < dominantColorsCount; i++) {
+        for (var i = 0; i < dominantColorsCount; i++)
+        {
             var key = reader.ReadString();
             var value = new Color[reader.ReadInt32()];
 
-            for (var j = 0; j < value.Length; j++) {
+            for (var j = 0; j < value.Length; j++)
                 value[j] = new Color(reader.ReadByte(), reader.ReadByte(), reader.ReadByte(), reader.ReadByte());
-            }
 
             dominantColors[key] = value;
         }
 
         return new Atlas(texture, atlasMapStatic, atlasMapAnimation, dominantColors);
+    }
+    private static void SubstituteBlankAttackFrames(AtlasData[] frames, ReadOnlySpan<Color> pixels, int imageWidth, int imageHeight)
+    {
+        if (frames == null || frames.Length < 6)
+            return;
+
+        for (var attackIndex = 4; attackIndex <= 5; attackIndex++)
+        {
+            if (IsFullyTransparent(frames[attackIndex], pixels, imageWidth, imageHeight))
+            {
+                var walkIndex = attackIndex - 4;
+                if (walkIndex < frames.Length)
+                    frames[attackIndex] = frames[walkIndex];
+            }
+        }
+    }
+
+    private static bool IsFullyTransparent(AtlasData frame, ReadOnlySpan<Color> pixels, int imageWidth, int imageHeight)
+    {
+        var x0 = frame.RawU();
+        var y0 = frame.RawV();
+        var w = frame.RawW();
+        var h = frame.RawH();
+
+        if (w <= 0 || h <= 0)
+            return true;
+
+        for (var y = y0; y < y0 + h; y++)
+        {
+            if (y < 0 || y >= imageHeight)
+                continue;
+
+            var rowStart = y * imageWidth;
+            for (var x = x0; x < x0 + w; x++)
+            {
+                if (x < 0 || x >= imageWidth)
+                    continue;
+
+                if (pixels[rowStart + x].A != 0)
+                    return false;
+            }
+        }
+
+        return true;
     }
 }
