@@ -79,7 +79,6 @@ public class LevelUpEffect : ParticleEffect
         return true;
     }
 
-
     private int UpdateSwirl(LevelUpParticleData[] data, int particleOffset, float progress)
     {
         var liveCount = 0;
@@ -97,9 +96,9 @@ public class LevelUpEffect : ParticleEffect
                 continue;
             }
 
-            var theta = (2f * MathF.PI * d.RingOffset) + (2f * MathF.PI * progress) + d.PhaseOffset;
-            var x = _entity.Position.X + 0.5f * MathF.Cos(theta);
-            var y = _entity.Position.Y + 0.5f * MathF.Sin(theta);
+            var angle = (2f * MathF.PI * d.RingOffset) + (2f * MathF.PI * progress) + d.PhaseOffset;
+            var x = _entity.Position.X + 0.5f * MathF.Cos(angle);
+            var y = _entity.Position.Y + 0.5f * MathF.Sin(angle);
 
             particle.Position.X = x;
             particle.Position.Y = y;

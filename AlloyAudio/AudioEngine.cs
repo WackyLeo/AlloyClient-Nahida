@@ -190,6 +190,7 @@ internal class InternalAudioEngine {
         
         track.SetAudioState(command.State);
         track.SetFadeState(command.Fade, time);
+        track.SetVolume(InternalUtils.GetLogVolume(command.Volume));
         track.Play();
 
         _tracks[new TrackLookup(command.ChannelId, command.TrackId)] = track;

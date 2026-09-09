@@ -23,8 +23,7 @@ public static class Audio {
     public static void Stop() => _audioEngine.StopAndDispose();
 
     public static void SetMasterVolume(float volume) => _audioEngine.SetMasterVolume(volume);
-    
-    public static void PlaySfx(string name) => SfxChannel.Play(EnsureOgg(name));
+    public static void PlaySfx(string name, float volume = 1f) => SfxChannel.Play(EnsureOgg(name), volume);
 
     private static string EnsureOgg(string name) =>
         name.EndsWith(".ogg", StringComparison.OrdinalIgnoreCase) ? name : name + ".ogg";

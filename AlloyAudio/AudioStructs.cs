@@ -46,15 +46,18 @@ internal struct EngineCommand {
         };
     }
 
-    internal static EngineCommand CreatePlay(string name, int channelId, int trackId, AudioMode mode, AudioState state, FadeState fade) {
-        return new EngineCommand {
+    internal static EngineCommand CreatePlay(string name, int channelId, int trackId, AudioMode mode, AudioState state, FadeState fade, float volume = 1f)
+    {
+        return new EngineCommand
+        {
             Type = AudioAll.Play,
             ChannelId = channelId,
             TrackId = trackId,
             FilePath = name,
             Mode = mode,
             State = state,
-            Fade = fade
+            Fade = fade,
+            Volume = volume
         };
     }
 

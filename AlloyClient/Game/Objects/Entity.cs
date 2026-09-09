@@ -390,7 +390,7 @@ public class Entity {
                     if (oldLevel != -1 && Level > oldLevel && Properties.IsPlayer)
                     {
                         if (this == Map.LocalPlayer)
-                            Audio.PlaySfx("level_up");
+                            Audio.PlaySfx("level_up", 0.7f);
                         Map.AddParticleEffect(new LevelUpEffect(this, 0x00FF00));
                         NotificationLayer.AddStatusText(this, "Level Up!", 0x00FF00, 2000, 0);
                     }

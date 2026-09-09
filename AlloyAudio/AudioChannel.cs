@@ -29,21 +29,23 @@ public abstract class AudioChannel {
     public void SetVolumeTrack(float volume, int trackId) => _audioEngine.EnqueueCommand(EngineCommand.CreateTrackVolume(_channelId, trackId, Math.Clamp(volume, 0f, 1f)));
 
     public void PlayTrack(string name, AudioMode mode, AudioState state, out int trackId) => trackId = PlayTrack(name, mode, state);
-    
+
     public void PlayTrack(string name, AudioMode mode, AudioState state, FadeState fade, out int trackId) => trackId = PlayTrack(name, mode, state, fade);
 
-    public int PlayTrack(string name, AudioMode mode, AudioState state) => PlayTrack(name, mode, state, FadeState.Default);
-    
-    public int PlayTrack(string name, AudioMode mode, AudioState state, FadeState fade) {
+    public int PlayTrack(string name, AudioMode mode, AudioState state, float volume = 1f) => PlayTrack(name, mode, state, FadeState.Default, volume);
+
+    public int PlayTrack(string name, AudioMode mode, AudioState state, FadeState fade, float volume = 1f)
+    {
         _lastPlayed.TryGetValue(name, out var time);
-        
-        if (time + MiniumRepeatDelayMs > _stopwatch.Elapsed.TotalMilliseconds) {
+
+        if (time + MiniumRepeatDelayMs > _stopwatch.Elapsed.TotalMilliseconds)
+        {
             return -1;
         }
 
         var id = _audioIdGenerator++;
         _lastPlayed[name] = _stopwatch.Elapsed.TotalMilliseconds;
-        _audioEngine.EnqueueCommand(EngineCommand.CreatePlay(name, _channelId, id, mode, state, fade));
+        _audioEngine.EnqueueCommand(EngineCommand.CreatePlay(name, _channelId, id, mode, state, fade, Math.Clamp(volume, 0f, 1f)));
         return id;
     }
 
@@ -78,8 +80,9 @@ public class SingleTrackChannel : AudioChannel {
     }
 }
 
-public class SfxChannel : AudioChannel {
-
-    public void Play(string name) => PlayTrack(name, AudioMode.Static, AudioState.FireAndForget);
+public class SfxChannel : AudioChannel
+{
+    public void Play(string name, float volume = 1f) => PlayTrack(name, AudioMode.Static, AudioState.FireAndForget, volume);
+    
 }
 
