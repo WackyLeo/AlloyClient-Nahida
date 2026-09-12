@@ -485,7 +485,6 @@ public sealed class Projectile : IResettable {
 
             
             ChatBox.AddChatLine.Dispatch(new ChatBoxLineData(0, "*Error*", -1, null, _bulletId.ToString()));
-            Log.Info(_bulletId);
             _hitEntities.Add(go.ObjectId);
             hitSomething = true;
 

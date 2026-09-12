@@ -107,21 +107,25 @@ public sealed class TextureData {
 
     public bool IsRemoteSheet => OverrideTexture != null;
 
-    private static AnimationAtlasData BuildAnimationFromSheet(SpriteSheetLibrary.SheetEntry entry, int index) {
-        const int framesPerRow = 7;
-        var spritesPerRow = entry.SpritesPerRow;
+    private static AnimationAtlasData BuildAnimationFromSheet(SpriteSheetLibrary.SheetEntry entry, int index)
+    {
+        var framesPerRow = entry.SpritesPerRow;
         var totalRows = entry.TextureHeight / entry.SpriteHeight;
         var isFullFacing = totalRows % 3 == 0;
-
         var baseRow = isFullFacing ? index * 3 : index;
+
+        Log.Info($"[AnimBuild] tex={entry.TextureWidth}x{entry.TextureHeight} sprite={entry.SpriteWidth}x{entry.SpriteHeight} framesPerRow={framesPerRow} totalRows={totalRows} isFullFacing={isFullFacing} index={index} baseRow={baseRow}");
 
         AnimationAtlasData anim = new();
         anim.FaceRight = BuildFrameRow(entry, baseRow, framesPerRow);
 
-        if (isFullFacing) {
+        if (isFullFacing)
+        {
             anim.FaceDown = BuildFrameRow(entry, baseRow + 1, framesPerRow);
             anim.FaceUp = BuildFrameRow(entry, baseRow + 2, framesPerRow);
-        } else {
+        }
+        else
+        {
             anim.FaceDown = anim.FaceRight;
             anim.FaceUp = anim.FaceRight;
         }
@@ -129,14 +133,15 @@ public sealed class TextureData {
         return anim;
     }
 
-    private static AtlasData[] BuildFrameRow(SpriteSheetLibrary.SheetEntry entry, int row, int frameCount) {
+    private static AtlasData[] BuildFrameRow(SpriteSheetLibrary.SheetEntry entry, int row, int frameCount)
+    {
         var frames = new AtlasData[frameCount];
-        var spritesPerRow = entry.SpritesPerRow;
 
-        for (var f = 0; f < frameCount; f++) {
-            var col = f % spritesPerRow;
-            frames[f] = new AtlasData {
-                U = (float)(col * entry.SpriteWidth) / entry.TextureWidth,
+        for (var f = 0; f < frameCount; f++)
+        {
+            frames[f] = new AtlasData
+            {
+                U = (float)(f * entry.SpriteWidth) / entry.TextureWidth,
                 V = (float)(row * entry.SpriteHeight) / entry.TextureHeight,
                 W = (float)entry.SpriteWidth / entry.TextureWidth,
                 H = (float)entry.SpriteHeight / entry.TextureHeight

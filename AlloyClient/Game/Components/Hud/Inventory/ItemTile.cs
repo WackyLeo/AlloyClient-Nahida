@@ -319,9 +319,15 @@ public sealed class ItemTile : Sprite {
         return -1;
     }
 
-    private void SwapItem(Entity targetEntity, byte targetSlot) {
+    private void SwapItem(Entity targetEntity, byte targetSlot)
+    {
         var targetItem = targetEntity.Equipment[targetSlot];
         var targetObjType = targetItem?.ObjectType ?? 0;
+
+        if ((SlotId == 0 || targetSlot == 0) && Owner is Player ownerAsPlayer)
+            ownerAsPlayer.FlushPendingShots();
+        if ((SlotId == 0 || targetSlot == 0) && targetEntity is Player targetAsPlayer && targetAsPlayer != Owner)
+            targetAsPlayer.FlushPendingShots();
 
         var swap = InvSwap.CreatePacket();
         swap.Time = (int)Map.LastGameTime.TotalMs;
@@ -343,9 +349,13 @@ public sealed class ItemTile : Sprite {
         Owner.Equipment[SlotId] = targetItem;
         targetEntity.Equipment[targetSlot] = sourceItem;
 
+        if ((SlotId == 0 || targetSlot == 0) && Owner is Player ownerLockPlayer)
+            ownerLockPlayer.LockWeaponSwap((int)Map.LastGameTime.TotalMs);
+        if ((SlotId == 0 || targetSlot == 0) && targetEntity is Player targetLockPlayer)
+            targetLockPlayer.LockWeaponSwap((int)Map.LastGameTime.TotalMs);
+
         SetItem(targetItem);
         if (targetEntity is Player tPlayer) tPlayer.InventoryUpdate.Dispatch(targetSlot);
-
         if (Owner is Player oPlayer) oPlayer.InventoryUpdate.Dispatch(SlotId);
     }
 
@@ -427,6 +437,11 @@ public sealed class ItemTile : Sprite {
                 if (!tile.Interactive) break;
                 if (tile.OneWay) break;
                 if (!CanSwapItems(this, tile)) break;
+
+                if ((SlotId == 0 || tile.SlotId == 0) && Owner is Player ownerAsPlayer)
+                    ownerAsPlayer.FlushPendingShots();
+                if ((SlotId == 0 || tile.SlotId == 0) && tile.Owner is Player tileOwnerAsPlayer && tileOwnerAsPlayer != Owner)
+                    tileOwnerAsPlayer.FlushPendingShots();
 
                 var swap = InvSwap.CreatePacket();
                 swap.Time = (int)Map.LastGameTime.TotalMs;

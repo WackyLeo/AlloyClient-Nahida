@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using AlloyClient.Assets.Libraries;
+using AlloyClient.Assets.XmlStructs;
 using AlloyClient.Game.Components;
 using AlloyClient.Game.Objects.Enums;
 using AlloyClient.Game.Objects.Util;
@@ -45,6 +46,17 @@ public class Player : Entity {
     public float Rotate;
     public int SinkLevel;
     public int UpdateRadius = 20;
+    
+    public readonly Dictionary<int, Projectile> PendingLocalProjectiles = new();
+    private readonly Dictionary<int, int> _lastProjShootTime = new();
+    private int _weaponSwapLockUntil;
+
+    public bool IsWeaponSwapLocked(int nowMs) => nowMs < _weaponSwapLockUntil;
+
+    public void LockWeaponSwap(int nowMs)
+    {
+        _weaponSwapLockUntil = nowMs + 150;
+    }
 
 
     protected override RenderBase GetRenderType(ushort type) {
@@ -785,7 +797,6 @@ public class Player : Entity {
         return texture;
     }
 
-
     private void SetPlayerSkinTemplate(ushort skin) {
         if (skin == 0)
             return;
@@ -815,86 +826,116 @@ public class Player : Entity {
 
         return attFreq;
     }
-    public readonly Dictionary<int, Projectile> PendingLocalProjectiles = new();
+
     public void Shoot(float attackAngle, GameTime gameTime, bool isAbility)
     {
         if (HasConditionEffect(ConditionEffects.Stunned) || HasConditionEffect(ConditionEffects.Paused))
             return;
+        if (IsWeaponSwapLocked((int)gameTime.TotalMs))
+            return;
+        
         var item = Equipment[0];
         if (item == null)
             return;
 
-        var temp = AttackFrequency();
-        AttackPeriod = (float)(1 / temp * (1 / item.RateOfFire) * 1.02);
-
-        if (gameTime.TotalMs < AttackStart + AttackPeriod)
-            return;
-
-        AttackAngle = attackAngle;
-        AttackStart = gameTime.TotalMs;
+        var curTime = (int)gameTime.TotalMs;
 
         var props = ObjectLibrary.TypeToObjectProps[item.ObjectType];
+        var firstShot = true;
 
-        var arc = MathHelper.DegreesToRadians(props.ArcGap) * (props.NumProjectiles - 1);
-        var startAngle = attackAngle - arc / 2;
-
-        var startCount = item.StartCount;
-        var nextCount = item.NextCount;
-        var projTypeIndex = 0;
-
-        for (var i = 0; i < props.NumProjectiles; i++)
+        for (var projID = 0; projID < item.AllProjectiles.Length; projID++)
         {
-            var projDesc = item.AllProjectiles[projTypeIndex % item.AllProjectiles.Length];
+            var projDesc = item.AllProjectiles[projID];
+            
+            // Use projectile's RateOfFire if set (> 0), otherwise use item's RateOfFire
+            var rateOfFire = projDesc.RateOfFire > 0 ? projDesc.RateOfFire : item.RateOfFire;
+
+            if (!ProjReady(projID, rateOfFire, curTime, out var interval))
+                continue;
+
             var projObjType = ObjectLibrary.IdToObjectType[projDesc.ObjectId];
             var objProps = ObjectLibrary.TypeToObjectProps[projObjType];
-            var angle = startAngle + MathHelper.DegreesToRadians(props.ArcGap) * i;
-            var bId = GetBulletId();
-
-            var rawDmg = Map.Random.NextIntRange((uint)projDesc.MinDamage, (uint)projDesc.MaxDamage);
-
-            float mult;
-            if (HasConditionEffect(ConditionEffects.Weak)) 
-            {
-                mult = 0.5f;
-            }
-            else
-            {
-                mult = 0.5f + Attack / 250f * 1.5f;
-                if (HasConditionEffect(ConditionEffects.Damaging))
-                    mult *= 1.25f;
-            }
-
-            var dmg = (int)(rawDmg * mult);
 
             if (!props.ProjectilesDict.TryGetValue(projDesc.BulletType, out var projProps))
                 projProps = props.Projectiles[0];
 
-            var proj = ObjectPools.Projectiles.Pop();
-            proj.Reset(bId, dmg, angle, this, objProps, projProps);
-            Map.AddProjectile(proj);
+            var numProjectiles = projDesc.NumProjectiles > 0 ? projDesc.NumProjectiles : item.NumProjectiles;
+            var arc = MathHelper.DegreesToRadians(props.ArcGap) * (numProjectiles - 1);
+            var startAngle = attackAngle - arc / 2;
 
-            if (i == 0)
+            for (var p = 0; p < numProjectiles; p++)
             {
-                if (!string.IsNullOrEmpty(props.OldSound))
-                    Audio.PlaySfx(props.OldSound);
-                else if (!string.IsNullOrEmpty(props.Sound))
-                    Audio.PlaySfx(props.Sound);
+                var angle = startAngle + MathHelper.DegreesToRadians(props.ArcGap) * p;
+                var bId = GetBulletId();
+                
+                Console.WriteLine($"[CLIENT SHOOT] t={curTime} projID={projID} bId={bId} weapon={item.ObjectType}");
+                var rawDmg = Map.Random.NextIntRange((uint)projDesc.MinDamage, (uint)projDesc.MaxDamage);
 
-                PendingShots.Add(new ShootData {
-                    Time = (int)Main.GameTime.TotalMs,
-                    BulletId = bId,
-                    ItemType = item.ObjectType,
-                    StartingPos = new Position { X = Position.X, Y = Position.Y },
-                    Angle = attackAngle
-                });
+                float mult;
+                if (HasConditionEffect(ConditionEffects.Weak))
+                    mult = 0.5f;
+                else
+                {
+                    mult = 0.5f + Attack / 250f * 1.5f;
+                    if (HasConditionEffect(ConditionEffects.Damaging))
+                        mult *= 1.25f;
+                }
+
+                var dmg = (int)(rawDmg * mult);
+
+                var proj = ObjectPools.Projectiles.Pop();
+                proj.Reset(bId, dmg, angle, this, objProps, projProps);
+                Map.AddProjectile(proj);
+                PendingLocalProjectiles[bId] = proj;
+
+                if (firstShot)
+                {
+                    firstShot = false;
+
+                    AttackAngle = attackAngle;
+                    AttackStart = gameTime.TotalMs;
+                    AttackPeriod = interval;
+
+                    if (!string.IsNullOrEmpty(props.OldSound))
+                        Audio.PlaySfx(props.OldSound);
+                    else if (!string.IsNullOrEmpty(props.Sound))
+                        Audio.PlaySfx(props.Sound);
+
+                    PendingShots.Add(new ShootData
+                    {
+                        Time = (int)Main.GameTime.TotalMs,
+                        BulletId = bId,
+                        ItemType = item.ObjectType,
+                        StartingPos = new Position { X = Position.X, Y = Position.Y },
+                        Angle = attackAngle
+                    });
+                }
             }
-
-            startCount++;
-            if (startCount % nextCount == 0)
-                projTypeIndex++;
         }
     }
 
+
+    private bool ProjReady(int projID, float rateOfFire, int curTime, out int interval)
+    {
+        interval = (int)((1.0 / AttackFrequency()) * (1.0 / rateOfFire));
+        var lastTime = _lastProjShootTime.TryGetValue(projID, out var t) ? t : 0;
+        if (curTime < lastTime + interval)
+            return false;
+
+        _lastProjShootTime[projID] = curTime;
+        return true;
+    }
+    public void FlushPendingShots()
+    {
+        if (PendingShots.Count == 0)
+            return;
+
+        var shootPkt = PlayerShoot.CreatePacket();
+        shootPkt.Shots.AddRange(PendingShots);
+        Client.QueuePacket(shootPkt);
+        PendingShots.Clear();
+    }
+    
     public int GetBulletId() {
         var ret = NextBulletId;
         NextBulletId = (NextBulletId + 1) % 1024;

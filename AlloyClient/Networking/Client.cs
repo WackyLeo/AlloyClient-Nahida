@@ -75,15 +75,15 @@ public class SocketSendState {
 
         var plaintextCopy = new byte[bodyLength];
         Array.Copy(Stream.GetBuffer(), bodyStart, plaintextCopy, 0, bodyLength);
-        if (pkt != PacketId.Move && pkt != PacketId.UpdateAck)
-            Console.WriteLine($"PRE-ENCRYPT [{pkt}]: {BitConverter.ToString(plaintextCopy)}");
+        //if (pkt != PacketId.Move && pkt != PacketId.UpdateAck)
+            //Console.WriteLine($"PRE-ENCRYPT [{pkt}]: {BitConverter.ToString(plaintextCopy)}");
 
         Client.OutgoingCipher.Apply(Stream.GetBuffer(), bodyStart, bodyLength);
 
         var ciphertextCopy = new byte[bodyLength];
         Array.Copy(Stream.GetBuffer(), bodyStart, ciphertextCopy, 0, bodyLength);
-        if (pkt != PacketId.Move && pkt != PacketId.UpdateAck)
-            Console.WriteLine($"POST-ENCRYPT [{pkt}]: {BitConverter.ToString(ciphertextCopy)}");
+        //if (pkt != PacketId.Move && pkt != PacketId.UpdateAck)
+            //Console.WriteLine($"POST-ENCRYPT [{pkt}]: {BitConverter.ToString(ciphertextCopy)}");
 
         Stream.Position -= length;
         var lengthBytes = BitConverter.GetBytes(IPAddress.HostToNetworkOrder(length));
@@ -338,8 +338,8 @@ public static class Client
 
             var buf = SendState.Stream.GetBuffer();
             var end = (int)SendState.Stream.Position;
-            if (pkt.PacketId != PacketId.Move && pkt.PacketId != PacketId.UpdateAck) 
-                Log.Info($"RAW PACKET [{pkt.PacketId}]: {BitConverter.ToString(buf, begin, end - begin)}");
+            //if (pkt.PacketId != PacketId.Move && pkt.PacketId != PacketId.UpdateAck) 
+                //Log.Info($"RAW PACKET [{pkt.PacketId}]: {BitConverter.ToString(buf, begin, end - begin)}");
         }
     }
 

@@ -122,10 +122,9 @@ public class Atlas {
                 for (var k = 0; k < up.Length; k++)
                     up[k] = reader.ReadAtlasData();
                 data.FaceUp = up;
-
-                SubstituteBlankAttackFrames(data.FaceRight, pixels, imageWidth, imageHeight);
-                SubstituteBlankAttackFrames(data.FaceDown, pixels, imageWidth, imageHeight);
-                SubstituteBlankAttackFrames(data.FaceUp, pixels, imageWidth, imageHeight);
+                SubstituteBlankAttackFrames(data.FaceRight, pixels, imageWidth, imageHeight, key, j);
+                SubstituteBlankAttackFrames(data.FaceDown, pixels, imageWidth, imageHeight, key, j);
+                SubstituteBlankAttackFrames(data.FaceUp, pixels, imageWidth, imageHeight, key, j);
 
                 animData[j] = data;
             }
@@ -149,14 +148,19 @@ public class Atlas {
 
         return new Atlas(texture, atlasMapStatic, atlasMapAnimation, dominantColors);
     }
-    private static void SubstituteBlankAttackFrames(AtlasData[] frames, ReadOnlySpan<Color> pixels, int imageWidth, int imageHeight)
+    private static void SubstituteBlankAttackFrames(AtlasData[] frames, ReadOnlySpan<Color> pixels, int imageWidth, int imageHeight, string key, int index)
     {
         if (frames == null || frames.Length < 6)
             return;
 
         for (var attackIndex = 4; attackIndex <= 5; attackIndex++)
         {
-            if (IsFullyTransparent(frames[attackIndex], pixels, imageWidth, imageHeight))
+            var isBlank = IsFullyTransparent(frames[attackIndex], pixels, imageWidth, imageHeight);
+
+            if (key == "players" && index == 3)
+                Console.WriteLine($"[AttackCheck] idx={attackIndex} rect={frames[attackIndex]} blank={isBlank}");
+
+            if (isBlank)
             {
                 var walkIndex = attackIndex - 4;
                 if (walkIndex < frames.Length)

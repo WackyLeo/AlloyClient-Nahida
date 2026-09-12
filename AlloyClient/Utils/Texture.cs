@@ -85,13 +85,15 @@ public static class TextureHelper
             var i = action switch
             {
                 AnimationType.Attack => 4 + (int)(idx * 2),
-
                 AnimationType.Walk => isSide
-                    ? (int)(idx * 2) % 2 
+                    ? (int)(idx * 2) % 2
                     : new[] { 0, 1, 0, 2 }[(int)(idx * 4) % 4],
                 _ => 0
             };
-            
+
+            if (i >= frames.Length)
+                i = isSide ? (int)(idx * 2) % 2 : new[] { 0, 1, 0, 2 }[(int)(idx * 4) % 4];
+
             attackFrame = i == 5;
             return frames[i];
         }

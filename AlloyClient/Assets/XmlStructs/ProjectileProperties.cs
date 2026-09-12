@@ -50,6 +50,7 @@ public sealed class ProjectileProperties {
     public readonly bool Orbiting;
     public readonly bool Parametric;
     public readonly bool ParticleTrail;
+    public readonly int NumProjectiles;
 
     public readonly uint ParticleTrailColor;
     public readonly float ParticleTrailIntensity;
@@ -108,6 +109,7 @@ public sealed class ProjectileProperties {
         DynamicRotationAngle = e.HasElement("DynamicRotationAngle");
         Falldown = e.HasElement("Falldown");
         Missile = e.HasElement("Missile");
+        NumProjectiles = e.GetValue("NumProjectiles", 0);
 
         Amplitude = e.GetValue<float>("Amplitude");
         Frequency = e.GetValue("Frequency", 1f);

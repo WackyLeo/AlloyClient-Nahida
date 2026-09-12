@@ -37,26 +37,23 @@ public class NewTick : IncomingPacket<NewTick> {
             array = new T[needed * 2];
     }
 
-    public override void Handle() {
+    public override void Handle()
+    {
         Map.LastTickId = TickId;
         var now = Main.GameTime.TotalMs;
 
-        for (var i = 0; i < ObjectStatsCount; i++) {
+        for (var i = 0; i < ObjectStatsCount; i++)
+        {
             var stats = _statsBuffer[i];
             var isMe = Map.LocalPlayer != null && stats.Id == Map.LocalPlayer.ObjectId;
             ProcessObjectStats(stats, isMe, now);
         }
-        
-        if (Map.LocalPlayer != null && Map.LocalPlayer.PendingShots.Count > 0) {
-            var shootPkt = PlayerShoot.CreatePacket();
-            shootPkt.Shots.AddRange(Map.LocalPlayer.PendingShots);
-            Client.QueuePacket(shootPkt);
-            Map.LocalPlayer.PendingShots.Clear(); 
-        }
-        
+
+        Map.LocalPlayer?.FlushPendingShots();
+
         Map.FlushEnemyHits();
         Map.FlushPlayerHits();
-        
+
         if (Map.LocalPlayer != null) {
             var move = Move.CreatePacket();
             move.ObjectId = Map.LocalPlayer.ObjectId;

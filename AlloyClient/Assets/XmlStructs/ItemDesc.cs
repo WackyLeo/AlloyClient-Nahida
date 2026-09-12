@@ -146,12 +146,16 @@ public class ProjectileDesc {
     public readonly float Speed;
     public readonly ParticleTrailDesc Trail;
     public readonly bool Wavy;
+    public readonly int NumProjectiles;
+    public readonly float RateOfFire;
 
     public ProjectileDesc(XElement xml) {
         BulletType = xml.GetAttribute<int>("id");
         ObjectId = xml.GetValue<string>("ObjectId");
         LifetimeMS = xml.GetValue<float>("LifetimeMS");
         Speed = xml.GetValue<float>("Speed", 100);
+        NumProjectiles = xml.GetValue("NumProjectiles", 0);
+        RateOfFire = xml.GetValue("RateOfFire", 0f);
 
         var dmg = xml.Element("Damage");
         if (dmg != null) {

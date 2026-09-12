@@ -97,7 +97,7 @@ public static class PacketUtils {
     }
 
     private static IIncomingPacket LogAndReturnUnknown(PacketId packetId) {
-        Client.Log.Warn($"Unsupported incoming packet: {packetId} (0x{(byte)packetId:X2}), skipping.");
+        //Client.Log.Warn($"Unsupported incoming packet: {packetId} (0x{(byte)packetId:X2}), skipping.");
         return UnknownPacket.CreatePacket();
     }
 }
