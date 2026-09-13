@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using AlloyClient.Assets.XmlStructs;
 using AlloyClient.Game;
 using AlloyClient.Game.Objects.Util;
@@ -62,9 +63,11 @@ public sealed class EquipmentToolTip : Tooltip {
         var shotsPerSec = 1000f * attackFreq * item.RateOfFire / 1.02f;
 
         var avgRawDmg = 0f;
-        foreach (var proj in item.AllProjectiles)
+        foreach (var proj in item.AllProjectiles.Where(e => !e.OmitText))
             avgRawDmg += (proj.MinDamage + proj.MaxDamage) / 2f;
-        avgRawDmg /= item.AllProjectiles.Length;
+        
+        
+        avgRawDmg /= item.AllProjectiles.Count(e => !e.OmitText);
 
         var dmgMult = 0.5f + (Map.LocalPlayer.Attack / 250f * 1.5f);
         var rawPerShot = avgRawDmg * dmgMult;

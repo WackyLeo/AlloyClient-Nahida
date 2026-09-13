@@ -858,7 +858,7 @@ public class Player : Entity {
 
             if (!props.ProjectilesDict.TryGetValue(projDesc.BulletType, out var projProps))
                 projProps = props.Projectiles[0];
-
+            
             var numProjectiles = projDesc.NumProjectiles > 0 ? projDesc.NumProjectiles : item.NumProjectiles;
             var arc = MathHelper.DegreesToRadians(props.ArcGap) * (numProjectiles - 1);
             var startAngle = attackAngle - arc / 2;
@@ -868,7 +868,6 @@ public class Player : Entity {
                 var angle = startAngle + MathHelper.DegreesToRadians(props.ArcGap) * p;
                 var bId = GetBulletId();
                 
-                Console.WriteLine($"[CLIENT SHOOT] t={curTime} projID={projID} bId={bId} weapon={item.ObjectType}");
                 var rawDmg = Map.Random.NextIntRange((uint)projDesc.MinDamage, (uint)projDesc.MaxDamage);
 
                 float mult;

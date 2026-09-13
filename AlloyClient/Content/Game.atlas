@@ -210,4 +210,6 @@
     <Image name="DreamBosses"                w="16" h="16">DreamBosses.png</Image>
     <Image name="Kitto"                      w="8" h="8">Kitto.png</Image>
     <Image name="Kittoproj"                  w="8" h="8">KittoProj.png</Image>
+    <Image name="axlemic8x8"                 w="8" h="8">axlemic.png</Image>
+    <Image name="axlemicprojectiles8x8"      w="8" h="8">axlemicProj.png</Image>
 </Atlas>

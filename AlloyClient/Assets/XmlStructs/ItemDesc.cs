@@ -148,6 +148,7 @@ public class ProjectileDesc {
     public readonly bool Wavy;
     public readonly int NumProjectiles;
     public readonly float RateOfFire;
+    public readonly bool OmitText;
 
     public ProjectileDesc(XElement xml) {
         BulletType = xml.GetAttribute<int>("id");
@@ -176,6 +177,7 @@ public class ProjectileDesc {
         Wavy = xml.HasElement("Wavy");
         Parametric = xml.HasElement("Parametric");
         Boomerang = xml.HasElement("Boomerang");
+        OmitText = xml.HasElement("OmitText");
 
         Amplitude = xml.GetValue<float>("Amplitude");
         Frequency = xml.GetValue<float>("Frequency", 1);
