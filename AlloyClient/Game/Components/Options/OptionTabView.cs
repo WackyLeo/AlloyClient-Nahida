@@ -86,8 +86,8 @@ public class OptionTabView : Container {
         //    "This key will toggle a display of fps and memory usage"));
         _options.Add(new KeyMapperOption(Settings.CenterPlayerKey, "Toggle Centering of Player",
             "This key will toggle the position between centered and offset"));
-        //_options.Add(new KeyMapperOption(Settings.Interact, "Interact/Buy",
-        //    "This key will allow you to enter a portal or buy an item without using your mouse."));
+        _options.Add(new KeyMapperOption(Settings.Interact, "Interact/Buy",
+            "This key will allow you to enter a portal or buy an item without using your mouse."));
     }
 
     private void AddHotkeysOptions() {

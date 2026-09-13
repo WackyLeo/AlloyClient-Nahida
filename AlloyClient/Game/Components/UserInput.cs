@@ -265,8 +265,8 @@ public sealed class UserInput : Sprite {
                 break;
             case true when Settings.Crouch.CheckValue(key):
                 Map.LocalPlayer.LimitSpeed = !Map.LocalPlayer.LimitSpeed;
-                var notification = Map.LocalPlayer.LimitSpeed ? "crouch" : "off";
-                NotificationLayer.AddStatusText(Map.LocalPlayer, notification, 0xcfe0ff, 1000, 0);
+                //var notification = Map.LocalPlayer.LimitSpeed ? "crouch" : "off";
+                NotificationLayer.AddStatusText(Map.LocalPlayer, "crouch", 0xcfe0ff, 1000, 0);
                 break;
             case true when Settings.InvOne.CheckValue(key):
                 HandleUseItem(4);
@@ -364,6 +364,10 @@ public sealed class UserInput : Sprite {
                     Map.LocalPlayer.UseAltWeapon(pos.X, pos.Y, 2); // 2 = END_USE
                 }
             }
+                break;
+            case true when Settings.Crouch.CheckValue(key):
+                Map.LocalPlayer.LimitSpeed = !Map.LocalPlayer.LimitSpeed;
+                NotificationLayer.AddStatusText(Map.LocalPlayer, "off", 0xcfe0ff, 1000, 0);
                 break;
         }
 
