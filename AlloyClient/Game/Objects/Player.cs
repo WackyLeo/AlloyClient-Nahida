@@ -731,9 +731,6 @@ public class Player : Entity {
                 case StatsType.Shield:
                     Shield = stat.Value;
                     break;
-                case StatsType.Restoration:
-                    Restoration = stat.Value;
-                    break;
                 case StatsType.Cloth1:
                     Cloth1 = (ushort)stat.Value;
                     break;
@@ -953,7 +950,6 @@ public class Player : Entity {
 
     #region StatData
 
-    public int Restoration;
     public int MaxShield;
     public int Shield;
     public int MaxMp;

@@ -130,7 +130,6 @@ public enum StatsType : byte
     LootGlyph = 130,
     GlyphOne = 131,
     GlyphTwo = 132,
-    Restoration = 133,
     AltTextureMin = 140,
     AltTextureMax = 141,
     AnimationSpeed = 142,

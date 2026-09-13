@@ -6,13 +6,11 @@ public class CharacterBars : Sprite {
 
     public const int TotalHeight = 85;
     private const int BarWidth = 220;
-    private const int RestorationFixedHeight = 7;
 
     private readonly StatusBar _expBar;
     private readonly StatusBar _fameBar;
     private readonly StatusBar _hpBar;
     private readonly StatusBar _shieldBar;
-    private readonly StatusBar _restorationBar;
     private readonly StatusBar _mpBar;
 
     private readonly StatusBar[] _allBars;
@@ -22,17 +20,15 @@ public class CharacterBars : Sprite {
         _fameBar = new StatusBar(BarWidth, 1, 14835456, 5526612, 0x676767, "Fame");
         _hpBar = new StatusBar(BarWidth, 1, 14693428, 5526612, 0x676767, "HP");
         _shieldBar = new StatusBar(BarWidth, 1, 0x00C9DD, 5526612, 0x676767, "Shield");
-        _restorationBar = new StatusBar(BarWidth, RestorationFixedHeight, 0x800000, 5526612, 0x676767, "");
         _mpBar = new StatusBar(BarWidth, 1, 6325472,  5526612, 0x676767, "MP");
 
-        _allBars = [_expBar, _fameBar, _hpBar, _shieldBar, _restorationBar, _mpBar];
+        _allBars = [_expBar, _fameBar, _hpBar, _shieldBar, _mpBar];
 
         foreach (var bar in _allBars)
             bar.Visible = false;
 
         AddChild(_hpBar);
         AddChild(_shieldBar);
-        AddChild(_restorationBar);
         AddChild(_mpBar);
         AddChild(_fameBar);
         AddChild(_expBar);
@@ -65,7 +61,6 @@ public class CharacterBars : Sprite {
             active.Add(_hpBar);
         }
         
-        active.Add(_restorationBar);
         active.Add(_mpBar);
         foreach (var bar in _allBars)
             bar.Visible = false;
@@ -76,10 +71,7 @@ public class CharacterBars : Sprite {
         if (_fameBar.Visible) _fameBar.Update(player.CurrentFame, player.FameGoal);
         if (_shieldBar.Visible) _shieldBar.Update(player.Shield, player.MaxShield);
         _hpBar.Update(player.Hp, player.MaxHp, player.MaxHpBoost, 250, player.Level);
-        if (_restorationBar.Visible) {
-            _restorationBar.Update(player.Restoration, player.MaxHp);
-            _restorationBar.drawLabel = false;
-        }
+
         _mpBar.Update(player.Mp, player.MaxMp, player.MaxMpBoost, 250, player.Level);
         Layout(active);
     }
@@ -88,15 +80,13 @@ public class CharacterBars : Sprite {
         var count = active.Count;
         if (count == 0) return;
 
-        var hasResto = active.Contains(_restorationBar);
-        var layoutBars = active.FindAll(b => b != _restorationBar);
+        var layoutBars = active;
 
         var totalGap = 0;
         for (var i = 1; i < layoutBars.Count; i++)
             totalGap += 3;
 
         var available = TotalHeight - totalGap;
-        if (hasResto) available -= RestorationFixedHeight;
 
         var resizableCount = layoutBars.Count;
         var baseHeight = resizableCount > 0 ? available / resizableCount : 0;
@@ -112,11 +102,6 @@ public class CharacterBars : Sprite {
             bar.SetSize(BarWidth, barH);
             currentY += barH;
 
-            if (hasResto && bar == _hpBar) {
-                _restorationBar.Y = _hpBar.Y + barH - 3; 
-                _restorationBar.SetSize(BarWidth, RestorationFixedHeight);
-                currentY += 3;
-            }
         }
     }
 }
