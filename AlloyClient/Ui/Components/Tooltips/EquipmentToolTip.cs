@@ -1,5 +1,6 @@
 using System;
 using System.Linq;
+using AlloyClient.Assets.Libraries;
 using AlloyClient.Assets.XmlStructs;
 using AlloyClient.Game;
 using AlloyClient.Game.Objects.Util;
@@ -55,7 +56,8 @@ public sealed class EquipmentToolTip : Tooltip {
         DrawSprite();
     }
 
-    private float CalcDps(ItemDesc item, int defense) {
+    private float CalcDps(ItemDesc item, int defense)
+    {
         if (item?.AllProjectiles == null || item.AllProjectiles.Length == 0) return 0f;
         if (Map.LocalPlayer == null) return 0f; 
         
@@ -64,8 +66,20 @@ public sealed class EquipmentToolTip : Tooltip {
 
         var avgRawDmg = 0f;
         foreach (var proj in item.AllProjectiles.Where(e => !e.OmitText))
+        {
             avgRawDmg += (proj.MinDamage + proj.MaxDamage) / 2f;
-        
+
+            // Check for split shots and add to avgRawDmg
+            if (proj.SplitShots != null && proj.SplitShots.Count > 0)
+            {
+                var splitId = ObjectLibrary.IdToObjectType[proj.SplitShots.Id];
+                var splitType = ObjectLibrary.TypeToObjectProps[splitId];
+                
+                // TODO: Update this so it's not hardcoded to Projectile index 0
+                avgRawDmg += (splitType.Projectiles[0].MinDamage + splitType.Projectiles[0].MaxDamage) / 2f * proj.SplitShots.Count;
+            }
+            
+        }
         
         avgRawDmg /= item.AllProjectiles.Count(e => !e.OmitText);
 

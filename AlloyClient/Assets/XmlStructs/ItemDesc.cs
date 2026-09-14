@@ -122,54 +122,66 @@ public class ItemDesc {
     }
 }
 
-public class StatBoostDesc(XElement xml) {
+public class StatBoostDesc(XElement xml)
+{
     public int Amount = xml.GetAttribute<int>("amount");
     public int Stat = xml.GetAttribute<int>("stat");
 }
 
-public class ProjectileDesc {
-    public readonly float Amplitude;
-    public readonly bool ArmorPiercing;
-    public readonly bool Boomerang;
+public class ProjectileDesc
+{
+    
     public readonly int BulletType;
-
-    public readonly ConditionEffectDesc[] Effects;
-    public readonly float Frequency;
-    public readonly float LifetimeMS;
-    public readonly float Magnitude;
     public readonly int MaxDamage;
     public readonly int MinDamage;
-    public readonly bool MultiHit;
-    public readonly string ObjectId;
-    public readonly bool Parametric;
-    public readonly bool PassesCover;
-    public readonly float Speed;
-    public readonly ParticleTrailDesc Trail;
-    public readonly bool Wavy;
     public readonly int NumProjectiles;
+    
+    public readonly float LifetimeMS;
+    public readonly float Frequency;
+    public readonly float Amplitude;
+    public readonly float Magnitude;
+    public readonly float Speed;
     public readonly float RateOfFire;
+    
+    public readonly string ObjectId;
+    
+    public readonly bool Parametric;
+    public readonly bool Wavy;
+    public readonly bool Boomerang;
+    public readonly bool MultiHit;
+    public readonly bool ArmorPiercing;
+    public readonly bool PassesCover;
     public readonly bool OmitText;
 
-    public ProjectileDesc(XElement xml) {
-        BulletType = xml.GetAttribute<int>("id");
-        ObjectId = xml.GetValue<string>("ObjectId");
-        LifetimeMS = xml.GetValue<float>("LifetimeMS");
-        Speed = xml.GetValue<float>("Speed", 100);
-        NumProjectiles = xml.GetValue("NumProjectiles", 0);
-        RateOfFire = xml.GetValue("RateOfFire", 0f);
+    public readonly ConditionEffectDesc[] Effects;
+    public readonly ParticleTrailDesc Trail;
+    public readonly SplitProjectiles? SplitShots;
+    
+    
 
+    public ProjectileDesc(XElement xml)
+    {
+        BulletType = xml.GetAttribute<int>("id");
         var dmg = xml.Element("Damage");
-        if (dmg != null) {
+        if (dmg != null)
+        {
             MinDamage = MaxDamage = xml.GetValue<int>("Damage");
-        } else {
+        }
+        else
+        {
             MinDamage = xml.GetValue<int>("MinDamage");
             MaxDamage = xml.GetValue<int>("MaxDamage");
         }
-
-        Effects = xml.Elements("ConditionEffect")
-            .Select(x => new ConditionEffectDesc(x.Value, x.GetAttribute<float>("duration"))).ToArray();
-
-        Trail = xml.HasElement("ParticleTrail") ? new ParticleTrailDesc(xml.Element("ParticleTrail")) : null;
+        NumProjectiles = xml.GetValue<int>("NumProjectiles", 0);
+        
+        LifetimeMS = xml.GetValue<float>("LifetimeMS");
+        Speed = xml.GetValue<float>("Speed", 100);
+        RateOfFire = xml.GetValue<float>("RateOfFire");
+        Amplitude = xml.GetValue<float>("Amplitude");
+        Frequency = xml.GetValue<float>("Frequency", 1);
+        Magnitude = xml.GetValue<float>("Magnitude", 3);
+        
+        ObjectId = xml.GetValue<string>("ObjectId");
 
         MultiHit = xml.HasElement("MultiHit");
         PassesCover = xml.HasElement("PassesCover");
@@ -178,10 +190,14 @@ public class ProjectileDesc {
         Parametric = xml.HasElement("Parametric");
         Boomerang = xml.HasElement("Boomerang");
         OmitText = xml.HasElement("OmitText");
+        
+        Effects = xml.Elements("ConditionEffect")
+            .Select(x => new ConditionEffectDesc(x.Value, x.GetAttribute<float>("duration"))).ToArray();
 
-        Amplitude = xml.GetValue<float>("Amplitude");
-        Frequency = xml.GetValue<float>("Frequency", 1);
-        Magnitude = xml.GetValue<float>("Magnitude", 3);
+        Trail = xml.HasElement("ParticleTrail") ? new ParticleTrailDesc(xml.Element("ParticleTrail")) : null;
+        SplitShots = xml.HasElement("Split") ? new SplitProjectiles(xml.Element("Split")) : null;
+
+
     }
 }
 
@@ -213,6 +229,24 @@ public class ParticleTrailDesc {
         Size = xml.GetAttribute<int>("size");
     }
 }
+
+    public class SplitProjectiles
+    {
+        public string Id;
+        public int Count;
+
+        public SplitProjectiles(XElement xml)
+        {
+            Id = xml.Attribute("Id")?.Value;
+            Count = int.Parse(xml.Attribute("count")?.Value ?? "0");
+            
+            if (int.TryParse(xml.Attribute("count")?.Value, out int count))
+                Count = count;
+
+            Id = xml.Attribute("id")?.Value;
+        }
+    }
+
 
 public class ActivateEffectDesc {
     public readonly int Amount;

@@ -10,11 +10,12 @@ public sealed class ProjectileProperties {
     public readonly float AccelerationDelay;
     public readonly int AltAnimation;
 
+    public readonly bool HasAcceleration;
     public readonly float Amplitude;
     public readonly bool Animated;
     public readonly int AnimationTime;
-    public readonly int ArcAmount;
-    public readonly bool ArcBlade;
+    public readonly int SplitAmount;
+    public readonly bool Split;
     public readonly bool ArmorPiercing;
     public readonly bool Asyncrone;
     public readonly float BonusSize;
@@ -22,6 +23,7 @@ public sealed class ProjectileProperties {
     public readonly int BulletType;
     public readonly bool CheckRayCast;
     public readonly bool CircularAngle;
+    public readonly bool OneWayFrequency;
 
     public readonly bool DynamicAngle;
     public readonly bool DynamicRotationAngle;
@@ -95,6 +97,7 @@ public sealed class ProjectileProperties {
         PassesCover = e.HasElement("PassesCover");
         ArmorPiercing = e.HasElement("ArmorPiercing");
         ParticleTrail = e.HasElement("ParticleTrail");
+        HasAcceleration = e.HasElement("Acceleration");
         Wavy = e.HasElement("Wavy");
         Parametric = e.HasElement("Parametric");
         Boomerang = e.HasElement("Boomerang");
@@ -102,13 +105,10 @@ public sealed class ProjectileProperties {
         PassAll = e.HasElement("PassAll");
         Asyncrone = e.HasElement("Asyncrone");
         NoAlt = e.HasElement("NoAlt");
-        Orbiting = e.HasElement("Orbiting");
-        ForceOrbiting = e.HasElement("ForceOrbit");
-        OnlyClockwise = e.HasElement("OnlyClockwise");
-        OnlyCounterClockwise = e.HasElement("OnlyCounterClockwise");
-        DynamicRotationAngle = e.HasElement("DynamicRotationAngle");
+        Orbiting = e.HasElement("Orbit");
         Falldown = e.HasElement("Falldown");
         Missile = e.HasElement("Missile");
+        OneWayFrequency = e.HasElement("OneWayFrequency");
         NumProjectiles = e.GetValue("NumProjectiles", 0);
 
         Amplitude = e.GetValue<float>("Amplitude");
@@ -116,23 +116,37 @@ public sealed class ProjectileProperties {
         StartFrequency = e.GetValue<float>("StartFrequency");
         Magnitude = e.GetValue("Magnitude", 3f);
         Fade = e.GetValue<int>("Fade");
+        
+        if (HasAcceleration)
+        {
+            var attr = e.Element("Acceleration");
+            Acceleration = e.GetValue<float>("Acceleration");
+            AccelerationDelay = attr.GetAttribute<float>("delay");
+            MaxAcceleration = attr.GetAttribute("max", 100000f);
+            MinAcceleration = attr.GetAttribute<float>("min");
+        }
 
-        Acceleration = e.GetValue<float>("Acceleration");
-        AccelerationDelay = e.GetValue<float>("AccelerationDelay");
-        MaxAcceleration = e.GetValue("MaxAcceleration", 100000f);
-        MinAcceleration = e.GetValue<float>("MinAcceleration");
-
-        StartRotationRadius = e.GetValue<float>("StartRotationRadius");
-        MaxRotationRadius = e.GetValue<float>("MaxRotationRadius");
-        RotationSpeed = e.GetValue<float>("RotationSpeed");
-        RadiusIncreaseSpeed = e.GetValue<float>("RadiusIncreaseSpeed");
-        FixedRotationAngle = e.GetValue<float>("FixedRotationAngle");
+        if (Orbiting)
+        {
+            var attr = e.Element("Orbit");
+            StartRotationRadius = attr.GetAttribute<float>("startRadius");
+            MaxRotationRadius = attr.GetAttribute<float>("maxRadius");
+            RotationSpeed = attr.GetAttribute<float>("speed");
+            RadiusIncreaseSpeed = attr.GetAttribute<float>("increaseSpeed");
+            FixedRotationAngle = attr.GetAttribute<float>("fixedAngle");
+            OnlyClockwise = attr.GetAttribute<bool>("clockwise");
+            OnlyCounterClockwise = attr.GetAttribute<bool>("counter");
+            RadiusIncreaseSpeed = attr.GetAttribute<float>("increaseSpeed");
+        }
+        ForceOrbiting = e.HasElement("OwnerLock");
+        DynamicRotationAngle = e.HasElement("DynamicRotationAngle");
 
         StaticFallAngle = e.GetValue("StaticFallAngle", -10000f);
         ProjDelayMs = e.GetValue<int>("ProjdelayMS");
         Ricochet = e.GetValue<int>("Ricochet");
 
-        if (ParticleTrail) {
+        if (ParticleTrail)
+        {
             var attr = e.Element("ParticleTrail");
             ParticleTrailColor = string.IsNullOrEmpty(attr?.Value) ? 0xFF00FF : Convert.ToUInt32(attr.Value, 16);
             ParticleTrailLifetime = attr.GetAttribute("lifetimeMS", 600);
@@ -152,8 +166,8 @@ public sealed class ProjectileProperties {
         CheckRayCast = e.HasElement("CheckRC");
 
         SecondId = e.GetValue<string>("SecondID");
-        ArcAmount = e.GetValue<int>("ArcAmount");
-        ArcBlade = e.HasElement("ArcBlade");
+        SplitAmount = e.GetValue<int>("ArcAmount");
+        Split = e.HasElement("ArcBlade");
         CircularAngle = e.HasElement("CircularAngle");
         ForceHit = e.HasElement("ForceHit");
 
