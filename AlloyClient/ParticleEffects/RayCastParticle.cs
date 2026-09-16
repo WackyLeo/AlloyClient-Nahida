@@ -15,20 +15,22 @@ public class RayCastParticle : ParticleEffect, IDrawableParticleEffect {
     private readonly int _size;
     private float _angleCorrection = 1f;
     private readonly Vector2 _pos;
+    private readonly float _alphaDecayPerMs;
 
     private bool _needsDraw;
 
-    public RayCastParticle(AtlasData texture, Vector2 pos, float angle, float angleCorrection, int size) {
+    public RayCastParticle(AtlasData texture, Vector2 pos, float angle, float angleCorrection, int size, float alphaDecay) {
         _texture = texture;
         _pos = pos;
         _position = pos;
         _angle = angle;
         _angleCorrection = angleCorrection;
         _size = size;
+        _alphaDecayPerMs = (alphaDecay / 100f) / 16f;
     }
 
     public override bool Update(double time, double dt) {
-        Alpha -= (float)(dt * 0.004f);
+        Alpha -= (float)(dt * _alphaDecayPerMs);
         if (Alpha <= 0) return false;
         _needsDraw = true;
         return true;

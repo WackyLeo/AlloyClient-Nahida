@@ -677,7 +677,7 @@ public sealed class Projectile : IResettable
             if (_projProp.RCSpeed > 0)
                 pos = PositionAtRayCastLine(t);
             else
-                pos = PositionAt(t);
+                pos = PositionAt(t - _projProp.ProjDelayMs);
 
             var tile = Map.GetTile(pos);
             if (tile == null || tile.Type == 0xFF)
@@ -724,14 +724,17 @@ public sealed class Projectile : IResettable
         var texture = GetTexture();
         var hitRadius = 0.5f + _projProp.BonusSize;
 
-        var life = _projProp.RCSpeed > 0 ? _projProp.RCLifetimeMs : _lifetime + _projDelayMs;
-        for (var t = 0; t <= life; t += 25)
+        //var life = _projProp.RCSpeed > 0 ? _projProp.RCLifetimeMs : _lifetime + _projProp.ProjDelayMs;
+        
+        // There's a good chance this is buggy
+        var life = time -  _startTime;
+        for (var t = 0; life <= _projProp.LifetimeMs; life += 50)
         {
             Vector2 pos;
             if (_projProp.RCSpeed > 0)
-                pos = PositionAtRayCastLine(t);
+                pos = PositionAtRayCastLine((float)life);
             else
-                pos = PositionAt(t);
+                pos = PositionAt((float)life);
 
             var tile = Map.GetTile(pos);
             if (tile == null || tile.Type == 0xFF)
@@ -751,7 +754,7 @@ public sealed class Projectile : IResettable
 
             if (t % 50 == 0)
             {
-                var rcp = new RayCastParticle(texture, pos, angle, _angleCorrection, Size)
+                var rcp = new RayCastParticle(texture, pos, angle, _angleCorrection, Size, _projProp.AlphaDecay)
                 {
                     Alpha = (!_damagePlayers && _ownerId != Map.LocalPlayerId) ? Settings.AllyProjOpacity : 1f
                 };

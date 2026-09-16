@@ -61,7 +61,9 @@ public sealed class ProjectileProperties {
     public readonly bool PassesCover;
     public readonly int ProjDelayMs;
     public readonly float RadiusIncreaseSpeed;
+    
     public readonly bool RayCast;
+    public readonly int AlphaDecay;
 
     public readonly int RCLifetimeMs;
     public readonly int RCSpeed;
@@ -69,6 +71,7 @@ public sealed class ProjectileProperties {
     public readonly bool ReturnRayCast;
     public readonly int Ricochet;
     public readonly float RotationSpeed;
+    
 
     public readonly string SecondId;
     public readonly int ShadowSize;
@@ -142,7 +145,7 @@ public sealed class ProjectileProperties {
         DynamicRotationAngle = e.HasElement("DynamicRotationAngle");
 
         StaticFallAngle = e.GetValue("StaticFallAngle", -10000f);
-        ProjDelayMs = e.GetValue<int>("ProjdelayMS");
+        ProjDelayMs = e.GetValue<int>("ProjDelay");
         Ricochet = e.GetValue<int>("Ricochet");
 
         if (ParticleTrail)
@@ -163,6 +166,11 @@ public sealed class ProjectileProperties {
         AltAnimation = e.GetValue<int>("AltAnimation");
         BonusSize = e.GetValue<float>("BonusSize");
         RayCast = e.HasElement("RayCast");
+        if (RayCast)
+        {
+            var attr = e.Element("RayCast");
+            AlphaDecay = attr.GetAttribute("alphaDecay", 10);
+        }
         CheckRayCast = e.HasElement("CheckRC");
 
         SecondId = e.GetValue<string>("SecondID");
