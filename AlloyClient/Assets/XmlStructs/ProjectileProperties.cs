@@ -24,6 +24,7 @@ public sealed class ProjectileProperties {
     public readonly bool CheckRayCast;
     public readonly bool CircularAngle;
     public readonly bool OneWayFrequency;
+    public readonly int HitAmount;
 
     public readonly bool DynamicAngle;
     public readonly bool DynamicRotationAngle;
@@ -113,6 +114,7 @@ public sealed class ProjectileProperties {
         Missile = e.HasElement("Missile");
         OneWayFrequency = e.HasElement("OneWayFrequency");
         NumProjectiles = e.GetValue("NumProjectiles", 0);
+        HitAmount = e.GetValue("HitAmount", 1);
 
         Amplitude = e.GetValue<float>("Amplitude");
         Frequency = e.GetValue("Frequency", 1f);

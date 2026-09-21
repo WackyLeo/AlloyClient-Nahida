@@ -45,6 +45,7 @@ public sealed class Projectile : IResettable
     private Vector2 _position;
     private int _projDelayMs;
     private ProjectileProperties _projProp;
+    private int _textureId;
 
     private bool _rayCasted;
     private bool _rayCastFailed;
@@ -60,6 +61,12 @@ public sealed class Projectile : IResettable
     private double _startTime;
     public bool Clear;
     public RenderBase RenderBaseType;
+    
+    public Dictionary<Entity, bool> _multiHitDict;
+    public float _hitCoolDown = 0;
+    public float hitCoolDownReset = 0;
+    public float _saveCoolDown = 0;
+    private int _lastHitCycle = 0;
 
     public float Rotation;
     public int Size;
@@ -98,6 +105,8 @@ public sealed class Projectile : IResettable
         Rotation = 0f;
         _hitEntities.Clear();
         RenderBaseType = null;
+        _multiHitDict = null;
+        _textureId = 0;
     }
 
     public bool IsInPool { get; set; }
@@ -130,8 +139,11 @@ public sealed class Projectile : IResettable
         _startTime = Main.GameTime.TotalMs;
         _lastHitTest = 0;
         _accel = 0;
+        _saveCoolDown = 0;
+        _hitCoolDown = 0;
         _angleCorrection = _objDesc.AngleCorrection * MathF.PI / 4;
         _position = _startPosition = entity.Position;
+        _multiHitDict = _projProp.MultiHit ? new Dictionary<Entity, bool>() : null;
 
         _spinDistance = _projProp.StartRotationRadius;
         _startSpinAngle = _projProp.Orbiting ? _angle : 0f;
@@ -157,6 +169,13 @@ public sealed class Projectile : IResettable
         ((TypeProjectile)RenderBaseType).RandDir = Random.Shared.NextSingle() * 360f;
         ((TypeProjectile)RenderBaseType).TempLt = 0f;
         ((TypeProjectile)RenderBaseType).Lifetime = _lifetime;
+        
+        // Get RandomTexture
+        var textureData = ObjectLibrary.TypeToTextureData[_objDesc.ObjectType];
+        _textureId = textureData.RandomTextures != null && textureData.RandomTextures.Length > 0
+            ? Random.Shared.Next(textureData.RandomTextures.Length)
+            : 0;
+
         RenderBaseType.SetSize(Size);
         RenderBaseType.SetTexture(GetTexture());
     }
@@ -196,13 +215,13 @@ public sealed class Projectile : IResettable
             }
         }
 
-        return textureData.GetTexture();
+        return textureData.GetTexture(false, _textureId);
     }
 
     public AtlasData GetTexture()
     {
         var textureData = ObjectLibrary.TypeToTextureData[_objDesc.ObjectType];
-        return textureData.HasAnimationData ? textureData.AnimatedTextures.FaceRight[0] : textureData.GetTexture();
+        return textureData.HasAnimationData ? textureData.AnimatedTextures.FaceRight[0] : textureData.GetTexture(false, _textureId);
     }
 
     public bool Update(double time, double dt, DepthMatrix matrix)
@@ -239,7 +258,19 @@ public sealed class Projectile : IResettable
         var curLifetime = elapsed - _projDelayMs;
 
         if (curLifetime > _lifetime) return false;
-
+        
+        if (_projProp.MultiHit && _projProp.HitAmount > 0)
+        {
+            var hitInterval = _lifetime / _projProp.HitAmount;
+            var hitCycle = (int)(curLifetime / hitInterval);
+        
+            if (hitCycle != _lastHitCycle)
+            {
+                _hitEntities.Clear();
+                _lastHitCycle = hitCycle;
+            }
+        }
+        
         float targetAlpha = (!_damagePlayers && _ownerId != Map.LocalPlayerId) ? Settings.AllyProjOpacity : 1.0f;
         if (targetAlpha <= 0f) return false;
         if (_projProp.Fade > 0)
@@ -297,6 +328,10 @@ public sealed class Projectile : IResettable
         if (_objDesc.Rotation != 0)
         {
             Rotation = elapsed / _objDesc.Rotation;
+        }
+        else if (_projProp.VanillaAngle)
+        {
+            Rotation = _angle + Camera.CameraAngle + _angleCorrection;
         }
         else if (_projProp.DynamicAngle)
         {
@@ -538,6 +573,7 @@ public sealed class Projectile : IResettable
                     Map.PendingPlayerHit.AddHit(_bulletId, _ownerId);
                 else
                     Map.PendingEnemyHit.AddHit((int)time, _bulletId, go.ObjectId, go.PredictedHp <= 0);
+                
             }
 
 
@@ -545,6 +581,9 @@ public sealed class Projectile : IResettable
             _hitEntities.Add(go.ObjectId);
             hitSomething = true;
 
+            if (_projProp.MultiHit)
+                _multiHitDict[go] = true;
+            
             if (_ricochetsLeft == 0 && _projProp.Ricochet > 0) return true;
             if (!_projProp.MultiHit) return true;
         }
@@ -664,6 +703,21 @@ public sealed class Projectile : IResettable
             pos.Y += _spinDistance * MathF.Sin(_spinAngle);
         }
 
+        if (_projProp.HitAmount > 1)
+        {
+            _hitCoolDown += curLifetime - _projDelayMs - _saveCoolDown;
+            
+            _saveCoolDown += curLifetime - _projDelayMs - _saveCoolDown;
+            hitCoolDownReset = _projProp.LifetimeMs / _projProp.HitAmount;
+
+            if (_hitCoolDown > hitCoolDownReset)
+            {
+                _multiHitDict = null;
+                _multiHitDict = new Dictionary<Entity, bool>();
+                _hitCoolDown %= hitCoolDownReset;
+            }
+        }
+        
         return pos;
     }
 

@@ -67,7 +67,7 @@ public sealed class EquipmentToolTip : Tooltip {
         var avgRawDmg = 0f;
         foreach (var proj in item.AllProjectiles.Where(e => !e.OmitText))
         {
-            avgRawDmg += (proj.MinDamage + proj.MaxDamage) / 2f;
+            avgRawDmg += ((proj.MinDamage + proj.MaxDamage) / 2f) * proj.HitAmount;
 
             // Check for split shots and add to avgRawDmg
             if (proj.SplitShots != null && proj.SplitShots.Count > 0)
@@ -76,7 +76,7 @@ public sealed class EquipmentToolTip : Tooltip {
                 var splitType = ObjectLibrary.TypeToObjectProps[splitId];
                 
                 // TODO: Update this so it's not hardcoded to Projectile index 0
-                avgRawDmg += (splitType.Projectiles[0].MinDamage + splitType.Projectiles[0].MaxDamage) / 2f * proj.SplitShots.Count;
+                avgRawDmg += ((splitType.Projectiles[0].MinDamage + splitType.Projectiles[0].MaxDamage) / 2f * proj.SplitShots.Count) *  proj.HitAmount;
             }
             
         }

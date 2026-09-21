@@ -135,6 +135,7 @@ public class ProjectileDesc
     public readonly int MaxDamage;
     public readonly int MinDamage;
     public readonly int NumProjectiles;
+    public readonly int HitAmount;
     
     public readonly float LifetimeMS;
     public readonly float Frequency;
@@ -173,6 +174,7 @@ public class ProjectileDesc
             MaxDamage = xml.GetValue<int>("MaxDamage");
         }
         NumProjectiles = xml.GetValue<int>("NumProjectiles", 0);
+        HitAmount = xml.GetValue("HitAmount", 1);
         
         LifetimeMS = xml.GetValue<float>("LifetimeMS");
         Speed = xml.GetValue<float>("Speed", 100);
