@@ -151,8 +151,10 @@ public sealed class TextureData {
         return frames;
     }
 
-    public AtlasData GetTexture(out Color color, bool random = false, int id = 0) {
-        if (RandomTextures == null) {
+    public AtlasData GetTexture(out Color color, bool random = false, int id = 0)
+    {
+        if (RandomTextures == null)
+        {
             color = DominantColor;
             return Texture;
         }

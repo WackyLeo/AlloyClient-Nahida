@@ -333,7 +333,8 @@ public class Player : Entity {
         MovementMultiplier = tile.GroundProperties.Speed;
     }
 
-    private float GetMoveSpeed() {
+    private float GetMoveSpeed()
+    {
         // Paralyzed Stops movement
         if (HasConditionEffect(ConditionEffects.Paralyzed))
             return 0.0f;
@@ -342,19 +343,19 @@ public class Player : Entity {
         var speed = Speed;
 
         // Outcast dash stuff
-        if (DashTimer > 0) {
+        if (DashTimer > 0)
             return 0.06f;
-        }
 
         // LimitSpeed/Crouch speed
-        if (LimitSpeed) {
+        if (LimitSpeed)
             speed = SpeedLimit <= speed && SpeedLimit >= 0 ? SpeedLimit : speed;
-        }
 
         var moveSpeed = MinMoveSpeed + speed / 75f * (MaxMoveSpeed - MinMoveSpeed);
-        if (speedy) {
+        if (speedy)
             moveSpeed *= 1.5f;
-        }
+
+        if (HasConditionEffect(ConditionEffects.Slowed))
+            return MinMoveSpeed * MovementMultiplier;
 
         return moveSpeed * MovementMultiplier;
     }
