@@ -92,6 +92,7 @@ public static class PacketUtils {
             PacketId.TradeRequested => TradeRequested.CreatePacket(),
             PacketId.TradeStart => TradeStart.CreatePacket(),
             PacketId.Update => Update.CreatePacket(),
+            PacketId.Indicator => Indicator.CreatePacket(),
             _ => LogAndReturnUnknown(packetId)
         };
     }

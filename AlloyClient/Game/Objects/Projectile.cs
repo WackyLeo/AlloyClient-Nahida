@@ -30,7 +30,7 @@ public sealed class Projectile : IResettable
     private float _angle;
     private float _angleCorrection;
 
-    private int _bulletId;
+    private int _projectileId;
     private bool _checkRayCasted;
     private int _damage;
     private bool _damagePlayers;
@@ -73,7 +73,7 @@ public sealed class Projectile : IResettable
 
     public void Reset()
     {
-        _bulletId = 0;
+        _projectileId = 0;
         _damage = 0;
         _angle = 0f;
         _ownerId = 0;
@@ -114,7 +114,7 @@ public sealed class Projectile : IResettable
     public void Reset(int id, int dmg, float angle, Entity entity, ObjectProperties objDesc,
         ProjectileProperties projProp)
     {
-        _bulletId = id;
+        _projectileId = id;
         _damage = dmg;
         _angle = angle;
         _dirX = MathF.Cos(_angle);
@@ -149,7 +149,7 @@ public sealed class Projectile : IResettable
         _startSpinAngle = _projProp.Orbiting ? _angle : 0f;
         if (_projProp.FixedRotationAngle != 0)
         {
-            if (_bulletId % 2 == 0 && !(_projProp.OnlyClockwise || _projProp.OnlyCounterClockwise))
+            if (_projectileId % 2 == 0 && !(_projProp.OnlyClockwise || _projProp.OnlyCounterClockwise))
                 _startSpinAngle -= _projProp.FixedRotationAngle * MathF.PI / 180f;
             else
                 _startSpinAngle += _projProp.FixedRotationAngle * MathF.PI / 180f;
@@ -173,7 +173,7 @@ public sealed class Projectile : IResettable
         // Get RandomTexture
         var textureData = ObjectLibrary.TypeToTextureData[_objDesc.ObjectType];
         _textureId = textureData.RandomTextures != null && textureData.RandomTextures.Length > 0
-            ? Random.Shared.Next(textureData.RandomTextures.Length)
+            ? _projectileId % textureData.RandomTextures.Length
             : 0;
 
         RenderBaseType.SetSize(Size);
@@ -199,7 +199,7 @@ public sealed class Projectile : IResettable
 
         if (_projProp.Animated && _projProp.AnimationTime > 0)
         {
-            float altAnim = _bulletId % 2 == 0 ? _projProp.AltAnimation : 0;
+            float altAnim = _projectileId % 2 == 0 ? _projProp.AltAnimation : 0;
             var frameIndex = (int)((curLifetime + altAnim) / _projProp.AnimationTime);
 
             if (textureData.HasAnimationData && textureData.AnimatedTextures.FaceRight != null)
@@ -482,7 +482,7 @@ public sealed class Projectile : IResettable
                 }
             }
 
-            Map.PendingPlayerHit.AddHit(_bulletId, _ownerId);
+            Map.PendingPlayerHit.AddHit(_projectileId, _ownerId);
 
             if (!_projProp.MultiHit)
                 return true;
@@ -570,14 +570,14 @@ public sealed class Projectile : IResettable
                 }
 
                 if (_damagePlayers)
-                    Map.PendingPlayerHit.AddHit(_bulletId, _ownerId);
+                    Map.PendingPlayerHit.AddHit(_projectileId, _ownerId);
                 else
-                    Map.PendingEnemyHit.AddHit((int)time, _bulletId, go.ObjectId, go.PredictedHp <= 0);
+                    Map.PendingEnemyHit.AddHit((int)time, _projectileId, go.ObjectId, go.PredictedHp <= 0);
                 
             }
 
 
-            ChatBox.AddChatLine.Dispatch(new ChatBoxLineData(0, "*Error*", -1, null, _bulletId.ToString()));
+            ChatBox.AddChatLine.Dispatch(new ChatBoxLineData(0, "*Error*", -1, null, _projectileId.ToString()));
             _hitEntities.Add(go.ObjectId);
             hitSomething = true;
 
@@ -609,12 +609,12 @@ public sealed class Projectile : IResettable
         if (!_projProp.Asyncrone)
         {
             if (!_projProp.OneWayFrequency)
-                phase = (float)((_bulletId % 2) == 0 ? 0 : Math.PI);
+                phase = (float)((_projectileId % 2) == 0 ? 0 : Math.PI);
             else
                 phase = 0;
         }
         else
-            phase = (_bulletId + 2) % 3 == 0 ? 0 : MathF.PI;
+            phase = (_projectileId + 2) % 3 == 0 ? 0 : MathF.PI;
         
         if (_projProp.Wavy)
         {
@@ -635,8 +635,8 @@ public sealed class Projectile : IResettable
             }
             else
             {
-                x = MathF.Sin(t) * (_bulletId % 2 == 0 ? -1 : 1);
-                y = MathF.Sin(2 * t) * (_bulletId % 4 < 2 ? 1 : -1);
+                x = MathF.Sin(t) * (_projectileId % 2 == 0 ? -1 : 1);
+                y = MathF.Sin(2 * t) * (_projectileId % 4 < 2 ? 1 : -1);
             }
 
             pos.X += (x * MathF.Cos(_angle) - y * MathF.Sin(_angle)) * _projProp.Magnitude;
@@ -680,7 +680,7 @@ public sealed class Projectile : IResettable
             if (_spinDistance > _projProp.MaxRotationRadius && _projProp.MaxRotationRadius > 0)
                 _spinDistance = _projProp.MaxRotationRadius;
 
-            if ((_bulletId % 2 == 0 || _projProp.OnlyClockwise) && !_projProp.OnlyCounterClockwise)
+            if ((_projectileId % 2 == 0 || _projProp.OnlyClockwise) && !_projProp.OnlyCounterClockwise)
                 _spinAngle = curLifetime * (_projProp.RotationSpeed / 200f) + _startSpinAngle;
             else
                 _spinAngle = -(curLifetime * (_projProp.RotationSpeed / 200f)) + _startSpinAngle;
@@ -694,7 +694,7 @@ public sealed class Projectile : IResettable
             if (_spinDistance > _projProp.MaxRotationRadius && _projProp.MaxRotationRadius > 0)
                 _spinDistance = _projProp.MaxRotationRadius;
 
-            if ((_bulletId % 2 == 0 || _projProp.OnlyClockwise) && !_projProp.OnlyCounterClockwise)
+            if ((_projectileId % 2 == 0 || _projProp.OnlyClockwise) && !_projProp.OnlyCounterClockwise)
                 _spinAngle = curLifetime * (_projProp.RotationSpeed / 200f) + _startSpinAngle;
             else
                 _spinAngle = -(curLifetime * (_projProp.RotationSpeed / 200f)) + _startSpinAngle;
@@ -808,6 +808,7 @@ public sealed class Projectile : IResettable
 
             if (t % 50 == 0)
             {
+                Log.Info(texture);
                 var rcp = new RayCastParticle(texture, pos, angle, _angleCorrection, Size, _projProp.AlphaDecay)
                 {
                     Alpha = (!_damagePlayers && _ownerId != Map.LocalPlayerId) ? Settings.AllyProjOpacity : 1f
@@ -829,7 +830,7 @@ public sealed class Projectile : IResettable
                         var clr = Entity.GetHitColour(_projProp.Effects, _projProp.ArmorPiercing);
                         Map.AddParticleEffect(new HitEffect(target, clr));
                         NotificationLayer.AddStatusText(target, notification, clr, 1000, 0);
-                        Map.PendingPlayerHit.AddHit(_bulletId, _ownerId);
+                        Map.PendingPlayerHit.AddHit(_projectileId, _ownerId);
 
                         if (newHealth <= 0)
                         {
@@ -870,7 +871,7 @@ public sealed class Projectile : IResettable
                         {
                             var actualDamage = Entity.DamageWithDefense(_damage, target.Defense,
                                 _projProp.ArmorPiercing, target);
-                            Map.PendingEnemyHit.AddHit((int)time, _bulletId, target.ObjectId, false);
+                            Map.PendingEnemyHit.AddHit((int)time, _projectileId, target.ObjectId, false);
 
                             if (actualDamage > 0 || (_projProp.Effects != null && _projProp.Effects.Length > 0))
                             {

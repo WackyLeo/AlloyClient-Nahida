@@ -67,6 +67,7 @@ public enum PacketId : byte
     PetUpgradeRequest = 67,
     NewTick = 68,
     PasswordPrompt = 69,
+    Indicator = 70,
     MapInfo = 74,
     ClientStat = 75,
     ActivePetUpdate = 76,

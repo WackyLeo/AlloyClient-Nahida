@@ -97,7 +97,7 @@ public sealed class UserInput : Sprite {
 
         if (args.ShiftKey && Map.LocalPlayer != null) {
             var pos = Camera.ScreenToWorld(MousePosition);
-            Map.LocalPlayer.UseAltWeapon(pos.X, pos.Y, 1);
+            Map.LocalPlayer.UseAbility(pos.X, pos.Y, 1);
             return;
         }
 
@@ -218,7 +218,7 @@ public sealed class UserInput : Sprite {
             case true when Settings.Special.CheckValue(key): {
                 if (!_specialKeyDown) {
                     var pos = Camera.ScreenToWorld(MousePosition);
-                    var success = Map.LocalPlayer.UseAltWeapon(pos.X, pos.Y, 1); // 1 = START_USE
+                    var success = Map.LocalPlayer.UseAbility(pos.X, pos.Y, 1); // 1 = START_USE
                     if (success) {
                         _specialKeyDown = true;
                         Map.LocalPlayer.AutoAbilityToggle(true);
@@ -361,7 +361,7 @@ public sealed class UserInput : Sprite {
                     _specialKeyDown = false;
                     Map.LocalPlayer.AutoAbilityToggle(false);
                     var pos = Camera.ScreenToWorld(MousePosition);
-                    Map.LocalPlayer.UseAltWeapon(pos.X, pos.Y, 2); // 2 = END_USE
+                    Map.LocalPlayer.UseAbility(pos.X, pos.Y, 2); // 2 = END_USE
                 }
             }
                 break;

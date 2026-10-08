@@ -371,7 +371,7 @@ public class Player : Entity {
 
         if (AutoAbility) {
             var target = Camera.ScreenToWorld(UserInput.MousePosition);
-            UseAltWeapon(target.X, target.Y, 4);
+            UseAbility(target.X, target.Y, 4);
         }
 
         if (ObjectId == Map.LocalPlayerId) {
@@ -413,7 +413,7 @@ public class Player : Entity {
 
     public void TryReload(float mouseX, float mouseY) {
         if (Ammo >= MaxAmmo) {
-            UseAltWeapon(mouseX, mouseY, 5);
+            UseAbility(mouseX, mouseY, 5);
         }
         else {
             var curTime = (int)Main.GameTime.TotalMs;
@@ -437,7 +437,7 @@ public class Player : Entity {
         }
     }
 
-    public bool UseAltWeapon(float mouseX, float mouseY, byte useType) {
+    public bool UseAbility(float mouseX, float mouseY, byte useType) {
         if (Map.LocalPlayer == null || HasConditionEffect(ConditionEffects.Paused))
             return false;
 
@@ -866,6 +866,7 @@ public class Player : Entity {
                 var angle = startAngle + MathHelper.DegreesToRadians(props.ArcGap) * p;
                 var bId = GetBulletId();
                 
+                Log.Info(bId);
                 var rawDmg = Map.Random.NextIntRange((uint)projDesc.MinDamage, (uint)projDesc.MaxDamage);
 
                 float mult;
@@ -935,7 +936,7 @@ public class Player : Entity {
     
     public int GetBulletId() {
         var ret = NextBulletId;
-        NextBulletId = (NextBulletId + 1) % 1024;
+        NextBulletId = (NextBulletId + 1) % 512;
         return ret;
     }
 
