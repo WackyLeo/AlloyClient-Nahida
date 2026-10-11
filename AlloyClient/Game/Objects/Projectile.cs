@@ -674,33 +674,27 @@ public sealed class Projectile : IResettable
             }
         }
 
-        if (_projProp.ForceOrbiting && _owner != null)
+        if (_projProp.Orbiting)
         {
             _spinDistance = curLifetime * (_projProp.RadiusIncreaseSpeed / 200f) + _projProp.StartRotationRadius;
             if (_spinDistance > _projProp.MaxRotationRadius && _projProp.MaxRotationRadius > 0)
                 _spinDistance = _projProp.MaxRotationRadius;
 
             if ((_projectileId % 2 == 0 || _projProp.OnlyClockwise) && !_projProp.OnlyCounterClockwise)
-                _spinAngle = curLifetime * (_projProp.RotationSpeed / 200f) + _startSpinAngle;
+                _spinAngle = curLifetime > _projProp.OrbitDelay ? (curLifetime - _projProp.OrbitDelay) * (_projProp.RotationSpeed / 200f) + _startSpinAngle : _angle;
             else
-                _spinAngle = -(curLifetime * (_projProp.RotationSpeed / 200f)) + _startSpinAngle;
+                _spinAngle = curLifetime > _projProp.OrbitDelay ? -((curLifetime - _projProp.OrbitDelay) * (_projProp.RotationSpeed / 200f)) + _startSpinAngle : _angle;
 
-            pos.X = _owner.Position.X + _spinDistance * MathF.Cos(_spinAngle);
-            pos.Y = _owner.Position.Y + _spinDistance * MathF.Sin(_spinAngle);
-        }
-        else if (_projProp.Orbiting)
-        {
-            _spinDistance = curLifetime * (_projProp.RadiusIncreaseSpeed / 200f) + _projProp.StartRotationRadius;
-            if (_spinDistance > _projProp.MaxRotationRadius && _projProp.MaxRotationRadius > 0)
-                _spinDistance = _projProp.MaxRotationRadius;
-
-            if ((_projectileId % 2 == 0 || _projProp.OnlyClockwise) && !_projProp.OnlyCounterClockwise)
-                _spinAngle = curLifetime * (_projProp.RotationSpeed / 200f) + _startSpinAngle;
+            if (_projProp.ForceOrbiting &&  _owner != null)
+            {
+                pos.X = _owner.Position.X + _spinDistance * MathF.Cos(_spinAngle);
+                pos.Y = _owner.Position.Y + _spinDistance * MathF.Sin(_spinAngle);
+            }
             else
-                _spinAngle = -(curLifetime * (_projProp.RotationSpeed / 200f)) + _startSpinAngle;
-
-            pos.X += _spinDistance * MathF.Cos(_spinAngle);
-            pos.Y += _spinDistance * MathF.Sin(_spinAngle);
+            {
+                pos.X += _spinDistance * MathF.Cos(_spinAngle);
+                pos.Y += _spinDistance * MathF.Sin(_spinAngle);
+            }
         }
 
         if (_projProp.HitAmount > 1)

@@ -62,6 +62,7 @@ public sealed class ProjectileProperties {
     public readonly bool PassesCover;
     public readonly int ProjDelayMs;
     public readonly float RadiusIncreaseSpeed;
+    public readonly int OrbitDelay;
     
     public readonly bool RayCast;
     public readonly int AlphaDecay;
@@ -142,6 +143,7 @@ public sealed class ProjectileProperties {
             OnlyClockwise = attr.GetAttribute<bool>("clockwise");
             OnlyCounterClockwise = attr.GetAttribute<bool>("counter");
             RadiusIncreaseSpeed = attr.GetAttribute<float>("increaseSpeed");
+            OrbitDelay = attr.GetAttribute<int>("delay");
         }
         ForceOrbiting = e.HasElement("OwnerLock");
         DynamicRotationAngle = e.HasElement("DynamicRotationAngle");
