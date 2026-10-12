@@ -112,6 +112,14 @@ public sealed class TabStrip : Sprite {
 
         InitializeTabs();
     }
+    
+    public void UpdateStatsPanel() {
+        if (currentTabIndex == (int)TabTypes.StatsView) {
+            RemoveChild(_statsPanel);
+            _statsPanel = new StatsPanel();
+            AddChild(_statsPanel);
+        }
+    }
 
     private void AddTab(TabTypes tab) {
         Tabs.Add((int)tab, tab);

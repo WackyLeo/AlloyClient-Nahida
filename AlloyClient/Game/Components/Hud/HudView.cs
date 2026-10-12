@@ -99,6 +99,10 @@ public sealed class HudView : Sprite {
         if (_inventoryGrid != null) {
             _inventoryGrid.UpdatePotions();
         }
+
+        if (_tabStrip != null && _tabStrip.currentTabIndex == 2) {
+            _tabStrip.UpdateStatsPanel();
+        }
     }
 }
 
