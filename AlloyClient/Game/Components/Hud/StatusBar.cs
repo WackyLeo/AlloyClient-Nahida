@@ -92,18 +92,24 @@ public class StatusBar : Sprite {
     private void UpdateText(int val, int max, int boost, int baseMax, int level) {
         valueText.Visible = true;
 
-        var ltmt = "";
+        //var ltmt = "";
+        bool extraInfo = boost is > 0 or < 0;
 
+        /*
         if (Settings.ToggleLeftToMax) {
             var ltm = baseMax - max - boost;
             if (level >= 20 && ltm > 0)
                 ltmt = $"|{Math.Ceiling(ltm / 5f)}";
         }
+        */
 
-        if (max > 0)
-            valueText.SetText($"{val}/{max}" + ltmt);
+        if (max > 0 && extraInfo)
+            valueText.SetText($"{val}/{max} ({(boost > 0 ? "+" : "")}{boost})");
+        else if (max > 0)
+            valueText.SetText($"{val}/{max}");
         else
             valueText.SetText($"{val}");
+        
         valueText.X = width / 2 - valueText.Width / 2;
     }
 

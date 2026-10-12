@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using AlloyClient.Game.Objects;
 using AlloyClient.UiLib.BuiltIn;
 using AlloyClient.UiLib.BuiltIn.Buttons;
@@ -155,23 +156,33 @@ public class StatsPanel : Sprite {
     public StatsPanel() {
         var p = Map.LocalPlayer;
         var y = 150 / 2 - 16 - 10; //Height - Size - Spacing 
-        var offset = 40;
+        var offset = 10;
         var bg = new CutEdgeRect(new CutEdgeConfig
             { Width = 224, Height = 150, CutX = 6, CutY = 6, Cuts = CutEdges.All, Color = 0x242222 });
         AddChild(bg);
 
         string[] IndexName = { "ATK", "DEF", "SPD", "DEX", "VIT", "WIS" };
         int[] IndexValue = { p.Attack, p.Defense, p.Speed, p.Dexterity, p.Vitality, p.Wisdom };
+        int[] IndexBoostValue = { p.AttackBoost, p.DefenseBoost, p.SpeedBoost, p.DexterityBoost, p.VitalityBoost, p.WisdomBoost };
 
         for (var i = 0; i < IndexValue.Length; i++) {
             var even = i == 0 || i == 2 || i == 4;
-            var extraInfo = false;
+            var extraInfo = IndexBoostValue[i] > 0 || IndexBoostValue[i] < 0;
+            uint boostColor = 16777103;
+
+            if (extraInfo) {
+                if (IndexBoostValue[i] > 0) 
+                    boostColor = 0x00FF00;
+                
+                else if (IndexBoostValue[i] < 0) 
+                    boostColor = 0xFF0000;
+            }
 
             var StatName = new SimpleText(new TextConfig {
                 Text = IndexName[i],
-                FontSize = 16,
+                FontSize = 14,
                 FontType = FontType.Normal,
-                X = even ? offset : Width - 16 - offset * 2,
+                X = even ? offset : Width / 2,
                 Y = y,
                 OutlineThickness = 0,
                 Color = 0xFFFFFF,
@@ -179,23 +190,40 @@ public class StatsPanel : Sprite {
                 Glow = 0,
                 Anchor = UiAnchor.MiddleLeft
             });
-
+            
             AddChild(StatName);
-
+            
             var StatValue = new SimpleText(new TextConfig {
-                Text = IndexValue[i] + (extraInfo ? $" +{0}" : ""),
-                FontSize = 16,
+                Text = IndexValue[i].ToString(),
+                FontSize = 14,
                 FontType = FontType.Bold,
-                X = (even ? offset : Width - 16 - offset * 2) + StatName.Width + 5, //kinda gross but its needed
+                X = (even ? offset : Width / 2) + StatName.Width + 5, //kinda gross but its needed
                 Y = y,
                 OutlineThickness = 0,
-                Color = 0xFFC800,
+                Color = 16777103,
                 OutlineColor = 0xFFFFFF,
                 Glow = 0,
                 Anchor = UiAnchor.MiddleLeft
             });
 
             AddChild(StatValue);
+
+            if (extraInfo) {
+                var StatBoostValue = new SimpleText(new TextConfig {
+                    Text = $"({(IndexBoostValue[i] > 0 ? "+" : "")}{IndexBoostValue[i]})",
+                    FontSize = 14,
+                    FontType = FontType.Bold,
+                    X = ((even ? offset : Width / 2) + StatName.Width + 5) + StatValue.Width + 5, //kinda grosser but its needed
+                    Y = y,
+                    OutlineThickness = 0,
+                    Color = boostColor,
+                    OutlineColor = 0xFFFFFF,
+                    Glow = 0,
+                    Anchor = UiAnchor.MiddleLeft
+                });
+
+                AddChild(StatBoostValue);
+            }
 
             y += even ? 0 : StatName.Height + 10;
         }
