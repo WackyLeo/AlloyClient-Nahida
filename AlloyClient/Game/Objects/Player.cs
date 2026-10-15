@@ -866,7 +866,6 @@ public class Player : Entity {
                 var angle = startAngle + MathHelper.DegreesToRadians(props.ArcGap) * p;
                 var bId = GetBulletId();
                 
-                Log.Info(bId);
                 var rawDmg = Map.Random.NextIntRange((uint)projDesc.MinDamage, (uint)projDesc.MaxDamage);
 
                 float mult;

@@ -142,7 +142,6 @@ public sealed class ProjectileProperties {
             FixedRotationAngle = attr.GetAttribute<float>("fixedAngle");
             OnlyClockwise = attr.GetAttribute<bool>("clockwise");
             OnlyCounterClockwise = attr.GetAttribute<bool>("counter");
-            RadiusIncreaseSpeed = attr.GetAttribute<float>("increaseSpeed");
             OrbitDelay = attr.GetAttribute<int>("delay");
         }
         ForceOrbiting = e.HasElement("OwnerLock");

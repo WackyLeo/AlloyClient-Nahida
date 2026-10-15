@@ -806,7 +806,6 @@ public sealed class Projectile : IResettable
 
             if (t % 50 == 0)
             {
-                Log.Info(texture);
                 var rcp = new RayCastParticle(texture, pos, angle, _angleCorrection, Size, _projProp.AlphaDecay)
                 {
                     Alpha = (!_damagePlayers && _ownerId != Map.LocalPlayerId) ? Settings.AllyProjOpacity : 1f
