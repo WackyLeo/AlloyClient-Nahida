@@ -2,6 +2,8 @@
 using System.Numerics;
 using AlloyClient.Game;
 using AlloyClient.Game.Objects.Util;
+using AlloyClient.Ui.Character;
+using AlloyClient.Game.Objects;
 
 namespace AlloyClient.Networking.Packets.Incoming;
 
@@ -42,10 +44,22 @@ public class Damage : IncomingPacket<Damage> {
         if (!Map.Entities.TryGetValue(TargetId, out var target))
             return;
 
+        // Need to add damage text colors including dynamic color and its toggle in options
+        // Entity.GetHitColour(Effects, ArmorPiercing/ArmorBroken);
+        
+        String notification = "";
+        uint clr;
+        
         if (Kill) {
             target.PredictedHp = Math.Min(target.PredictedHp, 0);
+            notification = $"-{DamageAmount} [{target.PredictedHp}]";
+            clr = 0xFF0000;
+            NotificationLayer.AddStatusText(target, notification, clr, 1000, 0);
         } else if (target.Hp > 0) {
             target.Hp -= DamageAmount;
+            notification = $"-{DamageAmount} [{target.Hp}]";
+            clr = 0xFF0000;
+            NotificationLayer.AddStatusText(target, notification, clr, 1000, 0);
         }
     }
 
