@@ -17,6 +17,7 @@ using AlloyClient.UiLib;
 using AlloyClient.UiLib.Data;
 using AlloyClient.UiLib.Enums;
 using AlloyClient.UiLib.Extra;
+using AlloyClient.UiLib.Input;
 using AlloyClient.UiLib.Signals;
 using Common;
 using Common.ContentReaders;
@@ -246,6 +247,8 @@ public class Main {
                 _running = false;
                 break;
             case FocusEventArgs e:
+                if (!e.GotFocus)
+                    KeyboardInput.ClearKeyInput();
                 UserInput.SetWindowFocus(e.GotFocus);
                 break;
             case WindowResizeEventArgs e:

@@ -1,4 +1,7 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Runtime.CompilerServices;
 using AlloyClient.Game.Components.Hud;
 using AlloyClient.Game.Components.Hud.Chat;
 using AlloyClient.Game.Components.Hud.Panels;
@@ -20,7 +23,8 @@ using OpenTK.Platform;
 
 namespace AlloyClient.Game.Components;
 
-public sealed class UserInput : Sprite {
+public sealed class UserInput : Sprite
+{
     private static bool _windowFocus;
     private static bool _manualFocus = true;
     private static bool _intputDisable;
@@ -37,23 +41,30 @@ public sealed class UserInput : Sprite {
 
     private int _rotateRight;
     private bool _specialKeyDown;
+    
+    private bool _hadFocus = true;
+    private static readonly HashSet<Scancode> _pressed = new();
 
-    public UserInput() {
+    public UserInput()
+    {
         AddEventListener(Event.AddedToStage, AddedToStage);
         AddEventListener(Event.RemovedFromStage, RemovedFromStage);
     }
 
     public static Vector2 MousePosition { get; private set; }
 
-    public static void SetInputDisabled(bool disable) {
+    public static void SetInputDisabled(bool disable)
+    {
         _intputDisable = disable;
     }
 
-    public static bool GetInputDisabled() {
+    public static bool GetInputDisabled()
+    {
         return _intputDisable;
     }
 
-    private void AddedToStage() {
+    private void AddedToStage()
+    {
         Stage.AddEventListener(KeyboardEvent.KeyDown, OnKeyDown);
         Stage.AddEventListener(KeyboardEvent.KeyUp, OnKeyUp);
 
@@ -66,7 +77,8 @@ public sealed class UserInput : Sprite {
         AddEventListener(Event.EnterFrame, OnFrameEnter);
     }
 
-    private void RemovedFromStage() {
+    private void RemovedFromStage()
+    {
         Stage.RemoveEventListener(KeyboardEvent.KeyDown, OnKeyDown);
         Stage.RemoveEventListener(KeyboardEvent.KeyUp, OnKeyUp);
 
@@ -79,23 +91,28 @@ public sealed class UserInput : Sprite {
         RemoveEventListener(Event.EnterFrame, OnFrameEnter);
     }
 
-    public static void SetWindowFocus(bool focus) {
+    public static void SetWindowFocus(bool focus)
+    {
         _windowFocus = focus;
     }
 
-    public static void SetManualFocus(bool focus) {
+    public static void SetManualFocus(bool focus)
+    {
         _manualFocus = focus;
     }
 
-    private static bool IsInputDisabled() {
+    private static bool IsInputDisabled()
+    {
         return !(_windowFocus && _manualFocus) || _intputDisable;
     }
 
-    private void OnLeftDown(MouseEvent args) {
+    private void OnLeftDown(MouseEvent args)
+    {
         if (args.Coords.X > Settings.ScreenWidth - HudView.Width * Stage.ScreenScale.X) return;
         _mouseDown = true;
 
-        if (args.ShiftKey && Map.LocalPlayer != null) {
+        if (args.ShiftKey && Map.LocalPlayer != null)
+        {
             var pos = Camera.ScreenToWorld(MousePosition);
             Map.LocalPlayer.UseAbility(pos.X, pos.Y, 1);
             return;
@@ -104,28 +121,45 @@ public sealed class UserInput : Sprite {
         _mouseDown = true;
     }
 
-    private void OnLeftUp() {
+    private void OnLeftUp()
+    {
         _mouseDown = false;
     }
 
-    private void OnRightDown(MouseEvent args) {
+    private void OnRightDown(MouseEvent args)
+    {
         if (IsInputDisabled() || Map.LocalPlayer == null) return;
         var pos = Camera.ScreenToWorld(MousePosition);
         Map.LocalPlayer.TryReload(pos.X, pos.Y);
     }
 
-    private void OnMouseMove(MouseEvent args) {
+    private void OnMouseMove(MouseEvent args)
+    {
         MousePosition = new Vector2(args.Coords.X, args.Coords.Y);
     }
 
-    public void ClearInput() {
+    
+    private void ReleaseAllInput()
+    {
+        if (_specialKeyDown && Map.LocalPlayer != null)
+        {
+            Map.LocalPlayer.AutoAbilityToggle(false);
+            var pos = Camera.ScreenToWorld(MousePosition);
+            Map.LocalPlayer.UseAbility(pos.X, pos.Y, 2); // 2 = END_USE
+        }
+
+        ClearInput();
+    }
+    
+    public void ClearInput()
+    {
         ClearMovement();
         _autoFire = false;
         _mouseDown = false;
         _specialKeyDown = false;
     }
-
-    public void ClearMovement() {
+    public void ClearMovement()
+    {
         _rotateLeft = 0;
         _rotateRight = 0;
         _moveUp = 0;
@@ -135,7 +169,20 @@ public sealed class UserInput : Sprite {
         Map.LocalPlayer?.SetRelativeMovement(0, 0, 0);
     }
 
-    private void OnFrameEnter() {
+    private void OnFrameEnter()
+    {
+        // Clear all key input when player tabs out
+        if (!_windowFocus)
+        {
+            if (_hadFocus)
+            {
+                _hadFocus = false;
+                ReleaseAllInput();
+            }
+            return;
+        }
+        _hadFocus = true;
+        
         if (IsInputDisabled() || !(_mouseDown || _autoFire) || Map.LocalPlayer == null)
             return;
 
@@ -146,7 +193,8 @@ public sealed class UserInput : Sprite {
         var dY = hitPos.Y - Map.LocalPlayer.Position.Y;
         var angle = MathF.Atan2(dY, dX);
 
-        if (Map.LocalPlayer.HasConditionEffect(ConditionEffects.Unstable)) {
+        if (Map.LocalPlayer.HasConditionEffect(ConditionEffects.Unstable))
+        {
             var variance = 180f;
             if (Random.Shared.NextSingle() * 5 < 1) variance = 720f;
             angle += (float)(Random.Shared.NextDouble() * variance - variance / 2f) / 360f * MathF.PI;
@@ -155,10 +203,12 @@ public sealed class UserInput : Sprite {
         Map.LocalPlayer.Shoot(angle, Stage.GameTime, false);
     }
 
-    private void SetPlayerMovement() {
+    private void SetPlayerMovement()
+    {
         if (Map.LocalPlayer == null) return;
 
-        if (IsInputDisabled()) {
+        if (IsInputDisabled())
+        {
             Map.LocalPlayer.SetRelativeMovement(0, 0, 0);
             return;
         }
@@ -166,26 +216,32 @@ public sealed class UserInput : Sprite {
         Map.LocalPlayer.SetRelativeMovement(_rotateRight - _rotateLeft, _moveRight - _moveLeft, _moveDown - _moveUp);
     }
 
-    private void OnScroll(MouseEvent args) {
+    private void OnScroll(MouseEvent args)
+    {
         if (IsInputDisabled()) return;
         if (Map.LocalPlayer == null) return;
 
-        if (args.ShiftKey) {
+        if (args.ShiftKey)
+        {
             Settings.CameraZoom = Math.Clamp(Settings.CameraZoom += 0.1f * args.Delta, Settings.MinCameraZoom,
                 Settings.MaxCameraZoom);
             Logger.Info($"Camera zoom: {Settings.CameraZoom.Value}");
             Camera.SetZoom(Settings.CameraZoom);
-        } else {
+        }
+        else
+        {
             Minimap.OnZoom.Dispatch((int)args.Delta);
         }
     }
 
-    private void OnMiddleClick(MouseEvent args) {
+    private void OnMiddleClick(MouseEvent args)
+    {
         if (IsInputDisabled())
             return;
     }
 
-    private void OnKeyDown(KeyboardEvent args) {
+    private void OnKeyDown(KeyboardEvent args)
+    {
         if (IsInputDisabled() || args.Code == Scancode.Unknown)
             return;
         if (Map.LocalPlayer == null)
@@ -193,7 +249,8 @@ public sealed class UserInput : Sprite {
 
         var key = args.Code;
 
-        switch (true) {
+        switch (true)
+        {
             case true when Settings.RotateLeft.CheckValue(key):
                 _rotateLeft = 1;
                 break;
@@ -215,11 +272,14 @@ public sealed class UserInput : Sprite {
             case true when Settings.AutoFire.CheckValue(key):
                 _autoFire = !_autoFire;
                 break;
-            case true when Settings.Special.CheckValue(key): {
-                if (!_specialKeyDown) {
+            case true when Settings.Special.CheckValue(key):
+            {
+                if (!_specialKeyDown)
+                {
                     var pos = Camera.ScreenToWorld(MousePosition);
                     var success = Map.LocalPlayer.UseAbility(pos.X, pos.Y, 1); // 1 = START_USE
-                    if (success) {
+                    if (success)
+                    {
                         _specialKeyDown = true;
                         Map.LocalPlayer.AutoAbilityToggle(true);
                     }
@@ -304,22 +364,6 @@ public sealed class UserInput : Sprite {
                 ClearMovement();
                 ChatBox.OnChatOpen.Dispatch("");
                 break;
-            case true when Settings.ChatCommand.CheckValue(key):
-                ClearMovement();
-                ChatBox.OnChatOpen.Dispatch("");
-                break;
-            case true when Settings.TellKey.CheckValue(key):
-                ClearMovement();
-                ChatBox.OnChatOpen.Dispatch("/tell ");
-                break;
-            case true when Settings.GuildChat.CheckValue(key):
-                ClearMovement();
-                ChatBox.OnChatOpen.Dispatch("/g ");
-                break;
-            case true when Settings.PartyChat.CheckValue(key):
-                ClearMovement();
-                ChatBox.OnChatOpen.Dispatch("/npp ");
-                break;
             case true when Settings.ChatHistoryUp.CheckValue(key):
                 ChatBox.OnChatHistoryUp.Dispatch();
                 break;
@@ -331,13 +375,15 @@ public sealed class UserInput : Sprite {
         SetPlayerMovement();
     }
 
-    private void OnKeyUp(KeyboardEvent args) {
+    private void OnKeyUp(KeyboardEvent args)
+    {
         if (IsInputDisabled() || args.Code == Scancode.Unknown) return;
         if (Map.LocalPlayer == null) return;
 
         var key = args.Code;
 
-        switch (true) {
+        switch (true)
+        {
             case true when Settings.RotateLeft.CheckValue(key):
                 _rotateLeft = 0;
                 break;
@@ -356,8 +402,26 @@ public sealed class UserInput : Sprite {
             case true when Settings.MoveRight.CheckValue(key):
                 _moveRight = 0;
                 break;
-            case true when Settings.Special.CheckValue(key): {
-                if (_specialKeyDown) {
+            case true when Settings.ChatCommand.CheckValue(key):
+                ClearMovement();
+                ChatBox.OnChatOpen.Dispatch("/");
+                break;
+            case true when Settings.TellKey.CheckValue(key):
+                ClearMovement();
+                ChatBox.OnChatOpen.Dispatch("/tell ");
+                break;
+            case true when Settings.GuildChat.CheckValue(key):
+                ClearMovement();
+                ChatBox.OnChatOpen.Dispatch("/g ");
+                break;
+            case true when Settings.PartyChat.CheckValue(key):
+                ClearMovement();
+                ChatBox.OnChatOpen.Dispatch("/npp ");
+                break;
+            case true when Settings.Special.CheckValue(key):
+            {
+                if (_specialKeyDown)
+                {
                     _specialKeyDown = false;
                     Map.LocalPlayer.AutoAbilityToggle(false);
                     var pos = Camera.ScreenToWorld(MousePosition);
@@ -374,17 +438,20 @@ public sealed class UserInput : Sprite {
         SetPlayerMovement();
     }
 
-    private void HandleUseItem(byte slotId) {
+    private void HandleUseItem(byte slotId)
+    {
         var player = Map.LocalPlayer;
         if (player == null || player.Equipment.Length <= slotId) return;
 
         var item = player.Equipment[slotId];
         if (item == null || item.ObjectType == 0) return;
 
-        if (item.ObjectType == ItemConstants.HealthPotion || item.ObjectType == ItemConstants.MagicPotion) {
+        if (item.ObjectType == ItemConstants.HealthPotion || item.ObjectType == ItemConstants.MagicPotion)
+        {
             var isHp = item.ObjectType == ItemConstants.HealthPotion;
             var currentCount = isHp ? player.HealthStackCount : player.MagicStackCount;
-            if (currentCount < 6) {
+            if (currentCount < 6)
+            {
                 var targetSlot = isHp ? ItemConstants.HpPotionSlot : ItemConstants.MpPotionSlot;
 
                 var pSwap = InvSwap.CreatePacket();
@@ -403,25 +470,30 @@ public sealed class UserInput : Sprite {
             }
         }
 
-        if (item.Consumable) {
+        if (item.Consumable)
+        {
             SendUseItem(slotId, item.ObjectType);
             return;
         }
 
         var equipSlot = -1;
-        for (var i = 0; i < 4; i++) {
-            if (i == 0 && item.SlotType == 0) {
+        for (var i = 0; i < 4; i++)
+        {
+            if (i == 0 && item.SlotType == 0)
+            {
                 equipSlot = i;
                 break;
             }
 
-            if (player.Properties.SlotTypes.Count > i && player.Properties.SlotTypes[i] == item.SlotType) {
+            if (player.Properties.SlotTypes.Count > i && player.Properties.SlotTypes[i] == item.SlotType)
+            {
                 equipSlot = i;
                 break;
             }
         }
 
-        if (equipSlot != -1) {
+        if (equipSlot != -1)
+        {
             var targetItem = player.Equipment[equipSlot];
             var targetObjType = targetItem?.ObjectType ?? 0;
 
@@ -438,12 +510,15 @@ public sealed class UserInput : Sprite {
             player.Equipment[equipSlot] = item;
             player.InventoryUpdate.Dispatch(slotId);
             player.InventoryUpdate.Dispatch(equipSlot);
-        } else {
+        }
+        else
+        {
             SendUseItem(slotId, item.ObjectType);
         }
     }
 
-    private void UsePotion(bool isHp) {
+    private void UsePotion(bool isHp)
+    {
         var player = Map.LocalPlayer;
         if (player == null) return;
 
@@ -458,7 +533,8 @@ public sealed class UserInput : Sprite {
         else player.MagicStackCount--;
     }
 
-    private void SendUseItem(byte slotId, ushort objectType) {
+    private void SendUseItem(byte slotId, ushort objectType)
+    {
         var player = Map.LocalPlayer;
         var packet = UseItem.CreatePacket();
 

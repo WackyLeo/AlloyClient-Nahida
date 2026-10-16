@@ -63,7 +63,7 @@ public sealed class Character(XElement xml) {
 
     public readonly int Wisdom = xml.GetValue("Wisdom", 0);
         
-    public readonly int Speed = xml.GetValue("Wisdom", 0);
+    public readonly int Speed = xml.GetValue("Speed", 0);
     
     public readonly int Vitality = xml.GetValue("LifeRegeneration", 0);
 }

@@ -1,4 +1,6 @@
-﻿using AlloyClient.UiLib.BuiltIn;
+﻿using System.Collections.Generic;
+using System.Linq;
+using AlloyClient.UiLib.BuiltIn;
 using AlloyClient.UiLib.Core;
 using OpenTK.Platform;
 
@@ -9,6 +11,7 @@ public static class KeyboardInput {
     private static InternalKeyboardState _internalState;
 
     private static Stage _stage;
+    private static readonly Dictionary<Key, Scancode> _heldCodes = new();
     
     public static bool IsKeyDown(Key key) {
         return _internalState.IsKeyDown(key);
@@ -28,19 +31,31 @@ public static class KeyboardInput {
         _stage = stage;
         _internalState = new InternalKeyboardState();
     }
-
-    internal static void SetKeyDown(KeyDownEventArgs args) {
+    internal static void SetKeyDown(KeyDownEventArgs args)
+    {
         if (_internalState.IsKeyDown(args.Key)) return;
         _internalState.SetKey(args.Key);
+        _heldCodes[args.Key] = args.Scancode;
         _stage.DispatchEvent(new KeyboardEvent(KeyboardEvent.KeyDown, args.Key, args.Scancode, IsCtrlDown(), IsShiftDown(), IsAltDown()));
     }
 
-    internal static void SetKeyUp(KeyUpEventArgs args) {
+    internal static void SetKeyUp(KeyUpEventArgs args)
+    {
         if (_internalState.IsKeyUp(args.Key)) return;
         _internalState.ClearKey(args.Key);
+        _heldCodes.Remove(args.Key);
         _stage.DispatchEvent(new KeyboardEvent(KeyboardEvent.KeyUp, args.Key, args.Scancode, IsCtrlDown(), IsShiftDown(), IsAltDown()));
     }
-
+    // Clear all key input when player tabs out
+    public static void ClearKeyInput()
+    {
+        foreach (var (key, code) in _heldCodes.ToArray())
+        {
+            _internalState.ClearKey(key);
+            _heldCodes.Remove(key);
+            _stage.DispatchEvent(new KeyboardEvent(KeyboardEvent.KeyUp, key, code, IsCtrlDown(), IsShiftDown(), IsAltDown()));
+        }
+    }
     internal static void OnTextInput(TextInputEventArgs args) {
         TextInput.ActiveInput?.OnTextInput(args);
     }

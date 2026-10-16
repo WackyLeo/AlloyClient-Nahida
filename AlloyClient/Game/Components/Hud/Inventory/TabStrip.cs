@@ -176,14 +176,14 @@ public class StatsPanel : Sprite {
         for (var i = 0; i < IndexValue.Length; i++) {
             var even = i == 0 || i == 2 || i == 4;
             var extraInfo = IndexBoostValue[i] > 0 || IndexBoostValue[i] < 0;
-            uint boostColor = 16777103;
+            uint boostColor = 0xFFFF8F;
 
             if (extraInfo) {
                 if (IndexBoostValue[i] > 0) 
-                    boostColor = 0x00FF00;
+                    boostColor = 0x5EB531;
                 
                 else if (IndexBoostValue[i] < 0) 
-                    boostColor = 0xFF0000;
+                    boostColor = 0xFF3838;
             }
 
             var StatName = new SimpleText(new TextConfig {

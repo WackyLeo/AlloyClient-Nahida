@@ -297,14 +297,15 @@ vec4 RenderOutline() {
         return vec4(outlineColor.rgb, 1.0);
     }
 
+/*
     if (inp.Extra2.z != -1 && nearestDist < 999.0) {
         float normalized = nearestDist / glowSize;
-        float glowAlpha = 0.8 * exp(-normalized * 4) * (1.0 - smoothstep(0.8, 1.0, normalized));
+        float glowAlpha = 5 * exp(-normalized * 4) * (1.0 - smoothstep(0.8, 1.0, normalized));
         if (glowAlpha > 0.0){
-            return vec4(outlineColor.rgb, glowAlpha);
+            return vec4(0, 0, 0, glowAlpha);
         }
     }
-
+*/
     discard;
 }
 
