@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Numerics;
+using AlloyClient.Data;
 using AlloyClient.Game;
 using AlloyClient.Game.Objects.Util;
 using AlloyClient.Ui.Character;
@@ -48,18 +49,26 @@ public class Damage : IncomingPacket<Damage> {
         // Entity.GetHitColour(Effects, ArmorPiercing/ArmorBroken);
         
         String notification = "";
-        uint clr;
+        int clr;
+        float percentage;
         
         if (Kill) {
             target.PredictedHp = Math.Min(target.PredictedHp, 0);
             notification = $"-{DamageAmount} [{target.PredictedHp}]";
-            clr = 0xFF0000;
-            NotificationLayer.AddStatusText(target, notification, clr, 1000, 0);
+            percentage = target.PredictedHp / target.MaxHp * 100f;
+            clr = NotificationLayer.Green2Red((int)percentage);
+            Console.WriteLine(clr);
+            NotificationLayer.AddStatusText(target, notification, (uint)clr, 1000, 0);
         } else if (target.Hp > 0) {
             target.Hp -= DamageAmount;
             notification = $"-{DamageAmount} [{target.Hp}]";
-            clr = 0xFF0000;
-            NotificationLayer.AddStatusText(target, notification, clr, 1000, 0);
+            percentage = ((float)target.Hp / (float)target.MaxHp) * 100f;
+            clr = NotificationLayer.Green2Red((int)percentage);
+            Console.WriteLine($"HP{target.Hp} : MaxHP{target.MaxHp}");
+            Console.WriteLine(clr);
+            var clrUint = (uint)clr;
+            Console.WriteLine(clrUint);
+            NotificationLayer.AddStatusText(target, notification, (uint)clr, 1000, 0);
         }
     }
 
