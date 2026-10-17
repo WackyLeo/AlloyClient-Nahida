@@ -444,6 +444,7 @@ public static class Settings {
     public static ValueSetting<bool> ToggleBarText = true;
     public static ValueSetting<bool> InventorySwap = true;
     public static ValueSetting<bool> CenterPlayer = true;
+    public static ValueSetting<bool> DynamicDamageColor = false;
 
     // Chat Settings
     public static ValueSetting<int> ChatInclude = 0;

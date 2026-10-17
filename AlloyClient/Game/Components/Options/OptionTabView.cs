@@ -165,6 +165,8 @@ public class OptionTabView : Container {
             "FPS Cap", "This allows you to choose a frame rate cap", OnFPSChange));
         _options.Add(new ChoiceOption<bool>(Settings.VSync, OnOffLabels, OnOffValues, "VSync",
             "This toggles whether to have VSync enabled or not.", OnVSyncToggle));
+        _options.Add(new ChoiceOption<bool>(Settings.DynamicDamageColor, OnOffLabels, OnOffValues, "Dynamic Damage Color",
+            "This toggles whether the color of damage text reflects the amount of health remaining for the target."));
     }
 
     private void AddSoundOptions() {

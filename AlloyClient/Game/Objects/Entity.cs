@@ -10,6 +10,7 @@ using AlloyClient.Networking.Structs.DataObjects;
 using AlloyClient.ParticleEffects;
 using AlloyClient.Rendering;
 using AlloyClient.Rendering.Types;
+using AlloyClient.State;
 using AlloyClient.Ui.Character;
 using AlloyClient.UiLib.Signals;
 using AlloyClient.Utils;
@@ -746,7 +747,16 @@ public class Entity {
                 return armorBreak ? 0x9000FFu : 0xFF0000u;
         }
     }
+    
+    public static int Green2Red(int hpPercentage) {
+        if (hpPercentage > 50)
+            return 0xFF00 + (327680 * (100 - hpPercentage));
+        return 0xFFFF00 - (0x0500 * (50 - hpPercentage));
+    }
 
+    // Needed still:
+    // Get effects set up with this
+    // Add Purple2Blue for Dynamic damage color while armor broken
     public void Damage(int damageAmount, ConditionEffectIndex effect = ConditionEffectIndex.None,
         bool isArmorPiercing = false) {
         if (HasConditionEffect(ConditionEffects.Invincible) || HasConditionEffect(ConditionEffects.Invulnerable))
@@ -754,16 +764,30 @@ public class Entity {
 
         if (Map.LocalPlayer == null)
             return;
-
+        
         if (effect != ConditionEffectIndex.None)
             ConditionEffects |= (ConditionEffects)(1UL << (int)effect);
 
         if (damageAmount > 0) {
-            var newHealth = Map.LocalPlayer.Hp - damageAmount;
-            var notification = $"-{damageAmount} [{newHealth}]";
-            var clr = GetHitColour(effect, isArmorPiercing);
-            Map.AddParticleEffect(new HitEffect(Map.LocalPlayer, clr));
-            NotificationLayer.AddStatusText(Map.LocalPlayer, notification, clr, 1000, 0);
+            PredictedHp -= damageAmount;
+            PredictedHp = PredictedHp < 0 ? 0 : PredictedHp;
+            
+            var notification = $"-{damageAmount} [{PredictedHp}]";
+            var percentage = (float)PredictedHp / MaxHp * 100f;
+            var clr = Settings.DynamicDamageColor ? Green2Red((int)percentage) : (int)GetHitColour(null, isArmorPiercing);
+            Map.AddParticleEffect(new HitEffect(this, 0xFF0000));
+            NotificationLayer.AddStatusText(this, notification, (uint)clr, 1000, 0);
+        }
+        
+        if (PredictedHp <= 0)
+        {
+            SetTransparency(0.4f);
+            if (!string.IsNullOrEmpty(Properties.DeathSound))
+                Audio.PlaySfx(Properties.DeathSound);
+        }
+        else if (!string.IsNullOrEmpty(Properties.HitSound))
+        {
+            Audio.PlaySfx(Properties.HitSound);
         }
     }
 

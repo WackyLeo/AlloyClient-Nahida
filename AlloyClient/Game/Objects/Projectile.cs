@@ -465,21 +465,7 @@ public sealed class Projectile : IResettable
                 _projProp.Penetration);
             if (actualDamage > 0 || (_projProp.Effects != null && _projProp.Effects.Length > 0))
             {
-                var newHealth = target.Hp - actualDamage;
-                var notification = $"-{actualDamage} [{newHealth}]";
-                var clr = Entity.GetHitColour(_projProp.Effects, _projProp.ArmorPiercing);
-                Map.AddParticleEffect(new HitEffect(target, clr));
-                NotificationLayer.AddStatusText(target, notification, clr, 1000, 0);
-
-                if (newHealth <= 0)
-                {
-                    if (!string.IsNullOrEmpty(target.Properties.DeathSound))
-                        Audio.PlaySfx(target.Properties.DeathSound);
-                }
-                else if (!string.IsNullOrEmpty(target.Properties.HitSound))
-                {
-                    Audio.PlaySfx(target.Properties.HitSound);
-                }
+                target.Damage(actualDamage, ConditionEffectIndex.None, _projProp.ArmorPiercing);
             }
 
             Map.PendingPlayerHit.AddHit(_projectileId, _ownerId);
@@ -549,24 +535,9 @@ public sealed class Projectile : IResettable
                 var actualDamage = Entity.DamageWithDefense(scaledDamage, go.Defense, _projProp.ArmorPiercing, go,
                     _projProp.Penetration);
 
-                go.PredictedHp -= actualDamage;
-                if (go.PredictedHp <= 0 && !_damagePlayers) go.SetTransparency(0.4f);
-
                 if (actualDamage > 0 || (_projProp.Effects != null && _projProp.Effects.Length > 0))
                 {
-                    var notification = $"-{actualDamage} [{go.PredictedHp}]";
-                    var clr = Entity.GetHitColour(_projProp.Effects, _projProp.ArmorPiercing);
-                    Map.AddParticleEffect(new HitEffect(go, clr));
-                    NotificationLayer.AddStatusText(go, notification, clr, 1000, 0);
-                    if (go.PredictedHp <= 0)
-                    {
-                        if (!string.IsNullOrEmpty(go.Properties.DeathSound))
-                            Audio.PlaySfx(go.Properties.DeathSound);
-                    }
-                    else if (!string.IsNullOrEmpty(go.Properties.HitSound))
-                    {
-                        Audio.PlaySfx(go.Properties.HitSound);
-                    }
+                    go.Damage(actualDamage, ConditionEffectIndex.None, _projProp.ArmorPiercing);
                 }
 
                 if (_damagePlayers)
@@ -822,22 +793,7 @@ public sealed class Projectile : IResettable
                         Entity.DamageWithDefense(_damage, target.Defense, _projProp.ArmorPiercing, target);
                     if (actualDamage > 0 || (_projProp.Effects != null && _projProp.Effects.Length > 0))
                     {
-                        var newHealth = target.Hp - actualDamage;
-                        var notification = $"-{actualDamage} [{newHealth}]";
-                        var clr = Entity.GetHitColour(_projProp.Effects, _projProp.ArmorPiercing);
-                        Map.AddParticleEffect(new HitEffect(target, clr));
-                        NotificationLayer.AddStatusText(target, notification, clr, 1000, 0);
-                        Map.PendingPlayerHit.AddHit(_projectileId, _ownerId);
-
-                        if (newHealth <= 0)
-                        {
-                            if (!string.IsNullOrEmpty(target.Properties.DeathSound))
-                                Audio.PlaySfx(target.Properties.DeathSound);
-                        }
-                        else if (!string.IsNullOrEmpty(target.Properties.HitSound))
-                        {
-                            Audio.PlaySfx(target.Properties.HitSound);
-                        }
+                        target.Damage(actualDamage, ConditionEffectIndex.None, _projProp.ArmorPiercing);
                     }
 
                     if (!_projProp.MultiHit) return;
@@ -872,21 +828,7 @@ public sealed class Projectile : IResettable
 
                             if (actualDamage > 0 || (_projProp.Effects != null && _projProp.Effects.Length > 0))
                             {
-                                var newHealth = target.Hp - actualDamage;
-                                var notification = $"-{actualDamage} [{newHealth}]";
-                                var clr = Entity.GetHitColour(_projProp.Effects, _projProp.ArmorPiercing);
-
-                                Map.AddParticleEffect(new HitEffect(target, clr));
-                                NotificationLayer.AddStatusText(target, notification, clr, 1000, 0);
-                                if (newHealth <= 0)
-                                {
-                                    if (!string.IsNullOrEmpty(target.Properties.DeathSound))
-                                        Audio.PlaySfx(target.Properties.DeathSound);
-                                }
-                                else if (!string.IsNullOrEmpty(target.Properties.HitSound))
-                                {
-                                    Audio.PlaySfx(target.Properties.HitSound);
-                                }
+                                target.Damage(actualDamage, ConditionEffectIndex.None, _projProp.ArmorPiercing);
                             }
                         }
 

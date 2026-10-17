@@ -3,7 +3,6 @@ using System.Numerics;
 using AlloyClient.Data;
 using AlloyClient.Game;
 using AlloyClient.Game.Objects.Util;
-using AlloyClient.Ui.Character;
 using AlloyClient.Game.Objects;
 
 namespace AlloyClient.Networking.Packets.Incoming;
@@ -44,32 +43,11 @@ public class Damage : IncomingPacket<Damage> {
     public override void Handle() {
         if (!Map.Entities.TryGetValue(TargetId, out var target))
             return;
-
-        // Need to add damage text colors including dynamic color and its toggle in options
-        // Entity.GetHitColour(Effects, ArmorPiercing/ArmorBroken);
         
-        String notification = "";
-        int clr;
-        float percentage;
+        bool armorBroken = target.HasConditionEffect(ConditionEffects.ArmorBroken);
+        var actualDamage = Entity.DamageWithDefense(DamageAmount, target.Defense, false, target);
         
-        if (Kill) {
-            target.PredictedHp = Math.Min(target.PredictedHp, 0);
-            notification = $"-{DamageAmount} [{target.PredictedHp}]";
-            percentage = target.PredictedHp / target.MaxHp * 100f;
-            clr = NotificationLayer.Green2Red((int)percentage);
-            Console.WriteLine(clr);
-            NotificationLayer.AddStatusText(target, notification, (uint)clr, 1000, 0);
-        } else if (target.Hp > 0) {
-            target.Hp -= DamageAmount;
-            notification = $"-{DamageAmount} [{target.Hp}]";
-            percentage = ((float)target.Hp / (float)target.MaxHp) * 100f;
-            clr = NotificationLayer.Green2Red((int)percentage);
-            Console.WriteLine($"HP{target.Hp} : MaxHP{target.MaxHp}");
-            Console.WriteLine(clr);
-            var clrUint = (uint)clr;
-            Console.WriteLine(clrUint);
-            NotificationLayer.AddStatusText(target, notification, (uint)clr, 1000, 0);
-        }
+        target.Damage(actualDamage, ConditionEffectIndex.None, armorBroken);
     }
 
     public override string ToString() {
