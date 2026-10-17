@@ -386,6 +386,7 @@ public class Player : Entity {
                     && !IFrame
                     && (Tile.OccupiedObject == null || !Tile.OccupiedObject.Properties.ProtectFromGroundDamage)) {
                     var dmg = MathUtils.RandomInt(Tile.GroundProperties.MinDamage, Tile.GroundProperties.MaxDamage);
+                    var newHp = Hp - dmg;
                     //Hp -= dmg;
                     Tile.LastDamage = now;
 
@@ -395,7 +396,7 @@ public class Player : Entity {
                     Client.QueuePacket(pkt);
 
                     Map.AddParticleEffect(new HitEffect(this, 0xFF0000));
-                    NotificationLayer.AddStatusText(this, $"-{dmg}", 0xFF0000, 1000, 0);
+                    NotificationLayer.AddStatusText(this, $"-{dmg} [{newHp}]", 0xFF0000, 1000, 0);
                 }
             }
         }
