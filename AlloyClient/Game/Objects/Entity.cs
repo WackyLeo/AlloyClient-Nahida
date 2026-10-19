@@ -747,18 +747,35 @@ public class Entity {
                 return armorBreak ? 0x9000FFu : 0xFF0000u;
         }
     }
-    
-    public static int Green2Red(int hpPercentage) {
+
+    public static int DynamicColor(int hpPercentage, bool armorBreak) 
+    {
+        return armorBreak ? Purple2Blue(hpPercentage) : Green2Red(hpPercentage);
+    }
+    public static int Green2Red(int hpPercentage) 
+    {
         if (hpPercentage > 50)
-            return 0xFF00 + (327680 * (100 - hpPercentage));
-        return 0xFFFF00 - (0x0500 * (50 - hpPercentage));
+            return 0x00FF00 + (0x050000 * (100 - hpPercentage));
+        return 0xFFFF00 - (0x000500 * (50 - hpPercentage));
+    }
+    // start: 0x4B0082 mid: 0x9000FF end: 0xE000C0
+    public static int Purple2Blue(int hpPercentage) 
+    {
+        if (hpPercentage > 50) {
+            var num = 0x4B0082 + (0x010000 * (100 - hpPercentage)) + (0x000002 * (100 - hpPercentage));
+            return num;
+        }
+        
+        var num2 = 0x9000FF + (0x020000 * (50 - hpPercentage)) - (0x000001 * (50 - hpPercentage));
+        return num2;
     }
 
     // Needed still:
     // Get effects set up with this
     // Add Purple2Blue for Dynamic damage color while armor broken
     public void Damage(int damageAmount, ConditionEffectIndex effect = ConditionEffectIndex.None,
-        bool isArmorPiercing = false) {
+        bool isArmorPiercing = false) 
+    {
         if (HasConditionEffect(ConditionEffects.Invincible) || HasConditionEffect(ConditionEffects.Invulnerable))
             return;
 
@@ -769,12 +786,12 @@ public class Entity {
             ConditionEffects |= (ConditionEffects)(1UL << (int)effect);
 
         if (damageAmount > 0) {
+            var newHealth = Hp - damageAmount;
             PredictedHp -= damageAmount;
-            PredictedHp = PredictedHp < 0 ? 0 : PredictedHp;
-            
-            var notification = $"-{damageAmount} [{PredictedHp}]";
-            var percentage = (float)PredictedHp / MaxHp * 100f;
-            var clr = Settings.DynamicDamageColor ? Green2Red((int)percentage) : (int)GetHitColour(null, isArmorPiercing);
+            newHealth = newHealth < 0 ? 0 : newHealth;
+            var notification = $"-{damageAmount} [{newHealth}]";
+            var percentage = (float)newHealth / MaxHp * 100f;
+            var clr = Settings.DynamicDamageColor ? DynamicColor((int)percentage, isArmorPiercing) : (int)GetHitColour(null, isArmorPiercing);
             Map.AddParticleEffect(new HitEffect(this, 0xFF0000));
             NotificationLayer.AddStatusText(this, notification, (uint)clr, 1000, 0);
         }
