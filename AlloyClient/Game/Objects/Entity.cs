@@ -758,6 +758,12 @@ public class Entity {
             return 0x00FF00 + (0x050000 * (100 - hpPercentage));
         return 0xFFFF00 - (0x000500 * (50 - hpPercentage));
     }
+    
+    // MASSIVE LINE SPACING >:3
+    // MASSIVE LINE SPACING >:3
+    // MASSIVE LINE SPACING >:3
+    // MASSIVE LINE SPACING >:3
+    // MASSIVE LINE SPACING >:3
     // start: 0x4B0082 mid: 0x9000FF end: 0xE000C0
     public static int Purple2Blue(int hpPercentage) 
     {
