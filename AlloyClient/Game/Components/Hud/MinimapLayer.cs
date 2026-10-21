@@ -139,10 +139,6 @@ public sealed class MinimapLayer : Container {
                 }
             }
         }
-
-        if (Map.LocalPlayer != null) {
-            AddObject(center, new Color(255, 255, 0));
-        }
     }
 }
 
