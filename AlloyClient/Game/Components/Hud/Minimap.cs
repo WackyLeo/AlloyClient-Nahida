@@ -63,7 +63,9 @@ public sealed class Minimap : Sprite {
 
         _arrow = new ObjectRect(new ObjectRectConfig {
             Texture = TextureHelper.FromGameAtlas("lofiInterface", 54, false),
-            X = MapSize / 2, Y = MapSize / 2, Width = 9, Height = 36, Anchor = UiAnchor.Middle
+            X = MapSize / 2, Y = MapSize / 2, Width = 9, Height = 36, Anchor = UiAnchor.Middle,
+            OutlineEnabled = false,
+            GlowEnabled = false
         });
         _arrow.ColorTransformation = new ColorTransform(0f, 0f, 1f, 1f);
         AddChild(_arrow);
