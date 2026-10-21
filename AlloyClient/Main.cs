@@ -213,7 +213,9 @@ public class Main {
         GL.CullFace(TriangleFace.Front);
 
         GL.Enable(EnableCap.Blend);
-        GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
+        GL.BlendFuncSeparate(
+            BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha,
+            BlendingFactor.Zero,     BlendingFactor.One);
         GL.Disable(EnableCap.FramebufferSrgb);
         
         Audio.MusicChannel.FadeTo("Reclaiming Entropy", 0f);

@@ -8,13 +8,18 @@ namespace AlloyClient.Rendering;
 public static class RenderPipeline {
     public static void BeginFrame(GameTime gameTime) {
         GL.BindFramebuffer(FramebufferTarget.Framebuffer, Render._Fbo);
+
+        GL.ColorMask(true, true, true, true);
         GL.ClearColor(0f, 0f, 0f, 1.0f);
         GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit | ClearBufferMask.StencilBufferBit);
 
         GL.Disable(EnableCap.DepthTest);
         GL.Disable(EnableCap.CullFace);
         GL.Enable(EnableCap.Blend);
-        GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
+
+        GL.BlendFuncSeparate(
+            BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha,
+            BlendingFactor.Zero,     BlendingFactor.One);
 
         Render.SetShaderParams(gameTime);
     }
@@ -65,8 +70,13 @@ public static class RenderPipeline {
 
     public static void EndFrameAndPostProcess(GameTime gameTime, Vector2 gameCenter, Vector2 gameHalfSize) {
         GL.BindFramebuffer(FramebufferTarget.Framebuffer, 0);
+        
+        GL.ColorMask(true, true, true, true); 
         GL.ClearColor(0f, 0f, 0f, 1f);
         GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
+        
+        GL.Disable(EnableCap.Blend);
+        GL.ColorMask(true, true, true, false);
 
         GL.Disable(EnableCap.DepthTest);
         GL.Disable(EnableCap.CullFace);
@@ -84,5 +94,11 @@ public static class RenderPipeline {
 
         GL.BindVertexArray(0);
         GL.BindTextureUnit(7, 0);
+        
+        GL.Enable(EnableCap.Blend);
+        GL.BlendFuncSeparate(
+            BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha,
+            BlendingFactor.Zero,     BlendingFactor.One);
+        
     }
 }

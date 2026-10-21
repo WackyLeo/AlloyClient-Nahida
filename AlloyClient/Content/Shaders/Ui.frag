@@ -257,55 +257,46 @@ vec4 RenderOutline() {
     float pxH = length(dy);
     vec2 invPx = vec2(1.0 / pxW, 1.0 / pxH);
 
-    float outlineSize = floor(max(1, scale));
-    float glowSize = max(6, 6.0 * scale);
-
-    vec2 dirs[8] = vec2[](
-    -dx - dy, -dy, dx - dy, dx,
-    dx + dy, dy, -dx + dy, -dx
-    );
-
-    float outlineAlpha = 0.0;
+    float outlineSize = floor(max(1, scale)) + 1;
+    float glowSize = 10.0;
+    
+    float texelsPerPx = pxW * texSize.x;
+    int   Rt = int(min(ceil(glowSize * texelsPerPx) + 1.0, 10.0));
+    
+    ivec2 spriteMinT = ivec2(floor(spriteMin * texSize));
+    ivec2 spriteMaxT = ivec2(ceil(spriteMax * texSize)) - ivec2(1);
+    
     float nearestDist = 999.0;
-
-    for (float i = 1; i <= glowSize && outlineAlpha == 0.0; i++) {
-        for (int j = 0; j < 8; j++) {
-            vec2 sampleUV = uv + dirs[j] * i;
-
-            if (sampleUV.x < spriteMin.x || sampleUV.x > spriteMax.x ||
-            sampleUV.y < spriteMin.y || sampleUV.y > spriteMax.y) {
-                continue;
-            }
-
-            ivec2 neighborTexel = ivec2(sampleUV * texSize);
-            if (neighborTexel == currentTexel) continue;
-            if (texelFetch(GameAtlasTexture, neighborTexel, 0).a == 0) continue;
-
-            vec2 nearestPoint = clamp(uv, vec2(neighborTexel) / texSize, vec2(neighborTexel + ivec2(1)) / texSize);
+    
+    for (int oy = -Rt; oy <= Rt; oy++) {
+        for (int ox = -Rt; ox <= Rt; ox++) {
+            ivec2 nt = currentTexel + ivec2(ox, oy);
+            if (nt.x < spriteMinT.x || nt.x > spriteMaxT.x ||
+                nt.y < spriteMinT.y || nt.y > spriteMaxT.y) continue;
+            if (nt == currentTexel) continue;
+            if (texelFetch(GameAtlasTexture, nt, 0).a == 0.0) continue;
+    
+            vec2 nearestPoint = clamp(uv, vec2(nt) / texSize, vec2(nt + ivec2(1)) / texSize);
             vec2 distPx = abs(uv - nearestPoint) * invPx;
-
-            if (max(distPx.x, distPx.y) <= outlineSize) {
-                outlineAlpha = 1.0;
-                break;
-            }
-
             nearestDist = min(nearestDist, length(distPx));
         }
     }
-
-    if (inp.Extra1.w != -1 && outlineAlpha > 0.0){
+    
+    if (nearestDist >= 999.0) discard;
+    
+    if (inp.Extra1.w != -1 && nearestDist <= outlineSize) {
         return vec4(outlineColor.rgb, 1.0);
     }
-
-/*
-    if (inp.Extra2.z != -1 && nearestDist < 999.0) {
-        float normalized = nearestDist / glowSize;
-        float glowAlpha = 5 * exp(-normalized * 4) * (1.0 - smoothstep(0.8, 1.0, normalized));
-        if (glowAlpha > 0.0){
-            return vec4(0, 0, 0, glowAlpha);
+    
+    if (inp.Extra2.z != -1) {
+        float t = clamp((nearestDist - outlineSize) / glowSize, 0.0, 1.0);
+        float a = 1.0 - t;
+        float glowAlpha = 0.25 * a * a;
+        if (glowAlpha > 0.003) {
+            return vec4(0.0, 0.0, 0.0, glowAlpha);
         }
     }
-*/
+    
     discard;
 }
 
