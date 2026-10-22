@@ -20,7 +20,8 @@ using OpenTK.Mathematics;
 
 namespace AlloyClient.Game.Objects;
 
-public class Entity {
+public class Entity
+{
     private static readonly Logger Log = new(nameof(Entity));
 
     public static float AttackPeriod = 300;
@@ -61,7 +62,7 @@ public class Entity {
     public Vector2 PositionAtTick;
     public int PredictedHp;
     public ObjectProperties Properties;
-    
+
     // Effect multipliers
     public int effectMult;
     public int quietMult;
@@ -83,7 +84,8 @@ public class Entity {
     public float Z;
     public bool IsPredictedDead => PredictedHp <= 0 && _hpInitialized;
 
-    public void SetObjectId(int id) {
+    public void SetObjectId(int id)
+    {
         ObjectId = id;
         Jitter = Random.Shared.NextSingle() * 0.00002f - 0.00001f;
 
@@ -93,10 +95,12 @@ public class Entity {
         Defense = Properties.Defense;
     }
 
-    public void SetType(ushort type) {
+    public void SetType(ushort type)
+    {
         Type = type;
 
-        if (!ObjectLibrary.TypeToTextureData.TryGetValue(type, out var textureData)) {
+        if (!ObjectLibrary.TypeToTextureData.TryGetValue(type, out var textureData))
+        {
             Log.Warn($"No texture data found for type 0x{type:X4}, using fallback.");
             textureData = ObjectLibrary.TypeToTextureData[ObjectLibrary.FallbackType];
         }
@@ -113,8 +117,10 @@ public class Entity {
         RenderBaseType = GetRenderType(type);
     }
 
-    public void StartFlash(uint color, float periodSeconds, float repeats) {
-        if (periodSeconds <= 0f || repeats <= 0f) {
+    public void StartFlash(uint color, float periodSeconds, float repeats)
+    {
+        if (periodSeconds <= 0f || repeats <= 0f)
+        {
             _flashDescription = default;
             FlashColor = Vector4.Zero;
             return;
@@ -127,15 +133,18 @@ public class Entity {
             Math.Max(1, (int)MathF.Ceiling(repeats)));
     }
 
-    private void UpdateFlash(double time) {
-        if (!_flashDescription.Active) {
+    private void UpdateFlash(double time)
+    {
+        if (!_flashDescription.Active)
+        {
             FlashColor = Vector4.Zero;
             return;
         }
 
         var elapsed = (float)(time - _flashDescription.StartTimeMs);
         var total = _flashDescription.PeriodMs * _flashDescription.Repeats;
-        if (elapsed > total) {
+        if (elapsed > total)
+        {
             _flashDescription = default;
             FlashColor = Vector4.Zero;
             return;
@@ -150,20 +159,23 @@ public class Entity {
             intensity);
     }
 
-    public void SetTransparency(float alpha) {
+    public void SetTransparency(float alpha)
+    {
         Alpha = Math.Clamp(alpha, 0f, 1f);
 
         if (RenderBaseType != null)
             RenderBaseType.Extra.Alpha = Alpha;
     }
 
-    public Color GetDominateColor() {
+    public Color GetDominateColor()
+    {
         if (RenderBaseType is TypeWall)
             return TextureData.TopTexture.DominantColor;
         return TextureData.DominantColor;
     }
 
-    protected virtual RenderBase GetRenderType(ushort type) {
+    protected virtual RenderBase GetRenderType(ushort type)
+    {
         ObjectLibrary.TypeToObjectProps.TryGetValue(type, out var props);
 
         if (props == null)
@@ -172,7 +184,8 @@ public class Entity {
         if (props.Size != -1)
             Size = props.Size;
 
-        if (props.MinSize != props.MaxSize) {
+        if (props.MinSize != props.MaxSize)
+        {
             var maxSteps = (props.MaxSize - props.MinSize) / props.SizeStep;
             Size = props.MinSize + (int)(Random.Shared.NextSingle() * maxSteps) * props.SizeStep;
         }
@@ -186,7 +199,8 @@ public class Entity {
         if (props.DrawOnGround)
             return new TypeGroundObject(this);
 
-        return props.Class switch {
+        return props.Class switch
+        {
             "Wall" => new TypeWall(this),
             "DoubleWall" => new TypeWall(this, ModelType.PbDoubleWall),
             "DoubleWall2" => new TypeWall(this, ModelType.PbDoubleWall),
@@ -198,7 +212,8 @@ public class Entity {
         };
     }
 
-    public void SetPos(float x, float y) {
+    public void SetPos(float x, float y)
+    {
         Position.X = x;
         Position.Y = y;
 
@@ -207,25 +222,31 @@ public class Entity {
         Effect?.SetEntityPosition(Position);
     }
 
-    public bool HasConditionEffect(ConditionEffects effect) {
+    public bool HasConditionEffect(ConditionEffects effect)
+    {
         return (ConditionEffects & effect) != 0;
     }
 
-    public virtual bool Update(double time, double dt) {
-        if (MovementVector is not { X: 0, Y: 0 }) {
-            if (LastTickId >= Map.LastTickId) {
+    public virtual bool Update(double time, double dt)
+    {
+        if (MovementVector is not { X: 0, Y: 0 })
+        {
+            if (LastTickId >= Map.LastTickId)
+            {
                 var tickDt = time - LastTickUpdateTime;
                 var pX = PositionAtTick.X + tickDt * MovementVector.X;
                 var pY = PositionAtTick.Y + tickDt * MovementVector.Y;
                 MoveTo((float)pX, (float)pY, false);
             }
-            else {
+            else
+            {
                 MovementVector.X = 0;
                 MovementVector.Y = 0;
                 MoveTo(TickPosition.X, TickPosition.Y, false);
             }
         }
-        else {
+        else
+        {
             MovementVector.X = 0;
             MovementVector.Y = 0;
         }
@@ -234,8 +255,10 @@ public class Entity {
         if (TextureData.HasAnimationData)
             AnimateCharacter(time);
 
-        if (AnimationSpeed > 0) {
-            if (_animationMinOld != AnimationMin) {
+        if (AnimationSpeed > 0)
+        {
+            if (_animationMinOld != AnimationMin)
+            {
                 _animationStart = time;
                 _animationMinOld = AnimationMin;
             }
@@ -252,7 +275,8 @@ public class Entity {
         return true;
     }
 
-    private void ClientAnimation(double time) {
+    private void ClientAnimation(double time)
+    {
         if (AnimationMax <= 0)
             return;
 
@@ -265,20 +289,25 @@ public class Entity {
         SetAltTexture(frame);
     }
 
-    public void UpdateVisibility(ref Matrix4 matrix, float renderRadiusSquared = -1f) {
-        if (Map.LocalPlayer != null && this != Map.LocalPlayer && renderRadiusSquared > 0f) {
+    public void UpdateVisibility(ref Matrix4 matrix, float renderRadiusSquared = -1f)
+    {
+        if (Map.LocalPlayer != null && this != Map.LocalPlayer && renderRadiusSquared > 0f)
+        {
             var renderDx = Position.X - Map.LocalPlayer.Position.X;
             var renderDy = Position.Y - Map.LocalPlayer.Position.Y;
-            if (renderDx * renderDx + renderDy * renderDy > renderRadiusSquared) {
+            if (renderDx * renderDx + renderDy * renderDy > renderRadiusSquared)
+            {
                 RenderBaseType.SetVisibility(false);
                 return;
             }
         }
 
-        if (Properties.Static) {
+        if (Properties.Static)
+        {
             RenderBaseType.SetVisibility(true);
         }
-        else {
+        else
+        {
             var dx = Position.X - Camera.Position.X;
             var dy = Position.Y + Camera.Position.Y;
             var distanceSquared = dx * dx + dy * dy;
@@ -294,7 +323,8 @@ public class Entity {
         RenderBaseType.SetDepth(0.5f + 0.4f * sort + Jitter);
     }
 
-    public bool MoveTo(float x, float y, bool isPlayer) {
+    public bool MoveTo(float x, float y, bool isPlayer)
+    {
         var tile = Map.GetTile((int)x, (int)y);
 
         if (tile == null)
@@ -307,7 +337,8 @@ public class Entity {
         Position.Y = y;
         Z = tile.ZOffset;
 
-        if (Properties.Static) {
+        if (Properties.Static)
+        {
             if (Tile != null)
                 Tile.OccupiedObject = null;
 
@@ -319,7 +350,8 @@ public class Entity {
         return true;
     }
 
-    public void OnTickPosition(float x, float y, double tickTime, int tickId, bool isPlayer, double now) {
+    public void OnTickPosition(float x, float y, double tickTime, int tickId, bool isPlayer, double now)
+    {
         if (!isPlayer && LastTickId < Map.LastTickId)
             MoveTo(TickPosition.X, TickPosition.Y, false);
 
@@ -331,41 +363,49 @@ public class Entity {
         PositionAtTick.X = Position.X;
         PositionAtTick.Y = Position.Y;
 
-        if (!isPlayer && tickTime > 0) {
+        if (!isPlayer && tickTime > 0)
+        {
             MovementVector.X = (float)((TickPosition.X - PositionAtTick.X) / tickTime);
             MovementVector.Y = (float)((TickPosition.Y - PositionAtTick.Y) / tickTime);
         }
     }
 
-    public virtual void UpdateStats(StatData[] statData, int offset, int count) {
-        for (var i = 0; i < count; i++) {
+    public virtual void UpdateStats(StatData[] statData, int offset, int count)
+    {
+        for (var i = 0; i < count; i++)
+        {
             var stat = statData[offset + i];
-            switch (stat.Type) {
+            switch (stat.Type)
+            {
                 case StatsType.Hp:
                     var serverHp = stat.Value;
-                    if (!_hpInitialized) {
+                    if (!_hpInitialized)
+                    {
                         Hp = serverHp;
                         PredictedHp = serverHp;
                         _hpInitialized = true;
                         break;
                     }
 
-                    if (serverHp > Hp) {
-                        if (PredictedHp <= 0 && Properties.IsEnemy) {
+                    if (serverHp > Hp)
+                    {
+                        if (PredictedHp <= 0 && Properties.IsEnemy)
+                        {
                             var diff = serverHp - PredictedHp;
                             NotificationLayer.AddStatusText(this, $"+{diff}", 0x00FF00, 1000, 0);
                         }
 
                         PredictedHp += serverHp - Hp;
                     }
-                    else if (serverHp < Hp) {
+                    else if (serverHp < Hp)
+                    {
                         if (PredictedHp > serverHp)
                             PredictedHp = serverHp;
                     }
-                    
+
                     if (serverHp > 0 && PredictedHp <= 0)
                         PredictedHp = serverHp;
-                    
+
                     Hp = serverHp;
                     //Logger.Info($"[CLIENT SYNC] Entity {ObjectId} Server HP: {Hp} | Prediction: {PredictedHp}");
 
@@ -395,6 +435,7 @@ public class Entity {
                         Map.AddParticleEffect(new LevelUpEffect(this, 0x00FF00));
                         NotificationLayer.AddStatusText(this, "Level Up!", 0x00FF00, 2000, 0);
                     }
+
                     break;
                 case StatsType.Inventory0:
                 case StatsType.Inventory1:
@@ -409,11 +450,13 @@ public class Entity {
                 case StatsType.Inventory10:
                 case StatsType.Inventory11:
                     var index = stat.Type - StatsType.Inventory0;
-                    if (stat.Value == -1) {
+                    if (stat.Value == -1)
+                    {
                         Equipment[index] = null;
                     }
                     else if (Equipment[index] == null ||
-                             (Equipment[index] != null && stat.Value != Equipment[index].ObjectType)) {
+                             (Equipment[index] != null && stat.Value != Equipment[index].ObjectType))
+                    {
                         if (ObjectLibrary.TypeToItem.TryGetValue((ushort)stat.Value, out var b))
                             Equipment[index] = b;
                         else
@@ -427,7 +470,8 @@ public class Entity {
                     ConditionEffects = (ConditionEffects)(((ulong)ConditionEffects & ~0x7FFFFFFFul) | lower);
 
                     if (HasConditionEffect(ConditionEffects.Invulnerable) ||
-                        HasConditionEffect(ConditionEffects.Invincible)) {
+                        HasConditionEffect(ConditionEffects.Invincible))
+                    {
                         if (PredictedHp <= 0 && Hp > 0)
                             NotificationLayer.AddStatusText(this, "Immune", 0x00FF00, 1000, 0);
                         PredictedHp = Hp;
@@ -445,7 +489,8 @@ public class Entity {
                         HasConditionEffect(ConditionEffects.Invisible) ? 0.5f : 1.0f);
                     break;
                 case StatsType.Name:
-                    if (Name != stat.Text) {
+                    if (Name != stat.Text)
+                    {
                         Name = string.Intern(stat.Text);
                         RenderBaseType.SetName(stat.Text);
                     }
@@ -495,11 +540,13 @@ public class Entity {
                 case StatsType.BackPack6:
                 case StatsType.BackPack7:
                     index = 12 + stat.Type - StatsType.BackPack0;
-                    if (stat.Value == -1) {
+                    if (stat.Value == -1)
+                    {
                         Equipment[index] = null;
                     }
                     else if (Equipment[index] == null ||
-                             (Equipment[index] != null && stat.Value != Equipment[index].ObjectType)) {
+                             (Equipment[index] != null && stat.Value != Equipment[index].ObjectType))
+                    {
                         if (ObjectLibrary.TypeToItem.TryGetValue((ushort)stat.Value, out var b))
                             Equipment[index] = b;
                         else
@@ -536,7 +583,8 @@ public class Entity {
     //    Renderer?.Render();
     //}
 
-    public virtual void Reset() {
+    public virtual void Reset()
+    {
         ObjectId = 0;
         Level = -1;
 
@@ -550,16 +598,19 @@ public class Entity {
         Tile = null;
     }
 
-    public AtlasData GetTexture() {
+    public AtlasData GetTexture()
+    {
         return Texture;
     }
 
-    public void SetAttack(int containerType, float attackAngle) {
+    public void SetAttack(int containerType, float attackAngle)
+    {
         AttackStart = Main.GameTime.TotalMs;
         AttackAngle = attackAngle;
     }
 
-    public virtual AtlasData GetTexture(double time, out bool attackFrame, out bool flipped) {
+    public virtual AtlasData GetTexture(double time, out bool attackFrame, out bool flipped)
+    {
         const float ZeroLimit = 0.00001f;
         const float NegZeroLimit = -ZeroLimit;
 
@@ -567,24 +618,29 @@ public class Entity {
         var action = AnimationType.Stand;
         attackFrame = flipped = false;
 
-        if (TextureData.HasAnimationData) {
+        if (TextureData.HasAnimationData)
+        {
             var idx = 0d;
-            if (time < AttackStart + AttackPeriod) {
+            if (time < AttackStart + AttackPeriod)
+            {
                 attackFrame = true;
                 action = AnimationType.Attack;
                 idx = (time - AttackStart) % AttackPeriod / AttackPeriod;
                 FacingAngle = AttackAngle;
             }
-            else if (MovementVector != Vector2.Zero) {
+            else if (MovementVector != Vector2.Zero)
+            {
                 var walkPer = 0.5f / (MovementVector.Length * 4);
                 walkPer = walkPer + (400 - walkPer % 400);
 
                 if (MovementVector.X > ZeroLimit || MovementVector.X < NegZeroLimit || MovementVector.Y > ZeroLimit ||
-                    MovementVector.Y < NegZeroLimit) {
+                    MovementVector.Y < NegZeroLimit)
+                {
                     FacingAngle = MathF.Atan2(MovementVector.Y, MovementVector.X);
                     action = AnimationType.Walk;
                 }
-                else {
+                else
+                {
                     action = AnimationType.Stand;
                 }
 
@@ -600,18 +656,22 @@ public class Entity {
 
 
     // we should move this shit somewhere else too
-    public void AnimateCharacter(double time) {
+    public void AnimateCharacter(double time)
+    {
         Texture = GetTexture(time, out var attackFrame, out Flipped);
         RenderBaseType.SetTexture(Texture, attackFrame);
     }
 
-    private void SetAltTexture(int index) {
+    private void SetAltTexture(int index)
+    {
         if (!ObjectLibrary.TypeToTextureData.TryGetValue(Type, out var baseTextureData))
             return;
-        if (index == 0 || index == -1) {
+        if (index == 0 || index == -1)
+        {
             TextureData = baseTextureData;
         }
-        else {
+        else
+        {
             if (baseTextureData.GetAltTexture(index, out var altData))
                 TextureData = altData;
             else
@@ -626,7 +686,8 @@ public class Entity {
         RenderBaseType?.SetTexture(Texture);
     }
 
-    public void OnAddedToMap(Position position) {
+    public void OnAddedToMap(Position position)
+    {
         PositionAtTick = Position;
         TickPosition = Position;
 
@@ -638,8 +699,10 @@ public class Entity {
         // Add entity's effect
     }
 
-    public void OnRemovedFromMap() {
-        if (Properties.Static && Tile != null) {
+    public void OnRemovedFromMap()
+    {
+        if (Properties.Static && Tile != null)
+        {
             if (Tile.OccupiedObject == this)
                 Tile.OccupiedObject = null;
 
@@ -655,7 +718,8 @@ public class Entity {
         // Dispose
     }
 
-    public static int DamageWithDefense(int damage, int defense, bool nodef, Entity entity, int penetration = 0) {
+    public static int DamageWithDefense(int damage, int defense, bool nodef, Entity entity, int penetration = 0)
+    {
         if (entity.HasConditionEffect(ConditionEffects.Invulnerable) ||
             entity.HasConditionEffect(ConditionEffects.Invincible))
             return 0;
@@ -663,9 +727,12 @@ public class Entity {
         if (entity.HasConditionEffect(ConditionEffects.Armored))
             defense *= 2;
 
-        if (nodef) {
+        if (nodef)
+        {
             defense = 0;
-        } else if (entity.HasConditionEffect(ConditionEffects.ArmorBroken)) {
+        }
+        else if (entity.HasConditionEffect(ConditionEffects.ArmorBroken))
+        {
             defense = entity.ArmorBreakMult > 0
                 ? defense - (int)(defense * (entity.ArmorBreakMult * 0.01f))
                 : 0;
@@ -694,8 +761,10 @@ public class Entity {
         return (int)ret;
     }
 
-    public static uint GetHitColour(ConditionEffectDesc[] effects, bool armorBreak) {
-        if (effects != null && effects.Length > 0) {
+    public static uint GetHitColour(ConditionEffectDesc[] effects, bool armorBreak)
+    {
+        if (effects != null && effects.Length > 0)
+        {
             var firstEffect = effects[0];
             return GetHitColour((ConditionEffectIndex)firstEffect.EffectId, armorBreak);
         }
@@ -703,8 +772,10 @@ public class Entity {
         return armorBreak ? 0x9000FFu : 0xFF0000u;
     }
 
-    public static uint GetHitColour(ConditionEffectIndex effect, bool armorBreak) {
-        switch (effect) {
+    public static uint GetHitColour(ConditionEffectIndex effect, bool armorBreak)
+    {
+        switch (effect)
+        {
             case ConditionEffectIndex.Quiet:
                 return 0xe6e6e6u;
             case ConditionEffectIndex.Weak:
@@ -748,74 +819,95 @@ public class Entity {
         }
     }
 
-    public static int DynamicColor(int hpPercentage, bool armorBreak) 
+    public static int GetHpColor(int healthPercent, bool isArmorPiercing)
     {
-        return armorBreak ? Purple2Blue(hpPercentage) : Green2Red(hpPercentage);
-    }
-    public static int Green2Red(int hpPercentage) 
-    {
-        if (hpPercentage > 50)
-            return 0x00FF00 + (0x050000 * (100 - hpPercentage));
-        return 0xFFFF00 - (0x000500 * (50 - hpPercentage));
-    }
-    
-    // MASSIVE LINE SPACING >:3
-    // MASSIVE LINE SPACING >:3
-    // MASSIVE LINE SPACING >:3
-    // MASSIVE LINE SPACING >:3
-    // MASSIVE LINE SPACING >:3
-    // start: 0x4B0082 mid: 0x9000FF end: 0xE000C0
-    public static int Purple2Blue(int hpPercentage) 
-    {
-        if (hpPercentage > 50) {
-            var num = 0x4B0082 + (0x010000 * (100 - hpPercentage)) + (0x000002 * (100 - hpPercentage));
-            return num;
+        if (!isArmorPiercing)
+        {
+            if (healthPercent > 50)
+                return 0xFF00 + (327680 * (100 - healthPercent));
+            return 0xFFFF00 - (0x0500 * (50 - healthPercent));
         }
-        
-        var num2 = 0x9000FF + (0x020000 * (50 - hpPercentage)) - (0x000001 * (50 - hpPercentage));
-        return num2;
+        else
+        {
+            healthPercent = Math.Max(0, Math.Min(100, healthPercent));
+            float factor = 0;
+            int r;
+            int g = 0;
+            int b;
+
+            int r_start = 75;
+            int b_start = 130;
+
+            int r_mid = 144;
+            int b_mid = 255;
+
+            int r_end = 224;
+            int b_end = 192;
+
+            if (healthPercent <= 50)
+            {
+                factor = healthPercent / 50f;
+
+                r = (int)(r_start + (r_mid - r_start) * factor);
+                b = (int)(b_start + (b_mid - b_start) * factor);
+            }
+            else
+            {
+                factor = (healthPercent - 50) / 50f;
+                r = (int)(r_mid + (r_end - r_mid) * factor);
+                b = (int)(b_mid + (b_end - b_mid) * factor);
+            }
+
+            r = Math.Max(0, r);
+            b = Math.Max(0, b);
+
+            return (r << 16) | (g << 8) | b;
+        }
     }
 
-    // Needed still:
-    // Get effects set up with this
-    // Add Purple2Blue for Dynamic damage color while armor broken
     public void Damage(int damageAmount, ConditionEffectIndex effect = ConditionEffectIndex.None,
-        bool isArmorPiercing = false) 
+        bool isArmorPiercing = false)
     {
         if (HasConditionEffect(ConditionEffects.Invincible) || HasConditionEffect(ConditionEffects.Invulnerable))
             return;
 
         if (Map.LocalPlayer == null)
             return;
-        
+
         if (effect != ConditionEffectIndex.None)
             ConditionEffects |= (ConditionEffects)(1UL << (int)effect);
 
-        if (damageAmount > 0) {
+        if (damageAmount > 0)
+        {
             var newHealth = Hp - damageAmount;
             PredictedHp -= damageAmount;
             newHealth = newHealth < 0 ? 0 : newHealth;
             var notification = $"-{damageAmount} [{newHealth}]";
             var percentage = (float)newHealth / MaxHp * 100f;
-            var clr = Settings.DynamicDamageColor ? DynamicColor((int)percentage, isArmorPiercing) : (int)GetHitColour(null, isArmorPiercing);
+            var clr = Settings.DynamicDamageColor
+                ? GetHpColor((int)percentage, isArmorPiercing)
+                : (int)GetHitColour(null, isArmorPiercing);
             Map.AddParticleEffect(new HitEffect(this, 0xFF0000));
             NotificationLayer.AddStatusText(this, notification, (uint)clr, 1000, 0);
         }
-        
+
         if (PredictedHp <= 0)
         {
             SetTransparency(0.4f);
             if (!string.IsNullOrEmpty(Properties.DeathSound))
                 Audio.PlaySfx(Properties.DeathSound);
         }
+
         else if (!string.IsNullOrEmpty(Properties.HitSound))
         {
             Audio.PlaySfx(Properties.HitSound);
         }
     }
 
-    private static bool IsBigBag(ushort type) {
-        return type switch {
+    private static bool IsBigBag(ushort type)
+    {
+        return type switch
+        {
             0x0509 or 0x050B or 0x050C or 0x050E or 0x050F or 0x0510 or
                 0x040D or 0x1591 or 0x1595 or 0x15AB or 0x1606 or 0x04F4 or
                 0x04F5 or 0x042D or 0x0427 or 0x04F6 or 0x04F7 or 0x04F8 or
@@ -824,7 +916,7 @@ public class Entity {
         };
     }
 
-    #region StatData
+#region StatData
 
     public string Name;
 
@@ -874,12 +966,11 @@ public class Entity {
 
     public bool PortalUsable;
 
-    #endregion
-
+#endregion
 }
 
-
-internal readonly struct EntityFlashDescription {
+internal readonly struct EntityFlashDescription
+{
     public readonly bool Active;
     public readonly double StartTimeMs;
     public readonly uint Color;
@@ -889,7 +980,8 @@ internal readonly struct EntityFlashDescription {
     public readonly float G;
     public readonly float B;
 
-    public EntityFlashDescription(double startTimeMs, uint color, float periodMs, int repeats) {
+    public EntityFlashDescription(double startTimeMs, uint color, float periodMs, int repeats)
+    {
         Active = true;
         StartTimeMs = startTimeMs;
         Color = color;
@@ -900,4 +992,3 @@ internal readonly struct EntityFlashDescription {
         B = color & 0xFF;
     }
 }
-

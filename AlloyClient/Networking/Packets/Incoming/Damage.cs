@@ -7,7 +7,8 @@ using AlloyClient.Game.Objects;
 
 namespace AlloyClient.Networking.Packets.Incoming;
 
-public class Damage : IncomingPacket<Damage> {
+public class Damage : IncomingPacket<Damage>
+{
     public int TargetId;
     public ConditionEffects Effects;
     public ushort DamageAmount;
@@ -17,7 +18,8 @@ public class Damage : IncomingPacket<Damage> {
 
     public override PacketId PacketId => PacketId.Damage;
 
-    public override void Reset() {
+    public override void Reset()
+    {
         TargetId = 0;
         Effects = 0;
         DamageAmount = 0;
@@ -26,7 +28,8 @@ public class Damage : IncomingPacket<Damage> {
         ObjectId = 0;
     }
 
-    public override void Read(NetworkReader reader) {
+    public override void Read(NetworkReader reader)
+    {
         TargetId = reader.ReadInt32();
 
         byte c = reader.ReadByte();
@@ -40,17 +43,21 @@ public class Damage : IncomingPacket<Damage> {
         ObjectId = reader.ReadInt32();
     }
 
-    public override void Handle() {
+    public override void Handle()
+    {
         if (!Map.Entities.TryGetValue(TargetId, out var target))
             return;
-        
+
+        if (ObjectId == Map.LocalPlayerId && !target.Properties.IsPlayer)
+            return;
+
         bool armorBroken = target.HasConditionEffect(ConditionEffects.ArmorBroken);
-        var actualDamage = Entity.DamageWithDefense(DamageAmount, target.Defense, false, target);
-        
-        target.Damage(actualDamage, ConditionEffectIndex.None, armorBroken);
+        target.Damage(DamageAmount, ConditionEffectIndex.None, armorBroken);
     }
 
-    public override string ToString() {
-        return $"TargetId: {TargetId}, Effects: {Effects}, DamageAmount: {DamageAmount}, Kill: {Kill}, BulletId: {BulletId}, ObjectId: {ObjectId}";
+    public override string ToString()
+    {
+        return
+            $"TargetId: {TargetId}, Effects: {Effects}, DamageAmount: {DamageAmount}, Kill: {Kill}, BulletId: {BulletId}, ObjectId: {ObjectId}";
     }
 }
