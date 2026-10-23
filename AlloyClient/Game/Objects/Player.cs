@@ -47,6 +47,19 @@ public class Player : Entity {
     public int SinkLevel;
     public int UpdateRadius = 20;
     
+    private readonly Queue<(int time, int cost)> _pendingMp = new();
+    private const int MpAckWindowMs = 400;
+    public int EffectiveMp => Mp - PendingMpCost((int)Main.GameTime.TotalMs);
+    public void ClearPendingMp() => _pendingMp.Clear();
+    
+    // Use types
+    private const byte UseStart = 0;
+    private const byte UseEnd = 1;
+    private const byte UseChannel = 2;
+    private const byte UseAutoFire = 3;
+    private const byte UseSpecial = 4;
+
+    
     public readonly Dictionary<int, Projectile> PendingLocalProjectiles = new();
     private readonly Dictionary<int, int> _lastProjShootTime = new();
     private int _weaponSwapLockUntil;
@@ -369,9 +382,10 @@ public class Player : Entity {
             }
         }
 
-        if (AutoAbility) {
+        if (AutoAbility)
+        {
             var target = Camera.ScreenToWorld(UserInput.MousePosition);
-            UseAbility(target.X, target.Y, 4);
+            UseAbility(target.X, target.Y, UseAutoFire);
         }
 
         if (ObjectId == Map.LocalPlayerId) {
@@ -412,21 +426,26 @@ public class Player : Entity {
         AutoAbility = toggle;
     }
 
-    public void TryReload(float mouseX, float mouseY) {
-        if (Ammo >= MaxAmmo) {
-            UseAbility(mouseX, mouseY, 5);
+    public void TryReload(float mouseX, float mouseY)
+    {
+        if (Ammo >= MaxAmmo)
+        {
+            UseAbility(mouseX, mouseY, UseSpecial);
         }
-        else {
+        else
+        {
             var curTime = (int)Main.GameTime.TotalMs;
             var item = Equipment[0];
             if (item == null)
                 return;
 
-            if (curTime > ReloadCooldown + 2000) {
+            if (curTime > ReloadCooldown + 2000)
+            {
                 // SoundEffectLibrary.play("Weapon_Reload");
                 var pkt = UseItem.CreatePacket();
                 pkt.Time = curTime;
-                pkt.SlotObject = new ObjectSlot {
+                pkt.SlotObject = new ObjectSlot
+                {
                     ObjectId = ObjectId,
                     SlotId = 0,
                     ObjectType = item.ObjectType
@@ -438,7 +457,8 @@ public class Player : Entity {
         }
     }
 
-    public bool UseAbility(float mouseX, float mouseY, byte useType) {
+    public bool UseAbility(float mouseX, float mouseY, byte useType)
+    {
         if (Map.LocalPlayer == null || HasConditionEffect(ConditionEffects.Paused))
             return false;
 
@@ -446,6 +466,17 @@ public class Player : Entity {
         if (ability == null)
             return false;
 
+        var mpCost = ability.MultiPhase && ability.MpEndCost > 0 || useType == UseEnd
+            ? ability.MpEndCost
+            : ability.MpCost;
+        
+        var effMp = EffectiveMp;
+        if ((mpCost != 0 && mpCost > effMp) || (ability.MpEndCost > effMp && useType == UseSpecial))
+        {
+            // Play no mana sound
+            return false;
+        }
+            
         var range = 25f;
         var xDiff = Position.X - mouseX;
         var yDiff = Position.Y - mouseY;
@@ -455,7 +486,8 @@ public class Player : Entity {
         var targetX = mouseX;
         var targetY = mouseY;
 
-        if (dist > range) {
+        if (dist > range)
+        {
             targetX = Position.X + MathF.Cos(angle) * range;
             targetY = Position.Y + MathF.Sin(angle) * range;
         }
@@ -466,7 +498,8 @@ public class Player : Entity {
         var isMultiPhase = ability.MpEndCost > 0;
 
         if (ability.ActivateEffects != null)
-            foreach (var effect in ability.ActivateEffects) {
+            foreach (var effect in ability.ActivateEffects)
+            {
                 if (effect.Effect == "Teleport")
                     teleport = true;
                 if (effect.Effect == "Shoot")
@@ -475,8 +508,21 @@ public class Player : Entity {
                     shoot = true;
                 if (effect.Effect == "Dash")
                     dash = true;
-                if (effect.Effect != "AutoShoot" && useType == 4)
+                if (effect.Effect != "AutoShoot" && useType == UseAutoFire)
                     return false;
+            }
+        
+        if (ability.AutoEffects != null)
+            foreach (var effect in ability.AutoEffects)
+            {
+                if (effect.Effect == "Teleport")
+                    teleport = true;
+                if (effect.Effect == "Shoot")
+                    shoot = true;
+                if (effect.Effect == "Auto")
+                    shoot = true;
+                if (effect.Effect == "Dash")
+                    dash = true;
             }
 
         if (teleport && !IsValidPosition(targetX, targetY))
@@ -484,34 +530,36 @@ public class Player : Entity {
 
         var time = (int)Main.GameTime.TotalMs;
 
-        if (useType == 1 || useType == 4 || (useType == 5 && isMultiPhase)) {
+        if (useType == UseStart || useType == UseAutoFire || (useType == UseSpecial && isMultiPhase))
+        {
             if (time < NextAltAttack)
-                return false;
-
-            var mpCheck = isMultiPhase && ability.SlotType == 25 ? ability.MpEndCost : ability.MpCost;
-            var xorCondition = !(isMultiPhase ^ (useType == 5));
-
-            if ((mpCheck != 0 && mpCheck > Mp && xorCondition) || HasConditionEffect(ConditionEffects.Silenced))
                 return false;
 
             var cooldown = (int)(ability.Cooldown * 1000f);
             if (cooldown <= 0)
                 cooldown = 550;
 
-            if (isMultiPhase && ability.SlotType == 25) {
-                if (useType == 5) {
+            if (isMultiPhase)
+            {
+                if (useType == UseSpecial)
+                {
                     LastAltAttack = time;
                     NextAltAttack = time + cooldown;
                 }
             }
-            else {
+            else
+            {
                 NextAltAttack = time + cooldown;
                 LastAltAttack = time;
             }
+            
+            if (mpCost > 0)
+                _pendingMp.Enqueue((time, mpCost));
 
             var serverBulletId = ReadServerId();
 
-            if (useType == 5 && isMultiPhase) {
+            if (useType == UseSpecial && isMultiPhase)
+            {
                 var pktCancel = UseItem.CreatePacket();
                 pktCancel.Time = time;
                 pktCancel.SlotObject = new ObjectSlot
@@ -530,7 +578,8 @@ public class Player : Entity {
                 pktShoot.ProjId = serverBulletId;
                 Client.QueuePacket(pktShoot);
             }
-            else {
+            else
+            {
                 var pkt = UseItem.CreatePacket();
                 pkt.Time = time;
                 pkt.SlotObject = new ObjectSlot { ObjectId = ObjectId, SlotId = 1, ObjectType = ability.ObjectType };
@@ -540,13 +589,15 @@ public class Player : Entity {
                 Client.QueuePacket(pkt);
             }
 
-            if (dash) {
+            if (dash)
+            {
                 DashTimer = 100;
                 IFrame = true;
             }
 
-            if (shoot && (!(isMultiPhase && useType != 5) || (isMultiPhase && useType == 5))) {
-                if (useType == 5 && Mp < ability.MpEndCost)
+            if (shoot && (!(isMultiPhase && useType != UseSpecial) || (isMultiPhase && useType == UseSpecial)))
+            {
+                if (useType == UseSpecial && Mp < ability.MpEndCost)
                     return false;
 
                 var props = ObjectLibrary.TypeToObjectProps[ability.ObjectType];
@@ -559,7 +610,8 @@ public class Player : Entity {
                 var nextCount = ability.NextCount;
                 var projTypeIndex = 0;
 
-                for (var i = 0; i < props.NumProjectiles; i++) {
+                for (var i = 0; i < props.NumProjectiles; i++)
+                {
                     var projDesc = ability.AllProjectiles[projTypeIndex % ability.AllProjectiles.Length];
                     var projObjType = ObjectLibrary.IdToObjectType[projDesc.ObjectId];
                     var objProps = ObjectLibrary.TypeToObjectProps[projObjType];
@@ -604,7 +656,8 @@ public class Player : Entity {
                 Client.QueuePacket(shootPacket);
             }
         }
-        else if (isMultiPhase) {
+        else if (isMultiPhase)
+        {
             var pkt = UseItem.CreatePacket();
             pkt.Time = time;
             pkt.SlotObject = new ObjectSlot { ObjectId = ObjectId, SlotId = 1, ObjectType = ability.ObjectType };
@@ -614,6 +667,16 @@ public class Player : Entity {
         }
 
         return true;
+    }
+    
+    private int PendingMpCost(int now)
+    {
+           while (_pendingMp.Count > 0 && now - _pendingMp.Peek().time > MpAckWindowMs)
+            _pendingMp.Dequeue();
+
+        var sum = 0;
+        foreach (var p in _pendingMp) sum += p.cost;
+        return sum;
     }
 
     public override void UpdateStats(StatData[] statData, int offset, int count) {

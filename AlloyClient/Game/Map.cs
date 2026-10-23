@@ -660,6 +660,7 @@ public static class Map {
         LastFarCulledEntityCount = 0;
         LastEntityRenderRadius = 0f;
 
+        LocalPlayer?.ClearPendingMp();
         LocalPlayerId = 0;
         LocalPlayer = null;
 

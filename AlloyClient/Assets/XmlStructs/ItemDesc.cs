@@ -6,8 +6,10 @@ using Common;
 
 namespace AlloyClient.Assets.XmlStructs;
 
-public class ItemDesc {
+public class ItemDesc
+{
     public readonly ActivateEffectDesc[] ActivateEffects;
+    public readonly ActivateEffectDesc[] AutoEffects;
     public readonly ProjectileDesc[] AllProjectiles;
     public readonly float ArcGap;
     public readonly bool Backpack;
@@ -42,10 +44,15 @@ public class ItemDesc {
     public readonly string SetName;
     public readonly int SlotType;
     public readonly bool Soulbound;
+    public readonly float CastRange;
 
     public readonly string Sound;
     public readonly bool ST;
     public readonly int StartCount;
+    public readonly bool Channel;
+    public readonly bool ChannelSize;
+    public readonly int Cap;
+    public readonly bool Aim;
 
     public readonly StatBoostDesc[] StatBoosts;
     public readonly string SuccessorId;
@@ -58,6 +65,8 @@ public class ItemDesc {
     public readonly bool UnHoly;
     public readonly bool Usable;
     public readonly bool XpBoost;
+    public readonly bool MultiPhase;
+    public readonly bool Auto;
 
     public ItemDesc(ushort type, XElement xml) {
         ObjectType = type;
@@ -94,12 +103,14 @@ public class ItemDesc {
         MpEndCost = xml.GetValue<int>("MpEndCost");
         InvUse = xml.HasElement("InvUse");
         TypeOfConsumable = InvUse || Consumable;
+        CastRange = xml.GetValue<float>("CastRange");
 
         Sound = xml.GetValue<string>("Sound");
         OldSound = xml.GetValue<string>("OldSound");
 
         StatBoosts = xml.Elements("ActivateOnEquip").Select(i => new StatBoostDesc(i)).ToArray();
         ActivateEffects = xml.Elements("Activate").Select(i => new ActivateEffectDesc(i)).ToArray();
+        AutoEffects = xml.Elements("Auto").Select(i => new ActivateEffectDesc(i)).ToArray();
         Projectiles = xml.HasElement("Projectile") ? new ProjectileDesc(xml.Element("Projectile")) : null;
 
         StartCount = xml.GetValue<int>("StartCount");
@@ -110,6 +121,9 @@ public class ItemDesc {
         ST = xml.HasAttribute("setType");
         SetName = xml.GetValue<string>("setName");
         Divinity = xml.GetValue<string>("Divinity");
+        
+        MultiPhase = xml.HasElement("MultiPhase");
+        Auto = xml.HasElement("Auto");
 
         NextCount = xml.GetValue("NextCount", 99999);
         AllProjectiles = xml.Elements("Projectile")
@@ -250,7 +264,8 @@ public class ParticleTrailDesc {
     }
 
 
-public class ActivateEffectDesc {
+public class ActivateEffectDesc
+{
     public readonly int Amount;
     public readonly ConditionEffectIndex CheckExistingEffect;
     public readonly uint? Color;
