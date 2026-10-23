@@ -15,6 +15,9 @@
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
         <RunPostBuildEvent>Always</RunPostBuildEvent>
         <DisableFastUpToDateCheck>True</DisableFastUpToDateCheck>
+
+        <OutputPath>bin/</OutputPath>
+        <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
     </PropertyGroup>
 
     <ItemGroup>
