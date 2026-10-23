@@ -62,6 +62,10 @@
         <EmbeddedResource Include="Content\Shaders\**\*.vert">
             <LogicalName>Shaders/%(Filename)%(Extension)</LogicalName>
         </EmbeddedResource>
+        <None Update="Content\Sound\**\*">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+            <TargetPath>Content\Sound\%(RecursiveDir)%(Filename)%(Extension)</TargetPath>
+        </None>
     </ItemGroup>
 
     <Target Name="RestoreDotnetTools" BeforeTargets="Restore">
