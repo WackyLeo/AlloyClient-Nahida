@@ -53,11 +53,11 @@ public class Player : Entity {
     public void ClearPendingMp() => _pendingMp.Clear();
     
     // Use types
-    private const byte UseStart = 0;
-    private const byte UseEnd = 1;
-    private const byte UseChannel = 2;
-    private const byte UseAutoFire = 3;
-    private const byte UseSpecial = 4;
+    public const byte UseStart = 0;
+    public const byte UseEnd = 1;
+    public const byte UseChannel = 2;
+    public const byte UseAutoFire = 3;
+    public const byte UseSpecial = 4;
 
     
     public readonly Dictionary<int, Projectile> PendingLocalProjectiles = new();
