@@ -6,6 +6,7 @@ using AlloyClient.Game.Components.Hud;
 using AlloyClient.Game.Components.Hud.Chat;
 using AlloyClient.Game.Components.Hud.Panels;
 using AlloyClient.Game.Components.Options;
+using AlloyClient.Game.Objects;
 using AlloyClient.Game.Objects.Util;
 using AlloyClient.Networking;
 using AlloyClient.Networking.Packets.Outgoing;
@@ -145,7 +146,7 @@ public sealed class UserInput : Sprite
         {
             Map.LocalPlayer.AutoAbilityToggle(false);
             var pos = Camera.ScreenToWorld(MousePosition);
-            Map.LocalPlayer.UseAbility(pos.X, pos.Y, 2); // 2 = END_USE
+            Map.LocalPlayer.UseAbility(pos.X, pos.Y, Player.UseEnd);
         }
 
         ClearInput();
@@ -277,7 +278,7 @@ public sealed class UserInput : Sprite
                 if (!_specialKeyDown)
                 {
                     var pos = Camera.ScreenToWorld(MousePosition);
-                    var success = Map.LocalPlayer.UseAbility(pos.X, pos.Y, 1); // 1 = START_USE
+                    var success = Map.LocalPlayer.UseAbility(pos.X, pos.Y, Player.UseStart);
                     if (success)
                     {
                         _specialKeyDown = true;
@@ -425,7 +426,7 @@ public sealed class UserInput : Sprite
                     _specialKeyDown = false;
                     Map.LocalPlayer.AutoAbilityToggle(false);
                     var pos = Camera.ScreenToWorld(MousePosition);
-                    Map.LocalPlayer.UseAbility(pos.X, pos.Y, 2); // 2 = END_USE
+                    Map.LocalPlayer.UseAbility(pos.X, pos.Y, Player.UseEnd);
                 }
             }
                 break;

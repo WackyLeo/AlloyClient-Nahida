@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using AlloyClient.Assets.Libraries;
-using AlloyClient.Assets.XmlStructs;
 using AlloyClient.Game.Components;
 using AlloyClient.Game.Objects.Enums;
 using AlloyClient.Game.Objects.Util;
@@ -21,7 +20,8 @@ using OpenTK.Mathematics;
 
 namespace AlloyClient.Game.Objects;
 
-public class Player : Entity {
+public class Player : Entity
+{
     private const float MoveThreshold = 0.4f;
     private const float MinMoveSpeed = 0.004f;
     private const float MaxMoveSpeed = 0.0096f;
@@ -46,20 +46,20 @@ public class Player : Entity {
     public float Rotate;
     public int SinkLevel;
     public int UpdateRadius = 20;
-    
+
     private readonly Queue<(int time, int cost)> _pendingMp = new();
     private const int MpAckWindowMs = 400;
     public int EffectiveMp => Mp - PendingMpCost((int)Main.GameTime.TotalMs);
     public void ClearPendingMp() => _pendingMp.Clear();
-    
-    // Use types
-    private const byte UseStart = 0;
-    private const byte UseEnd = 1;
-    private const byte UseChannel = 2;
-    private const byte UseAutoFire = 3;
-    private const byte UseSpecial = 4;
 
-    
+    // Use types
+    public const byte UseStart = 0;
+    public const byte UseEnd = 1;
+    public const byte UseChannel = 2;
+    public const byte UseAuto = 3;
+    public const byte UseSpecial = 4;
+
+
     public readonly Dictionary<int, Projectile> PendingLocalProjectiles = new();
     private readonly Dictionary<int, int> _lastProjShootTime = new();
     private int _weaponSwapLockUntil;
@@ -72,17 +72,21 @@ public class Player : Entity {
     }
 
 
-    protected override RenderBase GetRenderType(ushort type) {
+    protected override RenderBase GetRenderType(ushort type)
+    {
         ObjectLibrary.TypeToObjectProps.TryGetValue(type, out var objProp);
-        if (objProp == null) {
+        if (objProp == null)
+        {
             return null;
         }
 
-        if (objProp.Size != -1) {
+        if (objProp.Size != -1)
+        {
             Size = objProp.Size;
         }
 
-        if (objProp.MinSize != objProp.MaxSize) {
+        if (objProp.MinSize != objProp.MaxSize)
+        {
             var maxSteps = (objProp.MaxSize - objProp.MinSize) / objProp.SizeStep;
             Size = objProp.MinSize + (int)(Random.Shared.NextSingle() * maxSteps) * objProp.SizeStep;
         }
@@ -90,14 +94,16 @@ public class Player : Entity {
         return new TypePlayer(this);
     }
 
-    private void HandleRelativeMovement(double time, double dt) {
+    private void HandleRelativeMovement(double time, double dt)
+    {
         if (float.IsNaN(Position.X) || float.IsNaN(Position.Y))
             MoveTo(0, 0, true);
 
         var physicsDt = (float)Math.Clamp(dt, 0.0001, 33.3333);
         float angle = Settings.CameraAngle;
 
-        if (Rotate != 0) {
+        if (Rotate != 0)
+        {
             angle = angle + physicsDt * Settings.RotateSpeed * Rotate;
             Settings.CameraAngle = (angle % MathHelper.TwoPi + MathHelper.TwoPi) % MathHelper.TwoPi;
         }
@@ -107,7 +113,8 @@ public class Player : Entity {
         var isMoving = RelativeMoveVector.X != 0 || RelativeMoveVector.Y != 0;
         var targetVelocity = Vector2.Zero;
 
-        if (isMoving) {
+        if (isMoving)
+        {
             var moveVectorAngle = MathF.Atan2(RelativeMoveVector.Y, RelativeMoveVector.X);
             targetVelocity = new Vector2(
                 moveSpeed * MathF.Cos(angle + moveVectorAngle),
@@ -115,29 +122,34 @@ public class Player : Entity {
             );
         }
 
-        if (baseSlideAmount > 0) {
+        if (baseSlideAmount > 0)
+        {
             var safeSlideAmount = Math.Min(0.99f, baseSlideAmount);
             var frictionMultiplier = MathF.Pow(safeSlideAmount, physicsDt / 16.666666f);
 
             if (float.IsNaN(frictionMultiplier) || float.IsInfinity(frictionMultiplier))
                 frictionMultiplier = 0.95f;
 
-            if (isMoving) {
+            if (isMoving)
+            {
                 var newVel = MovementVector * frictionMultiplier + targetVelocity * (1f - frictionMultiplier);
                 if (!float.IsNaN(newVel.X) && !float.IsInfinity(newVel.X))
                     MovementVector = newVel;
             }
-            else {
+            else
+            {
                 MovementVector *= frictionMultiplier;
                 if (MovementVector.LengthSquared < 0.000001f)
                     MovementVector = Vector2.Zero;
             }
         }
-        else {
+        else
+        {
             MovementVector = targetVelocity;
         }
 
-        if (Tile?.GroundProperties?.Push == true) {
+        if (Tile?.GroundProperties?.Push == true)
+        {
             MovementVector.X -= Tile.GroundProperties.Animate.DeltaX / 1000f;
             MovementVector.Y -= Tile.GroundProperties.Animate.DeltaY / 1000f;
         }
@@ -153,7 +165,8 @@ public class Player : Entity {
         var nextX = Position.X + physicsDt * MovementVector.X;
         var nextY = Position.Y + physicsDt * MovementVector.Y;
 
-        if (!double.IsNaN(nextX) && !double.IsNaN(nextY)) {     
+        if (!double.IsNaN(nextX) && !double.IsNaN(nextY))
+        {
             var pos = ModifyMove(nextX, nextY);
             MoveTo(pos.X, pos.Y, true);
 
@@ -163,13 +176,15 @@ public class Player : Entity {
         RenderBaseType?.SetPosition(Position.X, Position.Y, Z);
     }
 
-    private Vector2 ModifyMove(float x, float y) {
+    private Vector2 ModifyMove(float x, float y)
+    {
         var result = new Vector2();
 
         var dX = x - Position.X;
         var dY = y - Position.Y;
 
-        if (dX < MoveThreshold && dX > -MoveThreshold && dY < MoveThreshold && dY > -MoveThreshold) {
+        if (dX < MoveThreshold && dX > -MoveThreshold && dY < MoveThreshold && dY > -MoveThreshold)
+        {
             result = ModifyStep(x, y);
             return result;
         }
@@ -183,8 +198,10 @@ public class Player : Entity {
         var d = 0.0f;
         var done = false;
 
-        while (!done) {
-            if (d + stepSize >= 1) {
+        while (!done)
+        {
+            if (d + stepSize >= 1)
+            {
                 stepSize = 1 - d;
                 done = true;
             }
@@ -196,7 +213,8 @@ public class Player : Entity {
         return result;
     }
 
-    private Vector2 ModifyStep(float x, float y) {
+    private Vector2 ModifyStep(float x, float y)
+    {
         var xCross = (Position.X % 0.5f == 0 && x != Position.X) || (int)(Position.X / 0.5f) != (int)(x / 0.5f);
         var yCross = (Position.Y % 0.5f == 0 && y != Position.Y) || (int)(Position.Y / 0.5f) != (int)(y / 0.5f);
 
@@ -209,21 +227,24 @@ public class Player : Entity {
         if (Tile?.GroundProperties?.SlideAmount > 0)
             Log.Warn($"[BOUNCE] at ({x:F2}, {y:F2}) xCross: {xCross} yCross: {yCross}");
 
-        if (xCross) {
+        if (xCross)
+        {
             nextXBorder = x > Position.X ? (int)(x * 2) / 2f : (int)(Position.X * 2) / 2f;
 
             if ((int)nextXBorder > (int)Position.X)
                 nextXBorder -= 0.01f;
         }
 
-        if (yCross) {
+        if (yCross)
+        {
             nextYBorder = y > Position.Y ? (int)(y * 2) / 2f : (int)(Position.Y * 2) / 2f;
 
             if ((int)nextYBorder > (int)Position.Y)
                 nextYBorder -= 0.01f;
         }
 
-        if (!xCross) {
+        if (!xCross)
+        {
             if (Tile.GroundProperties.SlideAmount == 0)
                 return new Vector2(x, nextYBorder);
 
@@ -233,7 +254,8 @@ public class Player : Entity {
             return new Vector2(x, nextYBorder);
         }
 
-        if (!yCross) {
+        if (!yCross)
+        {
             if (Tile.GroundProperties.SlideAmount == 0)
                 return new Vector2(nextXBorder, y);
 
@@ -246,13 +268,15 @@ public class Player : Entity {
         var xBorderDist = x > Position.X ? x - nextXBorder : nextXBorder - x;
         var yBorderDist = y > Position.Y ? y - nextYBorder : nextYBorder - y;
 
-        if (xBorderDist > yBorderDist) {
+        if (xBorderDist > yBorderDist)
+        {
             if (IsValidPosition(x, nextYBorder))
                 return new Vector2(x, nextYBorder);
             if (IsValidPosition(nextXBorder, y))
                 return new Vector2(nextXBorder, y);
         }
-        else {
+        else
+        {
             if (IsValidPosition(nextXBorder, y))
                 return new Vector2(nextXBorder, y);
             if (IsValidPosition(x, nextYBorder))
@@ -262,7 +286,8 @@ public class Player : Entity {
         return new Vector2(nextXBorder, nextYBorder);
     }
 
-    private bool IsValidPosition(float x, float y) {
+    private bool IsValidPosition(float x, float y)
+    {
         var tile = Map.GetTile((int)x, (int)y);
 
         if (Tile != tile && (tile == null || !tile.IsWalkable()))
@@ -271,37 +296,45 @@ public class Player : Entity {
         var xFrac = x - (int)x;
         var yFrac = y - (int)y;
 
-        if (xFrac < 0.5) {
+        if (xFrac < 0.5)
+        {
             if (IsFullOccupy(x - 1, y))
                 return false;
 
-            if (yFrac < 0.5) {
+            if (yFrac < 0.5)
+            {
                 if (IsFullOccupy(x, y - 1) || IsFullOccupy(x - 1, y - 1))
                     return false;
             }
-            else if (yFrac > 0.5) {
+            else if (yFrac > 0.5)
+            {
                 if (IsFullOccupy(x, y + 1) || IsFullOccupy(x - 1, y + 1))
                     return false;
             }
         }
-        else if (xFrac > 0.5) {
+        else if (xFrac > 0.5)
+        {
             if (IsFullOccupy(x + 1, y))
                 return false;
 
-            if (yFrac < 0.5) {
+            if (yFrac < 0.5)
+            {
                 if (IsFullOccupy(x, y - 1) || IsFullOccupy(x + 1, y - 1))
                     return false;
             }
-            else if (yFrac > 0.5) {
+            else if (yFrac > 0.5)
+            {
                 if (IsFullOccupy(x, y + 1) || IsFullOccupy(x + 1, y + 1))
                     return false;
             }
         }
-        else if (yFrac < 0.5) {
+        else if (yFrac < 0.5)
+        {
             if (IsFullOccupy(x, y - 1))
                 return false;
         }
-        else if (yFrac > 0.5) {
+        else if (yFrac > 0.5)
+        {
             if (IsFullOccupy(x, y + 1))
                 return false;
         }
@@ -309,14 +342,16 @@ public class Player : Entity {
         return true;
     }
 
-    public void SetRelativeMovement(float rotate, float relMoveVecX, float relMoveVecY) {
+    public void SetRelativeMovement(float rotate, float relMoveVecX, float relMoveVecY)
+    {
         Rotate = rotate;
         RelativeMoveVector.X = relMoveVecX;
         RelativeMoveVector.Y = relMoveVecY;
     }
 
 
-    private static bool IsFullOccupy(float x, float y) {
+    private static bool IsFullOccupy(float x, float y)
+    {
         var tile = Map.GetTile((int)x, (int)y);
 
         if (tile == null)
@@ -331,7 +366,8 @@ public class Player : Entity {
         return false;
     }
 
-    public void OnMove() {
+    public void OnMove()
+    {
         var tile = Map.GetTile((int)Position.X, (int)Position.Y);
         if (tile == null)
             return;
@@ -373,10 +409,13 @@ public class Player : Entity {
         return moveSpeed * MovementMultiplier;
     }
 
-    public override bool Update(double time, double dt) {
-        if (DashTimer > 0) {
+    public override bool Update(double time, double dt)
+    {
+        if (DashTimer > 0)
+        {
             DashTimer -= (int)dt;
-            if (DashTimer <= 0) {
+            if (DashTimer <= 0)
+            {
                 DashTimer = 0;
                 IFrame = false;
             }
@@ -385,20 +424,23 @@ public class Player : Entity {
         if (AutoAbility)
         {
             var target = Camera.ScreenToWorld(UserInput.MousePosition);
-            UseAbility(target.X, target.Y, UseAutoFire);
+            UseAbility(target.X, target.Y, UseAuto);
         }
 
-        if (ObjectId == Map.LocalPlayerId) {
+        if (ObjectId == Map.LocalPlayerId)
+        {
             HandleRelativeMovement(time, dt);
             OnMove();
 
-            if (Tile != null && Tile.GroundProperties.MaxDamage > 0) {
+            if (Tile != null && Tile.GroundProperties.MaxDamage > 0)
+            {
                 var now = Main.GameTime.TotalMs;
                 if (now > Tile.LastDamage + 500
                     && !HasConditionEffect(ConditionEffects.Invincible)
                     && !HasConditionEffect(ConditionEffects.Invulnerable)
                     && !IFrame
-                    && (Tile.OccupiedObject == null || !Tile.OccupiedObject.Properties.ProtectFromGroundDamage)) {
+                    && (Tile.OccupiedObject == null || !Tile.OccupiedObject.Properties.ProtectFromGroundDamage))
+                {
                     var dmg = MathUtils.RandomInt(Tile.GroundProperties.MinDamage, Tile.GroundProperties.MaxDamage);
                     var newHp = Hp - dmg;
                     //Hp -= dmg;
@@ -414,7 +456,8 @@ public class Player : Entity {
                 }
             }
         }
-        else if (!base.Update(time, dt)) {
+        else if (!base.Update(time, dt))
+        {
             return false;
         }
 
@@ -422,7 +465,8 @@ public class Player : Entity {
         return true;
     }
 
-    public void AutoAbilityToggle(bool toggle) {
+    public void AutoAbilityToggle(bool toggle)
+    {
         AutoAbility = toggle;
     }
 
@@ -456,7 +500,6 @@ public class Player : Entity {
             }
         }
     }
-
     public bool UseAbility(float mouseX, float mouseY, byte useType)
     {
         if (Map.LocalPlayer == null || HasConditionEffect(ConditionEffects.Paused))
@@ -466,17 +509,79 @@ public class Player : Entity {
         if (ability == null)
             return false;
 
-        var mpCost = ability.MultiPhase && ability.MpEndCost > 0 || useType == UseEnd
+        var hasActivate = false;
+        var hasAuto = false;
+        var shoot = false;
+        var teleport = false;
+        var dash = false;
+
+        if (ability.ActivateEffects != null)
+            foreach (var effect in ability.ActivateEffects)
+            {
+                hasActivate = true;
+                if (effect.Effect == "Teleport")
+                    teleport = true;
+                if (effect.Effect == "Shoot")
+                    shoot = true;
+                if (effect.Effect == "AutoShoot")
+                    shoot = true;
+                if (effect.Effect == "Dash")
+                    dash = true;
+            }
+
+        if (ability.AutoEffects != null)
+            foreach (var effect in ability.AutoEffects)
+            {
+                hasAuto = true;
+                if (effect.Effect == "Teleport")
+                    teleport = true;
+                if (effect.Effect == "Shoot")
+                    shoot = true;
+                if (effect.Effect == "AutoShoot")
+                    shoot = true;
+                if (effect.Effect == "Dash")
+                    dash = true;
+            }
+
+        if (hasActivate && hasAuto)
+            return false;
+
+        var isMultiPhase = ability.MultiPhase;
+        var isSpecial = useType == UseSpecial;
+
+        var release = useType == UseEnd && hasAuto && !shoot;
+
+        if (isSpecial)
+        {
+            if (!isMultiPhase)
+                return false;
+        }
+        else if (hasAuto)
+        {
+            if (useType != UseStart && useType != UseAuto && useType != UseEnd)
+                return false;
+        }
+        else if (hasActivate || !isMultiPhase)
+        {
+            if (useType != UseStart)
+                return false;
+        }
+        else
+        {
+            return false;
+        }
+
+        var mpCost = release || (isSpecial && ability.MpEndCost > 0)
             ? ability.MpEndCost
             : ability.MpCost;
-        
+
         var effMp = EffectiveMp;
-        if ((mpCost != 0 && mpCost > effMp) || (ability.MpEndCost > effMp && useType == UseSpecial))
+        if (!release && ((mpCost != 0 && mpCost > effMp) || (ability.MpEndCost > effMp && useType == UseSpecial)))
         {
             // Play no mana sound
             return false;
         }
-            
+
         var range = 25f;
         var xDiff = Position.X - mouseX;
         var yDiff = Position.Y - mouseY;
@@ -492,186 +597,122 @@ public class Player : Entity {
             targetY = Position.Y + MathF.Sin(angle) * range;
         }
 
-        var shoot = false;
-        var teleport = false;
-        var dash = false;
-        var isMultiPhase = ability.MpEndCost > 0;
-
-        if (ability.ActivateEffects != null)
-            foreach (var effect in ability.ActivateEffects)
-            {
-                if (effect.Effect == "Teleport")
-                    teleport = true;
-                if (effect.Effect == "Shoot")
-                    shoot = true;
-                if (effect.Effect == "AutoShoot")
-                    shoot = true;
-                if (effect.Effect == "Dash")
-                    dash = true;
-                if (effect.Effect != "AutoShoot" && useType == UseAutoFire)
-                    return false;
-            }
-        
-        if (ability.AutoEffects != null)
-            foreach (var effect in ability.AutoEffects)
-            {
-                if (effect.Effect == "Teleport")
-                    teleport = true;
-                if (effect.Effect == "Shoot")
-                    shoot = true;
-                if (effect.Effect == "Auto")
-                    shoot = true;
-                if (effect.Effect == "Dash")
-                    dash = true;
-            }
-
-        if (teleport && !IsValidPosition(targetX, targetY))
+        if (teleport && !release && !IsValidPosition(targetX, targetY))
             return false;
 
         var time = (int)Main.GameTime.TotalMs;
 
-        if (useType == UseStart || useType == UseAutoFire || (useType == UseSpecial && isMultiPhase))
+        // Used so multiphase can be used with on hold abilities
+        var useTimer = isMultiPhase && !isSpecial;
+
+        if (!release)
         {
-            if (time < NextAltAttack)
+            if (time < (useTimer ? NextSpecialAttack : NextAltAttack))
                 return false;
 
             var cooldown = (int)(ability.Cooldown * 1000f);
             if (cooldown <= 0)
                 cooldown = 550;
 
-            if (isMultiPhase)
+            if (useTimer)
             {
-                if (useType == UseSpecial)
-                {
-                    LastAltAttack = time;
-                    NextAltAttack = time + cooldown;
-                }
+                NextSpecialAttack = time + cooldown;
             }
             else
             {
                 NextAltAttack = time + cooldown;
                 LastAltAttack = time;
             }
-            
-            if (mpCost > 0)
-                _pendingMp.Enqueue((time, mpCost));
+        }
 
-            var serverBulletId = ReadServerId();
+        if (mpCost > 0)
+            _pendingMp.Enqueue((time, mpCost));
 
-            if (useType == UseSpecial && isMultiPhase)
+        var serverBulletId = ReadServerId();
+
+        if (dash && !release)
+        {
+            DashTimer = 100;
+            IFrame = true;
+        }
+
+        var pkt = UseItem.CreatePacket();
+        pkt.Time = time;
+        pkt.SlotObject = new ObjectSlot { ObjectId = ObjectId, SlotId = 1, ObjectType = ability.ObjectType };
+        pkt.ItemUsePos = new Position { X = targetX, Y = targetY };
+        pkt.UseType = useType;
+        pkt.ProjId = serverBulletId;
+        Client.QueuePacket(pkt);
+
+        if (shoot || (isMultiPhase && isSpecial))
+        {
+            if (useType == UseSpecial && Mp < ability.MpEndCost)
+                return false;
+
+            var props = ObjectLibrary.TypeToObjectProps[ability.ObjectType];
+            var shootPacket = PlayerShoot.CreatePacket();
+
+            var arc = MathHelper.DegreesToRadians(props.ArcGap) * (props.NumProjectiles - 1);
+            var startAngle = angle - arc / 2;
+
+            var startCount = ability.StartCount;
+            var nextCount = ability.NextCount;
+            var projTypeIndex = 0;
+
+            for (var i = 0; i < props.NumProjectiles; i++)
             {
-                var pktCancel = UseItem.CreatePacket();
-                pktCancel.Time = time;
-                pktCancel.SlotObject = new ObjectSlot
-                    { ObjectId = ObjectId, SlotId = 1, ObjectType = ability.ObjectType };
-                pktCancel.ItemUsePos = new Position { X = targetX, Y = targetY };
-                pktCancel.UseType = 2;
-                pktCancel.ProjId = serverBulletId;
-                Client.QueuePacket(pktCancel);
+                var projDesc = ability.AllProjectiles[projTypeIndex % ability.AllProjectiles.Length];
+                var projObjType = ObjectLibrary.IdToObjectType[projDesc.ObjectId];
+                var objProps = ObjectLibrary.TypeToObjectProps[projObjType];
+                var projAngle = startAngle + MathHelper.DegreesToRadians(props.ArcGap) * i;
+                var bId = GetBulletId2();
 
-                var pktShoot = UseItem.CreatePacket();
-                pktShoot.Time = time;
-                pktShoot.SlotObject = new ObjectSlot
-                    { ObjectId = ObjectId, SlotId = 1, ObjectType = ability.ObjectType };
-                pktShoot.ItemUsePos = new Position { X = targetX, Y = targetY };
-                pktShoot.UseType = 4;
-                pktShoot.ProjId = serverBulletId;
-                Client.QueuePacket(pktShoot);
-            }
-            else
-            {
-                var pkt = UseItem.CreatePacket();
-                pkt.Time = time;
-                pkt.SlotObject = new ObjectSlot { ObjectId = ObjectId, SlotId = 1, ObjectType = ability.ObjectType };
-                pkt.ItemUsePos = new Position { X = targetX, Y = targetY };
-                pkt.UseType = useType;
-                pkt.ProjId = serverBulletId;
-                Client.QueuePacket(pkt);
-            }
+                // DETERMINISTIC SEED
+                var seededRand = new Random(bId + AccountId);
+                var rawDmg = seededRand.Next(projDesc.MinDamage, projDesc.MaxDamage + 1);
+                var baseMult = 0.5f + Attack / 50f;
+                if (HasConditionEffect(ConditionEffects.Damaging))
+                    baseMult *= 1.25f;
 
-            if (dash)
-            {
-                DashTimer = 100;
-                IFrame = true;
-            }
+                var dmg = (int)(rawDmg * baseMult);
+                if (!props.ProjectilesDict.TryGetValue(projDesc.BulletType, out var projPropsInfo))
+                    projPropsInfo = props.Projectiles[0];
 
-            if (shoot && (!(isMultiPhase && useType != UseSpecial) || (isMultiPhase && useType == UseSpecial)))
-            {
-                if (useType == UseSpecial && Mp < ability.MpEndCost)
-                    return false;
+                var proj = ObjectPools.Projectiles.Pop();
+                proj.Reset(bId, dmg, projAngle, this, objProps, projPropsInfo);
+                Map.AddProjectile(proj);
 
-                var props = ObjectLibrary.TypeToObjectProps[ability.ObjectType];
-                var shootPacket = PlayerShoot.CreatePacket();
-
-                var arc = MathHelper.DegreesToRadians(props.ArcGap) * (props.NumProjectiles - 1);
-                var startAngle = angle - arc / 2;
-
-                var startCount = ability.StartCount;
-                var nextCount = ability.NextCount;
-                var projTypeIndex = 0;
-
-                for (var i = 0; i < props.NumProjectiles; i++)
+                if (i == 0)
                 {
-                    var projDesc = ability.AllProjectiles[projTypeIndex % ability.AllProjectiles.Length];
-                    var projObjType = ObjectLibrary.IdToObjectType[projDesc.ObjectId];
-                    var objProps = ObjectLibrary.TypeToObjectProps[projObjType];
-                    var projAngle = startAngle + MathHelper.DegreesToRadians(props.ArcGap) * i;
-                    var bId = GetBulletId2();
+                    if (!string.IsNullOrEmpty(props.OldSound))
+                        Audio.PlaySfx(props.OldSound);
+                    else if (!string.IsNullOrEmpty(props.Sound))
+                        Audio.PlaySfx(props.Sound);
 
-                    // DETERMINISTIC SEED
-                    var seededRand = new Random(bId + AccountId);
-                    var rawDmg = seededRand.Next(projDesc.MinDamage, projDesc.MaxDamage + 1);
-                    var baseMult = 0.5f + Attack / 50f;
-                    if (HasConditionEffect(ConditionEffects.Damaging))
-                        baseMult *= 1.25f;
-
-                    var dmg = (int)(rawDmg * baseMult);
-                    if (!props.ProjectilesDict.TryGetValue(projDesc.BulletType, out var projPropsInfo))
-                        projPropsInfo = props.Projectiles[0];
-
-                    var proj = ObjectPools.Projectiles.Pop();
-                    proj.Reset(bId, dmg, projAngle, this, objProps, projPropsInfo);
-                    Map.AddProjectile(proj);
-
-                    if (i == 0) {
-                        if (!string.IsNullOrEmpty(props.OldSound))
-                            Audio.PlaySfx(props.OldSound);
-                        else if (!string.IsNullOrEmpty(props.Sound))
-                            Audio.PlaySfx(props.Sound);
-
-                        shootPacket.Shots.Add(new ShootData {
-                            Time = time,
-                            BulletId = bId,
-                            ItemType = ability.ObjectType,
-                            StartingPos = new Position { X = Position.X, Y = Position.Y },
-                            Angle = projAngle
-                        });
-                    }
-
-                    startCount++;
-                    if (startCount % nextCount == 0)
-                        projTypeIndex++;
+                    shootPacket.Shots.Add(new ShootData
+                    {
+                        Time = time,
+                        BulletId = bId,
+                        ItemType = ability.ObjectType,
+                        StartingPos = new Position { X = Position.X, Y = Position.Y },
+                        Angle = projAngle
+                    });
                 }
 
-                Client.QueuePacket(shootPacket);
+                startCount++;
+                if (startCount % nextCount == 0)
+                    projTypeIndex++;
             }
-        }
-        else if (isMultiPhase)
-        {
-            var pkt = UseItem.CreatePacket();
-            pkt.Time = time;
-            pkt.SlotObject = new ObjectSlot { ObjectId = ObjectId, SlotId = 1, ObjectType = ability.ObjectType };
-            pkt.ItemUsePos = new Position { X = targetX, Y = targetY };
-            pkt.UseType = useType;
-            Client.QueuePacket(pkt);
+
+            Client.QueuePacket(shootPacket);
         }
 
         return true;
     }
-    
+
     private int PendingMpCost(int now)
     {
-           while (_pendingMp.Count > 0 && now - _pendingMp.Peek().time > MpAckWindowMs)
+        while (_pendingMp.Count > 0 && now - _pendingMp.Peek().time > MpAckWindowMs)
             _pendingMp.Dequeue();
 
         var sum = 0;
@@ -679,14 +720,17 @@ public class Player : Entity {
         return sum;
     }
 
-    public override void UpdateStats(StatData[] statData, int offset, int count) {
+    public override void UpdateStats(StatData[] statData, int offset, int count)
+    {
         base.UpdateStats(statData, offset, count);
 
-        #region Parse StatData
+    #region Parse StatData
 
-        for (var i = 0; i < count; i++) {
+        for (var i = 0; i < count; i++)
+        {
             var stat = statData[offset + i];
-            switch (stat.Type) {
+            switch (stat.Type)
+            {
                 case StatsType.MaximumMp:
                     MaxMp = stat.Value;
                     break;
@@ -832,21 +876,24 @@ public class Player : Entity {
             }
         }
 
-        #endregion
+    #endregion
     }
 
-    public override AtlasData GetTexture(double time, out bool attackFrame, out bool flipped) {
+    public override AtlasData GetTexture(double time, out bool attackFrame, out bool flipped)
+    {
         var texture = new AtlasData();
 
         var action = AnimationType.Stand;
         var idx = 0d;
 
-        if (time < AttackStart + AttackPeriod) {
+        if (time < AttackStart + AttackPeriod)
+        {
             action = AnimationType.Attack;
             idx = (time - AttackStart) % AttackPeriod / AttackPeriod;
             FacingAngle = AttackAngle;
         }
-        else if (MovementVector != Vector2.Zero) {
+        else if (MovementVector != Vector2.Zero)
+        {
             var walkPer = 3.5f / GetMoveSpeed();
             FacingAngle = MathF.Atan2(MovementVector.Y, MovementVector.X);
             action = AnimationType.Walk;
@@ -859,11 +906,13 @@ public class Player : Entity {
         return texture;
     }
 
-    private void SetPlayerSkinTemplate(ushort skin) {
+    private void SetPlayerSkinTemplate(ushort skin)
+    {
         if (skin == 0)
             return;
 
-        if (!ObjectLibrary.TypeToTextureData.ContainsKey(skin)) {
+        if (!ObjectLibrary.TypeToTextureData.ContainsKey(skin))
+        {
             TextureData = ObjectLibrary.TypeToTextureData[0x030e];
             Texture = TextureData.HasAnimationData
                 ? TextureData.AnimatedTextures.FaceRight[0]
@@ -877,7 +926,8 @@ public class Player : Entity {
         RenderBaseType.SetTexture(Texture, false);
     }
 
-    private float AttackFrequency() {
+    private float AttackFrequency()
+    {
         if (HasConditionEffect(ConditionEffects.Dazed))
             return MinAttackFreq;
 
@@ -895,7 +945,7 @@ public class Player : Entity {
             return;
         if (IsWeaponSwapLocked((int)gameTime.TotalMs))
             return;
-        
+
         var item = Equipment[0];
         if (item == null)
             return;
@@ -908,7 +958,7 @@ public class Player : Entity {
         for (var projID = 0; projID < item.AllProjectiles.Length; projID++)
         {
             var projDesc = item.AllProjectiles[projID];
-            
+
             // Use projectile's RateOfFire if set (> 0), otherwise use item's RateOfFire
             var rateOfFire = projDesc.RateOfFire > 0 ? projDesc.RateOfFire : item.RateOfFire;
 
@@ -920,7 +970,7 @@ public class Player : Entity {
 
             if (!props.ProjectilesDict.TryGetValue(projDesc.BulletType, out var projProps))
                 projProps = props.Projectiles[0];
-            
+
             var numProjectiles = projDesc.NumProjectiles > 0 ? projDesc.NumProjectiles : item.NumProjectiles;
             var arc = MathHelper.DegreesToRadians(props.ArcGap) * (numProjectiles - 1);
             var startAngle = attackAngle - arc / 2;
@@ -929,7 +979,7 @@ public class Player : Entity {
             {
                 var angle = startAngle + MathHelper.DegreesToRadians(props.ArcGap) * p;
                 var bId = GetBulletId();
-                
+
                 var rawDmg = Map.Random.NextIntRange((uint)projDesc.MinDamage, (uint)projDesc.MaxDamage);
 
                 float mult;
@@ -986,6 +1036,7 @@ public class Player : Entity {
         _lastProjShootTime[projID] = curTime;
         return true;
     }
+
     public void FlushPendingShots()
     {
         if (PendingShots.Count == 0)
@@ -996,24 +1047,27 @@ public class Player : Entity {
         Client.QueuePacket(shootPkt);
         PendingShots.Clear();
     }
-    
-    public int GetBulletId() {
+
+    public int GetBulletId()
+    {
         var ret = NextBulletId;
         NextBulletId = (NextBulletId + 1) % 512;
         return ret;
     }
 
-    public int GetBulletId2() {
+    public int GetBulletId2()
+    {
         var ret = NextBulletId2 + 1024;
         NextBulletId2 = (NextBulletId2 + 1) % 512;
         return ret;
     }
 
-    public int ReadServerId() {
+    public int ReadServerId()
+    {
         return NextBulletId2 + 1024;
     }
 
-    #region StatData
+#region StatData
 
     public int MaxShield;
     public int Shield;
@@ -1077,6 +1131,7 @@ public class Player : Entity {
     public bool AutoAbility;
     public int NextAltAttack;
     public int LastAltAttack;
+    public int NextSpecialAttack;
     public int Ammo;
     public int MaxAmmo;
     public int ReloadCooldown;
@@ -1092,6 +1147,5 @@ public class Player : Entity {
 
     public bool IsFellowGuild;
 
-    #endregion
-
+#endregion
 }
