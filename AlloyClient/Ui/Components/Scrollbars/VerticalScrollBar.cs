@@ -46,6 +46,7 @@ public class VerticalScrollBar : Sprite {
         AddChild(scrollBarTexture);
 
         var handleHeight = CalculateHandleHeight(config.Height, config.TotalContentHeight, config.VisibleContentHeight);
+        Console.WriteLine($"handle: {handleHeight}");
         _scrollBarHandleTexture = new NineSliceRect(new NineSliceConfig {
             SliceData = SliceLibrary.ScrollBar, CutX = 4, CutY = 4, Width = config.Width, Height = handleHeight, Anchor = UiAnchor.MiddleTop, MouseEnabled = true
         });

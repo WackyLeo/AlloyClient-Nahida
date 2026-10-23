@@ -14,11 +14,13 @@ public class OptionTabView : Container {
 
     private readonly Container _container;
     private readonly List<Option> _options = [];
+    private const int VerticalPadding = 22;
+    private const int VerticalSpacing = 70;
+    private const int ViewHeight = 507;
+    
+    private VerticalScrollBar _scrollBar;
 
-    private readonly OptionsView _optionsView;
-    private readonly VerticalScrollBar _scrollbar;
-
-    public OptionTabView(string name) : base(new ContainerConfig { Width = 1280, Height = 507, EnableClip = true }) {
+    public OptionTabView(string name) : base(new ContainerConfig { Width = 1280, Height = ViewHeight, EnableClip = true }) {
         _container = new Container();
         AddChild(_container);
 
@@ -49,15 +51,36 @@ public class OptionTabView : Container {
 
     private void PositionChildren() {
         var i = 0f;
+        
         foreach (var option in _options) {
             if (option == null) continue;
 
             option.X += i % 2 == 0 ? 32 : 664;
-            option.Y += (int)(i / 2) * 70 + 22;
+            option.Y += (int)(i / 2) * VerticalSpacing + VerticalPadding;
 
             _container.AddChild(option);
 
             i++;
+        }
+
+        var totalContentHeight = (VerticalPadding * 2) + (VerticalSpacing * (_options.Count) / 2);
+        Console.WriteLine($"View Height: {Height}");
+        Console.WriteLine($"Total: {totalContentHeight}");
+        Console.WriteLine($"Options Height: {_container.Height}");
+        
+        if (totalContentHeight > Height) 
+        {
+            _scrollBar = new VerticalScrollBar(this, new VerticalScrollBarConfig {
+                X = Settings.DefaultScreenWidth - 15,
+                Width = 10,
+                Height = ViewHeight,
+                TotalContentHeight = totalContentHeight,
+                VisibleContentHeight = ViewHeight,
+                OnValueChanged = value => {
+                    _container.Y = -value;
+                }
+            });
+            AddChild(_scrollBar);
         }
     }
 

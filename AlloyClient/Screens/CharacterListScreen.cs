@@ -49,6 +49,8 @@ public class CharacterListScreen : TitleScreenBase {
     private VerticalScrollBar _scrollBar;
     private int _selectedCharacterId = -1;
 
+    private const int CharListVisibleHeight = Settings.DefaultScreenHeight - 185;
+
     public CharacterListScreen() {
         #region Title Buttons
 
@@ -322,10 +324,11 @@ public class CharacterListScreen : TitleScreenBase {
 
         _scrollBar = new VerticalScrollBar(_scrollContainer, new VerticalScrollBarConfig {
             X = Settings.DefaultScreenWidth - 15,
+            Y = 5,
             Width = 10,
-            Height = _scrollContainer.Height,
+            Height = CharListVisibleHeight - 5,
             TotalContentHeight = (int)totalContentHeight,
-            VisibleContentHeight = _scrollContainer.Height,
+            VisibleContentHeight = CharListVisibleHeight,
             OnValueChanged = value => {
                 _characterListContainer.Y = -value;
             }
