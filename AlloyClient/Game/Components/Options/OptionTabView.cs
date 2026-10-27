@@ -64,9 +64,6 @@ public class OptionTabView : Container {
         }
 
         var totalContentHeight = (VerticalPadding * 2) + (VerticalSpacing * (_options.Count) / 2);
-        Console.WriteLine($"View Height: {Height}");
-        Console.WriteLine($"Total: {totalContentHeight}");
-        Console.WriteLine($"Options Height: {_container.Height}");
         
         if (totalContentHeight > Height) 
         {

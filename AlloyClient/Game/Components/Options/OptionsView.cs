@@ -56,11 +56,11 @@ public sealed class OptionsView : Overlay {
         var continueButton = new MenuBarButton(new TextButtonConfig {
             Text = "continue",
             FontSize = 57,
-            OnClicked = CloseOverlay,
+            OnClicked = Toggle,
             X = Settings.DefaultScreenWidth / 2,
             Y = Settings.DefaultScreenHeight - 40,
             Anchor = UiAnchor.Middle
-        }, true);
+        });
         AddChild(continueButton);
 
         var resetButton = new MenuBarButton(new TextButtonConfig {
