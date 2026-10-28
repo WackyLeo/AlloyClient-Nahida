@@ -126,8 +126,8 @@ public sealed class ItemTile : Sprite {
 
     private void OnRemovedFromStage() {
         RemoveEventListener(Event.EnterFrame, OnFrameEnter);
-        Map.GameSprite.Stage?.RemoveEventListener(MouseEvent.LeftUp, CancelDragCheck);
-        Map.GameSprite.Stage?.RemoveEventListener(MouseEvent.LeftUp, OnEndDrag);
+        Map.GameSprite?.Stage?.RemoveEventListener(MouseEvent.LeftUp, CancelDragCheck);
+        Map.GameSprite?.Stage?.RemoveEventListener(MouseEvent.LeftUp, OnEndDrag);
 
         if (_tooltip != null) {
             TooltipManager.RemoveTooltip(_tooltip);

@@ -285,6 +285,7 @@ public class ActivateEffectDesc
     public readonly float Range;
     public readonly bool RemoveSelf;
     public readonly int Stats;
+    public readonly float WisScale;
 
     public readonly int TotalDamage;
 
@@ -318,6 +319,11 @@ public class ActivateEffectDesc
         RemoveSelf = xml.GetAttribute<bool>("removeSelf");
         DungeonName = xml.GetAttribute<string>("dungeonName");
         LockedName = xml.GetAttribute<string>("lockedName");
+        
+        if (xml.HasAttribute("wisScale"))
+            WisScale = xml.GetAttribute<float>("wisScale");
+        else
+            WisScale = 1;
     }
 }
 
