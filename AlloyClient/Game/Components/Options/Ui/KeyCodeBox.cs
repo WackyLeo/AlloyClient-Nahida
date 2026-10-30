@@ -34,7 +34,7 @@ public class KeyCodeBox : Sprite {
 
     private readonly ColorRect _background;
     private readonly Action _callback;
-    private SimpleText _char;
+    private readonly SimpleText _char;
     private double _elapsed;
     private bool _inputMode;
 
@@ -131,16 +131,8 @@ public class KeyCodeBox : Sprite {
     }
 
     private void Reset() {
-        RemoveChild(_char);
-        
-        _char = new SimpleText(new TextConfig {
-            Text = CharCodes[(int)Toolkit.Keyboard.GetKeyFromScancode(_keyCode)], FontSize = 25,
-            FontType = FontType.Bold, X = BoxWidth / 2, Y = BoxHeight / 2, OutlineThickness = 0.5f, Glow = 0,
-            Anchor = UiAnchor.Middle
-        });
-        
-        AddChild(_char);
         _char.Visible = true;
+        _char.SetText(CharCodes[(int)Toolkit.Keyboard.GetKeyFromScancode(_keyCode)]);
         _elapsed = 0;
         _inputMode = false;
     }

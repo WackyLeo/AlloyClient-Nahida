@@ -85,10 +85,8 @@ public sealed class SimpleText : Sprite
     private void ResizeBackBuffer()
     {
         var size = Math.Max(Text.Length, 1);
-        if (VertexData == null || VertexData.Length < size * 4)
-        {
-            VertexData = new VertexUi[size * 4];
-        }
+        VertexData = new VertexUi[size * 4];
+        
         if (Indices == null || Indices.Length < size * 6)
         {
             Indices = new ushort[size * 6];
