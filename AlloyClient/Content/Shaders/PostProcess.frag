@@ -7,11 +7,10 @@ uniform vec2 uGameCenter;
 uniform vec2 uGameHalfSize;
 
 void main() {
-FragColor = vec4(1.0, 0.0, 1.0, 1.0); return;
     vec2 uv = vertUVs;
     if (abs((uv.x - uGameCenter.x) / uGameHalfSize.x) > 1.0 ||
     abs((uv.y - uGameCenter.y) / uGameHalfSize.y) > 1.0) {
-        FragColor = vec4(1.0, 0.0, 1.0, 1.0); return;
+        FragColor = vec4(0.0, 0.0, 0.0, 1.0); return;
     }
 
     vec2 norm = (uv - uGameCenter) / uGameHalfSize;

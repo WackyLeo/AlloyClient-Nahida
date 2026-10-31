@@ -417,7 +417,6 @@ vec4 RenderDiamondLine() {
 }
 
 void main() {
-FragColor = vec4(0.0, 1.0, 0.0, 1.0); return;
     vec4 pixel = vec4(0);
 
     //TODO: replace pos1 with gl_FragCoord and send screen coords in scissor instead
