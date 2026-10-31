@@ -1,4 +1,5 @@
-﻿using AlloyClient.Engine.Common;
+﻿using System;
+using AlloyClient.Engine.Common;
 using AlloyClient.UiLib.Core;
 using AlloyClient.UiLib.Enums;
 using AlloyClient.UiLib.Rendering;
@@ -11,6 +12,7 @@ public sealed class LogoGraphic : Sprite {
     private const int TexHeight = 720;
 
     public LogoGraphic() {
+        Console.WriteLine("title logo constructed");      // in LogoGraphic's constructor
         TextureId = TextureType.TitleLogo;
 
         VertexData = new VertexUi[4];

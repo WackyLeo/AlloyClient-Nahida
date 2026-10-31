@@ -11,6 +11,7 @@ public sealed class ScreenGraphic : Sprite {
     private const int TexHeight = 720;
 
     public ScreenGraphic(bool splash = false) {
+        Console.WriteLine("title graphic constructed");   // in ScreenBaseGraphic's constructor
         TextureId = TextureType.TitleGraphic;
 
         ResizeBackBuffer();
