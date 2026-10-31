@@ -1,7 +1,9 @@
 ﻿using System;
+using System.Collections.Generic;
 using AlloyClient.Engine.Graphics;
 using AlloyClient.Engine.Graphics.Buffers;
 using AlloyClient.UiLib.Core;
+using AlloyClient.UiLib.Enums;
 using OpenTK.Graphics.OpenGL;
 
 namespace AlloyClient.UiLib.Rendering;
@@ -44,9 +46,20 @@ public static class SpriteRender
 
         GL.BindVertexArray(0);
     }
-
+    private static bool _loggedView;
     internal static void StartDraw()
     {
+        _vao.Bind();
+        _instanceBuffer.BindToIndex(0);
+
+        UiRender.UiShader.Apply();
+        UiRender.UiShader.SetValue("ViewMatrix", UiRender.ViewMatrix);
+        UiRender.UiShader.SetValue("Time", (float)Stage.GameTime.TotalMs / 1000f);
+        
+        if (!_loggedView) {
+            _loggedView = true;
+            Console.WriteLine($"ViewMatrix M11={UiRender.ViewMatrix.M11} M22={UiRender.ViewMatrix.M22} Screen={UiRender.Screen}");
+        }
         _vao.Bind();
         _instanceBuffer.BindToIndex(0);
 
@@ -60,9 +73,17 @@ public static class SpriteRender
         _indexCount = 0;
         _vertexCount = 0;
     }
-
+    private static readonly HashSet<float> _seenTypes = new();   // needs using System.Collections.Generic;
     internal static void Draw(SpriteInstanceData data, ReadOnlySpan<ushort> indices, ReadOnlySpan<VertexUi> vertices)
     {
+        if (_seenTypes.Add(data.Info.X))
+            Console.WriteLine($"First draw of type {data.Info.X} (alpha {data.Info.Y}), verts={vertices.Length}");
+        if (data.Info.X == (float)TextureType.TitleGraphic || data.Info.X == (float)TextureType.TitleLogo) {
+            Console.WriteLine($"TITLE draw: info={data.Info} scale={data.VertexScale} offset={data.VertexOffset} anchor={data.VertexAnchor} rot={data.VertexRotation} verts={vertices.Length} idx={indices.Length}");
+            for (var i = 0; i < vertices.Length; i++)
+                Console.WriteLine($"  v{i}: pos={vertices[i].Position} uv={vertices[i].UV}");
+            Console.WriteLine($"  idx: {string.Join(",", indices.ToArray())}");
+        }
         if (_instanceCount + 1 > InstanceBufferSize || _indexCount + indices.Length > IndexBufferSize ||
             _vertexCount + vertices.Length > VertexBufferSize)
             Flush();
