@@ -1,4 +1,5 @@
-﻿using AlloyClient.State;
+﻿using System;
+using AlloyClient.State;
 using Common;
 using OpenTK.Graphics.OpenGL;
 using OpenTK.Mathematics;
@@ -6,6 +7,7 @@ using OpenTK.Mathematics;
 namespace AlloyClient.Rendering;
 
 public static class RenderPipeline {
+    private static bool _loggedPost;   // <- here, at class level
     public static void BeginFrame(GameTime gameTime) {
         GL.BindFramebuffer(FramebufferTarget.Framebuffer, Render._Fbo);
 
@@ -87,7 +89,11 @@ public static class RenderPipeline {
 
         Render.ShaderPostProcess.SetValue("uGameCenter", gameCenter);
         Render.ShaderPostProcess.SetValue("uGameHalfSize", gameHalfSize);
-
+        
+        if (!_loggedPost) {
+            _loggedPost = true;
+            Console.WriteLine($"Post: center={gameCenter} half={gameHalfSize} res={Settings.ScreenWidth}x{Settings.ScreenHeight}");
+        }
         GL.BindTextureUnit(7, Render._FboTID);
         GL.BindVertexArray(Render._emptyVao);
         GL.DrawArrays(PrimitiveType.Triangles, 0, 3);
