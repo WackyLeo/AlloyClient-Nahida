@@ -64,7 +64,7 @@
         </EmbeddedResource>
         <None Update="Content\Sound\**\*">
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-            <TargetPath>Content\Sound\%(RecursiveDir)%(Filename)%(Extension)</TargetPath>
+            <TargetPath>%(RecursiveDir)%(Filename)%(Extension)</TargetPath>
         </None>
     </ItemGroup>
 
