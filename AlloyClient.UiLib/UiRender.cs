@@ -130,6 +130,7 @@ public static class UiRender {
     }
 
     private static void HandleEvents(EventArgs args) {
+        if (args is WindowResizeEventArgs re) { OnResize(re.NewClientSize); return; }
         if (args is FocusEventArgs fea) SetFocus(fea.GotFocus);
         if (!IsFocused) return;
 
@@ -142,9 +143,6 @@ public static class UiRender {
                 break;
             case TextInputEventArgs e:
                 KeyboardInput.OnTextInput(e);
-                break;
-            case WindowResizeEventArgs e:
-                OnResize(e.NewClientSize);
                 break;
             case MouseButtonDownEventArgs e:
                 MouseInput.SetKeyDown(e.Button);

@@ -88,9 +88,6 @@ public class TitleScreen : TitleScreenBase {
             Color = 0xFFFFFF
         });
         AddChild(_developerText);
-        
-        Console.WriteLine($"Title: Width={Width} Height={Height} ContentW={ContentWidth} ContentH={ContentHeight} " +
-                          $"Scale={Scale} Screen={UiRender.Screen} ScreenScale={Stage.ScreenScale}");
     }
 
     public override void Draw(GameTime gameTime) {

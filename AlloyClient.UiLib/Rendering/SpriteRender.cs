@@ -44,9 +44,20 @@ public static class SpriteRender
 
         GL.BindVertexArray(0);
     }
-
+    private static bool _loggedView;
     internal static void StartDraw()
     {
+        _vao.Bind();
+        _instanceBuffer.BindToIndex(0);
+
+        UiRender.UiShader.Apply();
+        UiRender.UiShader.SetValue("ViewMatrix", UiRender.ViewMatrix);
+        UiRender.UiShader.SetValue("Time", (float)Stage.GameTime.TotalMs / 1000f);
+        
+        if (!_loggedView) {
+            _loggedView = true;
+            Console.WriteLine($"ViewMatrix M11={UiRender.ViewMatrix.M11} M22={UiRender.ViewMatrix.M22} Screen={UiRender.Screen}");
+        }
         _vao.Bind();
         _instanceBuffer.BindToIndex(0);
 

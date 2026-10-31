@@ -77,7 +77,7 @@ public static partial class Render {
             Console.WriteLine($"GL [{severity}] {type}: {text}");
         };
         GL.Enable(EnableCap.DebugOutput);
-        GL.Enable(EnableCap.DebugOutputSynchronous);   // makes the message print at the offending call
+        GL.Enable(EnableCap.DebugOutputSynchronous);
         GL.DebugMessageCallback(_debugProc, IntPtr.Zero);
         
         Console.WriteLine(GL.GetString(StringName.Renderer));
