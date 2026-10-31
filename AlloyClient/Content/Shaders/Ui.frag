@@ -470,6 +470,7 @@ void main() {
     pixel += add / 255.0;
 
     pixel.a *= inp.Info.y;
+    if (type == IdTitleGraphic) { FragColor = vec4(1.0, 0.0, 1.0, 1.0); return; }
     FragColor = pixel;
 }
 
