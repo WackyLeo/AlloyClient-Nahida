@@ -2,6 +2,7 @@
 using AlloyClient.Engine.Graphics;
 using AlloyClient.Engine.Graphics.Buffers;
 using AlloyClient.UiLib.Core;
+using AlloyClient.UiLib.Enums;
 using OpenTK.Graphics.OpenGL;
 
 namespace AlloyClient.UiLib.Rendering;
@@ -74,6 +75,12 @@ public static class SpriteRender
 
     internal static void Draw(SpriteInstanceData data, ReadOnlySpan<ushort> indices, ReadOnlySpan<VertexUi> vertices)
     {
+        if (data.Info.X == (float)TextureType.TitleGraphic || data.Info.X == (float)TextureType.TitleLogo) {
+            Console.WriteLine($"TITLE draw: info={data.Info} scale={data.VertexScale} offset={data.VertexOffset} anchor={data.VertexAnchor} rot={data.VertexRotation} verts={vertices.Length} idx={indices.Length}");
+            for (var i = 0; i < vertices.Length; i++)
+                Console.WriteLine($"  v{i}: pos={vertices[i].Position} uv={vertices[i].UV}");
+            Console.WriteLine($"  idx: {string.Join(",", indices.ToArray())}");
+        }
         if (_instanceCount + 1 > InstanceBufferSize || _indexCount + indices.Length > IndexBufferSize ||
             _vertexCount + vertices.Length > VertexBufferSize)
             Flush();
