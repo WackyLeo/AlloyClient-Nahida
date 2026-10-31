@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using AlloyClient.Engine.Graphics;
 using AlloyClient.Engine.Graphics.Buffers;
 using AlloyClient.UiLib.Core;
@@ -72,9 +73,11 @@ public static class SpriteRender
         _indexCount = 0;
         _vertexCount = 0;
     }
-
+    private static readonly HashSet<float> _seenTypes = new();   // needs using System.Collections.Generic;
     internal static void Draw(SpriteInstanceData data, ReadOnlySpan<ushort> indices, ReadOnlySpan<VertexUi> vertices)
     {
+        if (_seenTypes.Add(data.Info.X))
+            Console.WriteLine($"First draw of type {data.Info.X} (alpha {data.Info.Y}), verts={vertices.Length}");
         if (data.Info.X == (float)TextureType.TitleGraphic || data.Info.X == (float)TextureType.TitleLogo) {
             Console.WriteLine($"TITLE draw: info={data.Info} scale={data.VertexScale} offset={data.VertexOffset} anchor={data.VertexAnchor} rot={data.VertexRotation} verts={vertices.Length} idx={indices.Length}");
             for (var i = 0; i < vertices.Length; i++)
