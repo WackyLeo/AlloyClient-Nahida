@@ -4,6 +4,7 @@ using AlloyClient.Display;
 using AlloyClient.Screens.Components;
 using AlloyClient.Screens.Components.Containers;
 using AlloyClient.Ui.Components.Buttons;
+using AlloyClient.UiLib;
 using AlloyClient.UiLib.BuiltIn;
 using AlloyClient.UiLib.Core;
 using AlloyClient.UiLib.Enums;
@@ -87,6 +88,9 @@ public class TitleScreen : TitleScreenBase {
             Color = 0xFFFFFF
         });
         AddChild(_developerText);
+        
+        Console.WriteLine($"Title: Width={Width} Height={Height} ContentW={ContentWidth} ContentH={ContentHeight} " +
+                          $"Scale={Scale} Screen={UiRender.Screen} ScreenScale={Stage.ScreenScale}");
     }
 
     public override void Draw(GameTime gameTime) {
