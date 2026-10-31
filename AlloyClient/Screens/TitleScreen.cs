@@ -90,6 +90,8 @@ public class TitleScreen : TitleScreenBase {
             Color = 0xFFFFFF
         });
         AddChild(_developerText);
+        
+        Console.WriteLine("TitleScreen constructor finished");
     }
 
     public override void Draw(GameTime gameTime) {

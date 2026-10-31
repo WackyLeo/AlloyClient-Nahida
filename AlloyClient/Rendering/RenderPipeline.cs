@@ -71,6 +71,7 @@ public static class RenderPipeline {
     }
 
     public static void EndFrameAndPostProcess(GameTime gameTime, Vector2 gameCenter, Vector2 gameHalfSize) {
+        Console.WriteLine("EndFrameAndPostProcess called");
         GL.BindFramebuffer(FramebufferTarget.Framebuffer, 0);
         
         GL.ColorMask(true, true, true, true); 
@@ -90,10 +91,6 @@ public static class RenderPipeline {
         Render.ShaderPostProcess.SetValue("uGameCenter", gameCenter);
         Render.ShaderPostProcess.SetValue("uGameHalfSize", gameHalfSize);
         
-        if (!_loggedPost) {
-            _loggedPost = true;
-            Console.WriteLine($"Post: center={gameCenter} half={gameHalfSize} res={Settings.ScreenWidth}x{Settings.ScreenHeight}");
-        }
         GL.BindTextureUnit(7, Render._FboTID);
         GL.BindVertexArray(Render._emptyVao);
         GL.DrawArrays(PrimitiveType.Triangles, 0, 3);

@@ -1,4 +1,5 @@
-﻿using AlloyClient.UiLib;
+﻿using System;
+using AlloyClient.UiLib;
 using AlloyClient.UiLib.Core;
 using Common;
 
@@ -26,6 +27,7 @@ public static class DisplayManager {
     }
 
     public static void Draw(GameTime gameTime) {
+        Console.WriteLine("DisplayManager.Draw running");   // temporarily; it prints every frame, so stop the app quickly
         UiRender.LastRenderCount = 0;
         ScreenManager.Draw(gameTime);
         _stage.Draw(gameTime);
