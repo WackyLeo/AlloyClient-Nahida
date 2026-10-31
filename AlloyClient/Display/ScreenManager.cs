@@ -15,7 +15,8 @@ public sealed class ScreenManager : Sprite {
 
     private static Screen _prevScreen;
     private static Screen _currScreen = FadeScreen;
-
+    public static string DebugState() =>
+        $"screen={_currScreen?.GetType().Name} alpha={_currScreen?.Alpha} visible={_currScreen?.Visible} fade(visible={FadeScreen.Visible}, alpha={FadeScreen.Alpha})";
     public ScreenManager() {
         _instance = this;
         FadeScreen.Visible = false;

@@ -232,6 +232,7 @@ public class Main {
             Update(new GameTime(totalMs, elapsedMs));
 
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
+            GL.Viewport(0, 0, Settings.ScreenWidth, Settings.ScreenHeight);
             Draw(new GameTime(totalMs, elapsedMs));
 
             Toolkit.OpenGL.SwapBuffers(Context);
