@@ -132,8 +132,8 @@ public sealed class Minimap : Sprite {
         if (_layer.HoveredPlayers.Count == 1) {
             var pMenu = new PlayerMenuToolTip(_layer.HoveredPlayers[0]);
             pMenu.SpawnMouse = mousePos;
-            pMenu.X = mousePos.X - (int)(pMenu.ToolWidth * Stage.ScreenScale.X);
-            pMenu.Y = mousePos.Y;
+            pMenu.X = mousePos.X - (int)(pMenu.ToolWidth / 2 * Stage.ScreenScale.X);
+            pMenu.Y = mousePos.Y - (int)(70 * Stage.ScreenScale.Y);
             menu = pMenu;
         } else {
             var gMenu = new PlayerGroupMenu(_layer.HoveredPlayers);
