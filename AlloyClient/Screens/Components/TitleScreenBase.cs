@@ -24,6 +24,7 @@ public abstract class TitleScreenBase : Screen {
     private readonly SimpleText? _titleText;
 
     protected TitleScreenBase(bool title = false) {
+        Console.WriteLine("TitleScreenBase constructed");
         if (title) {
             _titleText = new SimpleText(new TextConfig {
                 Text = "meow",

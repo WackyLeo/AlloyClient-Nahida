@@ -26,6 +26,8 @@ public class TitleScreen : TitleScreenBase {
     private Vector2 _menuExactPos;
 
     public TitleScreen() : base(true) {
+        
+        Console.WriteLine("TitleScreen constructed");
         var currentY = 50;
         var gap = 15;
 

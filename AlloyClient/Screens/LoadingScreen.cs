@@ -1,4 +1,5 @@
-﻿using System.Threading.Tasks;
+﻿using System;
+using System.Threading.Tasks;
 using AlloyClient.AppEngine;
 using AlloyClient.Assets.Libraries;
 using AlloyClient.Display;
@@ -29,11 +30,11 @@ public class LoadingScreen : Screen {
         AddEventListener(Event.AddedToStage, OnStageEnter);
         AddEventListener(Event.RemovedFromStage, OnStageExit);
         ObjectLibrary.SetFallback();
-
+        
         AddEventListener(Task.WhenAll(
             AppRequests.Startup(),
             Task.Delay(0)
-        ), () => { ScreenManager.FadeToScreen(new TitleScreen(), Easing.SineInOut, 1000, 0x0); });
+        ), () => { Console.WriteLine("LoadingScreen finished, fading to title"); ScreenManager.FadeToScreen(new TitleScreen(), Easing.SineInOut, 1000, 0x0); });
     }
 
     private void OnStageEnter() {

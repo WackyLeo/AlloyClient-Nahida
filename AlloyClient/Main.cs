@@ -145,7 +145,6 @@ public class Main {
             Screen = new Vector2i(Settings.ScreenWidth, Settings.ScreenHeight)
         };
 
-
         //UiRender needs to be loaded first so Render can pull font data from it
         UiRender.ConfigureAndLoad(settings, out var stage);
         UiRender.RegisterFont(font);
@@ -155,7 +154,6 @@ public class Main {
         UiRender.RegisterTexture(TextureType.Minimap, mapTextureSampler);
         UiRender.RegisterTexture(TextureType.TitleGraphic, titleGraphicSampler);
         UiRender.RegisterTexture(TextureType.TitleLogo, titleLogoSampler);
-
 
         Render.FirstTimeInit(gameAtlasSampler);
 
@@ -183,6 +181,7 @@ public class Main {
     private void SetGraphicOptions(GraphicsOptions mode) {
         switch (mode) {
             case GraphicsOptions.TitleScreen:
+                Console.WriteLine("GraphicsOptions.TitleScreen dispatched");
                 _targetFrameTime = 1000d / 60;
                 break;
             case GraphicsOptions.InGame when Settings.VSync:
