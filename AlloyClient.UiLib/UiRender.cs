@@ -130,19 +130,24 @@ public static class UiRender {
     }
 
     private static void HandleEvents(EventArgs args) {
-        if (args is WindowResizeEventArgs re) { OnResize(re.NewClientSize); return; }
         if (args is FocusEventArgs fea) SetFocus(fea.GotFocus);
-        if (!IsFocused) return;
 
         switch (args) {
             case KeyDownEventArgs e:
+                if (!IsFocused) return;
                 KeyboardInput.SetKeyDown(e);
                 break;
             case KeyUpEventArgs e:
+                if (!IsFocused) return;
                 KeyboardInput.SetKeyUp(e);
                 break;
             case TextInputEventArgs e:
+                if (!IsFocused) return;
                 KeyboardInput.OnTextInput(e);
+                break;
+            case WindowResizeEventArgs e:
+                if (!IsFocused) return;
+                OnResize(e.NewClientSize);
                 break;
             case MouseButtonDownEventArgs e:
                 MouseInput.SetKeyDown(e.Button);
@@ -154,6 +159,7 @@ public static class UiRender {
                 MouseInput.SetMousePosition(e.ClientPosition);
                 break;
             case ScrollEventArgs e:
+                if (!IsFocused) return;
                 MouseInput.SetScrollDelta(e.Delta);
                 break;
         }
