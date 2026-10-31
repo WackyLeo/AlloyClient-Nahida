@@ -155,7 +155,6 @@ public sealed class UserInput : Sprite
     public void ClearInput()
     {
         ClearMovement();
-        _autoFire = false;
         _mouseDown = false;
         _specialKeyDown = false;
     }
