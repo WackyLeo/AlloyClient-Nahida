@@ -68,8 +68,18 @@ public static partial class Render {
 
     private static int _groundObjectCount;
     public static int BlendTileStart;
+    private static GLDebugProc _debugProc;
 
     public static unsafe void FirstTimeInit(Sampler atlas) {
+        _debugProc = (source, type, id, severity, length, message, userParam) => {
+            if (severity == DebugSeverity.DebugSeverityNotification) return;
+            var text = System.Runtime.InteropServices.Marshal.PtrToStringAnsi(message, length);
+            Console.WriteLine($"GL [{severity}] {type}: {text}");
+        };
+        GL.Enable(EnableCap.DebugOutput);
+        GL.Enable(EnableCap.DebugOutputSynchronous);   // makes the message print at the offending call
+        GL.DebugMessageCallback(_debugProc, IntPtr.Zero);
+        
         Console.WriteLine(GL.GetString(StringName.Renderer));
         Console.WriteLine(GL.GetString(StringName.Version));
         Console.WriteLine(GL.GetString(StringName.Vendor));
