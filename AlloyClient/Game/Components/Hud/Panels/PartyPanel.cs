@@ -2,6 +2,8 @@
 using AlloyClient.Display;
 using AlloyClient.Engine.Common;
 using AlloyClient.Game.Objects;
+using AlloyClient.Networking;
+using AlloyClient.Networking.Packets.Outgoing;
 using AlloyClient.Ui.Components.Tooltips;
 using AlloyClient.UiLib.BuiltIn;
 using AlloyClient.UiLib.Core;
@@ -64,7 +66,8 @@ public sealed class PartyPanel : Panel {
             Root.MouseEnabled = true;
             Root.AddEventListener(MouseEvent.MouseOver, OnMouseOver);
             Root.AddEventListener(MouseEvent.MouseOut, OnMouseOut);
-            Root.AddEventListener(MouseEvent.LeftClick, OnClick);
+            Root.AddEventListener(MouseEvent.LeftClick, OnLeftClick);
+            Root.AddEventListener(MouseEvent.RightClick, OnRightClick);
 
             _portrait = new ObjectRect(new ObjectRectConfig {
                 Width = PortraitSize,
@@ -102,7 +105,7 @@ public sealed class PartyPanel : Panel {
             Root.Visible = false;
         }
 
-        private void OnClick() {
+        private void OnLeftClick() {
             if (_player == null) return;
             OnMouseOut();
 
@@ -116,6 +119,14 @@ public sealed class PartyPanel : Panel {
             menu.X = mousePos.X - (int)(menu.ToolWidth * Stage.ScreenScale.X);
             menu.Y = mousePos.Y - (int)(menu.ToolHeight * Stage.ScreenScale.Y);
             Map.GameSprite.AddChild(menu);
+        }
+        
+        private void OnRightClick() {
+            if (_player == null) return;
+
+            var pkt = Teleport.CreatePacket();
+            pkt.ObjectId = _player.ObjectId;
+            Client.QueuePacket(pkt);
         }
 
         private void OnMouseOver() {
