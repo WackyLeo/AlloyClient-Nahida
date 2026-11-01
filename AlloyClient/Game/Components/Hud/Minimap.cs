@@ -1,5 +1,7 @@
 using System;
 using AlloyClient.Display;
+using AlloyClient.Networking;
+using AlloyClient.Networking.Packets.Outgoing;
 using AlloyClient.State;
 using AlloyClient.Ui.Components.Panels;
 using AlloyClient.Ui.Components.Tooltips;
@@ -72,7 +74,8 @@ public sealed class Minimap : Sprite {
 
         AddEventListener(Event.AddedToStage, OnAddedToStage);
         AddEventListener(Event.RemovedFromStage, OnRemovedFromStage);
-        AddEventListener(MouseEvent.LeftClick, new Action(OnMapClick)); // Click event for the menu
+        AddEventListener(MouseEvent.LeftClick, new Action(OnMapLeftClick)); // Left click event quick teleport
+        AddEventListener(MouseEvent.RightClick, new Action(OnMapRightClick)); // Right click event for the menu
     }
 
     private void UpdateButtons() {
@@ -116,8 +119,8 @@ public sealed class Minimap : Sprite {
         _zoom = Math.Max(0.5f, Math.Min(_maxZoom, _zoom));
         MinimapTexture.ClearData();
     }
-
-    private void OnMapClick() {
+    
+    private void OnMapLeftClick() {
         if (_layer.HoveredPlayers.Count == 0) return;
 
         if (_hoverTooltip != null) {
@@ -132,8 +135,8 @@ public sealed class Minimap : Sprite {
         if (_layer.HoveredPlayers.Count == 1) {
             var pMenu = new PlayerMenuToolTip(_layer.HoveredPlayers[0]);
             pMenu.SpawnMouse = mousePos;
-            pMenu.X = mousePos.X - (int)(pMenu.ToolWidth / 2 * Stage.ScreenScale.X);
-            pMenu.Y = mousePos.Y - (int)(70 * Stage.ScreenScale.Y);
+            pMenu.X = mousePos.X - (int)(pMenu.ToolWidth * Stage.ScreenScale.X);
+            pMenu.Y = mousePos.Y;
             menu = pMenu;
         } else {
             var gMenu = new PlayerGroupMenu(_layer.HoveredPlayers);
@@ -147,6 +150,13 @@ public sealed class Minimap : Sprite {
         Map.GameSprite.AddChild(menu);
     }
 
+    private void OnMapRightClick() {
+        if (_layer.HoveredPlayers.Count == 0) return;
+
+        var pkt = Teleport.CreatePacket();
+        pkt.ObjectId = _layer.HoveredPlayers[0].ObjectId;
+        Client.QueuePacket(pkt);
+    }
     
     private void OnAddedToStage() {
         AddEventListener(Event.EnterFrame, OnFrameEnter);
