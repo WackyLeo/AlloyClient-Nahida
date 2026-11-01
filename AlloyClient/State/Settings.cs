@@ -24,14 +24,14 @@ public static class Settings {
     public const string BuildVersion = "114.50";
     public const string BuildLabel = $"Version {BuildVersion}";
 
-    private const string AppEngineAddress = "127.0.0.1"; // 76.92.234.253
+    private const string AppEngineAddress = "76.92.234.253"; // 76.92.234.253
     private const string AppEnginePort = "61005"; // 65001
 
     public const string AppEngineUrl = $"http://{AppEngineAddress}:{AppEnginePort}";
     public const int AppEngineTimeout = 10000;
 
     // World-Engine connection info
-    public const string GameServerAddress = "127.0.0.1"; // 76.92.234.253
+    public const string GameServerAddress = "76.92.234.253"; // 76.92.234.253
     public const ushort GameServerPort = 2053; // 26959
 
     // Screen-Information
@@ -423,6 +423,7 @@ public static class Settings {
     public static ValueSetting<float> CameraZoom = 1;
     public static ValueSetting<bool> AllowRotation = true;
     public static ValueSetting<float> RotateSpeed = 0.003f;
+    public static ValueSetting<float> RotateSpeedMult = 1;
 
     // Screen Settings
     public static ValueSetting<int> FpsCap = -1;

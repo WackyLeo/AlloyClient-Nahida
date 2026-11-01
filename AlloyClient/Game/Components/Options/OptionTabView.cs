@@ -11,6 +11,8 @@ namespace AlloyClient.Game.Components.Options;
 public class OptionTabView : Container {
     private static readonly string[] OnOffLabels = ["On", "Off"];
     private static readonly object[] OnOffValues = [true, false];
+    private static readonly string[] RotateMultLabels = ["1x", "1.125x", "1.25x"];
+    private static readonly object[] RotateMultValues = [1f, 1.125f, 1.25f];
 
     private readonly Container _container;
     private readonly List<Option> _options = [];
@@ -93,6 +95,8 @@ public class OptionTabView : Container {
         //_options.Add(new ChoiceOption<bool>(Settings.AllowRotation, OnOffLabels, OnOffValues, "Allow Camera Rotation",
         //    "Toggles whether to allow for camera rotation"));
         //_options.Add(null);
+        _options.Add(new ChoiceOption<float>(Settings.RotateSpeedMult, RotateMultLabels, RotateMultValues, "Camera Rotate speed",
+            "Changes how fast the camera rotates."));
         _options.Add(new KeyMapperOption(Settings.RotateLeft, "Rotate Left",
             "Key to will rotate the camera to the left"));
         _options.Add(new KeyMapperOption(Settings.RotateRight, "Rotate Right",

@@ -33,14 +33,14 @@ public sealed class UserInput : Sprite
     private bool _autoFire;
 
     private bool _mouseDown;
+    
     private int _moveDown;
     private int _moveLeft;
-
     private int _moveRight;
     private int _moveUp;
-    private int _rotateLeft;
-
-    private int _rotateRight;
+    
+    private float _rotateLeft;
+    private float _rotateRight;
     private bool _specialKeyDown;
     
     private bool _hadFocus = true;
@@ -252,10 +252,10 @@ public sealed class UserInput : Sprite
         switch (true)
         {
             case true when Settings.RotateLeft.CheckValue(key):
-                _rotateLeft = 1;
+                _rotateLeft = 1 * Settings.RotateSpeedMult;
                 break;
             case true when Settings.RotateRight.CheckValue(key):
-                _rotateRight = 1;
+                _rotateRight = 1 * Settings.RotateSpeedMult;
                 break;
             case true when Settings.MoveUp.CheckValue(key):
                 _moveUp = 1;
