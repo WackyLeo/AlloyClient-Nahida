@@ -24,7 +24,6 @@ public abstract class TitleScreenBase : Screen {
     private readonly SimpleText? _titleText;
 
     protected TitleScreenBase(bool title = false) {
-        Console.WriteLine($"darken: visible={_darken.Visible} alpha={_darken.Alpha} size={_darken.Width}x{_darken.Height}");
         if (title) {
             _titleText = new SimpleText(new TextConfig {
                 Text = "meow",

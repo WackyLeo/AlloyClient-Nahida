@@ -34,7 +34,7 @@ public class LoadingScreen : Screen {
         AddEventListener(Task.WhenAll(
             AppRequests.Startup(),
             Task.Delay(0)
-        ), () => { Console.WriteLine("LoadingScreen finished, fading to title"); ScreenManager.FadeToScreen(new TitleScreen(), Easing.SineInOut, 1000, 0x0); });
+        ), () => { ScreenManager.FadeToScreen(new TitleScreen(), Easing.SineInOut, 1000, 0x0); });
     }
 
     private void OnStageEnter() {

@@ -7,7 +7,6 @@ using OpenTK.Mathematics;
 namespace AlloyClient.Rendering;
 
 public static class RenderPipeline {
-    private static bool _loggedPost;   // <- here, at class level
     public static void BeginFrame(GameTime gameTime) {
         GL.BindFramebuffer(FramebufferTarget.Framebuffer, Render._Fbo);
 
@@ -71,7 +70,6 @@ public static class RenderPipeline {
     }
 
     public static void EndFrameAndPostProcess(GameTime gameTime, Vector2 gameCenter, Vector2 gameHalfSize) {
-        Console.WriteLine("EndFrameAndPostProcess called");
         GL.BindFramebuffer(FramebufferTarget.Framebuffer, 0);
         
         GL.ColorMask(true, true, true, true); 

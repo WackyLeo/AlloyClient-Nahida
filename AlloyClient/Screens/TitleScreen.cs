@@ -27,7 +27,6 @@ public class TitleScreen : TitleScreenBase {
 
     public TitleScreen() : base(true) {
         
-        Console.WriteLine("TitleScreen constructed");
         var currentY = 50;
         var gap = 15;
 
@@ -90,8 +89,6 @@ public class TitleScreen : TitleScreenBase {
             Color = 0xFFFFFF
         });
         AddChild(_developerText);
-        
-        Console.WriteLine("TitleScreen constructor finished");
     }
 
     public override void Draw(GameTime gameTime) {

@@ -47,9 +47,6 @@ public partial class Sprite
 
     private void Draw()
     {
-        if (TextureId is TextureType.TitleGraphic or TextureType.TitleLogo)
-            Console.WriteLine($"{TextureId}: visible={Visible} noRenderData={_noRenderData} alpha={_trueAlpha} prim={OverridePrimCount} size={Width}x{Height}");
-
         if (!Visible) return;
 
         if (!_noRenderData && _trueAlpha != 0f && OverridePrimCount != 0)

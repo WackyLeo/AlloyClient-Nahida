@@ -12,7 +12,6 @@ public sealed class LogoGraphic : Sprite {
     private const int TexHeight = 720;
 
     public LogoGraphic() {
-        Console.WriteLine("title logo constructed");      // in LogoGraphic's constructor
         TextureId = TextureType.TitleLogo;
 
         VertexData = new VertexUi[4];
