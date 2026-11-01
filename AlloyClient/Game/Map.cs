@@ -244,6 +244,11 @@ public static class Map {
                 new Vector3(LocalPlayer.Position.X, LocalPlayer.Position.Y, LocalPlayer.Z));
             Render.DebugLine(lpPos - new Vector2(0.3f, 0), lpPos + new Vector2(0.3f, 0), new Vector3(1, 1, 0), 0.03f);
         }
+        else if (Render.CrouchEnabled) 
+        {
+            Render.DebugCircle(Camera.WorldToDebug2D(new Vector3(LocalPlayer.Position.X, LocalPlayer.Position.Y, 0.5f)),
+                0.25f, new Vector3(0f, 0.5f, 1f), 0.03f);
+        }
 
         var pos = Vector2.Floor(LocalPlayer.Position);
         var dirtyRotation = Math.Abs(_lastCameraAngle - Settings.CameraAngle) > 0.001f;
