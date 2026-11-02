@@ -25,7 +25,7 @@ public sealed class Character(XElement xml) {
     
     public readonly ushort ObjectType = xml.GetValue<ushort>("ObjectType");
     
-    //
+    public readonly int Level  = xml.GetValue("Level", 0);
     
     //
     
@@ -66,4 +66,6 @@ public sealed class Character(XElement xml) {
     public readonly int Speed = xml.GetValue("Speed", 0);
     
     public readonly int Vitality = xml.GetValue("LifeRegeneration", 0);
+    
+    public readonly int Skin =  xml.GetValue("Texture", 0);
 }

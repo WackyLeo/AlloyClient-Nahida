@@ -1,4 +1,5 @@
 using System;
+using AlloyClient.AppEngine;
 using AlloyClient.Assets.Libraries;
 using AlloyClient.Data;
 using AlloyClient.Display;
@@ -64,7 +65,7 @@ public sealed class CharacterRect : Container
             {
                 CharacterRectType.Character => "Play",
                 CharacterRectType.GraveyardCharacter => "View",
-                CharacterRectType.NewCharacter => "Create",
+                CharacterRectType.NewCharacter => remainingSlots > 0 ? "Create" : "Purchase",
                 _ => throw new ArgumentOutOfRangeException(nameof(type), type, null)
             },
             FontSize = 24,
@@ -77,7 +78,6 @@ public sealed class CharacterRect : Container
                     {
                         return;
                     }
-
                     GlobalData.SelectedCharacterId = character.Id;
                     ScreenManager.FadeToScreen(new GameScreen(), Easing.SineInOut, 1000, 0x0);
                 }
@@ -90,7 +90,22 @@ public sealed class CharacterRect : Container
                     }
                 }
                 ,
-                CharacterRectType.NewCharacter => () => { _characterListScreen.ShowCharacterCreate(); }
+                CharacterRectType.NewCharacter => () =>
+                {
+                    if (remainingSlots < 1) 
+                    {
+                        var result = AppRequests.PurchaseCharSlot();
+
+                        if (result.Result.Success) 
+                        {
+                            Console.WriteLine("Successfully Purchased");
+                            return;
+                        }
+                        
+                        Console.WriteLine(result.Result.Message);
+                    }
+                    _characterListScreen.ShowCharacterCreate();
+                }
                 ,
                 _ => throw new ArgumentOutOfRangeException(nameof(type), type, null)
             }
@@ -106,10 +121,10 @@ public sealed class CharacterRect : Container
             var props = ObjectLibrary.TypeToObjectProps[character.ObjectType];
             charNameText.SetText(props.ObjectId);
 
-            _statsMaxed = GetStatsMaxed(character);
+            _statsMaxed = character.Level;
             var statsMaxedText = new SimpleText(new TextConfig
             {
-                Text = $"{_statsMaxed}/{NumberStatsMaxed}",
+                Text = $"Level {character.Level}",
                 FontSize = 16,
                 FontType = FontType.Bold,
                 Color = 0xCFCFCF,
@@ -119,6 +134,7 @@ public sealed class CharacterRect : Container
             statsMaxedText.Y = charNameText.Height + statsMaxedText.Height / 2 + 13;
             AddChild(statsMaxedText);
 
+            /*
             switch (_statsMaxed)
             {
                 case NumberStatsMaxed:
@@ -128,8 +144,10 @@ public sealed class CharacterRect : Container
                     statsMaxedText.SetColor(0xFFFFFF);
                     break;
             }
-
-            var textureData = ObjectLibrary.TypeToTextureData[character.ObjectType];
+            */
+            
+            var textureData = ObjectLibrary.TypeToTextureData.ContainsKey((ushort)character.Skin) ? 
+                ObjectLibrary.TypeToTextureData[(ushort)character.Skin] : ObjectLibrary.TypeToTextureData[character.ObjectType];
             var atlasData = textureData.AnimatedTextures.FaceDown[0];
 
             var charPortrait = new ObjectRect(new ObjectRectConfig
@@ -229,6 +247,11 @@ public sealed class CharacterRect : Container
 
             #endregion
         }
+    }
+
+    public async void PurchaseCharSlot() 
+    {
+        
     }
 
     public int ComputeSortValue()
