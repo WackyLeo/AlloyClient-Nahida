@@ -414,10 +414,6 @@ public sealed class UserInput : Sprite
                 ClearMovement();
                 ChatBox.OnChatOpen.Dispatch("/g ");
                 break;
-            case true when Settings.PartyChat.CheckValue(key):
-                ClearMovement();
-                ChatBox.OnChatOpen.Dispatch("/npp ");
-                break;
             case true when Settings.Special.CheckValue(key):
             {
                 if (_specialKeyDown)
