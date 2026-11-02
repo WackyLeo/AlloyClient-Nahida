@@ -19,7 +19,8 @@ public class TypeHpBar : SubRenderBase {
         Extra = new ExtraData(RenderConfig.TypeBar, RenderConfig.NoShade);
     }
 
-    public override void Draw(float yOffset) {
+    public override void Draw(float yOffset)
+    {
         if (Entity.MaxHp <= 0 || Entity.HasConditionEffect(ConditionEffects.Invincible)) return;
 
         float fill = Math.Clamp(1f * Entity.Hp / Entity.MaxHp, 0f, 1f);
@@ -27,9 +28,12 @@ public class TypeHpBar : SubRenderBase {
         float currentAlpha = Parent.Extra.Alpha;
         byte alphaByte = (byte)(currentAlpha * 255);
     
-        Color = fill < 0.5f 
-            ? (fill >= 0.2f ? new Color((byte)255,(byte)128, (byte)16, alphaByte) : new Color((byte)224, (byte)16, (byte)16, alphaByte)) 
-            : new Color((byte)16, (byte)255, (byte)0, alphaByte);
+        if (Entity.HasConditionEffect(ConditionEffects.Invulnerable))
+            Color = new Color((byte)50, (byte)25, (byte)255, alphaByte);
+        else
+            Color = fill < 0.5f 
+                ? (fill >= 0.2f ? new Color((byte)255,(byte)128, (byte)16, alphaByte) : new Color((byte)224, (byte)16, (byte)16, alphaByte)) 
+                : new Color((byte)16, (byte)255, (byte)0, alphaByte);
     
         Extra.Alpha = currentAlpha;
         Scale.W = yOffset;
