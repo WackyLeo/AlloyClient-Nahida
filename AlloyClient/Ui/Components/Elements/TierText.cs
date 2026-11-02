@@ -26,11 +26,6 @@ public class TierText : Sprite
                 c = Color.FromHexRGB(0x9E9859);
                 text = "UH";
             }
-            else if (desc.Div)
-            {
-                c = Color.FromHexRGB(0xFCE53D);
-                text = "DIV";
-            }
             else if (desc.Ferozium)
             {
                 c = Color.FromHexRGB(0x52DCFF);
