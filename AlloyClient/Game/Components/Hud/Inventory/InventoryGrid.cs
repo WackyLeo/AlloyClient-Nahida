@@ -232,6 +232,10 @@ public sealed class InventoryGrid : Sprite {
     private void OnEnterFrame() {
         UpdatePotions();
     }
-    
+
+    public ItemTile GetTileAtIndex(int index) 
+    {
+        return _tiles[index];
+    }
 }
 

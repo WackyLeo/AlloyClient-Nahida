@@ -474,7 +474,55 @@ public sealed class ItemTile : Sprite {
                 break;
             case GameScreen:
                 var drop = InvDrop.CreatePacket();
-                drop.SlotObject = new ObjectSlot {
+
+                if (Map.CurrentObject != null) // If player is standing over an inventory
+                {
+                    var openSlotIndex = Map.CurrentObject.GetFirstOpenSlotIndex();
+
+                    if (openSlotIndex > 7) // When target inventory is full
+                    {
+                        drop.SlotObject = new ObjectSlot {
+                            ObjectId = Owner.ObjectId,
+                            SlotId = SlotId,
+                            ObjectType = ItemDesc.ObjectType
+                        };
+
+                        Client.QueuePacket(drop);
+                        break;
+                    }
+                    
+                    swap = InvSwap.CreatePacket();
+                    swap.Time = (int)Map.LastGameTime.TotalMs;
+                    swap.Position = new Position { X = Map.LocalPlayer.Position.X, Y = Map.LocalPlayer.Position.Y };
+                    
+                    swap.SlotObj1 = new ObjectSlot {
+                        ObjectId = Owner.ObjectId,
+                        SlotId = SlotId,
+                        ObjectType = ItemDesc.ObjectType
+                    };
+                    swap.SlotObj2 = new ObjectSlot {
+                        ObjectId = Map.CurrentObject.ObjectId,
+                        SlotId = (byte)openSlotIndex,
+                        ObjectType = Map.CurrentObject.Equipment[openSlotIndex]?.ObjectType ?? 0
+                    };
+                    Client.QueuePacket(swap); 
+                    draggedItem = ItemDesc;
+
+                    Owner.Equipment[SlotId] = Map.CurrentObject.Equipment[openSlotIndex];
+                    Map.CurrentObject.Equipment[openSlotIndex] = draggedItem;
+
+                    SetItem(Owner.Equipment[SlotId]);
+                    var invGrid = Map.CurrentInvPanel.GetChildAt(0) as InventoryGrid;
+                    var tile2 = invGrid?.GetTileAtIndex(openSlotIndex);
+                    tile2.SetItem(tile2.Owner.Equipment[tile2.SlotId]);
+
+                    if (Owner is Player oPlayer2) oPlayer2.InventoryUpdate.Dispatch(SlotId);
+                    if (tile2.Owner is Player tPlayer2) tPlayer2.InventoryUpdate.Dispatch(tile2.SlotId);
+
+                    break;
+                }
+                // Drops a fresh baggy if the player is not standing over an inventory
+                drop.SlotObject = new ObjectSlot { 
                     ObjectId = Owner.ObjectId,
                     SlotId = SlotId,
                     ObjectType = ItemDesc.ObjectType

@@ -916,6 +916,16 @@ public class Entity
         };
     }
 
+    public int GetFirstOpenSlotIndex() 
+    {
+        int i = 0;
+
+        while (Equipment[i] != null)
+            i++;
+
+        return i;
+    }
+
 #region StatData
 
     public string Name;

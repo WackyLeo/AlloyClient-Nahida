@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using AlloyClient.Assets;
 using AlloyClient.Game.Components;
 using AlloyClient.Game.Components.Hud;
+using AlloyClient.Game.Components.Hud.Panels;
 using AlloyClient.Game.Objects;
 using AlloyClient.Game.Objects.Util;
 using AlloyClient.Networking;
@@ -69,6 +70,8 @@ public static class Map {
 
     public static int LocalPlayerId;
     public static Player LocalPlayer;
+    public static Entity CurrentObject; // Storing object player is stood over for dropping items into
+    public static ContainerPanel CurrentInvPanel; // Storing container panel for the current object if it is container panel
 
     public static int LastTickId;
 

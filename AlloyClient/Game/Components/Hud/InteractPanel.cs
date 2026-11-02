@@ -46,10 +46,15 @@ public sealed class InteractPanel : Sprite {
 
         if (obj == null) {
             _currentObject = null;
+            Map.CurrentObject  = null;
+            Map.CurrentInvPanel = null;
             SetPanel(_partyPanel);
         } else if (obj != _currentObject || _currentPanel == null) {
             _currentObject = obj;
-            SetPanel(GetInteractPanel(_currentObject));
+            var panel = GetInteractPanel(_currentObject);
+            Map.CurrentObject  = _currentObject;
+            Map.CurrentInvPanel = panel as ContainerPanel;
+            SetPanel(panel);
         }
 
         _partyPanel.Refresh();
