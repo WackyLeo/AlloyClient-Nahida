@@ -10,6 +10,7 @@ namespace AlloyClient.Rendering;
 public static partial class Render {
 
     public static bool DebugEnabled = false;
+    public static bool CrouchEnabled = false; // CHANGED THIS TO SOMWHERE ELSE LATER!!
 
     [StructLayout(LayoutKind.Sequential)]
     private struct DebugVertex {
@@ -69,8 +70,9 @@ public static partial class Render {
         GL.BindVertexArray(0);
     }
 
-    public static void DebugLine(Vector2 from, Vector2 to, Vector3 color, float thickness = 0.04f) {
-        if (!DebugEnabled) return;
+    public static void DebugLine(Vector2 from, Vector2 to, Vector3 color, float thickness = 0.04f) 
+    {
+        if (!DebugEnabled && !CrouchEnabled) return;
 
         var dir = to - from;
         if (dir.LengthSquared < 0.00001f) return;
@@ -91,8 +93,10 @@ public static partial class Render {
         _debugVerts[_debugVertCount++] = new DebugVertex { Position = d, Color = color };
     }
 
-    public static void DebugCircle(Vector2 center, float radius, Vector3 color, float thickness = 0.04f, int segments = 32) {
-        if (!DebugEnabled) return;
+    public static void DebugCircle(Vector2 center, float radius, Vector3 color, float thickness = 0.04f, int segments = 32) 
+    {
+        if (!DebugEnabled && !CrouchEnabled) return;
+        
         for (int i = 0; i < segments; i++) {
             float a0 = i       / (float)segments * MathF.PI * 2f;
             float a1 = (i + 1) / (float)segments * MathF.PI * 2f;
@@ -100,7 +104,7 @@ public static partial class Render {
                 center + new Vector2(MathF.Cos(a0), MathF.Sin(a0)) * radius,
                 center + new Vector2(MathF.Cos(a1), MathF.Sin(a1)) * radius,
                 color, thickness);
-        }
+        }   
     }
 
     public static void DebugArrow(Vector2 from, float angle, float length, Vector3 color, float thickness = 0.04f) {
@@ -114,7 +118,7 @@ public static partial class Render {
     }
 
     public static void FlushDebug(Matrix4 viewProjection) {
-        if (!DebugEnabled || _debugVertCount == 0) return;
+        if (!DebugEnabled && !CrouchEnabled || _debugVertCount == 0) return;
         InitDebug();
 
         // Write into pre-allocated buffer, no new[]
