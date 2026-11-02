@@ -634,14 +634,12 @@ public sealed class Projectile : IResettable
             pos.Y += baseDistance * _dirY;
             if (_projProp.Amplitude != 0)
             {
-                var deflection = _projProp.Amplitude * MathF.Sin(
-                    phase + (curLifetime + _projProp.LifetimeMs *
-                        (_projProp.StartFrequency /
-                         _projProp.Frequency))
-                    / _projProp.LifetimeMs * _projProp.Frequency * 2 *
-                    MathF.PI);
-                pos.X += deflection * -_dirY;
-                pos.Y += deflection * _dirX;
+                var deflection = (_projProp.Amplitude * MathF.Sin((phase + (((((curLifetime + (_projProp.LifetimeMs * (_projProp.StartFrequency * 4))) /
+                    (_projProp.LifetimeMs + (_projProp.LifetimeMs * (_projProp.StartFrequency * 4)))) *
+                    _projProp.Frequency + _projProp.StartFrequency) * 2) * MathF.PI))));
+                
+                pos.X += deflection * MathF.Cos(_angle + MathF.PI / 2);
+                pos.Y += deflection * MathF.Sin(_angle + MathF.PI / 2);
             }
         }
 

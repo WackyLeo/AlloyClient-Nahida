@@ -139,7 +139,7 @@ public sealed class ProjectileProperties {
             MaxRotationRadius = attr.GetAttribute<float>("maxRadius");
             RotationSpeed = attr.GetAttribute<float>("speed");
             RadiusIncreaseSpeed = attr.GetAttribute<float>("increaseSpeed");
-            FixedRotationAngle = attr.GetAttribute<float>("fixedAngle");
+            FixedRotationAngle = attr.GetAttribute<float>("startAngle");
             OnlyClockwise = attr.GetAttribute<bool>("clockwise");
             OnlyCounterClockwise = attr.GetAttribute<bool>("counter");
             OrbitDelay = attr.GetAttribute<int>("delay");
