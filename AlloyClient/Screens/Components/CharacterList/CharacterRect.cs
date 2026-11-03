@@ -30,6 +30,9 @@ public sealed class CharacterRect : Container
 
     private int _statsMaxed;
     private int _baseFame;
+    
+    private SimpleText _remainingSlotsText;
+    private TextButton _textButton;
 
     public CharacterRect(CharacterListScreen characterListScreen) : base(new ContainerConfig { Width = 200, Height = 200, EnableClip = true })
     {
@@ -45,7 +48,7 @@ public sealed class CharacterRect : Container
         AddChild(background);
     }
 
-    public void Initialize(CharacterRectType type, Character character = null, int remainingSlots = 0)
+    public void Initialize(CharacterRectType type, Character character = null, int remainingSlots = 0) 
     {
         var charNameText = new SimpleText(new TextConfig
         {
@@ -65,7 +68,7 @@ public sealed class CharacterRect : Container
             {
                 CharacterRectType.Character => "Play",
                 CharacterRectType.GraveyardCharacter => "View",
-                CharacterRectType.NewCharacter => remainingSlots > 0 ? "Create" : "Purchase",
+                CharacterRectType.NewCharacter => remainingSlots > 0 ? "Create" : "Purchase Slot",
                 _ => throw new ArgumentOutOfRangeException(nameof(type), type, null)
             },
             FontSize = 24,
@@ -98,11 +101,10 @@ public sealed class CharacterRect : Container
 
                         if (result.Result.Success) 
                         {
-                            Console.WriteLine("Successfully Purchased");
+                            remainingSlots++;
+                            Refresh();
                             return;
                         }
-                        
-                        Console.WriteLine(result.Result.Message);
                     }
                     _characterListScreen.ShowCharacterCreate();
                 }
@@ -112,6 +114,7 @@ public sealed class CharacterRect : Container
         });
         textButton.X = Width / 2;
         textButton.Y = Height - textButton.Height / 2 - 12;
+        _textButton = textButton;
         AddChild(textButton);
 
         if (character != null)
@@ -122,7 +125,7 @@ public sealed class CharacterRect : Container
             charNameText.SetText(props.ObjectId);
 
             _statsMaxed = character.Level;
-            var statsMaxedText = new SimpleText(new TextConfig
+            var charLevelText = new SimpleText(new TextConfig
             {
                 Text = $"Level {character.Level}",
                 FontSize = 16,
@@ -130,21 +133,9 @@ public sealed class CharacterRect : Container
                 Color = 0xCFCFCF,
                 Anchor = UiAnchor.Middle,
             });
-            statsMaxedText.X = Width / 2;
-            statsMaxedText.Y = charNameText.Height + statsMaxedText.Height / 2 + 13;
-            AddChild(statsMaxedText);
-
-            /*
-            switch (_statsMaxed)
-            {
-                case NumberStatsMaxed:
-                    statsMaxedText.SetColor(0xFCDF00);
-                    break;
-                case > 0:
-                    statsMaxedText.SetColor(0xFFFFFF);
-                    break;
-            }
-            */
+            charLevelText.X = Width / 2;
+            charLevelText.Y = charNameText.Height + charLevelText.Height / 2 + 13;
+            AddChild(charLevelText);
             
             var textureData = ObjectLibrary.TypeToTextureData.ContainsKey((ushort)character.Skin) ? 
                 ObjectLibrary.TypeToTextureData[(ushort)character.Skin] : ObjectLibrary.TypeToTextureData[character.ObjectType];
@@ -159,10 +150,10 @@ public sealed class CharacterRect : Container
 
             });
             charPortrait.X = Width / 2;
-            charPortrait.Y = statsMaxedText.Y + charPortrait.Height / 2 + 14;
+            charPortrait.Y = charLevelText.Y + charPortrait.Height / 2 + 14;
             AddChild(charPortrait);
 
-            _baseFame = character.CurrentFame;
+            /*_baseFame = character.CurrentFame;
 
             var fameText = new SimpleText(new TextConfig
             {
@@ -174,9 +165,9 @@ public sealed class CharacterRect : Container
             });
             fameText.X = Width / 2;
             fameText.Y = charPortrait.Y + charPortrait.Height / 2 + 14;
-            AddChild(fameText);
+            AddChild(fameText);*/
 
-            const int middleStarIndex = NumberStars / 2;
+            /*const int middleStarIndex = NumberStars / 2;
             const int starWidth = 16;
             var startX = Width / 2 - middleStarIndex * starWidth;
             var numStars = GetStars(character);
@@ -197,7 +188,7 @@ public sealed class CharacterRect : Container
                 {
                     star.ColorTransformation = new ColorTransform(0.5f, 0.5f, 0.5f, 1);
                 }
-            }
+            }*/
 
             #endregion
         }
@@ -221,9 +212,10 @@ public sealed class CharacterRect : Container
             charPortrait.ColorTransformation = new ColorTransform(0, 0, 0, 0.5f);
             AddChild(charPortrait);
 
+            var plural = remainingSlots != 1 ? "s" : "";
             var remainingSlotsText = new SimpleText(new TextConfig
             {
-                Text = $"{remainingSlots} Character Slots",
+                Text = $"{remainingSlots} Character Slot{plural}",
                 FontSize = 18,
                 FontType = FontType.Bold,
                 Color = 0xFFFFFF,
@@ -231,6 +223,7 @@ public sealed class CharacterRect : Container
             });
             remainingSlotsText.X = Width / 2;
             remainingSlotsText.Y = charPortrait.Y + charPortrait.Height / 2 + 25;
+            _remainingSlotsText = remainingSlotsText;
             AddChild(remainingSlotsText);
 
             var remainingSlotsText2 = new SimpleText(new TextConfig
@@ -247,11 +240,6 @@ public sealed class CharacterRect : Container
 
             #endregion
         }
-    }
-
-    public async void PurchaseCharSlot() 
-    {
-        
     }
 
     public int ComputeSortValue()
@@ -342,5 +330,23 @@ public sealed class CharacterRect : Container
             < 2000 => 4,
             _ => 5,
         };*/
+    }
+
+    private void Refresh()  // For slot purchase
+    {
+        for (int i = 0; i < NumChildren; i++) 
+        {
+            var child = GetChildAt(i);
+
+            if (child == _remainingSlotsText) 
+            {
+                _remainingSlotsText.SetText($"1 Character Slot") ;
+            }
+            
+            if (child == _textButton) 
+            {
+                _textButton.SetText("Create");
+            }
+        }
     }
 }

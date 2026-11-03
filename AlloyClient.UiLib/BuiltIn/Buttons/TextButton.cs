@@ -59,6 +59,11 @@ public class TextButton : Sprite {
         else Deactivate();
     }
 
+    public void SetText(string text) 
+    {
+        _text.SetText(text);
+    }
+
     public void Activate() {
         _text.SetColor(_activeColor);
         AddEventListener(MouseEvent.MouseOver, OnMouseOver);

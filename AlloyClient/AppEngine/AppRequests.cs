@@ -88,6 +88,8 @@ public static class AppRequests {
 
         var result = XElement.Parse(response).Value;
         
+        await GetCharList();
+        
         return result == string.Empty ? new AppResponse { Success = true } : new AppResponse { Success = false, Message = result };
     }
     
