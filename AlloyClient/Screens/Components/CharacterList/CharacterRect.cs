@@ -1,4 +1,5 @@
 using System;
+using System.Reflection.Metadata.Ecma335;
 using AlloyClient.AppEngine;
 using AlloyClient.Assets.Libraries;
 using AlloyClient.Data;
@@ -30,11 +31,12 @@ public sealed class CharacterRect : Container
 
     private int _statsMaxed;
     private int _baseFame;
-    
+
     private SimpleText _remainingSlotsText;
     private TextButton _textButton;
 
-    public CharacterRect(CharacterListScreen characterListScreen) : base(new ContainerConfig { Width = 200, Height = 200, EnableClip = true })
+    public CharacterRect(CharacterListScreen characterListScreen) : base(new ContainerConfig
+        { Width = 200, Height = 200, EnableClip = true })
     {
         _characterListScreen = characterListScreen;
 
@@ -48,7 +50,7 @@ public sealed class CharacterRect : Container
         AddChild(background);
     }
 
-    public void Initialize(CharacterRectType type, Character character = null, int remainingSlots = 0) 
+    public void Initialize(CharacterRectType type, Character character = null, int remainingSlots = 0)
     {
         var charNameText = new SimpleText(new TextConfig
         {
@@ -61,6 +63,40 @@ public sealed class CharacterRect : Container
         charNameText.X = Width / 2;
         charNameText.Y = charNameText.Height / 2 + 10;
         AddChild(charNameText);
+
+        var xBoxLive = new TextButton(new TextButtonConfig
+        {
+            Text = "X",
+            FontSize = 24,
+            Anchor = UiAnchor.Middle,
+            ActiveColor = 0xFFFFFF,
+            OnClicked = type switch
+            {
+                CharacterRectType.Character => () =>
+                {
+                    if (character == null)
+                        return;
+                    
+                    var result = AppRequests.DeleteCharacter(character.Id.ToString());
+
+                    if (result.Result.Success)
+                    {
+                        _characterListScreen.DeleteCharacterRect(this);
+                    }
+                },
+                CharacterRectType.GraveyardCharacter => () =>
+                {
+                },
+                CharacterRectType.NewCharacter => () =>
+                {
+                },
+                _ => throw new ArgumentOutOfRangeException(nameof(type), type, null)
+            }
+        });
+        
+        xBoxLive.X = Width - 10;
+        xBoxLive.Y = Height - 10;
+        AddChild(xBoxLive);
 
         var textButton = new TextButton(new TextButtonConfig
         {
@@ -78,37 +114,34 @@ public sealed class CharacterRect : Container
                 CharacterRectType.Character => () =>
                 {
                     if (character == null)
-                    {
                         return;
-                    }
+
                     GlobalData.SelectedCharacterId = character.Id;
                     ScreenManager.FadeToScreen(new GameScreen(), Easing.SineInOut, 1000, 0x0);
-                }
-                ,
+                },
                 CharacterRectType.GraveyardCharacter => () =>
                 {
                     if (character == null)
-                    {
                         return;
-                    }
-                }
-                ,
+                },
                 CharacterRectType.NewCharacter => () =>
                 {
-                    if (remainingSlots < 1) 
+                    if (remainingSlots < 1)
                     {
                         var result = AppRequests.PurchaseCharSlot();
 
-                        if (result.Result.Success) 
+                        if (result.Result.Success)
                         {
+                            var account = GlobalData.Get<AccountData>();
+                            _characterListScreen.SetFame(account.Stats.Fame.ToString());
                             remainingSlots++;
                             Refresh();
                             return;
                         }
                     }
+
                     _characterListScreen.ShowCharacterCreate();
-                }
-                ,
+                },
                 _ => throw new ArgumentOutOfRangeException(nameof(type), type, null)
             }
         });
@@ -119,7 +152,7 @@ public sealed class CharacterRect : Container
 
         if (character != null)
         {
-            #region Character and Graveyard Character
+        #region Character and Graveyard Character
 
             var props = ObjectLibrary.TypeToObjectProps[character.ObjectType];
             charNameText.SetText(props.ObjectId);
@@ -136,9 +169,10 @@ public sealed class CharacterRect : Container
             charLevelText.X = Width / 2;
             charLevelText.Y = charNameText.Height + charLevelText.Height / 2 + 13;
             AddChild(charLevelText);
-            
-            var textureData = ObjectLibrary.TypeToTextureData.ContainsKey((ushort)character.Skin) ? 
-                ObjectLibrary.TypeToTextureData[(ushort)character.Skin] : ObjectLibrary.TypeToTextureData[character.ObjectType];
+
+            var textureData = ObjectLibrary.TypeToTextureData.ContainsKey((ushort)character.Skin)
+                ? ObjectLibrary.TypeToTextureData[(ushort)character.Skin]
+                : ObjectLibrary.TypeToTextureData[character.ObjectType];
             var atlasData = textureData.AnimatedTextures.FaceDown[0];
 
             var charPortrait = new ObjectRect(new ObjectRectConfig
@@ -147,7 +181,6 @@ public sealed class CharacterRect : Container
                 Width = 50,
                 Height = 50,
                 Anchor = UiAnchor.Middle,
-
             });
             charPortrait.X = Width / 2;
             charPortrait.Y = charLevelText.Y + charPortrait.Height / 2 + 14;
@@ -190,11 +223,11 @@ public sealed class CharacterRect : Container
                 }
             }*/
 
-            #endregion
+        #endregion
         }
         else
         {
-            #region New Character
+        #region New Character
 
             var index = Random.Shared.Next(0, NumberCharacters);
             var frames = Main.Atlas.GetAnimationAtlasData("players", index);
@@ -238,7 +271,7 @@ public sealed class CharacterRect : Container
             remainingSlotsText2.Y = remainingSlotsText.Y + remainingSlotsText.Height / 2 + 12;
             AddChild(remainingSlotsText2);
 
-            #endregion
+        #endregion
         }
     }
 
@@ -296,7 +329,8 @@ public sealed class CharacterRect : Container
         return numStatsMaxed;
     }
 
-    private static int GetStars(Character characterModel) {
+    private static int GetStars(Character characterModel)
+    {
         return 0;
         //TODO: stars
         /*var fame = characterModel.CurrentFame;
@@ -332,18 +366,18 @@ public sealed class CharacterRect : Container
         };*/
     }
 
-    private void Refresh()  // For slot purchase
+    private void Refresh() // For slot purchase
     {
-        for (int i = 0; i < NumChildren; i++) 
+        for (int i = 0; i < NumChildren; i++)
         {
             var child = GetChildAt(i);
 
-            if (child == _remainingSlotsText) 
+            if (child == _remainingSlotsText)
             {
-                _remainingSlotsText.SetText($"1 Character Slot") ;
+                _remainingSlotsText.SetText($"1 Character Slot");
             }
-            
-            if (child == _textButton) 
+
+            if (child == _textButton)
             {
                 _textButton.SetText("Create");
             }

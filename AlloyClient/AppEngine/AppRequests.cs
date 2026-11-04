@@ -94,6 +94,23 @@ public static class AppRequests {
     }
     
     // Delete
+    public static async Task<AppResponse> DeleteCharacter(string characterId)
+    {
+        var login = GlobalData.Get<LoginData>() ?? LoginData.Default;
+        if (login is null) 
+            return new AppResponse { Success = false, Message = "Not logged in" };
+
+        var data = BuildAccountRequestData(login.GUID, login.Password);
+        data.Add("charId", characterId);
+        var response = await AppEngineClient.SendRequest("/char/delete", data, retries: 3);
+        
+        if (response == null)
+            return new AppResponse { Success = false, Message = "Failed to contact server." };
+        
+        var result = XElement.Parse(response).Value;
+        
+        return result == string.Empty ? new AppResponse { Success = true } : new AppResponse { Success = false, Message = result };
+    }
     
     //Fame
 

@@ -258,6 +258,16 @@ public class CharacterListScreen : TitleScreenBase {
         UpdateGridLayout();
     }
 
+
+    public void SetFame(string fame)
+    {
+        _fameText.SetText(fame);
+    }
+
+    public void DeleteCharacterRect(CharacterRect rect)
+    {
+        _characterListContainer.RemoveChild(rect);
+    }
     private void LoadCharacterList() {
         var charModel = GlobalData.Get<CharacterListData>();
         if (charModel == null) return;
