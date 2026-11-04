@@ -12,6 +12,7 @@ public sealed class ProjectileProperties {
 
     public readonly bool HasAcceleration;
     public readonly float Amplitude;
+    public readonly float AmplitudeVariance;
     public readonly bool Animated;
     public readonly int AnimationTime;
     public readonly int SplitAmount;
@@ -87,6 +88,8 @@ public sealed class ProjectileProperties {
     public readonly bool VanillaAngle;
     public readonly bool Wavy;
 
+    private readonly bool hasAmp;
+
     public ProjectileProperties(XElement e) {
         BulletType = e.GetAttribute<int>("id");
         ObjectId = e.GetValue<string>("ObjectId");
@@ -118,6 +121,12 @@ public sealed class ProjectileProperties {
         HitAmount = e.GetValue("HitAmount", 1);
 
         Amplitude = e.GetValue<float>("Amplitude");
+        hasAmp = e.HasElement("Amplitude");
+        if (hasAmp)
+        {
+            var attr = e.Element("Amplitude");
+            AmplitudeVariance = attr.GetAttribute<float>("variance");
+        }
         Frequency = e.GetValue("Frequency", 1f);
         StartFrequency = e.GetValue<float>("StartFrequency");
         Magnitude = e.GetValue("Magnitude", 3f);

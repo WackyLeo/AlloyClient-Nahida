@@ -46,6 +46,7 @@ public sealed class Projectile : IResettable
     private int _projDelayMs;
     private ProjectileProperties _projProp;
     private int _textureId;
+    private float _amplitudeVariance;
 
     private bool _rayCasted;
     private bool _rayCastFailed;
@@ -135,6 +136,7 @@ public sealed class Projectile : IResettable
         _addLifetime = 0;
         _projDelayMs = _projProp.ProjDelayMs;
         Size = _projProp.Size != -1 ? _projProp.Size : 100;
+        _amplitudeVariance = (float)(Random.Shared.NextDouble() * 2 - 1) * projProp.AmplitudeVariance;
 
         _startTime = Main.GameTime.TotalMs;
         _lastHitTest = 0;
@@ -621,7 +623,9 @@ public sealed class Projectile : IResettable
             pos.Y += d * MathF.Sin(_angle);
             if (_projProp.Amplitude != 0)
             {
-                var deflection = _projProp.Amplitude *
+                var amplitude = _projProp.Amplitude + _amplitudeVariance;
+                
+                var deflection = amplitude *
                                  MathF.Sin(phase + curLifetime / _projProp.LifetimeMs * _projProp.Frequency * 2 *
                                      MathF.PI);
                 pos.X += deflection * MathF.Cos(_angle + MathF.PI / 2);
@@ -632,10 +636,12 @@ public sealed class Projectile : IResettable
         {
             pos.X += baseDistance * _dirX;
             pos.Y += baseDistance * _dirY;
-            if (_projProp.Amplitude != 0)
+            if (_projProp.Amplitude != 0 && (!_projProp.Asyncrone || (_projectileId % 3) != 0))
             {
-                var deflection = (_projProp.Amplitude * MathF.Sin((phase + (((((curLifetime + (_projProp.LifetimeMs * (_projProp.StartFrequency * 4))) /
-                    (_projProp.LifetimeMs + (_projProp.LifetimeMs * (_projProp.StartFrequency * 4)))) *
+                var amplitude = _projProp.Amplitude + _amplitudeVariance;
+
+                var deflection = (amplitude * MathF.Sin((phase + (((((curLifetime + (_projProp.LifetimeMs * (_projProp.StartFrequency * 4))) /
+                                                                     (_projProp.LifetimeMs + (_projProp.LifetimeMs * (_projProp.StartFrequency * 4)))) *
                     _projProp.Frequency + _projProp.StartFrequency) * 2) * MathF.PI))));
                 
                 pos.X += deflection * MathF.Cos(_angle + MathF.PI / 2);
@@ -739,48 +745,46 @@ public sealed class Projectile : IResettable
         pos.Y += dist * MathF.Sin(_angle);
         return pos;
     }
-
     private void RayCastHit(double time)
     {
         var texture = GetTexture();
         var hitRadius = 0.5f + _projProp.BonusSize;
 
-        //var life = _projProp.RCSpeed > 0 ? _projProp.RCLifetimeMs : _lifetime + _projProp.ProjDelayMs;
-        
-        // There's a good chance this is buggy
-        var life = time -  _startTime;
-        for (var t = 0; life <= _projProp.LifetimeMs; life += 50)
+        var life = time - _startTime - _projDelayMs;
+        var first = true;
+        var prevPos = Vector2.Zero;
+
+        for (var t = 0;  life <= _projProp.LifetimeMs; life += 50)
         {
-            Vector2 pos;
-            if (_projProp.RCSpeed > 0)
-                pos = PositionAtRayCastLine((float)life);
-            else
-                pos = PositionAt((float)life);
+            Vector2 pos = _projProp.RCSpeed > 0
+                ? PositionAtRayCastLine((float)life)
+                : PositionAt((float)life);
 
             var tile = Map.GetTile(pos);
             if (tile == null || tile.Type == 0xFF)
-                if (_damagePlayers)
-                    break;
+                break;
+
             if (tile.OccupiedObject != null && !_projProp.PassAll)
             {
                 var obj = tile.OccupiedObject.Properties;
                 var isHittable = obj.IsEnemy || tile.OccupiedObject.Hp > 0;
-                if (!isHittable)
-                    if (obj.EnemyOccupySquare || (!_projProp.PassesCover && obj.OccupySquare))
-                        break;
+                if (!isHittable && (obj.EnemyOccupySquare || (!_projProp.PassesCover && obj.OccupySquare)))
+                    break;
             }
+            
+            var angle = first
+                ? _angle
+                : MathF.Atan2(pos.Y - prevPos.Y, pos.X - prevPos.X);
+            prevPos = pos;
+            first = false;
 
-            var angle = t == 0 ? _angle : MathF.Atan2(pos.Y - _startPosition.Y, pos.X - _startPosition.X);
             var projPos = Camera.WorldToDebug2D(new Vector3(pos.X, pos.Y, 0.5f));
 
-            if (t % 50 == 0)
+            var rcp = new RayCastParticle(texture, pos, angle, _angleCorrection, Size, _projProp.AlphaDecay)
             {
-                var rcp = new RayCastParticle(texture, pos, angle, _angleCorrection, Size, _projProp.AlphaDecay)
-                {
-                    Alpha = (!_damagePlayers && _ownerId != Map.LocalPlayerId) ? Settings.AllyProjOpacity : 1f
-                };
-                Map.AddParticleEffect(rcp);
-            }
+                Alpha = (!_damagePlayers && _ownerId != Map.LocalPlayerId) ? Settings.AllyProjOpacity : 1f
+            };
+            Map.AddParticleEffect(rcp);
 
             if (_damagePlayers)
             {
