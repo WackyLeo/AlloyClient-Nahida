@@ -5,6 +5,7 @@ using AlloyClient.Assets.Libraries;
 using AlloyClient.Data;
 using AlloyClient.Display;
 using AlloyClient.Game;
+using AlloyClient.Screens.Components.Containers;
 using AlloyClient.UiLib.BuiltIn;
 using AlloyClient.UiLib.BuiltIn.Buttons;
 using AlloyClient.UiLib.Enums;
@@ -64,39 +65,30 @@ public sealed class CharacterRect : Container
         charNameText.Y = charNameText.Height / 2 + 10;
         AddChild(charNameText);
 
-        var xBoxLive = new TextButton(new TextButtonConfig
+        if (type == CharacterRectType.Character) 
         {
-            Text = "X",
-            FontSize = 24,
-            Anchor = UiAnchor.Middle,
-            ActiveColor = 0xFFFFFF,
-            OnClicked = type switch
+            var xBoxLive = new TextButton(new TextButtonConfig 
             {
-                CharacterRectType.Character => () =>
-                {
-                    if (character == null)
-                        return;
-                    
-                    var result = AppRequests.DeleteCharacter(character.Id.ToString());
-
-                    if (result.Result.Success)
+                Text = "X",
+                FontSize = 24,
+                Anchor = UiAnchor.Middle,
+                ActiveColor = 0xFF0000,
+                OnClicked = type switch {
+                    CharacterRectType.Character => () => 
                     {
-                        _characterListScreen.DeleteCharacterRect(this);
-                    }
-                },
-                CharacterRectType.GraveyardCharacter => () =>
-                {
-                },
-                CharacterRectType.NewCharacter => () =>
-                {
-                },
-                _ => throw new ArgumentOutOfRangeException(nameof(type), type, null)
-            }
-        });
-        
-        xBoxLive.X = Width - 10;
-        xBoxLive.Y = Height - 10;
-        AddChild(xBoxLive);
+                        if (character == null)
+                            return;
+
+                        OverlayManager.Set(new DeleteCharacterPromptContainer(_characterListScreen, character));
+                    },
+                    _ => throw new ArgumentOutOfRangeException(nameof(type), type, null)
+                }
+            });
+
+            xBoxLive.X = Width - 10;
+            xBoxLive.Y = 15;
+            AddChild(xBoxLive);
+        }
 
         var textButton = new TextButton(new TextButtonConfig
         {
@@ -130,12 +122,9 @@ public sealed class CharacterRect : Container
                     {
                         var result = AppRequests.PurchaseCharSlot();
 
-                        if (result.Result.Success)
+                        if (result.Result.Success) 
                         {
-                            var account = GlobalData.Get<AccountData>();
-                            _characterListScreen.SetFame(account.Stats.Fame.ToString());
-                            remainingSlots++;
-                            Refresh();
+                            _characterListScreen.RefreshCharacterList();
                             return;
                         }
                     }
@@ -186,19 +175,17 @@ public sealed class CharacterRect : Container
             charPortrait.Y = charLevelText.Y + charPortrait.Height / 2 + 14;
             AddChild(charPortrait);
 
-            /*_baseFame = character.CurrentFame;
-
-            var fameText = new SimpleText(new TextConfig
+            var charIdText = new SimpleText(new TextConfig
             {
-                Text = _baseFame.ToString(),
+                Text = $"Id: {character.Id.ToString()}",
                 FontSize = 16,
                 FontType = FontType.Bold,
                 Color = 0xFFFFFF,
                 Anchor = UiAnchor.Middle,
             });
-            fameText.X = Width / 2;
-            fameText.Y = charPortrait.Y + charPortrait.Height / 2 + 14;
-            AddChild(fameText);*/
+            charIdText.X = Width / 2;
+            charIdText.Y = charPortrait.Y + charPortrait.Height / 2 + 14;
+            AddChild(charIdText);
 
             /*const int middleStarIndex = NumberStars / 2;
             const int starWidth = 16;
@@ -364,23 +351,5 @@ public sealed class CharacterRect : Container
             < 2000 => 4,
             _ => 5,
         };*/
-    }
-
-    private void Refresh() // For slot purchase
-    {
-        for (int i = 0; i < NumChildren; i++)
-        {
-            var child = GetChildAt(i);
-
-            if (child == _remainingSlotsText)
-            {
-                _remainingSlotsText.SetText($"1 Character Slot");
-            }
-
-            if (child == _textButton)
-            {
-                _textButton.SetText("Create");
-            }
-        }
     }
 }

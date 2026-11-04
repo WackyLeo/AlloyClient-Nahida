@@ -16,6 +16,7 @@ using AlloyClient.UiLib.Core;
 using AlloyClient.UiLib.Enums;
 using AlloyClient.UiLib.Extra;
 using AlloyClient.Utils;
+using Common;
 using OpenTK.Mathematics;
 
 namespace AlloyClient.Screens;
@@ -50,6 +51,8 @@ public class CharacterListScreen : TitleScreenBase {
     private int _selectedCharacterId = -1;
 
     private const int CharListVisibleHeight = Settings.DefaultScreenHeight - 185;
+    
+    private static readonly Logger Log = new(typeof(Settings));
 
     public CharacterListScreen() {
         #region Title Buttons
@@ -264,9 +267,26 @@ public class CharacterListScreen : TitleScreenBase {
         _fameText.SetText(fame);
     }
 
-    public void DeleteCharacterRect(CharacterRect rect)
+    public async void RefreshCharacterList() 
     {
-        _characterListContainer.RemoveChild(rect);
+        var account = GlobalData.Get<AccountData>();
+        
+        try 
+        {
+            await AppRequests.GetCharList();
+        } catch (Exception e) 
+        {
+            Log.Error($"Failed to retrieve character list for account {account.AccountId}: {e.Message}");
+            return;
+        }
+        
+        if (account.Stats.Fame.ToString() != _fameText.Text)
+            _fameText.SetText(account.Stats.Fame.ToString());
+        
+        _characterListContainer.RemoveChildren();
+        _characterListRects.Clear();
+        LoadCharacterList();
+        LoadGraveyardList();
     }
     private void LoadCharacterList() {
         var charModel = GlobalData.Get<CharacterListData>();
