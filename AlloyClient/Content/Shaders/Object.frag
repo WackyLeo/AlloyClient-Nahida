@@ -152,7 +152,43 @@ bool IsBarSolid(vec2 baseUV, float w, float h) {
     float offsetX = (60.0 - w) / 2.0; float offsetY = (20.0 - h) / 2.0;
     return (px >= offsetX && px <= offsetX + w && py >= offsetY && py <= offsetY + h);
 }
+vec3 GetBarColor(vec2 uv, float w, float h, float fill, float shine)
+{
+    float quadW = 60.0;
+    float quadH = 20.0;
+    float px = uv.x * quadW - (quadW - w) / 2.0;
+    float py = uv.y * quadH - (quadH - h) / 2.0;
 
+    bool filled = px <= w * fill;
+    vec3 col = filled ? vsOutput.Color.rgb : vec3(0.1);
+
+    if (shine >= 0.0 && filled)
+    {
+        float t = clamp(shine / 0.50, 0.0, 1.0);
+
+        float fade = smoothstep(0.0, 0.33, t) * (1.0 - smoothstep(0.65, 1.0, t));
+
+        fade = floor(fade * 4.0 + 0.5) / 4.0;
+
+        float pxi = floor(px);
+        float pyi = floor(py);
+        float d = pxi - pyi;
+
+        float center = floor(mix(-4.0, w + 6.0, t));
+        float rel = d - center;
+        float band = abs(rel - 0.5);
+
+        if (band <= 0.5) 
+        {
+            col = mix(col, vec3(1.0), 0.7 * fade);
+        } 
+        else if (band <= 1.5) 
+        {
+            col = mix(col, vec3(0.75, 0.82, 1.0), 0.35 * fade);
+        }
+    }
+    return col;
+}
 vec4 GetBar() {
     vec2 uv = vsOutput.BaseUV;
     vec2 dx = dFdx(uv);
@@ -160,26 +196,18 @@ vec4 GetBar() {
 
     float w = vsOutput.Mask1.x;
     float h = vsOutput.Mask1.y;
+    float shine = vsOutput.Mask1.z;
     float fill = vsOutput.Mask1.w;
 
     bool isSolid = IsBarSolid(uv, w, h);
     if (RenderPass == OpaquePass) {
         if (!isSolid || vsOutput.ExtraAlpha < 1.0) discard;
-        float quadW = 60.0;
-        float px = uv.x * quadW;
-        float offsetX = (quadW - w) / 2.0;
-        vec3 fillColor = (px - offsetX <= w * fill) ? vsOutput.Color.rgb : vec3(0.1);
-        return vec4(fillColor, 1.0);
+        return vec4(GetBarColor(uv, w, h, fill, shine), 1.0);
     }
 
     if (isSolid) {
-        if (vsOutput.ExtraAlpha < 1.0) {
-            float quadW = 60.0;
-            float px = uv.x * quadW;
-            float offsetX = (quadW - w) / 2.0;
-            vec3 fillColor = (px - offsetX <= w * fill) ? vsOutput.Color.rgb : vec3(0.1);
-            return vec4(fillColor, vsOutput.ExtraAlpha);
-        }
+        if (vsOutput.ExtraAlpha < 1.0)
+            return vec4(GetBarColor(uv, w, h, fill, shine), vsOutput.ExtraAlpha);
         discard;
     }
 
