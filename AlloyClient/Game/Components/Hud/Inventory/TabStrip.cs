@@ -5,6 +5,7 @@ using AlloyClient.UiLib.BuiltIn;
 using AlloyClient.UiLib.BuiltIn.Buttons;
 using AlloyClient.UiLib.Core;
 using AlloyClient.UiLib.Enums;
+using AlloyClient.UiLib.Signals;
 using AlloyClient.Utils;
 
 namespace AlloyClient.Game.Components.Hud.Inventory;
@@ -33,6 +34,8 @@ public sealed class TabStrip : Sprite {
     private StatsPanel _statsPanel;
 
     public int currentTabIndex = 1;
+    
+    public static readonly Signal OnSwitchTabsDown = new();
 
     private CutEdgeRect invTab;
     private IconButton invTabButton;
@@ -46,8 +49,21 @@ public sealed class TabStrip : Sprite {
         _owner = owner;
 
         currentTabIndex = (int)TabTypes.Inventory;
-
+        
         Update();
+        
+        AddEventListener(Event.AddedToStage, AddHandlers);
+        AddEventListener(Event.RemovedFromStage, RemoveHandlers);
+    }
+    
+    private void AddHandlers() 
+    {
+        OnSwitchTabsDown.Add(SwitchTabs);
+    }
+
+    private void RemoveHandlers() 
+    {
+        OnSwitchTabsDown.Remove(SwitchTabs);
     }
 
     private void Update() {
@@ -147,6 +163,13 @@ public sealed class TabStrip : Sprite {
 
     private void OnTabSelected(TabTypes tabType) {
         currentTabIndex = (int)tabType;
+        Update();
+    }
+
+    private void SwitchTabs() 
+    {
+        currentTabIndex += 1;
+        currentTabIndex = currentTabIndex > Tabs.Count ? 1 : currentTabIndex;
         Update();
     }
 

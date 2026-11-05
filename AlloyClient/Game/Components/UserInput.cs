@@ -4,6 +4,7 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 using AlloyClient.Game.Components.Hud;
 using AlloyClient.Game.Components.Hud.Chat;
+using AlloyClient.Game.Components.Hud.Inventory;
 using AlloyClient.Game.Components.Hud.Panels;
 using AlloyClient.Game.Components.Options;
 using AlloyClient.Game.Objects;
@@ -369,8 +370,11 @@ public sealed class UserInput : Sprite
             case true when Settings.ChatHistoryDown.CheckValue(key):
                 ChatBox.OnChatHistoryDown.Dispatch();
                 break;
+            case true when Settings.SwitchTabs.CheckValue(key):
+                TabStrip.OnSwitchTabsDown.Dispatch();
+                break;
         }
-
+        
         SetPlayerMovement();
     }
 
