@@ -58,7 +58,7 @@ public class ItemDesc
     public readonly string SuccessorId;
     public readonly int Texture1;
     public readonly int Texture2;
-    public readonly int Tier;
+    public readonly int Tier = -1;
     public readonly float Timer;
     public readonly int TributePoints;
     public readonly bool TypeOfConsumable;
