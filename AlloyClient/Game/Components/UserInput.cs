@@ -523,10 +523,21 @@ public sealed class UserInput : Sprite
 
         var count = isHp ? player.HealthStackCount : player.MagicStackCount;
         if (count <= 0) return;
+        if (isHp && ((player.Hp >= player.MaxHp) || player.HasConditionEffect(ConditionEffects.Sick))) 
+        {
+            Audio.PlaySfx("error");
+            return;
+        }
+        if (!isHp && player.Mp >= player.MaxMp)
+        {
+            Audio.PlaySfx("error");
+            return;
+        }
 
         var slotId = isHp ? ItemConstants.HpPotionSlot : ItemConstants.MpPotionSlot;
         var objType = isHp ? ItemConstants.HealthPotion : ItemConstants.MagicPotion;
 
+        Audio.PlaySfx("use_potion");
         SendUseItem(slotId, objType);
         if (isHp) player.HealthStackCount--;
         else player.MagicStackCount--;

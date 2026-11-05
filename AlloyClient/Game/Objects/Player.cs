@@ -578,7 +578,7 @@ public class Player : Entity
         var effMp = EffectiveMp;
         if (!release && ((mpCost != 0 && mpCost > effMp) || (ability.MpEndCost > effMp && useType == UseSpecial)))
         {
-            // Play no mana sound
+            Audio.PlaySfx("no_mana");
             return false;
         }
 
@@ -607,8 +607,11 @@ public class Player : Entity
 
         if (!release)
         {
-            if (time < (useTimer ? NextSpecialAttack : NextAltAttack))
-                return false;
+            if (time < (useTimer ? NextSpecialAttack : NextAltAttack)) 
+            {
+                Audio.PlaySfx("error");
+                return false;   
+            }
 
             var cooldown = (int)(ability.Cooldown * 1000f);
             if (cooldown <= 0)

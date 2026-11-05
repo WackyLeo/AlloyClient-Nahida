@@ -167,12 +167,14 @@ public sealed class InventoryGrid : Sprite {
     private void UseHpPot() {
         if (_owner is not Player player) return;
         if (player.HealthStackCount <= 0) return;
+        if(player.Hp >= player.MaxHp) return;
         UsePotion(254, ItemConstants.HealthPotion);
     }
 
     private void UseMpPot() {
         if (_owner is not Player player) return;
         if (player.MagicStackCount <= 0) return;
+        if(player.Mp >= player.MaxMp) return;
         UsePotion(255, ItemConstants.MagicPotion);
     }
     
