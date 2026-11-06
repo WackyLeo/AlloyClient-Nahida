@@ -1,4 +1,5 @@
 using System;
+using System.Threading.Tasks;
 using AlloyClient.AppEngine;
 using AlloyClient.Data;
 using AlloyClient.Display;
@@ -9,13 +10,20 @@ using AlloyClient.UiLib.BuiltIn;
 using AlloyClient.UiLib.BuiltIn.Buttons;
 using AlloyClient.UiLib.Core;
 using AlloyClient.UiLib.Enums;
+using Common;
 
 namespace AlloyClient.Screens.Components.Containers;
 
 public class DeleteCharacterPromptContainer : Overlay 
 {
+    private static readonly Logger Log = new(typeof(Settings));
+    
+    CharacterListScreen _characterListScreen;
+    
     public DeleteCharacterPromptContainer(CharacterListScreen characterListScreen, Character character) 
     {
+        _characterListScreen = characterListScreen;
+        
         var cx = Settings.DefaultScreenWidth / 2;
         var cy = Settings.DefaultScreenHeight / 2;
         
@@ -48,16 +56,7 @@ public class DeleteCharacterPromptContainer : Overlay
             FontSize = 48,
             OnClicked = () => 
             {
-                var result = AppRequests.DeleteCharacter(character.Id.ToString());
-
-                if (result.Result.Success) 
-                {
-                    characterListScreen.RefreshCharacterList();
-                }
-                else 
-                    Console.WriteLine($"Failed to delete character: {result.Result}");
-                
-                CloseOverlay();
+                DeleteCharacter(character);
             }, 
             FontType = FontType.Bold, 
             X = 80,
@@ -79,5 +78,26 @@ public class DeleteCharacterPromptContainer : Overlay
         });
         background.AddChild(noButton);
     }
-    
+
+    private async void DeleteCharacter(Character character)
+    {
+        AppResponse result;
+        try 
+        {
+            result = await AppRequests.DeleteCharacter(character.Id.ToString());
+        } catch (Exception e) 
+        {
+            Log.Error($"Failed to delete character: {character.Id}: {e.Message}");
+            return;
+        }
+
+        if (result.Success) 
+        {
+            _characterListScreen.RefreshCharacterList();
+        }
+        else 
+            Console.WriteLine($"Failed to delete character: {result}");
+                
+        CloseOverlay();
+    }
 }
