@@ -652,62 +652,7 @@ public class Player : Entity
             if (useType == UseSpecial && Mp < ability.MpEndCost)
                 return false;
 
-            var props = ObjectLibrary.TypeToObjectProps[ability.ObjectType];
-            var shootPacket = PlayerShoot.CreatePacket();
-
-            var arc = MathHelper.DegreesToRadians(props.ArcGap) * (props.NumProjectiles - 1);
-            var startAngle = angle - arc / 2;
-
-            var startCount = ability.StartCount;
-            var nextCount = ability.NextCount;
-            var projTypeIndex = 0;
-
-            for (var i = 0; i < props.NumProjectiles; i++)
-            {
-                var projDesc = ability.AllProjectiles[projTypeIndex % ability.AllProjectiles.Length];
-                var projObjType = ObjectLibrary.IdToObjectType[projDesc.ObjectId];
-                var objProps = ObjectLibrary.TypeToObjectProps[projObjType];
-                var projAngle = startAngle + MathHelper.DegreesToRadians(props.ArcGap) * i;
-                var bId = GetBulletId2();
-
-                // DETERMINISTIC SEED
-                var seededRand = new Random(bId + AccountId);
-                var rawDmg = seededRand.Next(projDesc.MinDamage, projDesc.MaxDamage + 1);
-                var baseMult = 0.5f + Attack / 50f;
-                if (HasConditionEffect(ConditionEffects.Damaging))
-                    baseMult *= 1.25f;
-
-                var dmg = (int)(rawDmg * baseMult);
-                if (!props.ProjectilesDict.TryGetValue(projDesc.BulletType, out var projPropsInfo))
-                    projPropsInfo = props.Projectiles[0];
-
-                var proj = ObjectPools.Projectiles.Pop();
-                proj.Reset(bId, dmg, projAngle, this, objProps, projPropsInfo);
-                Map.AddProjectile(proj);
-
-                if (i == 0)
-                {
-                    if (!string.IsNullOrEmpty(props.OldSound))
-                        Audio.PlaySfx(props.OldSound);
-                    else if (!string.IsNullOrEmpty(props.Sound))
-                        Audio.PlaySfx(props.Sound);
-
-                    shootPacket.Shots.Add(new ShootData
-                    {
-                        Time = time,
-                        BulletId = bId,
-                        ItemType = ability.ObjectType,
-                        StartingPos = new Position { X = Position.X, Y = Position.Y },
-                        Angle = projAngle
-                    });
-                }
-
-                startCount++;
-                if (startCount % nextCount == 0)
-                    projTypeIndex++;
-            }
-
-            Client.QueuePacket(shootPacket);
+            Shoot(angle, Main.GameTime, true);
         }
 
         return true;
@@ -949,7 +894,8 @@ public class Player : Entity
         if (IsWeaponSwapLocked((int)gameTime.TotalMs))
             return;
 
-        var item = Equipment[0];
+        // This is BAD
+        var item = isAbility ? Equipment[1] : Equipment[0];
         if (item == null)
             return;
 
@@ -981,7 +927,7 @@ public class Player : Entity
             for (var p = 0; p < numProjectiles; p++)
             {
                 var angle = startAngle + MathHelper.DegreesToRadians(props.ArcGap) * p;
-                var bId = GetBulletId();
+                var bId = isAbility ? GetBulletId2() : GetBulletId();
 
                 var rawDmg = Map.Random.NextIntRange((uint)projDesc.MinDamage, (uint)projDesc.MaxDamage);
 
@@ -1024,6 +970,8 @@ public class Player : Entity
                         Angle = attackAngle
                     });
                 }
+                if (isAbility)
+                    Log.Info(bId);
             }
         }
     }
