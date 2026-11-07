@@ -94,9 +94,12 @@ public class DeleteCharacterPromptContainer : Overlay
         if (result.Success) 
         {
             _characterListScreen.RefreshCharacterList();
+        } else
+        {
+            var dialog = new Dialog("Deletion Error", result.Message, new DialogOption("Ok"));
+            DialogManager.Enqueue(dialog);
+            return;
         }
-        else 
-            Console.WriteLine($"Failed to delete character: {result}");
                 
         CloseOverlay();
     }

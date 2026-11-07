@@ -6,6 +6,7 @@ using AlloyClient.Data;
 using AlloyClient.Display;
 using AlloyClient.Game;
 using AlloyClient.Screens.Components.Containers;
+using AlloyClient.Ui.Components.Dialogs;
 using AlloyClient.UiLib.BuiltIn;
 using AlloyClient.UiLib.BuiltIn.Buttons;
 using AlloyClient.UiLib.Enums;
@@ -120,13 +121,7 @@ public sealed class CharacterRect : Container
                 {
                     if (remainingSlots < 1)
                     {
-                        var result = AppRequests.PurchaseCharSlot();
-
-                        if (result.Result.Success) 
-                        {
-                            _characterListScreen.RefreshCharacterList();
-                            return;
-                        }
+                        PurchaseSlot();
                     }
 
                     _characterListScreen.ShowCharacterCreate();
@@ -314,6 +309,20 @@ public sealed class CharacterRect : Container
         }
 
         return numStatsMaxed;
+    }
+
+    private async void PurchaseSlot()
+    {
+        var result = await AppRequests.PurchaseCharSlot();
+
+        if (result.Success) 
+        {
+            _characterListScreen.RefreshCharacterList();
+            return;
+        }
+                        
+        var dialog = new Dialog("Purchase Error", result.Message, new DialogOption("Ok"));
+        DialogManager.Enqueue(dialog);
     }
 
     private static int GetStars(Character characterModel)
