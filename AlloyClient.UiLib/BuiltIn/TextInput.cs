@@ -1,9 +1,11 @@
 ﻿using System;
+using System.Runtime.InteropServices.JavaScript;
 using System.Text;
 using AlloyClient.UiLib.Core;
 using AlloyClient.UiLib.Data;
 using AlloyClient.UiLib.Enums;
 using AlloyClient.UiLib.Rendering;
+using AlloyClient.UiLib.Signals;
 using OpenTK.Mathematics;
 using OpenTK.Platform;
 
@@ -105,7 +107,7 @@ public sealed class TextInput : Sprite {
         _textBox = new NineSliceRect(rectConfig);
         AddChild(_textBox);
 
-        SetHitboxType(CollisionType.CustomNoScale);
+        SetHitboxType(CollisionType.Square);
 
         _globalMouseListener = OnGlobalMouseDown;
 
@@ -114,7 +116,7 @@ public sealed class TextInput : Sprite {
         ResizeBackBuffer();
         FillData();
     }
-
+    
     public string Text => _inputText.ToString();
 
     private void ResizeBackBuffer() {
@@ -216,28 +218,38 @@ public sealed class TextInput : Sprite {
         SetGraphicsBuffer();
     }
 
-    protected override bool CustomHitbox(Vector2i pos) {
+    protected override bool CustomHitbox(Vector2i pos) 
+    {
         var hit = pos.X > 0 && pos.X < _textBox.Width && pos.Y > 0 && pos.Y < _textBox.Height;
         _mousePosition = pos;
         return hit;
     }
 
-    private void OnGlobalMouseDown(MouseEvent e) {
-        if (!IsInBounds(e.Coords)) UnFocus();
+    private void OnGlobalMouseDown(MouseEvent e) 
+    {
+        if (!IsInBounds(e.Coords))
+        {
+            UnFocus();
+        }
     }
 
-    private void OnMouseClick(MouseEvent args) {
-        if (ActiveInput != this && _clickActivate) {
+    private void OnMouseClick(MouseEvent args) 
+    {
+        if (ActiveInput != this && _clickActivate) 
+        {
             ActiveInput?.UnFocus();
+            Parent?.SetTextInputIndex(this);
             Focus();
         }
 
         SetCaretIndex();
     }
 
-    private void SetCaretIndex() {
+    private void SetCaretIndex() 
+    {
         var i = 1; // Offset by 1 for rect
-        for (var j = _startIndex; j < _inputText.Length; j++) {
+        for (var j = _startIndex; j < _inputText.Length; j++) 
+        {
             var p1 = VertexData[i * 4 + 1].Position.X;
             var p2 = VertexData[i * 4 + 3].Position.X;
             var half = (p2 - p1) / 2f;
@@ -258,28 +270,40 @@ public sealed class TextInput : Sprite {
 
     internal void OnTextInput(TextInputEventArgs e) {
         var text = e.Text;
-
         if (string.IsNullOrEmpty(text)) return;
         if (text.Length != 1) return;
 
         var c = char.Parse(text);
+        var ca = "\\" + text;
+        Console.WriteLine($"CHAR: {ca}");
         var backspace = c == '\b';
+        var tab = c == '\t';
+        var enter = c == '\n';
+        var allowedControlKey = backspace || tab || enter;
 
-        if (char.IsControl(c) && !backspace) return;
+        if (char.IsControl(c) && !allowedControlKey) return;
 
-        if (backspace && _inputText.Length > 0) {
-            if (_caretIndex == -1) {
-                _inputText.Remove(_inputText.Length - 1, 1);
-                FillData();
-                _onChange?.Invoke();
-            } else if (_caretIndex > 0) {
-                _caretIndex--;
-                _inputText.Remove(_caretIndex, 1);
-                FillData();
-                _onChange?.Invoke();
-            }
-
-            return;
+        switch (true) 
+        {
+            case true when tab:
+                Parent?.TabToNextTextInput();
+                return;
+            case true when enter:
+                
+            case true when backspace && _inputText.Length > 0:
+                if (_caretIndex == -1) 
+                {
+                    _inputText.Remove(_inputText.Length - 1, 1);
+                    FillData();
+                    _onChange?.Invoke();
+                } else if (_caretIndex > 0) 
+                {
+                    _caretIndex--;
+                    _inputText.Remove(_caretIndex, 1);
+                    FillData();
+                    _onChange?.Invoke();
+                }
+                return;
         }
 
         if (_inputText.Length == _maxCharacters) return;
@@ -302,24 +326,26 @@ public sealed class TextInput : Sprite {
         return _inputText.Length > 0;
     }
 
-    public void Focus() {
-        if (ActiveInput != this) {
+    public void Focus() 
+    {
+        if (ActiveInput != this) 
+        {
             ActiveInput?.UnFocus();
             ActiveInput = this;
         }
 
+        var changed = ClearIfDefault();
+        
+        _caretIndex = -1;
         _isCaretActive = true;
         _caret.Visible = true;
-        _caretIndex = -1;
         _onFocus?.Invoke();
-
-        var changed = ClearIfDefault();
 
         AddEventListener(Event.EnterFrame, OnFrameEnter);
         Stage?.AddEventListener(MouseEvent.LeftDown, _globalMouseListener);
 
         FillData();
-
+        
         if (changed) _onChange?.Invoke();
     }
 
@@ -377,7 +403,8 @@ public sealed class TextInput : Sprite {
         _onChange?.Invoke();
     }
 
-    private bool ClearIfDefault() {
+    private bool ClearIfDefault() 
+    {
         if (!_isDefaultText) return false;
         _inputText.Clear();
         _isDefaultText = false;
