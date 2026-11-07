@@ -29,9 +29,16 @@ public class AccountOverlay : Sprite {
         }
     }
     
-    public void OnLogin() 
+    public async void OnLogin() 
     {
-        GTween.Add(Tween.New(_container, Easing.SineInOut, 150, 0f, EaseType.Alpha, onFinish: () => 
+        var result = await AppRequests.GetCharList();
+        await Assets.RemoteAssetLoader.LoadAllAsync();
+
+        if (!result.Success)
+        {
+            ScreenManager.FadeToScreen(new TitleScreen(), Easing.SineInOut, 1000, 0x0);
+        }
+        else GTween.Add(Tween.New(_container, Easing.SineInOut, 150, 0f, EaseType.Alpha, onFinish: () => 
         {
             CreateLogout();
             GTween.Add(Tween.New(_container, Easing.SineInOut, 150, 1f, EaseType.Alpha));
@@ -41,6 +48,7 @@ public class AccountOverlay : Sprite {
     public async void OnRegister()
     {
         var result = await AppRequests.GetCharList();
+        await Assets.RemoteAssetLoader.LoadAllAsync();
 
         if (!result.Success)
         {

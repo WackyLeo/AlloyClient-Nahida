@@ -1,4 +1,5 @@
 using AlloyClient.AppEngine;
+using AlloyClient.Data;
 using AlloyClient.Display;
 using AlloyClient.State;
 using AlloyClient.Ui.Components.Dialogs;
@@ -134,6 +135,7 @@ public class RegisterContainer : Overlay
             DialogManager.Enqueue(dialog);
             return;
         }
+        GlobalData.Add(new LoginData(_emailInput.Text, _passwordInput.Text));
         CloseOverlay();
         DispatchEvent(new Event("registerSuccess"));
     }

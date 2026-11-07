@@ -137,9 +137,12 @@ public class TitleScreen : TitleScreenBase {
     }
 
     private void OnPlay() {
-        if (GlobalData.Contains<LoginData>()) {
+        if (GlobalData.Contains<LoginData>()) 
+        {
             ScreenManager.FadeTo(new CharacterListScreen());
-        } else {
+        }
+        else 
+        {
             var login = new LoginContainer();
             login.AddEventListener("loginSuccess", Overlay.OnLogin);
             OverlayManager.Set(login);
