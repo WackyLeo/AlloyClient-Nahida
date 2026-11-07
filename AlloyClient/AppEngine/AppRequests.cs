@@ -74,18 +74,21 @@ public static class AppRequests {
         return await VerifyAsync(guid, password, true);
     }
     
-    public static async Task<AppResponse> PurchaseCharSlot() {
+    public static async Task<AppResponse> PurchaseCharSlot() 
+    {
         var login = GlobalData.Get<LoginData>();
+        
+        if (GlobalData.Overridden)
+            login = GlobalData.OverriddenGet<LoginData>();
 
-        if (login is null) {
+        if (login is null) 
             return new AppResponse { Success = false, Message = "Not logged in" };
-        }
+        
         var response = await AppEngineClient.SendRequest("/account/purchaseCharSlot", BuildAccountRequestData(login.GUID, login.Password), retries: 3);
         
-        if (response == null) {
+        if (response == null) 
             return new AppResponse { Success = false, Message = "Failed to contact server." };
-        }
-
+        
         var result = XElement.Parse(response).Value;
         
         await GetCharList();
@@ -97,11 +100,16 @@ public static class AppRequests {
     public static async Task<AppResponse> DeleteCharacter(string characterId)
     {
         var login = GlobalData.Get<LoginData>() ?? LoginData.Default;
+        
+        if (GlobalData.Overridden)
+            login = GlobalData.OverriddenGet<LoginData>();
+        
         if (login is null) 
             return new AppResponse { Success = false, Message = "Not logged in" };
 
         var data = BuildAccountRequestData(login.GUID, login.Password);
         data.Add("charId", characterId);
+        
         var response = await AppEngineClient.SendRequest("/char/delete", data, retries: 3);
         
         if (response == null)
@@ -114,7 +122,8 @@ public static class AppRequests {
     
     //Fame
 
-    public static async Task<AppResponse> GetCharList() {
+    public static async Task<AppResponse> GetCharList() 
+    {
         var login = GlobalData.Get<LoginData>() ?? LoginData.Default;
         var response = await AppEngineClient.SendRequest("/char/list", BuildAccountRequestData(login.GUID, login.Password), retries: 3);
         
@@ -128,11 +137,25 @@ public static class AppRequests {
         }
 
         var xml = XElement.Parse(response);
+        var newAccount = new AccountData(xml.Element("Account"));
+        var charList = new CharacterListData(xml);
+        var newsData = new NewsData(xml.Elements("News"));
+        var servers = new ServerListData(xml.Element("Servers"));
+
+        if (GlobalData.Get<AccountData>().AccountId != newAccount.AccountId)
+        {
+            GlobalData.Overridden = true;
+            GlobalData.OverriddenAdd(newAccount);
+            GlobalData.OverriddenAdd(charList);
+            GlobalData.OverriddenAdd(newsData);
+            GlobalData.OverriddenAdd(servers);
+        }
         
-        GlobalData.Add(new AccountData(xml.Element("Account")));
-        GlobalData.Add(new CharacterListData(xml));
-        GlobalData.Add(new NewsData(xml.Elements("NewsItem")));
-        GlobalData.Add(new ServerListData(xml.Element("Servers")));
+        GlobalData.Overridden = false;
+        GlobalData.Add(newAccount);
+        GlobalData.Add(charList);
+        GlobalData.Add(newsData);
+        GlobalData.Add(servers);
         
         return new AppResponse{ Success = true };
     }

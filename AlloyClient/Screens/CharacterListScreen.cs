@@ -288,6 +288,7 @@ public class CharacterListScreen : TitleScreenBase {
         LoadCharacterList();
         LoadGraveyardList();
     }
+    
     private void LoadCharacterList() {
         var charModel = GlobalData.Get<CharacterListData>();
         if (charModel == null) return;
