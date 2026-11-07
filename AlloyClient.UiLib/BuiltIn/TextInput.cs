@@ -275,7 +275,6 @@ public sealed class TextInput : Sprite {
 
         var c = char.Parse(text);
         var ca = "\\" + text;
-        Console.WriteLine($"CHAR: {ca}");
         var backspace = c == '\b';
         var tab = c == '\t';
         var enter = c == '\n';

@@ -122,6 +122,7 @@ public sealed class CharacterRect : Container
                     if (remainingSlots < 1)
                     {
                         PurchaseSlot();
+                        return;
                     }
 
                     _characterListScreen.ShowCharacterCreate();
