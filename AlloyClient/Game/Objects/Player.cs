@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using AlloyClient.Assets.Libraries;
 using AlloyClient.Game.Components;
 using AlloyClient.Game.Objects.Enums;
@@ -908,11 +909,15 @@ public class Player : Entity
         {
             var projDesc = item.AllProjectiles[projID];
 
+            var interval = 0;
             // Use projectile's RateOfFire if set (> 0), otherwise use item's RateOfFire
-            var rateOfFire = projDesc.RateOfFire > 0 ? projDesc.RateOfFire : item.RateOfFire;
+            if (!isAbility)
+            {
+                var rateOfFire = projDesc.RateOfFire > 0 ? projDesc.RateOfFire : item.RateOfFire;
 
-            if (!ProjReady(projID, rateOfFire, curTime, out var interval))
-                continue;
+                if (!ProjReady(projID, rateOfFire, curTime, out interval))
+                    continue;
+            }
 
             var projObjType = ObjectLibrary.IdToObjectType[projDesc.ObjectId];
             var objProps = ObjectLibrary.TypeToObjectProps[projObjType];
@@ -970,8 +975,6 @@ public class Player : Entity
                         Angle = attackAngle
                     });
                 }
-                if (isAbility)
-                    Log.Info(bId);
             }
         }
     }
