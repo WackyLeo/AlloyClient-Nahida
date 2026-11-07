@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Net.Mime;
 using System.Runtime.InteropServices;
 using AlloyClient.UiLib.Utils;
 using OpenTK.Mathematics;
@@ -27,6 +28,9 @@ public abstract class DisplayContainer : EventManager
     protected internal int ContentHeight;
 
     private readonly List<Sprite> _children = [];
+    
+    private readonly List<TextInput> _textInputs = [];
+    private int _currentTextInputIndex = 0;
 
     internal ReadOnlySpan<Sprite> GetChildrenSpan()
     {
@@ -46,6 +50,12 @@ public abstract class DisplayContainer : EventManager
             {
                 _children.Remove(child);
                 _children.Insert(index - 1, child);
+                
+                if (child is TextInput) 
+                {
+                    _textInputs.Remove(child as TextInput);
+                    _textInputs.Add(child as TextInput);
+                }
             }
             return child;
         }
@@ -53,6 +63,9 @@ public abstract class DisplayContainer : EventManager
         child.Parent?.RemoveChild(child);
         _children.Insert(index, child);
         child.Parent = this as Sprite;
+
+        if (child is TextInput) 
+            _textInputs.Add(child as TextInput);
 
         UpdateBounds();
 
@@ -113,7 +126,9 @@ public abstract class DisplayContainer : EventManager
 
         child.Parent = null;
         _children.Remove(child);
-
+        if (child is TextInput)
+            _textInputs.Remove(child as TextInput);
+        
         UpdateBounds();
 
         return child;
@@ -168,6 +183,30 @@ public abstract class DisplayContainer : EventManager
 
         (_children[index1], _children[index2]) = (_children[index2], _children[index1]);
     }
+
+    public void SetTextInputIndex(TextInput input) 
+    {
+        _currentTextInputIndex = _textInputs.IndexOf(input);
+    }
+
+    // For moving to the next text input with hotkeys (tab key or arrow keys)
+    public void TabToNextTextInput(bool reverse = false)
+    {
+        TextInput.ActiveInput?.UnFocus();
+        _currentTextInputIndex = !reverse ? _currentTextInputIndex + 1 : _currentTextInputIndex - 1;
+        
+        if (_currentTextInputIndex < 0)
+            _currentTextInputIndex = _textInputs.Count - 1;
+        else if (_currentTextInputIndex > _textInputs.Count - 1)
+            _currentTextInputIndex = 0;
+        
+        _textInputs[_currentTextInputIndex].Focus();
+    }
+
+    /*public void SetTextInputEnterFunction() 
+    {
+        
+    }*/
 
     private void DispatchChildren(Event @event)
     {
