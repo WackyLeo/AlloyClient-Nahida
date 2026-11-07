@@ -1,3 +1,4 @@
+using System.Runtime.InteropServices.JavaScript;
 using AlloyClient.AppEngine;
 using AlloyClient.Display;
 using AlloyClient.State;
@@ -21,55 +22,101 @@ public class LoginContainer : Overlay
         var cy = Settings.DefaultScreenHeight / 2;
 
         var background = new ColorRect(new ColorRectConfig
-            { Width = 475, Height = 350, Color = 0x363636, X = cx, Y = cy, Anchor = UiAnchor.Middle });
+            { 
+                Width = 475, 
+                Height = 350, 
+                Color = 0x363636, 
+                X = cx, 
+                Y = cy, 
+                Anchor = UiAnchor.Middle 
+            });
         AddChild(background);
 
         var titleBackground = new ColorRect(new ColorRectConfig
-            { Width = 475, Height = 50, Color = 0x4d4d4d, X = cx, Y = cy - 150, Anchor = UiAnchor.Middle });
-        AddChild(titleBackground);
+        {
+            Width = 475, 
+            Height = 50, 
+            Color = 0x4d4d4d, 
+            X = 0, 
+            Y = 0, 
+            Anchor = UiAnchor.LeftTop
+        });
+        background.AddChild(titleBackground);
 
         var title = new SimpleText(new TextConfig 
         {
-            Text = "Log in", FontSize = 22, FontType = FontType.Bold, X = cx, Y = cy - 150, Color = 0xFFFFFF,
+            Text = "Log in", 
+            FontSize = 22, 
+            FontType = FontType.Bold, 
+            X = background.Width / 2, 
+            Y = background.Height / 2 - 150, 
+            Color = 0xFFFFFF,
             Anchor = UiAnchor.Middle
         });
-        AddChild(title);
+        titleBackground.AddChild(title);
 
         _emailInput = new TextInput(new InputConfig 
         {
-            X = cx, Y = cy - 50, FontSize = 24, FontType = FontType.Bold, Color = 0xFFFFFF, Width = 350,
-            DefaultText = "Email", Anchor = UiAnchor.Middle
+            X = background.Width / 2,
+            Y = background.Height / 2 - 50, 
+            FontSize = 24, 
+            FontType = FontType.Bold, 
+            Color = 0xFFFFFF, 
+            Width = 350,
+            DefaultText = "Email", 
+            Anchor = UiAnchor.Middle
         });
-        AddChild(_emailInput);
+        background.AddChild(_emailInput);
 
         _passwordInput = new TextInput(new InputConfig 
         {
-            X = cx, Y = cy + 10, FontSize = 24, FontType = FontType.Bold, Color = 0xFFFFFF, Width = 350,
-            DefaultText = "Password", Password = true, Anchor = UiAnchor.Middle
+            X = background.Width / 2, 
+            Y = background.Height / 2 + 10, 
+            FontSize = 24, 
+            FontType = FontType.Bold, 
+            Color = 0xFFFFFF, 
+            Width = 350,
+            DefaultText = "Password", 
+            Password = true, 
+            Anchor = UiAnchor.Middle
         });
-        AddChild(_passwordInput);
+        background.AddChild(_passwordInput);
 
         var registerButton = new TextButton(new TextButtonConfig 
         {
-            Text = "New user? Click here to Register!", FontSize = 16,
-            OnClicked = () => OverlayManager.Set(new RegisterContainer()), FontType = FontType.Bold, X = cx,
-            Y = cy + 50, Anchor = UiAnchor.Middle
+            Text = "New user? Click here to Register!", 
+            FontSize = 16,
+            OnClicked = () => OverlayManager.Set(new RegisterContainer()), 
+            FontType = FontType.Bold,
+            X = background.Width / 2,
+            Y = background.Height / 2 + 50, 
+            Anchor = UiAnchor.Middle
         });
-        AddChild(registerButton);
+        background.AddChild(registerButton);
 
         var loginButton = new TextButton(new TextButtonConfig 
         {
-            Text = "Log in", FontSize = 28, OnClicked = OnLogin, FontType = FontType.Normal, X = cx + 200, Y = cy + 150,
-            Anchor = UiAnchor.Middle
+            Text = "Log in", 
+            FontSize = 28, 
+            OnClicked = OnLogin, 
+            FontType = FontType.Bold, 
+            X = background.Width - 10, 
+            Y = background.Height - 10,
+            Anchor = UiAnchor.RightBottom
         });
-        AddChild(loginButton);
+        background.AddChild(loginButton);
 
         var cancelButton = new TextButton(new TextButtonConfig 
         {
-            Text = "Cancel", FontSize = 28, OnClicked = CloseOverlay, FontType = FontType.Normal, X = cx - 200,
-            Y = cy + 150, Anchor = UiAnchor.Middle
+            Text = "Cancel", 
+            FontSize = 28, 
+            OnClicked = CloseOverlay, 
+            FontType = FontType.Bold, 
+            X = 10,
+            Y = background.Height - 10, 
+            Anchor = UiAnchor.LeftBottom
         });
-        AddChild(cancelButton);
+        background.AddChild(cancelButton);
     }
 
     private void OnLogin() 

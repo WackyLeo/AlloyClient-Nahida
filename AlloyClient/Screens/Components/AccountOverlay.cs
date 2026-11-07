@@ -1,3 +1,4 @@
+using AlloyClient.AppEngine;
 using AlloyClient.Data;
 using AlloyClient.Display;
 using AlloyClient.Screens.Components.Containers;
@@ -28,8 +29,25 @@ public class AccountOverlay : Sprite {
         }
     }
     
-    public void OnLogin() {
-        GTween.Add(Tween.New(_container, Easing.SineInOut, 150, 0f, EaseType.Alpha, onFinish: () => {
+    public void OnLogin() 
+    {
+        GTween.Add(Tween.New(_container, Easing.SineInOut, 150, 0f, EaseType.Alpha, onFinish: () => 
+        {
+            CreateLogout();
+            GTween.Add(Tween.New(_container, Easing.SineInOut, 150, 1f, EaseType.Alpha));
+        }));
+    }
+    
+    public async void OnRegister()
+    {
+        var result = await AppRequests.GetCharList();
+
+        if (!result.Success)
+        {
+            ScreenManager.FadeToScreen(new TitleScreen(), Easing.SineInOut, 1000, 0x0);
+        }
+        else GTween.Add(Tween.New(_container, Easing.SineInOut, 150, 0f, EaseType.Alpha, onFinish: () => 
+        {
             CreateLogout();
             GTween.Add(Tween.New(_container, Easing.SineInOut, 150, 1f, EaseType.Alpha));
         }));
@@ -42,7 +60,12 @@ public class AccountOverlay : Sprite {
         var newText = new SimpleText(newConfig);
         _container.AddChild(newText);
 
-        var registerConfig = new TextButtonConfig { Text = "register", FontSize = 24, OnClicked = () => OverlayManager.Set(new RegisterContainer()), FontType = FontType.Bold, X = newText.Width };
+        var registerConfig = new TextButtonConfig { Text = "register", FontSize = 24, OnClicked = () => 
+        {
+            var register = new RegisterContainer();
+            register.AddEventListener("registerSuccess", OnRegister);
+            OverlayManager.Set(register);
+        }, FontType = FontType.Bold, X = newText.Width };
         var registerButton = new TextButton(registerConfig);
         _container.AddChild(registerButton);
 
@@ -50,7 +73,8 @@ public class AccountOverlay : Sprite {
         var dashText = new SimpleText(dashConfig);
         _container.AddChild(dashText);
 
-        var loginConfig = new TextButtonConfig { Text = "login", FontSize = 24, OnClicked = () => {
+        var loginConfig = new TextButtonConfig { Text = "login", FontSize = 24, OnClicked = () => 
+        {
             var login = new LoginContainer();
             login.AddEventListener("loginSuccess", OnLogin);
             OverlayManager.Set(login);
@@ -59,11 +83,14 @@ public class AccountOverlay : Sprite {
         _container.AddChild(loginButton);
     }
 
-    private void CreateLogout() {
+    private void CreateLogout() 
+    {
         _container.RemoveChildren();
 
         var account = GlobalData.Get<AccountData>();
-        if (account == null) { // We're not properly logged in
+        
+        if (account == null)    // We're not properly logged in
+        {
             CreateLogin();
             return;
         }
@@ -77,15 +104,19 @@ public class AccountOverlay : Sprite {
         _container.AddChild(logoutButton);
     }
     
-    private void OnLogout() {
+    private void OnLogout() 
+    {
         GlobalData.Logout();
 
-        if (_isTitle) {
-            GTween.Add(Tween.New(_container, Easing.SineInOut, 150, 0f, EaseType.Alpha, onFinish: () => {
+        if (_isTitle) 
+        {
+            GTween.Add(Tween.New(_container, Easing.SineInOut, 150, 0f, EaseType.Alpha, onFinish: () => 
+            {
                 CreateLogin();
                 GTween.Add(Tween.New(_container, Easing.SineInOut, 150, 1f, EaseType.Alpha));
             }));
-        } else {
+        } else 
+        {
             ScreenManager.FadeToScreen(new TitleScreen(), Easing.SineInOut, 500, 0x0);
         }
     }
