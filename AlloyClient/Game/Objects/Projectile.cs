@@ -750,9 +750,15 @@ public sealed class Projectile : IResettable
         var life = time - _startTime - _projDelayMs;
         var first = true;
         var prevPos = Vector2.Zero;
+        var lastAngle = _angle;
 
         for (var t = 0;  life <= _projProp.LifetimeMs; life += 50)
         {
+            // Orbiting ray projectiles (e.g. Sprite Wand trail) are single stamps at their own radius;
+            // sweeping their lifetime would redraw the other trail projectiles' positions.
+            if (_projProp.Orbiting && !first)
+                break;
+
             Vector2 pos = _projProp.RCSpeed > 0
                 ? PositionAtRayCastLine((float)life)
                 : PositionAt((float)life);
@@ -769,9 +775,18 @@ public sealed class Projectile : IResettable
                     break;
             }
             
-            var angle = first
-                ? _angle
-                : MathF.Atan2(pos.Y - prevPos.Y, pos.X - prevPos.X);
+            float angle;
+            if (first)
+                angle = _angle;
+            else if (_projProp.Orbiting)
+                angle = _spinAngle;
+            else
+            {
+                var delta = pos - prevPos;
+                angle = delta.LengthSquared > 0.000001f ? MathF.Atan2(delta.Y, delta.X) : lastAngle;
+            }
+
+            lastAngle = angle;
             prevPos = pos;
             first = false;
 

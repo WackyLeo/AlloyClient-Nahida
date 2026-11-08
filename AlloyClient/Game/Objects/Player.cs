@@ -905,18 +905,29 @@ public class Player : Entity
         var props = ObjectLibrary.TypeToObjectProps[item.ObjectType];
         var firstShot = true;
 
+        var arcGap = MathHelper.DegreesToRadians(props.ArcGap);
+        var totalProjectiles = 0;
+        foreach (var d in item.AllProjectiles)
+            totalProjectiles += Math.Max(1, d.NumProjectiles > 0 ? d.NumProjectiles : item.NumProjectiles);
+
+        var startAngle = attackAngle - arcGap * (totalProjectiles - 1) / 2f;
+        var slot = 0;
+
         for (var projID = 0; projID < item.AllProjectiles.Length; projID++)
         {
             var projDesc = item.AllProjectiles[projID];
+            var numProjectiles = Math.Max(1, projDesc.NumProjectiles > 0 ? projDesc.NumProjectiles : item.NumProjectiles);
 
             var interval = 0;
-            // Use projectile's RateOfFire if set (> 0), otherwise use item's RateOfFire
             if (!isAbility)
             {
                 var rateOfFire = projDesc.RateOfFire > 0 ? projDesc.RateOfFire : item.RateOfFire;
 
                 if (!ProjReady(projID, rateOfFire, curTime, out interval))
+                {
+                    slot += numProjectiles;
                     continue;
+                }
             }
 
             var projObjType = ObjectLibrary.IdToObjectType[projDesc.ObjectId];
@@ -925,13 +936,11 @@ public class Player : Entity
             if (!props.ProjectilesDict.TryGetValue(projDesc.BulletType, out var projProps))
                 projProps = props.Projectiles[0];
 
-            var numProjectiles = projDesc.NumProjectiles > 0 ? projDesc.NumProjectiles : item.NumProjectiles;
-            var arc = MathHelper.DegreesToRadians(props.ArcGap) * (numProjectiles - 1);
-            var startAngle = attackAngle - arc / 2;
-
             for (var p = 0; p < numProjectiles; p++)
             {
-                var angle = startAngle + MathHelper.DegreesToRadians(props.ArcGap) * p;
+                var angle = startAngle + arcGap * slot;
+                slot++;
+
                 var bId = isAbility ? GetBulletId2() : GetBulletId();
 
                 var rawDmg = Map.Random.NextIntRange((uint)projDesc.MinDamage, (uint)projDesc.MaxDamage);
