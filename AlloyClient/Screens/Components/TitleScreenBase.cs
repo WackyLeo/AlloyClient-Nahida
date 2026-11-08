@@ -2,6 +2,7 @@
 using AlloyClient.Display;
 using AlloyClient.State;
 using AlloyClient.Ui.Components.Buttons;
+using AlloyClient.Ui.Components.Graphics;
 using AlloyClient.UiLib.BuiltIn;
 using AlloyClient.UiLib.Core;
 using AlloyClient.UiLib.Enums;
@@ -23,7 +24,9 @@ public abstract class TitleScreenBase : Screen {
 
     private readonly SimpleText? _titleText;
 
-    protected TitleScreenBase(bool title = false) {
+    protected TitleScreenBase(bool title = false) 
+    {
+        AddChild(new ScreenGraphic());
         if (title) {
             _titleText = new SimpleText(new TextConfig {
                 Text = "meow",
@@ -42,7 +45,7 @@ public abstract class TitleScreenBase : Screen {
         AddChild(_music);
 
         //Todo guild/stars
-
+        
         Overlay = new AccountOverlay(title);
         Overlay.X = Settings.DefaultScreenWidth - 10;
         Overlay.Y = 10;

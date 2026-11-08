@@ -77,9 +77,6 @@ public static class AppRequests {
     public static async Task<AppResponse> PurchaseCharSlot() 
     {
         var login = GlobalData.Get<LoginData>();
-        
-        if (GlobalData.Overridden)
-            login = GlobalData.OverriddenGet<LoginData>();
 
         if (login is null) 
             return new AppResponse { Success = false, Message = "Not logged in" };
@@ -101,9 +98,6 @@ public static class AppRequests {
     {
         var login = GlobalData.Get<LoginData>() ?? LoginData.Default;
         
-        if (GlobalData.Overridden)
-            login = GlobalData.OverriddenGet<LoginData>();
-        
         if (login is null) 
             return new AppResponse { Success = false, Message = "Not logged in" };
 
@@ -120,6 +114,26 @@ public static class AppRequests {
         return result == string.Empty ? new AppResponse { Success = true } : new AppResponse { Success = false, Message = result };
     }
     
+    //Rename
+    public static async Task<AppResponse> RenameAccount(string newName)
+    {
+        var login = GlobalData.Get<LoginData>() ?? LoginData.Default;
+        
+        if (login is null) 
+            return new AppResponse { Success = false, Message = "Please log in to choose a name!" };
+
+        var data = BuildAccountRequestData(login.GUID, login.Password);
+        data.Add("name", newName);
+        
+        var response = await AppEngineClient.SendRequest("/account/setName", data, retries: 3);
+        
+        if (response == null)
+            return new AppResponse { Success = false, Message = "Failed to contact server." };
+        
+        var result = XElement.Parse(response).Value;
+        
+        return result == string.Empty ? new AppResponse { Success = true } : new AppResponse { Success = false, Message = result };
+    }
     //Fame
 
     public static async Task<AppResponse> GetCharList() 
@@ -141,17 +155,7 @@ public static class AppRequests {
         var charList = new CharacterListData(xml);
         var newsData = new NewsData(xml.Elements("News"));
         var servers = new ServerListData(xml.Element("Servers"));
-
-        if (GlobalData.Get<AccountData>().AccountId != newAccount.AccountId)
-        {
-            GlobalData.Overridden = true;
-            GlobalData.OverriddenAdd(newAccount);
-            GlobalData.OverriddenAdd(charList);
-            GlobalData.OverriddenAdd(newsData);
-            GlobalData.OverriddenAdd(servers);
-        }
         
-        GlobalData.Overridden = false;
         GlobalData.Add(newAccount);
         GlobalData.Add(charList);
         GlobalData.Add(newsData);

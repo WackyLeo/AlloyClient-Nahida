@@ -1,5 +1,4 @@
 using System;
-using System.Threading.Tasks;
 using AlloyClient.AppEngine;
 using AlloyClient.Data;
 using AlloyClient.Display;
@@ -8,7 +7,6 @@ using AlloyClient.Ui.Components.Dialogs;
 using AlloyClient.Ui.Components.Panels;
 using AlloyClient.UiLib.BuiltIn;
 using AlloyClient.UiLib.BuiltIn.Buttons;
-using AlloyClient.UiLib.Core;
 using AlloyClient.UiLib.Enums;
 using Common;
 
@@ -18,7 +16,7 @@ public class DeleteCharacterPromptContainer : Overlay
 {
     private static readonly Logger Log = new(typeof(Settings));
     
-    CharacterListScreen _characterListScreen;
+    private CharacterListScreen _characterListScreen;
     
     public DeleteCharacterPromptContainer(CharacterListScreen characterListScreen, Character character) 
     {

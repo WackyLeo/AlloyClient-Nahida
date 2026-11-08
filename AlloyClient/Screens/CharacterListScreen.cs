@@ -103,6 +103,10 @@ public class CharacterListScreen : TitleScreenBase {
             FontType = FontType.Bold,
             ActiveColor = 0xB3B3B3,
             InactiveColor = 0xB3B3B3,
+            OnClicked = () => 
+            {
+                OverlayManager.Set(new ChooseNameContainer(this));
+            },
             Anchor = UiAnchor.Middle,
         });
         AddChild(_nameText);
@@ -365,6 +369,11 @@ public class CharacterListScreen : TitleScreenBase {
             }
         });
         _scrollContainer.AddChild(_scrollBar);
+    }
+    
+    public void SetName(string newName)
+    {
+        _nameText.SetText(newName);
     }
 
     private void LoadGraveyardList() {

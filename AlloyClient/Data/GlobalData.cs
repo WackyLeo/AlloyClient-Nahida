@@ -17,8 +17,6 @@ public static class GlobalData
     
     public static ushort CharacterType;
 
-    public static bool Overridden = false;
-
     public static T Get<T>() where T : class, IGlobalData 
     {
         if (DataStorage.TryGetValue(typeof(T), out var data)) 
@@ -42,31 +40,6 @@ public static class GlobalData
     public static void Remove<T>() where T : class, IGlobalData 
     {
         DataStorage.Remove(typeof(T));
-    }
-    
-    public static T OverriddenGet<T>() where T : class, IGlobalData 
-    {
-        if (OverriddenDataStorage.TryGetValue(typeof(T), out var data)) 
-        {
-            return (T)data;
-        }
-
-        return null;
-    }
-
-    public static bool OverriddenContains<T>() where T : class, IGlobalData 
-    {
-        return OverriddenDataStorage.ContainsKey(typeof(T));
-    }
-
-    public static void OverriddenAdd<T>(T data) where T : class, IGlobalData 
-    {
-        OverriddenDataStorage[typeof(T)] = data;
-    }
-
-    public static void OverriddenRemove<T>() where T : class, IGlobalData 
-    {
-        OverriddenDataStorage.Remove(typeof(T));
     }
 
     public static void Logout() 
