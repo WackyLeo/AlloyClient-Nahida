@@ -109,6 +109,7 @@
     <Animated name="SR16x16skins2"           w="16" h="16" group="Full">SRAssets_SR16x16skins2Embed_.png</Animated>
     <Animated name="SR8x8skins2"             w="8"  h="8"  group="Full">SRAssets_SR8x8Skins2Embed_.png</Animated>
     <Animated name="playerskins"             w="8"  h="8"  group="Full">SRAssets_skins8x8Embed_.png</Animated>
+    <Animated name="skins8"                  w="8"  h="8"  group="Full">skins8x8.png</Animated>
 	
 	<Animated name="chars8x8rPets1"          w="8"  h="8" >EmbeddedAssets_chars8x8rPets1Embed_.png</Animated>
     <Animated name="chars8x8rPets2"          w="8"  h="8" >EmbeddedAssets_chars8x8rPets2Embed_.png</Animated>
@@ -196,7 +197,6 @@
     <Image name="prodSkins16"                w="16" h="16" group="Full">ProdSkins16.png</Image>
     <Image name="SCchars8x8"                 w="8"  h="8"  group="Full">SCchars8x8.png</Image>
     <Image name="SCchars16x16"               w="16" h="16" group="Full">SCchars16x16.png</Image>
-    <Image name="skins8"                     w="8"  h="8"  group="Full">skins8x8.png</Image>
     <Image name="swmpMobs8"                  w="8"  h="8" >swmpMobs8.png</Image>
     <Image name="swmpMobs16"                 w="16" h="16">swmpMobs16.png</Image>
     <Image name="masks8"                     w="8"  h="8"  group="Full">masks8x8.png</Image>
@@ -204,7 +204,6 @@
     <Image name="Feroziumenemies16x16"       w="16" h="16">Feroziumenemies16x16.png</Image>
     <Image name="EternaBird16"               w="16" h="16" group="Full">_EternaBird.png</Image>
     <Image name="Hopeswing8"                 w="8"  h="8"  group="Full">_hopeswingskin.png</Image>
-    <Image name="skins8"                     w="8"  h="8"  group="Full">skins8x8.png</Image>
     <Image name="SR32x32charsTrue"           w="32" h="32" group="Full">SR32x32chars.png</Image>
     <Image name="talkingmoraa8"              w="32" h="32">talkingmoraa.png</Image>
     <Image name="DreamBosses"                w="16" h="16">DreamBosses.png</Image>
