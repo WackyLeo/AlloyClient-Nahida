@@ -31,7 +31,6 @@ public class ItemDesc
     public readonly bool LTBoosted;
     public readonly int MpCost;
     public readonly int MpEndCost;
-    public readonly int NextCount;
     public readonly int NumProjectiles;
     public readonly string ObjectId;
     public readonly ushort ObjectType;
@@ -48,7 +47,6 @@ public class ItemDesc
 
     public readonly string Sound;
     public readonly bool ST;
-    public readonly int StartCount;
     public readonly bool Channel;
     public readonly bool ChannelSize;
     public readonly int Cap;
@@ -113,7 +111,6 @@ public class ItemDesc
         AutoEffects = xml.Elements("Auto").Select(i => new ActivateEffectDesc(i)).ToArray();
         Projectiles = xml.HasElement("Projectile") ? new ProjectileDesc(xml.Element("Projectile")) : null;
 
-        StartCount = xml.GetValue<int>("StartCount");
         TributePoints = xml.GetValue<int>("tributePoints");
         Div = xml.HasElement("DIV");
         UnHoly = xml.HasElement("Unholy");
@@ -125,7 +122,6 @@ public class ItemDesc
         MultiPhase = xml.HasElement("MultiPhase");
         Auto = xml.HasElement("Auto");
 
-        NextCount = xml.GetValue("NextCount", 99999);
         AllProjectiles = xml.Elements("Projectile")
             .Select(p => new ProjectileDesc(p))
             .ToArray();
@@ -286,6 +282,7 @@ public class ActivateEffectDesc
     public readonly bool RemoveSelf;
     public readonly int Stats;
     public readonly float WisScale;
+    public readonly int Cap;
 
     public readonly int TotalDamage;
 
@@ -319,6 +316,7 @@ public class ActivateEffectDesc
         RemoveSelf = xml.GetAttribute<bool>("removeSelf");
         DungeonName = xml.GetAttribute<string>("dungeonName");
         LockedName = xml.GetAttribute<string>("lockedName");
+        Cap = xml.GetAttribute<int>("cap", 1000);
         
         if (xml.HasAttribute("wisScale"))
             WisScale = xml.GetAttribute<float>("wisScale");
