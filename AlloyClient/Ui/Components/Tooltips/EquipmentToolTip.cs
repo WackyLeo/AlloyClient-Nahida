@@ -3,7 +3,6 @@ using System.Linq;
 using AlloyClient.Assets.Libraries;
 using AlloyClient.Assets.XmlStructs;
 using AlloyClient.Game;
-using AlloyClient.Game.Objects;
 using AlloyClient.Game.Objects.Util;
 using AlloyClient.Ui.Components.Elements;
 using AlloyClient.UiLib.BuiltIn;
@@ -12,7 +11,7 @@ using AlloyClient.Utils;
 
 namespace AlloyClient.Ui.Components.Tooltips;
 
-public sealed class EquipmentToolTip : Tooltip 
+public sealed class EquipmentToolTip : Tooltip
 {
     private const uint BgDefault = 0xFF363636u;
     private const uint BgUnusable = 0xFF5C1D1Du;
@@ -36,7 +35,7 @@ public sealed class EquipmentToolTip : Tooltip
 
     public EquipmentToolTip(ItemDesc itemDesc) : base(260, 100,
         IsUsableByPlayer(itemDesc) ? BgDefault : BgUnusable,
-        IsUsableByPlayer(itemDesc) ? BgOutlineDefault : BgOutlineUnusable) 
+        IsUsableByPlayer(itemDesc) ? BgOutlineDefault : BgOutlineUnusable)
     {
         _itemDesc = itemDesc;
         _currentY = 10;
@@ -62,8 +61,8 @@ public sealed class EquipmentToolTip : Tooltip
     private float CalcDps(ItemDesc item, int defense)
     {
         if (item?.AllProjectiles == null || item.AllProjectiles.Length == 0) return 0f;
-        if (Map.LocalPlayer == null) return 0f; 
-        
+        if (Map.LocalPlayer == null) return 0f;
+
         var attackFreq = 0.0015f + Map.LocalPlayer.Dexterity / 250f * (0.008f - 0.0015f);
         var shotsPerSec = 1000f * attackFreq * item.RateOfFire / 1.02f;
 
@@ -77,13 +76,14 @@ public sealed class EquipmentToolTip : Tooltip
             {
                 var splitId = ObjectLibrary.IdToObjectType[proj.SplitShots.Id];
                 var splitType = ObjectLibrary.TypeToObjectProps[splitId];
-                
+
                 // TODO: Update this so it's not hardcoded to Projectile index 0
-                avgRawDmg += ((splitType.Projectiles[0].MinDamage + splitType.Projectiles[0].MaxDamage) / 2f * proj.SplitShots.Count) *  proj.HitAmount;
+                avgRawDmg +=
+                    ((splitType.Projectiles[0].MinDamage + splitType.Projectiles[0].MaxDamage) / 2f *
+                     proj.SplitShots.Count) * proj.HitAmount;
             }
-            
         }
-        
+
         avgRawDmg /= item.AllProjectiles.Count(e => !e.OmitText);
 
         var dmgMult = 0.5f + (Map.LocalPlayer.Attack / 250f * 1.5f);
@@ -97,10 +97,10 @@ public sealed class EquipmentToolTip : Tooltip
         return dmgAfterDef * item.NumProjectiles * shotsPerSec;
     }
 
-    private void SetComparison(int slotType) 
+    private void SetComparison(int slotType)
     {
         var curSlotIndex = 0;
-        for (curSlotIndex = 0; curSlotIndex < 4; curSlotIndex++) 
+        for (curSlotIndex = 0; curSlotIndex < 4; curSlotIndex++)
         {
             if (curSlotIndex == 0 && slotType == 0)
                 break;
@@ -112,10 +112,10 @@ public sealed class EquipmentToolTip : Tooltip
         if (Map.LocalPlayer.Equipment[curSlotIndex] != null) _compareItemDesc = Map.LocalPlayer.Equipment[curSlotIndex];
     }
 
-    private void AddHeader() 
+    private void AddHeader()
     {
         var obj = _itemDesc.ObjectType;
-        var icon = new ObjectRect(new ObjectRectConfig 
+        var icon = new ObjectRect(new ObjectRectConfig
         {
             Texture = TextureHelper.FromGameAtlas(obj <= 0 ? (ushort)0x0096 : obj),
             Width = 36,
@@ -141,38 +141,8 @@ public sealed class EquipmentToolTip : Tooltip
         title.Y = titleY;
         AddChild(title);
 
-        if (!_itemDesc.Consumable && _itemDesc.SlotType != 10) 
+        if (!_itemDesc.Consumable && _itemDesc.SlotType != 10)
         {
-            ushort divIcon = 0;
-            if (!string.IsNullOrEmpty(_itemDesc.Divinity))
-                switch (_itemDesc.Divinity) 
-                {
-                    case "Azamoth": divIcon = 4568; break;
-                    case "Serleon": divIcon = 4569; break;
-                    case "Arcanios": divIcon = 4570; break;
-                    case "Celeste": divIcon = 4571; break;
-                    case "Singigna": divIcon = 4572; break;
-                    case "Neracia": divIcon = 4573; break;
-                    case "Siera": divIcon = 4574; break;
-                    case "Paradox": divIcon = 3058; break;
-                }
-
-            if (divIcon != 0) 
-            {
-                var divinityIcon = new ObjectRect(new ObjectRectConfig 
-                {
-                    Texture = TextureHelper.FromGameAtlas(divIcon),
-                    Width = 36,
-                    Height = 36,
-                    OutlineEnabled = true,
-                    GlowEnabled = true
-                });
-
-                divinityIcon.X = ToolWidth - divinityIcon.Width - 10;
-                divinityIcon.Y = 10;
-                AddChild(divinityIcon);
-            }
-
             var tierTag = new TierText(_itemDesc);
             tierTag.X = ToolWidth - 28 - tierTag.Width / 2;
             tierTag.Y = _currentY + 12;
@@ -182,17 +152,17 @@ public sealed class EquipmentToolTip : Tooltip
         _currentY = Math.Max(titleY + title.Height, 10 + 44) + 4;
     }
 
-    private void AddDescription() 
+    private void AddDescription()
     {
         if (string.IsNullOrEmpty(_itemDesc.Description)) return;
         AddTextLine(_itemDesc.Description, ColorDefault, FontType.Bold, 14, 12, null, ToolWidth - 24, 0.0f);
     }
 
-    private void AddLineBreak() 
+    private void AddLineBreak()
     {
         _currentY += 2;
 
-        var line = new DiamondDivider(new DiamondDividerConfig 
+        var line = new DiamondDivider(new DiamondDividerConfig
         {
             LineLength = ToolWidth - 36,
             LineThickness = 2,
@@ -207,12 +177,12 @@ public sealed class EquipmentToolTip : Tooltip
         _currentY += 12;
     }
 
-    private void AddCombatStats() 
+    private void AddCombatStats()
     {
         if (_itemDesc.Doses > 0) AddSplitRow("Doses: ", $"{_itemDesc.Doses}", ColorKhaki);
         if (_itemDesc.Quantity > 0) AddSplitRow("Quantity: ", $"{_itemDesc.Quantity}", ColorKhaki);
 
-        if (_itemDesc.NumProjectiles > 1) 
+        if (_itemDesc.NumProjectiles > 1)
         {
             AddTextLine($"Projectiles: {_itemDesc.NumProjectiles}", ColorDefault, FontType.Bold, 14);
 
@@ -221,23 +191,15 @@ public sealed class EquipmentToolTip : Tooltip
             var i = 0;
         }
 
-        if (_itemDesc.AllProjectiles != null && _itemDesc.AllProjectiles.Length > 0) 
+        if (_itemDesc.AllProjectiles != null && _itemDesc.AllProjectiles.Length > 0)
         {
-
-            foreach (var activateEffect in _itemDesc.ActivateEffects) {
-                if (activateEffect.Effect == "BulletNova") 
-                {
-                    var numShots = activateEffect.Amount > 0 ? activateEffect.Amount : 20;
-                    AddTextLine($"Projectiles: {numShots}", ColorDefault, FontType.Bold, 14);
-                }
-            }
             var proj = _itemDesc.AllProjectiles[0];
 
             var dmgClr = _usable ? ColorGreen : ColorKhaki;
             var curDmg = (proj.MinDamage + proj.MaxDamage) / 2;
 
-            if (_usable && _compareItemDesc != null && _compareItemDesc.AllProjectiles.Length > 0) {
-                
+            if (_usable && _compareItemDesc != null && _compareItemDesc.AllProjectiles.Length > 0)
+            {
                 var comparProj = _compareItemDesc.AllProjectiles[0];
                 var compDmg = (comparProj.MinDamage + comparProj.MaxDamage) / 2;
 
@@ -252,32 +214,12 @@ public sealed class EquipmentToolTip : Tooltip
             var dmgStr = proj.MinDamage == proj.MaxDamage
                 ? $"{proj.MinDamage}"
                 : $"{proj.MinDamage} - {proj.MaxDamage}";
-            
-            foreach (var activateEffect in _itemDesc.ActivateEffects) 
-            {
-                if (activateEffect.WisScale > 0) 
-                {
-                    int minDamageScaled = 0;
-                    int maxDamageScaled = 0;
-                    
-                    if (proj.MinDamage == proj.MaxDamage)
-                        minDamageScaled = GetStatScaleDamage(proj.MinDamage, activateEffect.WisScale);
-                    else 
-                    {
-                        minDamageScaled = GetStatScaleDamage(proj.MinDamage, activateEffect.WisScale);
-                        maxDamageScaled = GetStatScaleDamage(proj.MaxDamage, activateEffect.WisScale);
-                    }
-
-                    dmgStr = $"{proj.MinDamage + minDamageScaled} - {proj.MaxDamage + maxDamageScaled}";
-                }
-            }
-            
             AddSplitRow("Damage: ", dmgStr, dmgClr);
 
             var rangeClr = _usable ? ColorGreen : ColorKhaki;
             var range = proj.Speed * proj.LifetimeMS / 10000f;
 
-            if (_usable && _compareItemDesc != null && _compareItemDesc.AllProjectiles.Length > 0) 
+            if (_usable && _compareItemDesc != null && _compareItemDesc.AllProjectiles.Length > 0)
             {
                 var comparProj = _compareItemDesc.AllProjectiles[0];
                 var compRange = comparProj.Speed * comparProj.LifetimeMS / 10000f;
@@ -293,7 +235,7 @@ public sealed class EquipmentToolTip : Tooltip
             AddSplitRow("Range: ", $"{MathF.Round(range, 1):0.0}", rangeClr);
 
             var rateClr = _usable ? ColorGreen : ColorKhaki;
-            if (_usable && _compareItemDesc != null) 
+            if (_usable && _compareItemDesc != null)
             {
                 if (_itemDesc.RateOfFire > _compareItemDesc.RateOfFire)
                     rateClr = ColorGreen;
@@ -311,11 +253,11 @@ public sealed class EquipmentToolTip : Tooltip
 
             var dps0 = CalcDps(_itemDesc, 0);
             var dps75 = CalcDps(_itemDesc, 75);
-            if (dps0 > 0) 
+            if (dps0 > 0)
             {
                 var dpsGreenClr = ColorKhaki;
                 var dpsPurpleClr = 0xCC88FFu;
-                if (_usable && _compareItemDesc != null) 
+                if (_usable && _compareItemDesc != null)
                 {
                     var compDps0 = CalcDps(_compareItemDesc, 0);
                     dpsGreenClr = dps0 > compDps0 ? ColorGreen : dps0 < compDps0 ? ColorRed : ColorKhaki;
@@ -355,21 +297,12 @@ public sealed class EquipmentToolTip : Tooltip
         if (_itemDesc.MpCost > 0) AddSplitRow("Cooldown: ", $"{_itemDesc.Cooldown} Seconds", ColorKhaki);
     }
 
-    private int GetStatScaleDamage(int value, float scale) 
-    {
-        float totalStat = Map.LocalPlayer.Wisdom + Map.LocalPlayer.WisdomBoost;
-        
-        var mult = ((value * totalStat * scale) / 100) + value;
-
-        return (int)mult;
-    }
-
-    private void AddActivateEffects() 
+    private void AddActivateEffects()
     {
         if (_itemDesc.ActivateEffects == null) return;
 
         foreach (var act in _itemDesc.ActivateEffects)
-            switch (act.Effect) 
+            switch (act.Effect)
             {
                 case "Heal":
                     AddTextLine($"+{act.Amount} HP", ColorGreen, FontType.Bold, 14);
@@ -441,44 +374,47 @@ public sealed class EquipmentToolTip : Tooltip
             }
     }
 
-    private void AddExtraTooltipData() 
+    private void AddExtraTooltipData()
     {
         if (_itemDesc.ExtraTooltipData == null || _itemDesc.ExtraTooltipData.Length == 0) return;
 
-        foreach (var extraData in _itemDesc.ExtraTooltipData) 
+        foreach (var extraData in _itemDesc.ExtraTooltipData)
         {
             var desc = extraData.Description?.Replace("\\n", "\n").Trim();
-            if (!string.IsNullOrEmpty(extraData.Name) && !string.IsNullOrEmpty(desc)) 
+            if (!string.IsNullOrEmpty(extraData.Name) && !string.IsNullOrEmpty(desc))
             {
-                if (desc.Length <= 24 && !desc.Contains('\n')) 
+                if (desc.Length <= 24 && !desc.Contains('\n'))
                 {
                     AddSplitRow($"{extraData.Name}: ", desc, ColorKhaki);
-                } else 
+                }
+                else
                 {
                     AddTextLine($"{extraData.Name}:", ColorDefault, FontType.Bold, 14, maxWidth: ToolWidth - 24);
                     AddTextLine(desc, ColorKhaki, FontType.Bold, 14, maxWidth: ToolWidth - 24);
                 }
-            } else if (!string.IsNullOrEmpty(desc)) 
+            }
+            else if (!string.IsNullOrEmpty(desc))
             {
                 AddTextLine(desc, ColorKhaki, FontType.Bold, 14, maxWidth: ToolWidth - 24);
-            } else if (!string.IsNullOrEmpty(extraData.Name)) 
+            }
+            else if (!string.IsNullOrEmpty(extraData.Name))
             {
                 AddTextLine(extraData.Name, ColorDefault, FontType.Bold, 14, maxWidth: ToolWidth - 24);
             }
         }
     }
 
-    private void AddEquipStats() 
+    private void AddEquipStats()
     {
-        if (_itemDesc.StatBoosts != null && _itemDesc.StatBoosts.Length > 0) 
+        if (_itemDesc.StatBoosts != null && _itemDesc.StatBoosts.Length > 0)
         {
             AddTextLine("On Equip:", ColorDefault, FontType.Bold, 14);
-            for (var i = 0; i < _itemDesc.StatBoosts.Length; i++) 
+            for (var i = 0; i < _itemDesc.StatBoosts.Length; i++)
             {
                 var stat = _itemDesc.StatBoosts[i];
                 var prefix = stat.Amount >= 0 ? "+" : "";
                 var color = _usable ? stat.Amount >= 0 ? ColorGreen : ColorRed : ColorKhaki;
-                if (_usable && _compareItemDesc != null) 
+                if (_usable && _compareItemDesc != null)
                 {
                     var amount = -1;
                     foreach (var stat2 in _compareItemDesc.StatBoosts)
@@ -498,7 +434,7 @@ public sealed class EquipmentToolTip : Tooltip
             }
         }
 
-        if (_itemDesc.FameBonus > 0) 
+        if (_itemDesc.FameBonus > 0)
         {
             var color = _usable ? ColorGreen : ColorKhaki;
 
@@ -509,26 +445,21 @@ public sealed class EquipmentToolTip : Tooltip
         }
     }
 
-    private void AddRestrictions() 
+    private void AddRestrictions()
     {
         if (_itemDesc.Soulbound) AddTextLine("Soulbound", ColorDefault, FontType.Bold, 14);
 
         if (!string.IsNullOrEmpty(_itemDesc.SetName))
             AddTextLine($"This item is a part of {_itemDesc.SetName}", 0xFF9900, FontType.Bold, 14);
 
-        if (_itemDesc.SlotType != 0 && _itemDesc.SlotType != 10) 
+        if (_itemDesc.SlotType != 0 && _itemDesc.SlotType != 10)
         {
-            AddTextLine("Must be equipped to use", ColorDefault, FontType.Bold, 14);
-            AddTextLine("Double-Click to equip", ColorDefault, FontType.Bold, 14);
-
             var usableClass = string.IsNullOrEmpty(_itemDesc.Class) ? "Any" : _itemDesc.Class;
             AddTextLine($"Usable by: {usableClass}", ColorDefault, FontType.Bold, 14);
         }
 
-        /*if (_itemDesc.EquipRequirements != null)
-         {
-            foreach (var req in _itemDesc.EquipRequirements) 
-            {
+        /*if (_itemDesc.EquipRequirements != null) {
+            foreach (var req in _itemDesc.EquipRequirements) {
                 bool meetsReq = true;
                 var color = meetsReq ? ColorDefault : ColorRed;
                 AddTextLine($"Requires {StatsUtil.FromId(req.Stat)} of {req.Value}", color, FontType.Bold, 14);
@@ -536,39 +467,19 @@ public sealed class EquipmentToolTip : Tooltip
         }*/
     }
 
-    private uint GetDivinityColour(string divinity) 
+    private void AddTribute()
     {
-        switch (divinity) 
-        {
-            case "Azamoth": return 0xC06B00;
-            case "Serleon": return 0xE4E300;
-            case "Arcanios": return 0xE400D8;
-            case "Celeste": return 0x160040;
-            case "Singigna": return 0x130017;
-            case "Neracia": return 0x08C037;
-            case "Siera": return 0x8F8894;
-            case "Paradox": return 0xFFFFFF;
-        }
-
-        return 0xffffffffu;
-    }
-
-    private void AddTribute() 
-    {
-        if (_itemDesc.TributePoints > 0) 
+        if (_itemDesc.TributePoints > 0)
         {
             _currentY += 4;
 
-            var clr = GetDivinityColour(_itemDesc.Divinity);
-            AddTextLine($"Sacrificial Value: {_itemDesc.TributePoints}", clr, FontType.Bold, 14);
+            AddTextLine($"Sacrificial Value: {_itemDesc.TributePoints}", 0xFFFFFF, FontType.Bold, 14);
 
-            if (!string.IsNullOrEmpty(_itemDesc.Divinity))
-                AddTextLine($"({_itemDesc.Divinity})", clr, FontType.Bold, 14);
         }
     }
 
     private SimpleText AddTextLine(string text, uint color, FontType font, int fontSize, int xOffset = 12,
-        int? yOverride = null, int maxWidth = 320, float glow = 0.5f, int effect = 0) 
+        int? yOverride = null, int maxWidth = 320, float glow = 0.5f, int effect = 0)
     {
         var config = SimpleConfig(text, fontSize, font, color, 0x000000, 0f, maxWidth, glow, effect);
         config.X = xOffset;
@@ -581,8 +492,8 @@ public sealed class EquipmentToolTip : Tooltip
         return st;
     }
 
-    private void AddSplitRow(string label, string value, uint valueColor, bool increaseY = true) {
-        
+    private void AddSplitRow(string label, string value, uint valueColor, bool increaseY = true)
+    {
         var lbl = new SimpleText(SimpleConfig(label, 14, FontType.Bold, ColorDefault, thickness: 0f, glow: 0.5f));
         lbl.X = 12;
         lbl.Y = _currentY;
@@ -603,9 +514,9 @@ public sealed class EquipmentToolTip : Tooltip
 
     public static TextConfig SimpleConfig(string text = "", int size = 14, FontType type = FontType.Bold,
         uint color = 0xFFFFFFFFu, uint outline = 0xFF000000u, float thickness = 1f,
-        int maxWidth = 320, float glow = 0.5f, int effect = 0) 
+        int maxWidth = 320, float glow = 0.5f, int effect = 0)
     {
-        return new TextConfig 
+        return new TextConfig
         {
             FontSize = size,
             FontType = type,
@@ -619,7 +530,7 @@ public sealed class EquipmentToolTip : Tooltip
         };
     }
 
-    private static bool IsUsableByPlayer(ItemDesc itemDesc) 
+    private static bool IsUsableByPlayer(ItemDesc itemDesc)
     {
         if (Map.LocalPlayer == null || itemDesc == null) return true;
         if (itemDesc.ObjectType == 0) return false;
@@ -635,10 +546,5 @@ public sealed class EquipmentToolTip : Tooltip
                 return true;
 
         return false;
-    }
-
-    private enum StatTextColors 
-    {
-        wisdom = 0x0044ff
     }
 }
