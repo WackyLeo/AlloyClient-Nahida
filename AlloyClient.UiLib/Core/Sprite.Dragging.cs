@@ -6,7 +6,8 @@ using AlloyClient.UiLib.Enums;
 
 namespace AlloyClient.UiLib.Core;
 
-public partial class Sprite {
+public partial class Sprite 
+{
     
     private static Sprite _dragSprite;
     private static Type _dropType;
@@ -19,14 +20,17 @@ public partial class Sprite {
 
     public void StartDrag() => StartDrag<Sprite>();
 
-    public void StartDrag<T>() where T : Sprite {
+    public void StartDrag<T>() where T : Sprite 
+    {
         if (_dragSprite != null)
             _dragSprite._isDragging = false;
         
         var pos = MouseInput.GetMousePosition();
-        pos.X -= _trueX;
-        pos.Y -= _trueY;
-
+        var trueXMid = _trueX + (Width / 2);
+        var trueYMid = _trueY + (Height / 2);
+        pos.X -= _trueX + (pos.X - trueXMid);
+        pos.Y -= _trueY + (pos.Y - trueYMid);
+        Console.WriteLine($"Mouse: {pos.X}");
         pos = pos.Scale(Scale);
         
         _dragOffset = new Vector2i((int)(pos.X / _trueScale.X), (int)(pos.Y / _trueScale.Y));
@@ -36,12 +40,14 @@ public partial class Sprite {
         _dropType = typeof(T);
     }
 
-    public void EndDrag() {
+    public void EndDrag() 
+    {
         _isDragging = false;
         GetDragTarget();
     }
 
-    private void GetDragTarget() {
+    private void GetDragTarget() 
+    {
         if (_dragSprite == null) return;
         if (_dragSprite._isDragging) return;
 
@@ -49,7 +55,8 @@ public partial class Sprite {
         var current = this;
         var next = this;
 
-        while (next != null) {
+        while (next != null) 
+        {
             next = next.Parent;
 
             if (next != null)
@@ -63,7 +70,8 @@ public partial class Sprite {
         _dropType = null;
     }
 
-    private void DropCheck(Vector2i pos, ref Sprite target) {
+    private void DropCheck(Vector2i pos, ref Sprite target) 
+    {
         if (!Visible || !IsInBounds(pos) || this == _dragSprite)
             return;
         
@@ -71,7 +79,8 @@ public partial class Sprite {
             target = this;
 
         var span = GetChildrenSpan();
-        foreach (var child in span) {
+        foreach (var child in span) 
+        {
             child.DropCheck(pos, ref target);
         }
     }
