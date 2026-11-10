@@ -673,6 +673,7 @@ public class Player : Entity
     {
         base.UpdateStats(statData, offset, count);
 
+        var backpackAdded = false;
     #region Parse StatData
 
         for (var i = 0; i < count; i++)
@@ -780,10 +781,9 @@ public class Player : Entity
                     SetPlayerSkinTemplate(Skin);
                     break;
                 case StatsType.HasBackpack:
-                    var didHaveBackpack = HasBackPack;
+                    var hadBackpack = HasBackPack;
                     HasBackPack = stat.Value != 0;
-                    if (!didHaveBackpack && HasBackPack)
-                        TabStrip.OnBackpackAdded.Dispatch();
+                    backpackAdded |= !hadBackpack && HasBackPack;
                     break;
                 case StatsType.MaxShield:
                     MaxShield = stat.Value;
@@ -825,6 +825,9 @@ public class Player : Entity
 
                     break;
             }
+            
+            if (backpackAdded && Map.LocalPlayer == this)
+                TabStrip.OnBackpackAdded.Dispatch();
         }
 
     #endregion
