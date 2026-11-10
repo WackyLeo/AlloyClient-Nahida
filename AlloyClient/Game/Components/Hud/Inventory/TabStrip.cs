@@ -36,6 +36,7 @@ public sealed class TabStrip : Sprite {
     public int currentTabIndex = 1;
     
     public static readonly Signal OnSwitchTabsDown = new();
+    public static readonly Signal OnBackpackAdded = new();
 
     private CutEdgeRect invTab;
     private IconButton invTabButton;
@@ -59,11 +60,13 @@ public sealed class TabStrip : Sprite {
     private void AddHandlers() 
     {
         OnSwitchTabsDown.Add(SwitchTabs);
+        OnBackpackAdded.Add(Update);
     }
 
     private void RemoveHandlers() 
     {
         OnSwitchTabsDown.Remove(SwitchTabs);
+        OnBackpackAdded.Remove(Update);
     }
 
     private void Update() {

@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using AlloyClient.Assets.Libraries;
 using AlloyClient.Game.Components;
+using AlloyClient.Game.Components.Hud.Inventory;
 using AlloyClient.Game.Objects.Enums;
 using AlloyClient.Game.Objects.Util;
 using AlloyClient.Networking;
@@ -780,8 +780,10 @@ public class Player : Entity
                     SetPlayerSkinTemplate(Skin);
                     break;
                 case StatsType.HasBackpack:
+                    var didHaveBackpack = HasBackPack;
                     HasBackPack = stat.Value != 0;
-                    // add backpack signal
+                    if (!didHaveBackpack && HasBackPack)
+                        TabStrip.OnBackpackAdded.Dispatch();
                     break;
                 case StatsType.MaxShield:
                     MaxShield = stat.Value;

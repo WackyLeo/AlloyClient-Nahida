@@ -578,6 +578,14 @@ public sealed class ItemTile : Sprite {
         packet.UseType = useType;
         packet.ProjId = Map.LocalPlayer.ReadServerId();
 
+        if (objectType == 0xc6c && Map.LocalPlayer.HasBackPack)
+        {
+            Audio.PlaySfx("error");
+            return;
+        } else
+        {
+            Audio.PlaySfx("use_potion");
+        }
         Client.QueuePacket(packet);
     }
 
