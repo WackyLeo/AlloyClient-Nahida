@@ -299,7 +299,7 @@ public sealed class ItemTile : Sprite {
 
     private int GetNextAvailableInventorySlot() {
         if (Map.LocalPlayer == null) return -1;
-        for (var i = 4; i < 12; i++)
+        for (var i = 4; i < 20; i++)
             if (Map.LocalPlayer.Equipment.Length > i) {
                 var item = Map.LocalPlayer.Equipment[i];
                 if (item == null || item.ObjectType == 0) return i;
