@@ -25,14 +25,14 @@ public static class Settings {
     public const string BuildLabel = $"Version {BuildVersion}";
 
     private const string AppEngineAddress = "127.0.0.1"; // 76.92.234.253
-    private const string AppEnginePort = "61005"; // 65001
+    private const string AppEnginePort = "61005";
 
     public const string AppEngineUrl = $"http://{AppEngineAddress}:{AppEnginePort}";
     public const int AppEngineTimeout = 10000;
 
     // World-Engine connection info
     public const string GameServerAddress = "127.0.0.1"; // 76.92.234.253
-    public const ushort GameServerPort = 2053; // 26959
+    public const ushort GameServerPort = 2053;
 
     // Screen-Information
     public const int DefaultScreenWidth = 1280;
