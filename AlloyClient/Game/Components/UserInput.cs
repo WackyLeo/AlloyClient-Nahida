@@ -288,8 +288,8 @@ public sealed class UserInput : Sprite
             }
                 break;
             case true when Settings.Escape.CheckValue(key):
-                Client.Disconnect();
-                Map.Reset();
+                Client.QueuePacket(Escape.CreatePacket());
+                //Map.Reset();
                 break;
             case true when Settings.Interact.CheckValue(key):
                 if (Client.IsReconnecting)
