@@ -11,8 +11,8 @@ namespace AlloyClient.Game.Components.Options;
 public class OptionTabView : Container {
     private static readonly string[] OnOffLabels = ["On", "Off"];
     private static readonly object[] OnOffValues = [true, false];
-    private static readonly string[] RotateMultLabels = ["1x", "1.125x", "1.25x"];
-    private static readonly object[] RotateMultValues = [1f, 1.125f, 1.25f];
+    private static readonly string[] RotateMultLabels = ["1x","1.125", "1.25x", "1.5x"];
+    private static readonly object[] RotateMultValues = [1f, 1.125, 1.25f, 1.5f];
 
     private readonly Container _container;
     private readonly List<Option> _options = [];
