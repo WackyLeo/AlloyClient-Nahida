@@ -10,48 +10,45 @@ using AlloyClient.Utils;
 
 namespace AlloyClient.Game.Components.Hud.Inventory;
 
-public sealed class TabStrip : Sprite {
-
+public sealed class TabStrip : Sprite 
+{
+    public const uint BackgroundColor = 7039594;
+    public const uint SelectedTabColor = 2368034;
+    
     private readonly Entity _owner;
-    private readonly CutEdgeRect AdminTab;
-    private readonly IconButton AdminTabButton;
-    private readonly uint BackgroundColor = 7039594;
-    private readonly CutEdgeRect BackpackTab;
-    private readonly IconButton BackpackTabButton;
-    private readonly CutEdgeRect CosmeticTab;
-    private readonly IconButton CosmeticTabButton;
-
-    private readonly CutEdgeRect InventoryTab;
-
-    private readonly IconButton InventoryTabButton;
-    private readonly CutEdgeRect StatsViewTab;
-    private readonly IconButton StatsViewTabButton;
-
-    private readonly uint TabColor = 2368034;
-    private InventoryGrid _backpackPanel;
-
-    private InventoryGrid _inventoryGrid;
-    private StatsPanel _statsPanel;
-
-    public int currentTabIndex = 1;
+    private InventoryGrid _inventoryTab;
+    private IconButton _inventoryTabButton;
+    private StatsPanel _statsTab;
+    private IconButton _statsTabButton;
+    private InventoryGrid _backpackTab;
+    private IconButton _backpackTabButton;
+    private CutEdgeRect _cosmeticTab;
+    private IconButton _cosmeticTabButton;
+    private CutEdgeRect _adminTab;
+    private IconButton _adminTabButton;
+    
+    private CutEdgeRect _invTabButtonBg;
+    private IconButton _invTabButton;
+    
+    public int CurrentTabIndex;
+    
+    private readonly Dictionary<int, Tab> _tabs = new();
+    private readonly Dictionary<int, TabTypes> _tabsTypes = new() 
+    {
+        { (int)TabTypes.Inventory, TabTypes.Inventory }, //Key is 1
+        { (int)TabTypes.StatsView, TabTypes.StatsView } //Key is 2
+    };
     
     public static readonly Signal OnSwitchTabsDown = new();
     public static readonly Signal OnBackpackAdded = new();
 
-    private CutEdgeRect invTab;
-    private IconButton invTabButton;
-
-    private readonly Dictionary<int, TabTypes> Tabs = new() {
-        { (int)TabTypes.Inventory, TabTypes.Inventory }, //Key is 1
-        { (int)TabTypes.StatsView, TabTypes.StatsView } //Key is 2
-    };
-
-    public TabStrip(Entity owner) {
+    public TabStrip(Entity owner) 
+    {
         _owner = owner;
 
-        currentTabIndex = (int)TabTypes.Inventory;
+        CurrentTabIndex = (int)TabTypes.Inventory;
         
-        Update();
+        Initialize();
         
         AddEventListener(Event.AddedToStage, AddHandlers);
         AddEventListener(Event.RemovedFromStage, RemoveHandlers);
@@ -60,123 +57,145 @@ public sealed class TabStrip : Sprite {
     private void AddHandlers() 
     {
         OnSwitchTabsDown.Add(SwitchTabs);
-        OnBackpackAdded.Add(Update);
+        OnBackpackAdded.Add(Initialize);
     }
 
     private void RemoveHandlers() 
     {
         OnSwitchTabsDown.Remove(SwitchTabs);
-        OnBackpackAdded.Remove(Update);
+        OnBackpackAdded.Remove(Initialize);
     }
 
-    private void Update() {
-        var Y = -24;
-        var X = 6;
+    private void Initialize() 
+    {
+        var X = 6; // For initial tab button offset
 
-        if (Map.LocalPlayer.HasBackPack && !Tabs.ContainsKey(3)) {
+        if (Map.LocalPlayer.HasBackPack && !_tabsTypes.ContainsKey(3)) 
+        {
             AddTab(TabTypes.Backpack);
         }
 
         //AddTab(TabTypes.Cosmetics);
 
-        /*if (false) {
+        /*if (false)
+         {
             AddTab(TabTypes.Admin);
         }*/
         RemoveChildren(); //Remove All Panels
         _owner.InventoryUpdate.RemoveAll(); //Remove InventoryUpdate
+        InitializeTabs(); // Initialize tabs first to add the tab buttons to them as children
+        
+        foreach (var tabType in _tabsTypes) // Add the tab button to each tab
+        {
+            _invTabButtonBg = new CutEdgeRect(new CutEdgeConfig 
+            {
+                Width = 34, 
+                Height = 24, 
+                CutX = 5, 
+                CutY = 5, 
+                Cuts = CutEdges.Top,
+                Color = CurrentTabIndex == tabType.Key ? SelectedTabColor : BackgroundColor,
+                Anchor = UiAnchor.LeftBottom
+            });
+            _invTabButtonBg.X = X;
+            _invTabButtonBg.Y = 0;
+            
+            AddChild(_invTabButtonBg);
 
-        foreach (var tab in Tabs) {
-            switch (tab.Value) {
+            _invTabButton = new IconButton(new IconButtonConfig 
+            {
+                Texture = TextureHelper.FromGameAtlas("lofiInterfaceBig", 23 + tabType.Key, false),
+                Alpha = 1,
+                X = _invTabButtonBg.Width / 2,
+                Y = _invTabButtonBg.Height / 2,
+                Width = 24,
+                Height = 24,
+                OnClick = () => OnTabSelected(tabType.Value),
+                Anchor = UiAnchor.Middle
+            });
+
+            X = _invTabButtonBg.X + 40;
+            
+            _invTabButtonBg.AddChild(_invTabButton);
+            
+            switch (tabType.Value) 
+            {
                 case TabTypes.Inventory:
-                    invTab = InventoryTab;
-                    invTabButton = InventoryTabButton;
-                    break;
-                case TabTypes.Backpack:
-                    invTab = BackpackTab;
-                    invTabButton = BackpackTabButton;
+                    _tabs.Add((int)tabType.Value, new Tab(_inventoryTab, _invTabButtonBg));
                     break;
                 case TabTypes.StatsView:
-                    invTab = StatsViewTab;
-                    invTabButton = StatsViewTabButton;
+                    _tabs.Add((int)tabType.Value, new Tab(_statsTab, _invTabButtonBg));
+                    break;
+                case TabTypes.Backpack:
+                    _tabs.Add((int)tabType.Value, new Tab(_backpackTab, _invTabButtonBg));
                     break;
                 case TabTypes.Cosmetics:
                     break;
                 case TabTypes.Admin:
                     break;
             }
-
-            invTab = new CutEdgeRect(new CutEdgeConfig {
-                Width = 34, Height = 24, CutX = 5, CutY = 5, Cuts = CutEdges.Top,
-                Color = currentTabIndex == tab.Key ? TabColor : BackgroundColor
-            });
-            invTab.X = X;
-            invTab.Y = Y;
-
-            AddChild(invTab);
-
-            invTabButton = new IconButton(new IconButtonConfig {
-                Texture = TextureHelper.FromGameAtlas("lofiInterfaceBig", 23 + tab.Key, false),
-                Alpha = 1,
-                X = X + 6,
-                Y = Y,
-                Width = 24,
-                Height = 24,
-                OnClick = () => OnTabSelected(tab.Value)
-            });
-
-            AddChild(invTabButton);
-
-            X = invTab.X + 40;
         }
+        
+        SetTabVisibility(CurrentTabIndex);
+    }
 
-        InitializeTabs();
+    private void InitializeTabs() 
+    {
+        _inventoryTab = new InventoryGrid(Map.LocalPlayer, 4);
+        AddChild(_inventoryTab);
+
+        _statsTab = new StatsPanel();
+        AddChild(_statsTab);
+
+        _backpackTab = new InventoryGrid(Map.LocalPlayer, 12, false, true);
+        AddChild(_backpackTab);
     }
     
-    public void UpdateStatsPanel() {
-        if (currentTabIndex == (int)TabTypes.StatsView) {
-            RemoveChild(_statsPanel);
-            _statsPanel = new StatsPanel();
-            AddChild(_statsPanel);
+    // Used for adding extra tabs outside the basic inventory and stats view
+    private void AddTab(TabTypes tab)
+    {
+        _tabsTypes.Add((int)tab, tab);
+    }
+
+    // Sets the tab of the given index to visible, and the previously visible tab to not visible
+    private void SetTabVisibility(int index)
+    {
+        var currentTab = _tabs[CurrentTabIndex];
+        currentTab.SetVisible(false);
+        CurrentTabIndex = index;
+        _tabs[CurrentTabIndex].SetVisible(true);
+        Console.WriteLine(currentTab.GetPanel().Visible);
+    }
+
+    private void OnTabSelected(TabTypes tabType) 
+    {
+        SetTabVisibility((int)tabType);
+    }
+
+    // Increment current tab index for tab switch hotkey
+    private void SwitchTabs()
+    {
+        if (CurrentTabIndex >= _tabsTypes.Count)
+            SetTabVisibility(1);
+        else
+            SetTabVisibility(CurrentTabIndex + 1);
+    }
+    
+    // For updating stat values in stats view
+    // Make an update function in StatsPanel so it doesn't have to make a whole one each frame
+    public void UpdateStatsPanel()
+    {
+        if (CurrentTabIndex == (int)TabTypes.StatsView) 
+        {
+            RemoveChild(_statsTab);
+            _statsTab = new StatsPanel();
+            _tabs[(int)TabTypes.StatsView].SetPanel(_statsTab);
+            AddChild(_statsTab);
         }
     }
 
-    private void AddTab(TabTypes tab) {
-        Tabs.Add((int)tab, tab);
-    }
-
-    private void InitializeTabs() {
-        _inventoryGrid = new InventoryGrid(Map.LocalPlayer, 4);
-        AddChild(_inventoryGrid);
-
-        _backpackPanel = new InventoryGrid(Map.LocalPlayer, 12, false, true);
-        AddChild(_backpackPanel);
-
-        _statsPanel = new StatsPanel();
-        AddChild(_statsPanel);
-
-
-        SetTabVisibility(currentTabIndex);
-    }
-
-    private void SetTabVisibility(int tabType) {
-        _inventoryGrid.Visible = tabType == (int)TabTypes.Inventory;
-        _backpackPanel.Visible = tabType == (int)TabTypes.Backpack;
-        _statsPanel.Visible = tabType == (int)TabTypes.StatsView;
-    }
-
-    private void OnTabSelected(TabTypes tabType) {
-        currentTabIndex = (int)tabType;
-        Update();
-    }
-
-    private void SwitchTabs() 
+    private enum TabTypes 
     {
-        currentTabIndex += 1;
-        currentTabIndex = currentTabIndex > Tabs.Count ? 1 : currentTabIndex;
-        Update();
-    }
-
-    private enum TabTypes {
         None,
         Inventory,
         StatsView,
@@ -186,25 +205,36 @@ public sealed class TabStrip : Sprite {
     }
 }
 
-public class StatsPanel : Sprite {
-    public StatsPanel() {
+public class StatsPanel : Sprite 
+{
+    public StatsPanel() 
+    {
         var p = Map.LocalPlayer;
         var y = 150 / 2 - 16 - 10; //Height - Size - Spacing 
         var offset = 10;
         var bg = new CutEdgeRect(new CutEdgeConfig
-            { Width = 224, Height = 150, CutX = 6, CutY = 6, Cuts = CutEdges.All, Color = 0x242222 });
+        {
+            Width = 224, 
+            Height = 150, 
+            CutX = 6, 
+            CutY = 6, 
+            Cuts = CutEdges.All, 
+            Color = 0x242222
+        });
         AddChild(bg);
 
         string[] IndexName = { "ATK", "DEF", "SPD", "DEX", "VIT", "WIS" };
         int[] IndexValue = { p.Attack, p.Defense, p.Speed, p.Dexterity, p.Vitality, p.Wisdom };
         int[] IndexBoostValue = { p.AttackBoost, p.DefenseBoost, p.SpeedBoost, p.DexterityBoost, p.VitalityBoost, p.WisdomBoost };
 
-        for (var i = 0; i < IndexValue.Length; i++) {
+        for (var i = 0; i < IndexValue.Length; i++) 
+        {
             var even = i == 0 || i == 2 || i == 4;
             var extraInfo = IndexBoostValue[i] > 0 || IndexBoostValue[i] < 0;
             uint boostColor = 0xFFFF8F;
 
-            if (extraInfo) {
+            if (extraInfo) 
+            {
                 if (IndexBoostValue[i] > 0) 
                     boostColor = 0x5EB531;
                 
@@ -212,7 +242,8 @@ public class StatsPanel : Sprite {
                     boostColor = 0xFF3838;
             }
 
-            var StatName = new SimpleText(new TextConfig {
+            var StatName = new SimpleText(new TextConfig 
+            {
                 Text = IndexName[i],
                 FontSize = 14,
                 FontType = FontType.Normal,
@@ -227,7 +258,8 @@ public class StatsPanel : Sprite {
             
             AddChild(StatName);
             
-            var StatValue = new SimpleText(new TextConfig {
+            var StatValue = new SimpleText(new TextConfig 
+            {
                 Text = IndexValue[i].ToString(),
                 FontSize = 14,
                 FontType = FontType.Bold,
@@ -242,8 +274,10 @@ public class StatsPanel : Sprite {
 
             AddChild(StatValue);
 
-            if (extraInfo) {
-                var StatBoostValue = new SimpleText(new TextConfig {
+            if (extraInfo) 
+            {
+                var StatBoostValue = new SimpleText(new TextConfig 
+                {
                     Text = $"({(IndexBoostValue[i] > 0 ? "+" : "")}{IndexBoostValue[i]})",
                     FontSize = 14,
                     FontType = FontType.Bold,
@@ -261,5 +295,25 @@ public class StatsPanel : Sprite {
 
             y += even ? 0 : StatName.Height + 10;
         }
+    }
+}
+
+public class Tab(Sprite tabPanel, CutEdgeRect tabButtonBackground ) 
+{
+    public void SetVisible(bool visible)
+    {
+        tabPanel.Visible = visible;
+        var color = visible ? TabStrip.SelectedTabColor : TabStrip.BackgroundColor;
+        tabButtonBackground.SetColor(color);
+    }
+
+    public Sprite GetPanel()
+    {
+        return tabPanel;
+    }
+
+    public void SetPanel(Sprite newPanel)
+    {
+        tabPanel = newPanel;
     }
 }
