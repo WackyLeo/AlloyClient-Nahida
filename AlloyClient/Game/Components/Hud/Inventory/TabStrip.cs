@@ -142,12 +142,15 @@ public sealed class TabStrip : Sprite
     private void InitializeTabs() 
     {
         _inventoryTab = new InventoryGrid(Map.LocalPlayer, 4);
+        _inventoryTab.Visible = false;
         AddChild(_inventoryTab);
 
         _statsTab = new StatsPanel();
+        _statsTab.Visible = false;
         AddChild(_statsTab);
 
         _backpackTab = new InventoryGrid(Map.LocalPlayer, 12, false, true);
+        _backpackTab.Visible = false;
         AddChild(_backpackTab);
     }
     
@@ -160,15 +163,16 @@ public sealed class TabStrip : Sprite
     // Sets the tab of the given index to visible, and the previously visible tab to not visible
     private void SetTabVisibility(int index)
     {
-        var currentTab = _tabs[CurrentTabIndex];
-        currentTab.SetVisible(false);
+        var previousTab = _tabs[CurrentTabIndex];
+        previousTab.SetVisible(false);
         CurrentTabIndex = index;
         _tabs[CurrentTabIndex].SetVisible(true);
-        Console.WriteLine(currentTab.GetPanel().Visible);
+        //Console.WriteLine(previousTab.GetPanel());
     }
 
     private void OnTabSelected(TabTypes tabType) 
     {
+        Console.WriteLine(_tabs.Count);
         SetTabVisibility((int)tabType);
     }
 
@@ -300,20 +304,23 @@ public class StatsPanel : Sprite
 
 public class Tab(Sprite tabPanel, CutEdgeRect tabButtonBackground ) 
 {
+    private Sprite _tabPanel = tabPanel;
+    private CutEdgeRect _tabButtonBackground = tabButtonBackground;
+
     public void SetVisible(bool visible)
     {
-        tabPanel.Visible = visible;
+        _tabPanel.Visible = visible;
         var color = visible ? TabStrip.SelectedTabColor : TabStrip.BackgroundColor;
-        tabButtonBackground.SetColor(color);
+        _tabButtonBackground.SetColor(color);
     }
 
     public Sprite GetPanel()
     {
-        return tabPanel;
+        return _tabPanel;
     }
 
     public void SetPanel(Sprite newPanel)
     {
-        tabPanel = newPanel;
+        _tabPanel = newPanel;
     }
 }
