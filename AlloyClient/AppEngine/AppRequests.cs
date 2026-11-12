@@ -5,7 +5,12 @@ using System.Collections.Generic;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading.Tasks;
+using System.Timers;
 using System.Xml.Linq;
+using AlloyClient.ParticleEffects;
+using AlloyClient.Screens.Components;
+using AlloyClient.UiLib.Extra;
+using Timer = System.Timers.Timer;
 
 namespace AlloyClient.AppEngine;
 
@@ -14,16 +19,69 @@ public struct AppResponse {
     public string Message;
 }
 
-public static class AppRequests {
+public static class AppRequests 
+{
+    private static readonly Timer StartTimer = new(11000);
+    
+    public static async Task Startup()
+    {
+        CheckConnection();
+        
+        StartTimer.Enabled = true;
+        StartTimer.AutoReset = true;
+        StartTimer.Elapsed += async (sender, args) => 
+        {
+            CheckConnection();
+        };
+    }
 
-    public static async Task Startup() {
-        await VerifyAsync();
-        await GetCharList();
+    private static async void CheckConnection()
+    {
+        var result = await VerifyAsync();
+            
+        Console.WriteLine(result);
 
-        await Assets.RemoteAssetLoader.LoadAllAsync();
+        if (result.Message == "Invalid account credentials.")
+        {
+            StartTimer.Stop();
+            Console.WriteLine($"Result: {result.Message}");
+                
+            AccountOverlay.OnVerifyAsyncSuccessLoggedOut.Dispatch();
+            AccountOverlay.Connected = true;
+                
+            await Assets.RemoteAssetLoader.LoadAllAsync();
+            return;
+        }
+        if (result.Message == "Error")
+        {
+            StartTimer.Stop();
+            Console.WriteLine($"Result: {result.Message}");
+                
+            AccountOverlay.OnVerifyAsyncSuccessLoggedOut.Dispatch();
+            AccountOverlay.Connected = true;
+                
+            await Assets.RemoteAssetLoader.LoadAllAsync();
+            return;
+        } 
+        if (result.Message != "Failed to contact server.")
+        {
+            StartTimer.Stop();
+            Console.WriteLine($"Result: {result.Message}");
+                
+            AccountOverlay.OnVerifyAsyncSuccess.Dispatch();
+            AccountOverlay.Connected = true;
+                
+            await GetCharList();
+
+            await Assets.RemoteAssetLoader.LoadAllAsync();
+            return;
+        }
+
+        AccountOverlay.Connected = false;
     }
     
-    public static async Task<AppResponse> VerifyAsync() {
+    public static async Task<AppResponse> VerifyAsync() 
+    {
         var login = GlobalData.Get<LoginData>() ?? LoginData.Default;
         return await VerifyAsync(login.GUID, login.Password);
     }
