@@ -15,13 +15,11 @@ public sealed class TabStrip : Sprite
     public const uint BackgroundColor = 7039594;
     public const uint SelectedTabColor = 2368034;
     
-    private readonly Entity _owner;
+    private readonly Player _owner;
     private InventoryGrid _inventoryTab;
     private IconButton _inventoryTabButton;
     private StatsPanel _statsTab;
     private IconButton _statsTabButton;
-    private InventoryGrid _backpackTab;
-    private IconButton _backpackTabButton;
     private CutEdgeRect _cosmeticTab;
     private IconButton _cosmeticTabButton;
     private CutEdgeRect _adminTab;
@@ -42,7 +40,7 @@ public sealed class TabStrip : Sprite
     public static readonly Signal OnSwitchTabsDown = new();
     public static readonly Signal OnBackpackAdded = new();
 
-    public TabStrip(Entity owner) 
+    public TabStrip(Player owner) 
     {
         _owner = owner;
 
@@ -69,11 +67,6 @@ public sealed class TabStrip : Sprite
     private void Initialize() 
     {
         var X = 6; // For initial tab button offset
-
-        if (Map.LocalPlayer.HasBackPack && !_tabsTypes.ContainsKey(3)) 
-        {
-            AddTab(TabTypes.Backpack);
-        }
 
         //AddTab(TabTypes.Cosmetics);
 
@@ -126,9 +119,6 @@ public sealed class TabStrip : Sprite
                 case TabTypes.StatsView:
                     _tabs.Add((int)tabType.Value, new Tab(_statsTab, _invTabButtonBg));
                     break;
-                case TabTypes.Backpack:
-                    _tabs.Add((int)tabType.Value, new Tab(_backpackTab, _invTabButtonBg));
-                    break;
                 case TabTypes.Cosmetics:
                     break;
                 case TabTypes.Admin:
@@ -141,17 +131,13 @@ public sealed class TabStrip : Sprite
 
     private void InitializeTabs() 
     {
-        _inventoryTab = new InventoryGrid(Map.LocalPlayer, 4);
+        _inventoryTab = new InventoryGrid(_owner, 4, false, GetBonusSlots());
         _inventoryTab.Visible = false;
         AddChild(_inventoryTab);
 
         _statsTab = new StatsPanel();
         _statsTab.Visible = false;
         AddChild(_statsTab);
-
-        _backpackTab = new InventoryGrid(Map.LocalPlayer, 12, false, true);
-        _backpackTab.Visible = false;
-        AddChild(_backpackTab);
     }
     
     // Used for adding extra tabs outside the basic inventory and stats view
@@ -196,6 +182,20 @@ public sealed class TabStrip : Sprite
             _tabs[(int)TabTypes.StatsView].SetPanel(_statsTab);
             AddChild(_statsTab);
         }
+    }
+
+    // For checking all sources of extra slots for player inventory
+    // Currently only has backpack, but this is where to add more inv extender checks
+    public int GetBonusSlots()
+    {
+        var slotTotal = 0;
+        
+        foreach (var expander in _owner.InventoryExpanders)
+        {
+            slotTotal += expander.Value;
+        }
+
+        return slotTotal;
     }
 
     private enum TabTypes 
