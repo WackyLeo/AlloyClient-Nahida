@@ -2,7 +2,6 @@ using System;
 using AlloyClient.Game.Objects;
 using AlloyClient.Networking;
 using AlloyClient.Networking.Packets.Outgoing;
-using AlloyClient.Ui.Components.Scrollbars;
 using AlloyClient.UiLib.BuiltIn;
 using AlloyClient.UiLib.Core;
 using AlloyClient.UiLib.Enums;
@@ -10,38 +9,17 @@ using AlloyClient.Utils;
 
 namespace AlloyClient.Game.Components.Hud.Inventory;
 
-public sealed class InventoryGrid : Container 
-{
+public sealed class InventoryGrid : Sprite {
 
     private const int NumSlots = 8;
-    private const int ItemTileSize = 48;
-    private const int ConsumableSlotHeight = 26;
-    private const int ConsumableSlotWidth = 26;
-    private const int Padding = 8;
-    private const int Spacing = 5;
     private const int IconSize = 28;
 
-    private static readonly CutEdges[] Cuts = 
-        [
-            CutEdges.TopLeft, 
-            CutEdges.None, 
-            CutEdges.None, 
-            CutEdges.TopRight, 
-            CutEdges.BottomLeft, 
-            CutEdges.None, 
-            CutEdges.None, 
-            CutEdges.BottomRight
-        ];
-
-    private Container _tileVisibleContainer;
-    private Container _tileScrollContainer;
-    
-    private readonly ItemTile[] _tiles;
-    private int _totalSlots = NumSlots;
+    private static readonly CutEdges[] Cuts = [CutEdges.TopLeft, CutEdges.None, CutEdges.None, CutEdges.TopRight, CutEdges.BottomLeft, CutEdges.None, CutEdges.None, CutEdges.BottomRight];
+    private readonly ItemTile[] _tiles = new ItemTile[NumSlots];
 
     private readonly Entity _owner;
 
-    private readonly int _offset;   // Offset for where the inventory grid starts from the entity's actual Equipment
+    private readonly int _offset;
 
     private readonly int _height;
 
@@ -55,117 +33,60 @@ public sealed class InventoryGrid : Container
     private readonly CutEdgeRect _hpSlotOutline;
     private readonly CutEdgeRect _mpSlot;
     private readonly CutEdgeRect _mpSlotOutline;
-    
-    private VerticalScrollBar _scrollBar;
 
-
-    public InventoryGrid(Entity owner, int offset, bool oneWay = false, int extraSlots = 0) // 148 = 26 + 48 + 48 + 26
-    {
-        _totalSlots = NumSlots + extraSlots;
-        _tiles = new ItemTile[_totalSlots];
+    public InventoryGrid(Entity owner, int offset, bool oneWay = false, bool isBackpack = false) {
         _owner = owner;
         _offset = offset;
+        _backpack = isBackpack;
         _interactive = owner == Map.LocalPlayer || owner.Properties.Container;
-        _height = (ItemTileSize * 2) + ConsumableSlotHeight + (Padding * 2) + (Spacing * 2);
-        var visibleHeight = (ItemTileSize * 2) + Spacing;
+        _height = 148;
 
         if (owner == Map.LocalPlayer)
         {
-            var bg = new CutEdgeRect(new CutEdgeConfig
-            {
-                Width = 223, 
-                Height = _height, 
-                CutX = 6, 
-                CutY = 6, 
-                Cuts = CutEdges.All, 
-                Color = 0x242222
-            });
+            var bg = new CutEdgeRect(new CutEdgeConfig { Width = 223, Height = _height, CutX = 6, CutY = 6, Cuts = CutEdges.All, Color = 0x242222 });
             AddChild(bg);
-            
-            _tileVisibleContainer = new Container(new ContainerConfig
-            {
-                Y = Padding,
-                Width = (ItemTileSize * 4) + (Spacing * 3) + (Padding * 2), 
-                Height = visibleHeight, 
-                EnableClip = true
-            });
-            AddChild(_tileVisibleContainer);
 
-            _hpSlotOutline = new CutEdgeRect(new CutEdgeConfig
-            {
-                Width = 101, 
-                Height = 26, 
-                CutX = 4, 
-                CutY = 4, 
-                Cuts = CutEdges.Left, 
-                Color = 0x454545
-            });
+            _hpSlotOutline = new CutEdgeRect(new CutEdgeConfig { Width = 101, Height = 26, CutX = 4, CutY = 4, Cuts = CutEdges.Left, Color = 0x454545 });
             _hpSlotOutline.Y += 152 - 38;
             _hpSlotOutline.X = 8;
             AddChild(_hpSlotOutline);
 
-            _hpSlot  = new CutEdgeRect(new CutEdgeConfig
-            {
-                Width = 95, 
-                Height = 20, 
-                CutX = 4, 
-                CutY = 4, 
-                Cuts = CutEdges.Left, 
-                Color = 0x242222
-            });
+            _hpSlot  = new CutEdgeRect(new CutEdgeConfig { Width = 95, Height = 20, CutX = 4, CutY = 4, Cuts = CutEdges.Left, Color = 0x242222 });
             _hpSlot .Y += 152 - 38 + 3;
             _hpSlot .X = 8 + 3;
             AddChild(_hpSlot );
 
-            _mpSlotOutline = new CutEdgeRect(new CutEdgeConfig {
-                Width = 101,
-                Height = 26,
-                CutX = 4,
-                CutY = 4,
-                Cuts = CutEdges.Right,
-                Color = 0x454545
-            });
+            _mpSlotOutline = new CutEdgeRect(new CutEdgeConfig { Width = 101, Height = 26, CutX = 4, CutY = 4, Cuts = CutEdges.Right, Color = 0x454545 });
             _mpSlotOutline.Y += 152 - 38;
             _mpSlotOutline.X = _hpSlotOutline.X + 100 + 6;
             AddChild(_mpSlotOutline);
 
-            _mpSlot  = new CutEdgeRect(new CutEdgeConfig
-            {
-                Width = 95, 
-                Height = 20, 
-                CutX = 4, 
-                CutY = 4, 
-                Cuts = CutEdges.Right, 
-                Color = 0x242222
-            });
+            _mpSlot  = new CutEdgeRect(new CutEdgeConfig { Width = 95, Height = 20, CutX = 4, CutY = 4, Cuts = CutEdges.Right, Color = 0x242222 });
             _mpSlot .Y += 152 - 38 + 3;
             _mpSlot .X = _hpSlotOutline.X + 100 + 6 + 3;
             AddChild(_mpSlot );
             
-            var hpIcon =  new ObjectRect(new ObjectRectConfig 
-            {
+            var hpIcon =  new ObjectRect(new ObjectRectConfig {
                 X = _hpSlotOutline.X + (_hpSlotOutline.Width / 2) - (IconSize/2) - 10,
                 Y = _hpSlotOutline.Y + (_hpSlotOutline.Height /2) - (IconSize/2),
                 Width = IconSize,
                 Height = IconSize,
                 Texture = TextureHelper.FromGameAtlas(2594),
                 Anchor = UiAnchor.LeftTop
-            });
+            });;
             AddChild(hpIcon);
             
-            var mpIcon =  new ObjectRect(new ObjectRectConfig 
-            {
+            var mpIcon =  new ObjectRect(new ObjectRectConfig {
                 X = _mpSlotOutline.X + (_mpSlotOutline.Width / 2) - (IconSize/2) - 10,
                 Y = _mpSlotOutline.Y + (_mpSlotOutline.Height /2) - (IconSize/2),
                 Width = IconSize,
                 Height = IconSize,
                 Texture = TextureHelper.FromGameAtlas(2595),
                 Anchor = UiAnchor.LeftTop
-            });
+            });;
             AddChild(mpIcon);
             
-            _hpText = new SimpleText(new TextConfig 
-            {
+            _hpText = new SimpleText(new TextConfig {
                 FontSize = 20,
                 Color = 0xFFFFFFFFu,
                 OutlineColor = 0xFF000000u,
@@ -177,8 +98,7 @@ public sealed class InventoryGrid : Container
             _hpText.Y = _hpSlotOutline.Y + (_hpSlotOutline.Height /2) - (9);
             AddChild(_hpText);
 
-            _mpText = new SimpleText(new TextConfig 
-            {
+            _mpText = new SimpleText(new TextConfig {
                 FontSize = 20,
                 Color = 0xFFFFFFFFu,
                 OutlineColor = 0xFF000000u,
@@ -193,38 +113,14 @@ public sealed class InventoryGrid : Container
 
         _owner.InventoryUpdate.Add(OnInventoryChange);
 
-        _tileScrollContainer = new Container();
-        _tileVisibleContainer.AddChild(_tileScrollContainer);
-        
-        for (var i = 0; i < _totalSlots; i++)
+        for (var i = 0; i < NumSlots; i++)
         {
-            var slot = new ItemTile(owner, (byte)(i + offset), _interactive, Cuts[2], oneWay, tileSize: ItemTileSize);
+            var slot = new ItemTile(owner, (byte)(i + offset), _interactive, Cuts[i], oneWay, tileSize: 48);
             slot.SetTileNumber(i + 1);
-            slot.X = i % 4 * (ItemTileSize + Spacing) + Padding;
-            slot.Y = i / 4 * (ItemTileSize + Spacing);
-            _tileScrollContainer.AddChild(slot);
+            slot.X = i % 4 * (48 + 5) + 8;
+            slot.Y = i / 4 * (48 + 5) + 8;
+            AddChild(slot);
             _tiles[i] = slot;
-        }
-        
-        var numRows = _totalSlots / 4;
-        var totalContentHeight = ((numRows - 1) * Spacing) + (numRows * ItemTileSize);
-        
-        if (_totalSlots > 8) 
-        {
-            _scrollBar = new VerticalScrollBar(_tileVisibleContainer, new VerticalScrollBarConfig 
-            {
-                X = _tileVisibleContainer.Width - 5,
-                Y = Padding,
-                Width = 6,
-                Height = visibleHeight,
-                TotalContentHeight = totalContentHeight,
-                VisibleContentHeight = visibleHeight,
-                OnValueChanged = value => {
-                    _tileScrollContainer.Y = -value;
-                },
-                ScrollStep = 10
-            });
-            AddChild(_scrollBar);
         }
         
         if (owner == Map.LocalPlayer)
@@ -248,13 +144,11 @@ public sealed class InventoryGrid : Container
     }
     
     
-    private void OnAddedToStage() 
-    {
+    private void OnAddedToStage() {
         AddEventListener(Event.EnterFrame, OnEnterFrame);
     }
 
-    private void OnRemovedFromStage() 
-    {
+    private void OnRemovedFromStage() {
         RemoveEventListener(Event.EnterFrame, OnEnterFrame);
         _owner.InventoryUpdate.Remove(OnInventoryChange);
     }
@@ -266,28 +160,25 @@ public sealed class InventoryGrid : Container
             return;
         }
 
-        if (slot < _offset || slot >= _offset + _totalSlots) return;
+        if (slot < _offset || slot >= _offset + NumSlots) return;
         _tiles[slot - _offset].SetItem(_owner.Equipment[slot]);
     }
     
-    private void UseHpPot() 
-    {
+    private void UseHpPot() {
         if (_owner is not Player player) return;
         if (player.HealthStackCount <= 0) return;
         if(player.Hp >= player.MaxHp) return;
         UsePotion(254, ItemConstants.HealthPotion);
     }
 
-    private void UseMpPot() 
-    {
+    private void UseMpPot() {
         if (_owner is not Player player) return;
         if (player.MagicStackCount <= 0) return;
         if(player.Mp >= player.MaxMp) return;
         UsePotion(255, ItemConstants.MagicPotion);
     }
     
-    public void UpdatePotions() 
-    {
+    public void UpdatePotions() {
         if (_owner is not Player player) return;
         if (_hpText == null || _mpText == null) return;
 
@@ -307,10 +198,8 @@ public sealed class InventoryGrid : Container
         _mpSlot.Visible = mp <= 0;
     }
     
-    uint GetGradientColor(int count) 
-    {
-        return count switch 
-        {
+    uint GetGradientColor(int count) {
+        return count switch {
             >= 6 => 0x00FF00,
             5 => 0x55FF00,
             4 => 0xAAFF00,
@@ -321,8 +210,7 @@ public sealed class InventoryGrid : Container
         };
     }
     
-    private void UsePotion(byte slotId, ushort objectType) 
-    {
+    private void UsePotion(byte slotId, ushort objectType) {
         var player = Map.LocalPlayer;
         if (player == null) return;
 
@@ -343,8 +231,7 @@ public sealed class InventoryGrid : Container
         Client.QueuePacket(packet);
     }
     
-    private void OnEnterFrame() 
-    {
+    private void OnEnterFrame() {
         UpdatePotions();
     }
 
