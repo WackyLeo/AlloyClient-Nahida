@@ -15,7 +15,7 @@ public sealed class TabStrip : Sprite
     public const uint BackgroundColor = 7039594;
     public const uint SelectedTabColor = 2368034;
     
-    private readonly Entity _owner;
+    private readonly Player _owner;
     private InventoryGrid _inventoryTab;
     private IconButton _inventoryTabButton;
     private StatsPanel _statsTab;
@@ -40,7 +40,7 @@ public sealed class TabStrip : Sprite
     public static readonly Signal OnSwitchTabsDown = new();
     public static readonly Signal OnBackpackAdded = new();
 
-    public TabStrip(Entity owner) 
+    public TabStrip(Player owner) 
     {
         _owner = owner;
 
@@ -131,7 +131,7 @@ public sealed class TabStrip : Sprite
 
     private void InitializeTabs() 
     {
-        _inventoryTab = new InventoryGrid(Map.LocalPlayer, 4, false, GetBonusSlots());
+        _inventoryTab = new InventoryGrid(_owner, 4, false, GetBonusSlots());
         _inventoryTab.Visible = false;
         AddChild(_inventoryTab);
 
@@ -190,7 +190,7 @@ public sealed class TabStrip : Sprite
     {
         var slotTotal = 0;
         
-        foreach (var expander in Map.LocalPlayer.InventoryExpanders)
+        foreach (var expander in _owner.InventoryExpanders)
         {
             slotTotal += expander.Value;
         }
