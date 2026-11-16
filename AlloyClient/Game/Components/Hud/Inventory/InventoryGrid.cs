@@ -59,7 +59,7 @@ public sealed class InventoryGrid : Container
     private VerticalScrollBar _scrollBar;
 
 
-    public InventoryGrid(Entity owner, int offset, bool oneWay = false, int extraSlots = 0) // 148 = 26 + 48 + 48 + 26
+    public InventoryGrid(Entity owner, int offset, bool oneWay = false, int extraSlots = 0)
     {
         _totalSlots = NumSlots + extraSlots;
         _tiles = new ItemTile[_totalSlots];
@@ -68,7 +68,7 @@ public sealed class InventoryGrid : Container
         _interactive = owner == Map.LocalPlayer || owner.Properties.Container;
         _height = (ItemTileSize * 2) + ConsumableSlotHeight + (Padding * 2) + (Spacing * 2);
         var visibleHeight = (ItemTileSize * 2) + Spacing;
-
+        
         if (owner == Map.LocalPlayer)
         {
             var bg = new CutEdgeRect(new CutEdgeConfig
@@ -81,16 +81,19 @@ public sealed class InventoryGrid : Container
                 Color = 0x242222
             });
             AddChild(bg);
-            
-            _tileVisibleContainer = new Container(new ContainerConfig
-            {
-                Y = Padding,
-                Width = (ItemTileSize * 4) + (Spacing * 3) + (Padding * 2), 
-                Height = visibleHeight, 
-                EnableClip = true
-            });
-            AddChild(_tileVisibleContainer);
-
+        }
+    
+        _tileVisibleContainer = new Container(new ContainerConfig
+        {
+            Y = Padding,
+            Width = (ItemTileSize * 4) + (Spacing * 3) + (Padding * 2), 
+            Height = visibleHeight, 
+            EnableClip = true
+        });
+        AddChild(_tileVisibleContainer);
+        
+        if (owner == Map.LocalPlayer)
+        {
             _hpSlotOutline = new CutEdgeRect(new CutEdgeConfig
             {
                 Width = 101, 
@@ -189,10 +192,11 @@ public sealed class InventoryGrid : Container
             _mpText.X = mpIcon.X + 27;
             _mpText.Y = _mpSlotOutline.Y + (_mpSlotOutline.Height /2) - (9);
             AddChild(_mpText);
+            
         }
-
+        
         _owner.InventoryUpdate.Add(OnInventoryChange);
-
+        
         _tileScrollContainer = new Container();
         _tileVisibleContainer.AddChild(_tileScrollContainer);
         
