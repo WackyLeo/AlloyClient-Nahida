@@ -97,7 +97,8 @@ public class CharacterListScreen : TitleScreenBase {
 
         var account = GlobalData.Get<AccountData>();
 
-        _nameText = new TextButton(new TextButtonConfig() {
+        _nameText = new TextButton(new TextButtonConfig() 
+        {
             Text = account.Name,
             FontSize = 32,
             FontType = FontType.Bold,
