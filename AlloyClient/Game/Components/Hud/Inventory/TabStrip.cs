@@ -69,7 +69,7 @@ public sealed class TabStrip : Sprite
         var X = 6; // For initial tab button offset
 
         //AddTab(TabTypes.Cosmetics);
-
+        
         /*if (false)
          {
             AddTab(TabTypes.Admin);
