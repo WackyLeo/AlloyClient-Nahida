@@ -672,7 +672,8 @@ public class Player : Entity
     public override void UpdateStats(StatData[] statData, int offset, int count)
     {
         base.UpdateStats(statData, offset, count);
-        
+
+        var backpackAdded = false;
     #region Parse StatData
 
         for (var i = 0; i < count; i++)
@@ -780,11 +781,9 @@ public class Player : Entity
                     SetPlayerSkinTemplate(Skin);
                     break;
                 case StatsType.HasBackpack:
-                    if (stat.Value != 0 && !InventoryExpanders.ContainsKey(StatsType.HasBackpack))
-                    {
-                        InventoryExpanders.Add(StatsType.HasBackpack, 8);
-                        TabStrip.OnBackpackAdded.Dispatch();
-                    }
+                    var hadBackpack = HasBackPack;
+                    HasBackPack = stat.Value != 0;
+                    backpackAdded |= !hadBackpack && HasBackPack;
                     break;
                 case StatsType.MaxShield:
                     MaxShield = stat.Value;
@@ -826,6 +825,9 @@ public class Player : Entity
 
                     break;
             }
+            
+            if (backpackAdded && Map.LocalPlayer == this)
+                TabStrip.OnBackpackAdded.Dispatch();
         }
 
     #endregion
@@ -1109,7 +1111,7 @@ public class Player : Entity
 
     public int XpBoostTime;
 
-    public Dictionary<StatsType, int> InventoryExpanders =  new();
+    public bool HasBackPack;
 
     public bool IsFellowGuild;
 
