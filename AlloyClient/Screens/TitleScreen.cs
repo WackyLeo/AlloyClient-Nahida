@@ -16,24 +16,20 @@ public class TitleScreen : TitleScreenBase {
     public const int PlayFontSize = 57;
     public const int FontSize = 35;
 
-    private readonly Container _container = new();
+    private Container _container = new();
     private readonly SimpleText _developerText;
+    public MenuBarButton _playButton;
 
     // References for our corner text so we can resize them
     private readonly SimpleText _versionText;
     private Vector2 _menuAnchor;
     private Vector2 _menuExactPos;
 
-    public TitleScreen() : base(true) {
-        
-        var currentY = 50;
-        var gap = 15;
+    public TitleScreen() : base(true)
+    {
 
-        var play = new MenuBarButton("PLAY", PlayFontSize, OnPlay);
-        play.X = -play.Width / 2;
-        play.Y = currentY;
-        _container.AddChild(play);
-        currentY += FontSize + gap + 15;
+        CreatePlayButton();
+        _playButton.Visible = true; // Start this as false later once the tweens work
 
         /*
         var servers = new MenuBarButton("SERVERS", FontSize, () => ScreenManager.FadeTo(new ServersTitleScreen()));
@@ -146,5 +142,19 @@ public class TitleScreen : TitleScreenBase {
             login.AddEventListener("loginSuccess", Overlay.OnLogin);
             OverlayManager.Set(login);
         }
+    }
+
+    public void CreatePlayButton()
+    {
+        var currentY = 50;
+        var gap = 15;
+        
+        var play = new MenuBarButton("PLAY", PlayFontSize, OnPlay);
+        play.X = -play.Width / 2;
+        play.Y = currentY;
+        play.Visible = false;
+        _playButton = play;
+        _container.AddChild(play);
+        currentY += FontSize + gap + 15;
     }
 }

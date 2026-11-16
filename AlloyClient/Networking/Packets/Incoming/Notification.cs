@@ -36,7 +36,7 @@ public class Notification : IncomingPacket<Notification>
         if (!Map.Entities.TryGetValue(ObjectId, out var en))
             return;
 
-        // AddStatusText takes 0xRRGGBB, so drop the alpha byte
+        // AddStatusText takes rgb, so drop the alpha byte
         var rgb = ((uint)Color.R << 16) | ((uint)Color.G << 8) | Color.B;
         
         NotificationLayer.AddStatusText(en, Message, rgb, 2000, 0);

@@ -8,7 +8,8 @@ using AlloyClient.UiLib.BuiltIn;
 
 namespace AlloyClient.Game.Components.Options;
 
-public class OptionTabView : Container {
+public class OptionTabView : Container 
+{
     private static readonly string[] OnOffLabels = ["On", "Off"];
     private static readonly object[] OnOffValues = [true, false];
     private static readonly string[] RotateMultLabels = ["1x", "1.125", "1.25x", "1.5x"];
@@ -16,17 +17,19 @@ public class OptionTabView : Container {
 
     private readonly Container _container;
     private readonly List<Option> _options = [];
-    private const int VerticalPadding = 22;
-    private const int VerticalSpacing = 70;
+    private const int VerticalPadding = 22; 
+    private const int VerticalSpacing = 70; // Total vertical space from one row to the next, includes spacing between option boxes
     private const int ViewHeight = 507;
     
     private VerticalScrollBar _scrollBar;
 
-    public OptionTabView(string name) : base(new ContainerConfig { Width = 1280, Height = ViewHeight, EnableClip = true }) {
+    public OptionTabView(string name) : base(new ContainerConfig { Width = 1280, Height = ViewHeight, EnableClip = true }) 
+    {
         _container = new Container();
         AddChild(_container);
 
-        switch (name) {
+        switch (name) 
+        {
             case OptionsView.ControlsTab:
                 AddControlsOptions();
                 break;
@@ -48,13 +51,14 @@ public class OptionTabView : Container {
         }
 
         PositionChildren();
-
     }
 
-    private void PositionChildren() {
+    private void PositionChildren() 
+    {
         var i = 0f;
         
-        foreach (var option in _options) {
+        foreach (var option in _options) 
+        {
             if (option == null) continue;
 
             option.X += i % 2 == 0 ? 32 : 664;
@@ -69,7 +73,8 @@ public class OptionTabView : Container {
         
         if (totalContentHeight > Height) 
         {
-            _scrollBar = new VerticalScrollBar(this, new VerticalScrollBarConfig {
+            _scrollBar = new VerticalScrollBar(this, new VerticalScrollBarConfig 
+            {
                 X = Settings.DefaultScreenWidth - 15,
                 Width = 10,
                 Height = ViewHeight,
@@ -83,11 +88,13 @@ public class OptionTabView : Container {
         }
     }
 
-    public void Refresh() {
+    public void Refresh() 
+    {
         foreach (var option in _options) option?.Refresh();
     }
 
-    private void AddControlsOptions() {
+    private void AddControlsOptions() 
+    {
         _options.Add(new KeyMapperOption(Settings.MoveUp, "Move Up", "Key to will move character up"));
         _options.Add(new KeyMapperOption(Settings.MoveLeft, "Move Left", "Key to will move character to the left"));
         _options.Add(new KeyMapperOption(Settings.MoveDown, "Move Down", "Key to will move character down"));
@@ -114,7 +121,8 @@ public class OptionTabView : Container {
             "This key will allow you to enter a portal or buy an item without using your mouse."));
     }
 
-    private void AddHotkeysOptions() {
+    private void AddHotkeysOptions() 
+    {
         _options.Add(new KeyMapperOption(Settings.HealthPotion, "Use Health Potion",
             "This key will use health potions if available"));
         _options.Add(new KeyMapperOption(Settings.MagicPotion, "Use Magic Potion",
@@ -143,7 +151,8 @@ public class OptionTabView : Container {
         _options.Add(new KeyMapperOption(Settings.FullscreenKey, "Fullscreen", "Toggles fullscreen mode."));
     }
 
-    private void AddChatOptions() {
+    private void AddChatOptions() 
+    {
         _options.Add(new KeyMapperOption(Settings.Chat, "Activate Chat", "This key will bring up the chat input box"));
         _options.Add(new KeyMapperOption(Settings.ChatCommand, "Start Chat Command",
             "This key will bring up the chat with a \\'/\\' prepended to \" + \"allow for commands such as /who, /ignore, etc."));
@@ -170,7 +179,8 @@ public class OptionTabView : Container {
             "Choose which players messages should be shown to you. This includes whispers and global chat."));
     }
 
-    private void AddGraphicsOptions() {
+    private void AddGraphicsOptions() 
+    {
         _options.Add(new ChoiceOption<float>(Settings.CameraAngle, ["45", "0"], [7 * MathF.PI, 0f],
             "Default Camera Angle", "This toggles the default camera angle",
             OnDefautCameraAngleChange));
@@ -193,7 +203,8 @@ public class OptionTabView : Container {
             "This toggles whether the color of damage text reflects the amount of health remaining for the target."));
     }
 
-    private void AddSoundOptions() {
+    private void AddSoundOptions() 
+    {
         // I've commented out the buttons and added some overview text alongside these sliders, 
         // 0% can act as the isplaying check
 
@@ -215,7 +226,8 @@ public class OptionTabView : Container {
         _options.Add(new SliderOption(Settings.WeaponSfxVolume, "Vol:", "WEAPONS", OnWeaponSfxVolumeChange));
     }
 
-    private void AddExtraOptions() {
+    private void AddExtraOptions() 
+    {
         _options.Add(new ChoiceOption<float>(Settings.AllyOpacity,
             ["100%", "80%", "60%", "40%", "20%", "10%", "5%", "Invisible"],
             [1.0f, 0.8f, 0.6f, 0.4f, 0.2f, 0.1f, 0.05f, 0.0f],
@@ -228,67 +240,81 @@ public class OptionTabView : Container {
             "Sets the opacity of projectiles fired by other players."));
     }
 
-    private void OnMasterVolumeChange(float obj) {
+    private void OnMasterVolumeChange(float obj) 
+    {
         Settings.MasterVolume.SetValue(obj);
         Audio.SetMasterVolume(Settings.MasterVolume);
     }
 
-    private void OnWeaponSfxVolumeChange(float volume) {
+    private void OnWeaponSfxVolumeChange(float volume) 
+    {
         Settings.WeaponSfxVolume.SetValue(volume);
         Audio.SetMasterVolume(Settings.WeaponSfxVolume);
     }
 
-    private void OnSfxVolumeChange(float volume) {
+    private void OnSfxVolumeChange(float volume) 
+    {
         Settings.SfxVolume.SetValue(volume);
         Audio.SetMasterVolume(Settings.SfxVolume);
     }
 
-    private void OnMusicVolumeChange(float obj) {
+    private void OnMusicVolumeChange(float obj) 
+    {
         Settings.MusicVolume.SetValue(obj);
         Audio.MusicChannel.SetVolume(Settings.MusicVolume);
     }
 
-    private void OnChatVisible() {
+    private void OnChatVisible() 
+    {
         //throw new NotImplementedException();
         //GameSprite.Instance.ChatBox.Enabled = !GameSprite.Instance.ChatBox.Enabled;
     }
 
-    private void OnChatBoxScale() {
+    private void OnChatBoxScale() 
+    {
         //throw new NotImplementedException();
         //GameSprite.Instance.ChatBox.Scale = new Vector2(Settings.ChatScaling);
     }
 
-    private void OnDefautCameraAngleChange() {
+    private void OnDefautCameraAngleChange() 
+    {
         //throw new NotImplementedException();
     }
 
-    private void OnCenterPlayerChange() {
+    private void OnCenterPlayerChange() 
+    {
         Camera.Reset();
     }
 
-    private void OnVSyncToggle() {
+    private void OnVSyncToggle() 
+    {
         Main.GraphicsMode.Dispatch(GraphicsOptions.InGame);
         var option = GetOption(Settings.FpsCap);
         option.SetDisabled(Settings.VSync);
     }
 
-    private void OnRenderDistanceChange() {
+    private void OnRenderDistanceChange() 
+    {
         //throw new NotImplementedException();
     }
 
-    private void OnFPSChange() {
+    private void OnFPSChange() 
+    {
         Main.GraphicsMode.Dispatch(GraphicsOptions.InGame);
     }
 
-    private void OnMScaleChange() {
+    private void OnMScaleChange() 
+    {
         //throw new NotImplementedException();
     }
 
-    private void OnFullscreenToggle() {
+    private void OnFullscreenToggle() 
+    {
         //throw new NotImplementedException();
     }
 
-    private Option GetOption(ISettingType setting) {
+    private Option GetOption(ISettingType setting) 
+    {
         return _options.Find(option => option.Setting == setting);
     }
 }
