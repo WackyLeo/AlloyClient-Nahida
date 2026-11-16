@@ -3,6 +3,7 @@ using AlloyClient.Assets.XmlStructs;
 using AlloyClient.Display;
 using AlloyClient.Game.Objects;
 using AlloyClient.Networking;
+using AlloyClient.Networking.Enums;
 using AlloyClient.Networking.Packets.Outgoing;
 using AlloyClient.Networking.Structs.DataObjects;
 using AlloyClient.Ui.Components.Tooltips;
@@ -578,7 +579,7 @@ public sealed class ItemTile : Sprite {
         packet.UseType = useType;
         packet.ProjId = Map.LocalPlayer.ReadServerId();
 
-        if (objectType == 0xc6c && Map.LocalPlayer.HasBackPack)
+        if (objectType == 0xc6c && Map.LocalPlayer.InventoryExpanders.ContainsKey(StatsType.HasBackpack))
         {
             Audio.PlaySfx("error");
             return;
