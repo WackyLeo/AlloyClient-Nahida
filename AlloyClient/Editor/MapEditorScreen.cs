@@ -122,7 +122,6 @@ public sealed class MapEditorScreen : Screen {
         _newButton = AddUi(new EditorButton("New", OnNewClick));
         _saveButton = AddUi(new EditorButton("Save JSON", () => OnSaveClick(false)));
         _saveWmapButton = AddUi(new EditorButton("Save Wmap", () => OnSaveClick(true)));
-        _testButton = AddUi(new EditorButton("Test", OnTestMapClick));
         _backButton = AddUi(new EditorButton("Back", OnBackClick));
 
         _mapSelector = AddUi(new MapSelectorView());
@@ -141,7 +140,8 @@ public sealed class MapEditorScreen : Screen {
         _drawTypeSwitch = new EditorSwitch(62, "Ground", "Objects", "Regions");
         _drawTypeSwitch.OnSwitch = OnDrawTypeSwitch;
         var settingsY = settingsTitle.Y + settingsTitle.Height + 6;
-        foreach (var s in new Sprite[] { _zoomInput, _gridCheckbox, autoSaveCheckbox, _drawTypeSwitch }) {
+        _testButton = new EditorButton("Test map", OnTestMapClick, 120);
+        foreach (var s in new Sprite[] { _zoomInput, _gridCheckbox, autoSaveCheckbox, _drawTypeSwitch, _testButton }) {
             s.X = 8;
             s.Y = settingsY;
             settingsY += s.Height + 8;
@@ -275,8 +275,6 @@ public sealed class MapEditorScreen : Screen {
         _saveButton.Y = _loadButton.Y;
         _saveWmapButton.X = _saveButton.X + _saveButton.ButtonWidth + 10;
         _saveWmapButton.Y = _loadButton.Y;
-        _testButton.X = _saveWmapButton.X + _saveWmapButton.ButtonWidth + 10;
-        _testButton.Y = _loadButton.Y;
         _backButton.X = _stageWidth - _backButton.ButtonWidth - 15;
         _backButton.Y = _loadButton.Y;
 
@@ -307,7 +305,7 @@ public sealed class MapEditorScreen : Screen {
         _objectFilterView.Y = _drawElementsList.Y;
 
         _brushOptions.X = _drawElementsList.X - _brushOptions.PanelWidth - 8;
-        _brushOptions.Y = _testButton.Y;
+        _brushOptions.Y = _loadButton.Y;
 
         _tileHotkeys.X = _drawElementsList.X - _tileHotkeys.PanelWidth - 8;
         _tileHotkeys.Y = _toolBar.Y - _tileHotkeys.PanelHeight - 8;
@@ -724,15 +722,17 @@ public sealed class MapEditorScreen : Screen {
         if (SelectedTool.Id is METool.PencilId or METool.ShapeId) MapView.DrawBrushTiles(p.X, p.Y, UserBrush);
     }
 
-    public void OnElementHover(DrawType? type, int element) {
+    /// <param name="cell">The hovered list cell (owner of the tooltip)</param>
+    public void OnElementHover(object cell, DrawType? type, int element) {
         if (type == null) {
+            if (!_tooltip.IsOwner(cell)) return; // Another cell is already hovered
             _hoveredElement = null;
-            HideTooltip();
+            _tooltip.Hide(cell);
             return;
         }
 
         _hoveredElement = (type.Value, element);
-        ShowTooltip(BuildElementTooltip(type.Value, element));
+        _tooltip.Show(BuildElementTooltip(type.Value, element), cell);
     }
 
     private static string BuildElementTooltip(DrawType type, int element) {
@@ -761,7 +761,9 @@ public sealed class MapEditorScreen : Screen {
         return sb.ToString();
     }
 
-    public void ShowTooltip(string text) => _tooltip.Show(text);
+    public void ShowTooltip(string text, object owner) => _tooltip.Show(text, owner);
+
+    public void HideTooltip(object owner) => _tooltip.Hide(owner);
 
     public void HideTooltip() => _tooltip.Hide();
 
@@ -962,9 +964,13 @@ public sealed class MapEditorScreen : Screen {
     }
 
     private void OnTestMapClick() {
-        if (MapData == null) return;
-        if (!MapTestSession.CanTest(out var reason)) {
-            _notifications.Show(reason, 18, 2500);
+        if (MapData == null) {
+            _notifications.Show("Open or create a map to test", 18, 2500);
+            return;
+        }
+
+        if (!MapTestSession.CanTest(out var title, out var reason)) {
+            DialogManager.Enqueue(new Ui.Components.Dialogs.Dialog(title, reason, new Ui.Components.Dialogs.DialogOption("Ok")));
             return;
         }
 

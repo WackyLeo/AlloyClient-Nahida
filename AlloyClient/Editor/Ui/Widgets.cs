@@ -286,17 +286,30 @@ public sealed class EditorSwitch : Sprite {
 public sealed class EditorTooltip {
     private Ui.Components.Tooltips.SimpleTooltip _current;
     private string _text;
+    private object _owner;
 
-    // Uses the game's own tooltip (follows the mouse, drawn above everything by the TooltipManager)
-    public void Show(string text) {
+    // Uses the game's own tooltip (follows the mouse, drawn above everything by the TooltipManager).
+    // The owner is whatever is hovered: the ui lib sends "mouse over" for the new sprite *before* "mouse out" for the old
+    // one, so a stale mouse out must not hide the tooltip the newly hovered sprite just showed.
+    public void Show(string text, object owner) {
+        _owner = owner;
         if (_current != null && _text == text) return;
-        Hide();
+        HideCurrent();
         _text = text;
         _current = new Ui.Components.Tooltips.SimpleTooltip(text);
         Display.TooltipManager.AddTooltip(_current);
     }
 
-    public void Hide() {
+    public bool IsOwner(object owner) => ReferenceEquals(owner, _owner);
+
+    /// <param name="owner">Only hides if this is still the owner. Null hides unconditionally.</param>
+    public void Hide(object owner = null) {
+        if (owner != null && !ReferenceEquals(owner, _owner)) return;
+        _owner = null;
+        HideCurrent();
+    }
+
+    private void HideCurrent() {
         if (_current == null) return;
         Display.TooltipManager.RemoveTooltip(_current);
         _current = null;

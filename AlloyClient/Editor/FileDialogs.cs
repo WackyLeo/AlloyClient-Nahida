@@ -15,18 +15,41 @@ public static class FileDialogs {
     private static readonly Logger Log = new(typeof(FileDialogs));
     private static readonly DialogFileFilter[] MapFilter = [new("Map files", "jm;wmap")];
 
-    public static string LastDirectory = DefaultDirectory;
+    private const string LastDirectoryFile = "editor_last_directory.txt";
+    private static string _lastDirectory;
+
+    /// <summary>Folder the dialogs open in: the last folder a map was loaded from/saved to (kept between runs), else the desktop.</summary>
+    public static string LastDirectory {
+        get {
+            if (_lastDirectory == null) {
+                _lastDirectory = ReadSavedDirectory();
+                if (_lastDirectory == null || !Directory.Exists(_lastDirectory)) _lastDirectory = DefaultDirectory;
+            }
+
+            return _lastDirectory;
+        }
+    }
 
     public static string DefaultDirectory {
         get {
-            var dir = Path.Combine(AppContext.BaseDirectory, "Maps");
-            try {
-                Directory.CreateDirectory(dir);
-            } catch {
-                dir = AppContext.BaseDirectory;
-            }
+            var desktop = Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory);
+            if (!string.IsNullOrEmpty(desktop) && Directory.Exists(desktop)) return desktop;
 
-            return dir;
+            var home = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+            if (!string.IsNullOrEmpty(home) && Directory.Exists(home)) return home;
+
+            return AppContext.BaseDirectory;
+        }
+    }
+
+    private static string SavedDirectoryPath => Path.Combine(State.Settings.LocalFolderPath, LastDirectoryFile);
+
+    private static string ReadSavedDirectory() {
+        try {
+            return File.Exists(SavedDirectoryPath) ? File.ReadAllText(SavedDirectoryPath).Trim() : null;
+        } catch (Exception e) {
+            Log.Warn($"Couldn't read the editor's last directory: {e.Message}");
+            return null;
         }
     }
 
@@ -69,10 +92,18 @@ public static class FileDialogs {
         return true;
     }
 
+    /// <summary>Remembers the folder of a loaded/saved map, also for the next time the client runs.</summary>
     public static void Remember(string path) {
         if (string.IsNullOrEmpty(path)) return;
         var dir = Path.GetDirectoryName(path);
-        if (!string.IsNullOrEmpty(dir)) LastDirectory = dir;
+        if (string.IsNullOrEmpty(dir) || !Directory.Exists(dir) || dir == _lastDirectory) return;
+
+        _lastDirectory = dir;
+        try {
+            File.WriteAllText(SavedDirectoryPath, dir);
+        } catch (Exception e) {
+            Log.Warn($"Couldn't save the editor's last directory: {e.Message}");
+        }
     }
 
     private static string WithSlash(string dir) => dir.EndsWith(Path.DirectorySeparatorChar) ? dir : dir + Path.DirectorySeparatorChar;

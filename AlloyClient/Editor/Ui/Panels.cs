@@ -204,7 +204,7 @@ public sealed class DrawElementListView : EditorPanel {
         OnSelect?.Invoke(cell.Element);
     }
 
-    internal void OnCellHover(ElementCell cell, bool hover) => _editor.OnElementHover(hover ? DrawType : null, cell.Element);
+    internal void OnCellHover(ElementCell cell, bool hover) => _editor.OnElementHover(cell, hover ? DrawType : null, cell.Element);
 
     private void OnScroll(MouseEvent e) {
         e.StopPropagation();
@@ -485,8 +485,8 @@ public sealed class MapToolbar : EditorPanel {
             var button = new EditorButton($"{METool.ToolIdToName(id)} ({Keys[i]})", () => editor.OnToolSwitch(id), 70, 11);
             button.X = 4;
             button.Y = y;
-            button.OnHover = () => editor.ShowTooltip($"{METool.ToolIdToName(id)}\n{METool.GetToolDescription(id)}");
-            button.OnHoverEnd = editor.HideTooltip;
+            button.OnHover = () => editor.ShowTooltip($"{METool.ToolIdToName(id)}\n{METool.GetToolDescription(id)}", button);
+            button.OnHoverEnd = () => editor.HideTooltip(button);
             y += button.ButtonHeight + 3;
             _buttons[id] = button;
             AddChild(button);
@@ -748,8 +748,8 @@ public sealed class ObjectFilterView : Sprite {
     public ObjectFilterView(DrawElementListView list, MapEditorScreen editor) {
         _list = list;
         _arrow = new EditorButton("<", Toggle, 20, 14, 26);
-        _arrow.OnHover = () => editor.ShowTooltip("Object property filter\nOnly objects whose xml matches every filter are listed.\nLeave the value blank to require the property.");
-        _arrow.OnHoverEnd = editor.HideTooltip;
+        _arrow.OnHover = () => editor.ShowTooltip("Object property filter\nOnly objects whose xml matches every filter are listed.\nLeave the value blank to require the property.", _arrow);
+        _arrow.OnHoverEnd = () => editor.HideTooltip(_arrow);
         AddChild(_arrow);
 
         _panel = new EditorPanel(200, 100);

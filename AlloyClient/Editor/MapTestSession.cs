@@ -18,25 +18,39 @@ public static class MapTestSession {
     private static Screen _returnScreen;
     private static bool _active;
 
-    public static bool CanTest(out string reason) {
+    /// <summary>Rank needed to test maps: the same MapMinRank the server sends for the map editor.</summary>
+    public static int RequiredRank => GlobalData.Get<CharacterListData>()?.MapMinRank ?? 0;
+
+    public static bool CanTest(out string title, out string reason) {
         if (!GlobalData.Contains<LoginData>()) {
-            reason = "Log in to test maps";
+            title = "Not logged in";
+            reason = "Log in to test maps.";
+            return false;
+        }
+
+        var rank = GlobalData.Get<AccountData>()?.Rank ?? 0;
+        if (rank < RequiredRank) {
+            title = "Insufficient Rank";
+            reason = $"Testing maps requires rank {RequiredRank} (your rank: {rank}).";
             return false;
         }
 
         var chars = GlobalData.Get<CharacterListData>()?.Characters;
         if (chars == null || chars.Length == 0) {
-            reason = "You need a character to test maps";
+            title = "No character";
+            reason = "Create a character first, you test maps with it.";
             return false;
         }
 
-        reason = null;
+        title = reason = null;
         return true;
     }
 
     public static void Start(string mapJson, Screen returnScreen) {
+        // Enter the world with the last selected character (like playing normally), else the first one
         var chars = GlobalData.Get<CharacterListData>().Characters;
-        GlobalData.SelectedCharacterId = chars.First().Id;
+        if (chars.All(c => c.Id != GlobalData.SelectedCharacterId))
+            GlobalData.SelectedCharacterId = chars.First().Id;
 
         _pendingJson = mapJson;
         _returnScreen = returnScreen;
