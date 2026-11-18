@@ -12,6 +12,9 @@ public sealed class CharacterListData(XElement xml) : IGlobalData {
 
     public readonly int CharSlotCost = xml.GetAttribute("charSlotCost", 0);
 
+    // Minimum account rank required to use the map editor (same gate as the flash client's title screen)
+    public readonly int MapMinRank = xml.GetValue("MapMinRank", 0);
+
     public readonly int[] OwnedSkins = xml.GetValue("OwnedSkins", "").FromCommaSepString();
 
     public readonly Character[] Characters = xml.Elements("Char").Select(c => new Character(c)).ToArray();

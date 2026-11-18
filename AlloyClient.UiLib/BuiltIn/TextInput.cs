@@ -41,6 +41,9 @@ public sealed class TextInput : Sprite {
     private const int CutY = 2;
 
     internal static TextInput ActiveInput;
+
+    /// <summary>True while any text input has keyboard focus (used to suppress hotkeys while typing).</summary>
+    public static bool IsAnyFocused => ActiveInput != null;
     private readonly SimpleText _caret;
     private readonly bool _clickActivate;
     private readonly string _defaultText;

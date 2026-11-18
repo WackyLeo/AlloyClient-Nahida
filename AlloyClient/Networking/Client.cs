@@ -391,6 +391,7 @@ public static class Client
         if (IsReconnecting) return;
 
         Map.Reset();
+        if (Editor.MapTestSession.TryReturnToEditor()) return;
         ScreenManager.FadeTo(new CharacterListScreen());
     }
 
@@ -407,6 +408,7 @@ public static class Client
         hello.KeyTime = -1;
         hello.Key = Array.Empty<byte>();
         hello.Key2 = 0;
+        Editor.MapTestSession.ApplyToHello(hello); // Map editor "Test" button
         QueuePacket(hello);
     }
     

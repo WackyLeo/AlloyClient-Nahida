@@ -19,6 +19,7 @@ public class TitleScreen : TitleScreenBase {
     private Container _container = new();
     private readonly SimpleText _developerText;
     public MenuBarButton _playButton;
+    private MenuBarButton _mapButton;
 
     // References for our corner text so we can resize them
     private readonly SimpleText _versionText;
@@ -104,6 +105,8 @@ public class TitleScreen : TitleScreenBase {
         _container.X = (int)_menuExactPos.X;
         _container.Y = (int)_menuExactPos.Y;
 
+        if (_mapButton != null) _mapButton.Visible = CanMapEdit(); // login/logout can change the rank
+
         base.Draw(gameTime);
     }
 
@@ -156,5 +159,24 @@ public class TitleScreen : TitleScreenBase {
         _playButton = play;
         _container.AddChild(play);
         currentY += FontSize + gap + 15;
+
+        // Map editor, same as the flash client's "map" button on the title screen
+        var map = new MenuBarButton("MAP", FontSize, OnMap);
+        map.X = -map.Width / 2;
+        map.Y = currentY;
+        map.Visible = CanMapEdit();
+        _mapButton = map;
+        _container.AddChild(map);
+    }
+
+    // Flash client: canMapEdit = rank >= mapMinRank (both default to 0)
+    private static bool CanMapEdit() {
+        var rank = GlobalData.Get<AccountData>()?.Rank ?? 0;
+        var minRank = GlobalData.Get<CharacterListData>()?.MapMinRank ?? 0;
+        return rank >= minRank;
+    }
+
+    private void OnMap() {
+        ScreenManager.FadeTo(Editor.MapEditorScreen.GetOrCreate());
     }
 }

@@ -145,6 +145,7 @@ public static class RemoteAssetLoader {
 
                 ParseGroundXml(xml);
                 ParseObjectsXml(xml);
+                Editor.EditorAssets.RegisterXml(xml);
             } catch (Exception e) {
                 Log.Error($"XML chunk {i} error: {e.Message}");
             }
