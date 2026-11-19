@@ -18,7 +18,8 @@ namespace AlloyClient.Editor;
 /// The standalone realm editor (RealmEditorLib's MainView), ported to the C# client. Opened from the MAP button on the
 /// title screen. The instance is kept while the client runs, so leaving and coming back keeps the opened maps.
 /// </summary>
-public sealed class MapEditorScreen : Screen {
+public sealed class MapEditorScreen : Screen
+{
     private const int MaxZoom = 1000;
     private const int T = TileMapView.TileSize;
 
@@ -48,6 +49,7 @@ public sealed class MapEditorScreen : Screen {
     public METool SelectedTool { get; private set; }
     private METool _previousTool; // Tool to go back to after a shift+drag selection
     private (DrawType type, int element)? _hoveredElement;
+    private bool _defaultMapCreated;
 
     // Mouse state on the map
     private bool _mouseDown;
@@ -96,12 +98,14 @@ public sealed class MapEditorScreen : Screen {
     private bool _zoomInputUpdating;
     private Key? _ignoreKeyUp; // Key that closed/submitted a window, its key up shouldn't trigger a hotkey
 
-    private MapEditorScreen() {
+    private MapEditorScreen()
+    {
         _background = new ColorRect(new ColorRectConfig { Width = 1, Height = 1, Color = 0x1B1B1B });
         AddChild(_background);
         AddChild(_mapContainer);
 
-        _inputLayer = new ColorRect(new ColorRectConfig { Width = 1, Height = 1, Color = 0x0, Alpha = 0f, MouseEnabled = true });
+        _inputLayer = new ColorRect(new ColorRectConfig
+            { Width = 1, Height = 1, Color = 0x0, Alpha = 0f, MouseEnabled = true });
         _inputLayer.AddEventListener(MouseEvent.LeftDown, OnLeftDown);
         _inputLayer.AddEventListener(MouseEvent.LeftUp, OnLeftUp);
         _inputLayer.AddEventListener(MouseEvent.MiddleDown, OnMiddleDown);
@@ -141,7 +145,8 @@ public sealed class MapEditorScreen : Screen {
         _drawTypeSwitch.OnSwitch = OnDrawTypeSwitch;
         var settingsY = settingsTitle.Y + settingsTitle.Height + 6;
         _testButton = new EditorButton("Test map", OnTestMapClick, 120);
-        foreach (var s in new Sprite[] { _zoomInput, _gridCheckbox, autoSaveCheckbox, _drawTypeSwitch, _testButton }) {
+        foreach (var s in new Sprite[] { _zoomInput, _gridCheckbox, autoSaveCheckbox, _drawTypeSwitch, _testButton })
+        {
             s.X = 8;
             s.Y = settingsY;
             settingsY += s.Height + 8;
@@ -185,14 +190,15 @@ public sealed class MapEditorScreen : Screen {
         _editNameWindow.OnOk = OnEditName;
         _pathPrompt = AddWindow(new PathPromptWindow());
         _pathPrompt.OnOk = () => _pathPromptCallback?.Invoke(_pathPrompt.Path);
-        _closeMapPrompt = AddWindow(new TextWindow("Close map", "This map has unsaved changes. Save it before closing?", "Save", "Discard"));
+        _closeMapPrompt = AddWindow(new TextWindow("Close map", "This map has unsaved changes. Save it before closing?",
+            "Save", "Discard"));
         _closeMapPrompt.OnOk = () => SaveThenClose(_closingMapId);
         _closeMapPrompt.OnCancel = () => CloseMap(_closingMapId);
 
         _tooltip = new EditorTooltip();
 
         _drawElementsList.SetContent(DrawType.Ground);
-        _brushOptions.OnToolChanged(METool.SelectId);
+        _brushOptions.OnToolChanged(METool.DrawId);
 
         AddEventListener(Event.AddedToStage, OnAddedToStage);
         AddEventListener(Event.RemovedFromStage, OnRemovedFromStage);
@@ -202,9 +208,10 @@ public sealed class MapEditorScreen : Screen {
 
     private T AddWindow<T>(T window) where T : EditorWindow => _windowLayer.AddChild(window);
 
-    #region Lifecycle
+#region Lifecycle
 
-    private void OnAddedToStage() {
+    private void OnAddedToStage()
+    {
         Stage.AddEventListener(ResizeEvent.Resize, OnResize);
         Stage.AddEventListener(KeyboardEvent.KeyDown, new Action<KeyboardEvent>(OnKeyDown));
         Stage.AddEventListener(KeyboardEvent.KeyUp, new Action<KeyboardEvent>(OnKeyUp));
@@ -219,7 +226,8 @@ public sealed class MapEditorScreen : Screen {
             _notifications.Show("Assets aren't loaded yet, connect to the server first", 16, 5000);
     }
 
-    private void OnRemovedFromStage() {
+    private void OnRemovedFromStage()
+    {
         Stage?.RemoveEventListener(ResizeEvent.Resize, OnResize);
         Stage?.RemoveEventListener(KeyboardEvent.KeyDown, new Action<KeyboardEvent>(OnKeyDown));
         Stage?.RemoveEventListener(KeyboardEvent.KeyUp, new Action<KeyboardEvent>(OnKeyUp));
@@ -228,18 +236,22 @@ public sealed class MapEditorScreen : Screen {
         HideTooltip();
     }
 
-    private void OnEnterFrame() {
+    private void OnEnterFrame()
+    {
         var dt = Stage.GameTime.ElapsedMs;
 
+        TryCreateDefaultMap();
         foreach (var view in _maps.Values) view.TileMap.RebuildDirty();
 
         if (_debugView.Visible) _debugView.UpdateStats(dt, MapView);
         if (MapData != null) _autoSaver.TrySaveMap(MapData, dt);
 
-        for (var i = _timers.Count - 1; i >= 0; i--) {
+        for (var i = _timers.Count - 1; i >= 0; i--)
+        {
             var (timeLeft, action) = _timers[i];
             timeLeft -= dt;
-            if (timeLeft > 0) {
+            if (timeLeft > 0)
+            {
                 _timers[i] = (timeLeft, action);
                 continue;
             }
@@ -251,7 +263,8 @@ public sealed class MapEditorScreen : Screen {
 
     private void RunLater(double ms, Action action) => _timers.Add((ms, action));
 
-    protected override void OnResize(ResizeEvent args) {
+    protected override void OnResize(ResizeEvent args)
+    {
         _stageWidth = Math.Max(1, args.Width);
         _stageHeight = Math.Max(1, args.Height);
         _background.Resize(_stageWidth, _stageHeight);
@@ -260,11 +273,12 @@ public sealed class MapEditorScreen : Screen {
         UpdatePositions();
     }
 
-    #endregion
+#endregion
 
-    #region Layout
+#region Layout
 
-    public void UpdatePositions() {
+    public void UpdatePositions()
+    {
         _notifications.UpdatePosition(_stageWidth);
 
         _loadButton.X = 15;
@@ -313,36 +327,43 @@ public sealed class MapEditorScreen : Screen {
         _debugView.X = 10;
         _debugView.Y = _mapInfoPanel.Y - _debugView.PanelHeight - 10;
 
-        foreach (var window in new EditorWindow[] { _createMapWindow, _mapDimensionsWindow, _editNameWindow, _pathPrompt, _closeMapPrompt })
+        foreach (var window in new EditorWindow[]
+                     { _createMapWindow, _mapDimensionsWindow, _editNameWindow, _pathPrompt, _closeMapPrompt })
             window.CenterOn(_stageWidth, _stageHeight);
 
         PositionMapView();
     }
 
-    private void PositionMapView() {
+    private void PositionMapView()
+    {
         if (MapView == null) return;
 
         var scale = GetScale(MapView);
         MapView.Scale = new Vector2(scale);
-        MapView.X = (int)((_stageWidth - MapData.MapWidth * T * scale) / 2 + MapView.MapOffset.X * MapView.ZoomLevel / MaxZoom);
-        MapView.Y = (int)((_stageHeight - MapData.MapHeight * T * scale) / 2 + MapView.MapOffset.Y * MapView.ZoomLevel / MaxZoom);
+        MapView.X = (int)((_stageWidth - MapData.MapWidth * T * scale) / 2 +
+                          MapView.MapOffset.X * MapView.ZoomLevel / MaxZoom);
+        MapView.Y = (int)((_stageHeight - MapData.MapHeight * T * scale) / 2 +
+                          MapView.MapOffset.Y * MapView.ZoomLevel / MaxZoom);
 
         // Hide chunks that are off screen
-        MapView.TileMap.UpdateVisibility(-MapView.X / scale, -MapView.Y / scale, _stageWidth / scale, _stageHeight / scale);
+        MapView.TileMap.UpdateVisibility(-MapView.X / scale, -MapView.Y / scale, _stageWidth / scale,
+            _stageHeight / scale);
     }
 
     private static float GetScale(MapView view) => Math.Max(0.01f, view.ZoomLevel / 100f);
 
-    #endregion
+#endregion
 
-    #region Map input
+#region Map input
 
-    private bool IsWindowOpened() => _createMapWindow.Visible || _mapDimensionsWindow.Visible || _editNameWindow.Visible ||
+    private bool IsWindowOpened() => _createMapWindow.Visible || _mapDimensionsWindow.Visible ||
+                                     _editNameWindow.Visible ||
                                      _pathPrompt.Visible || _closeMapPrompt.Visible;
 
     private MapHistory History => MapView == null ? null : _timeControl.GetHistory(MapView.Id);
 
-    private Vector2i? GetMouseTilePosition() {
+    private Vector2i? GetMouseTilePosition()
+    {
         if (MapView == null) return null;
         var mouse = MouseInput.GetMousePosition();
         var scale = GetScale(MapView);
@@ -352,36 +373,45 @@ public sealed class MapEditorScreen : Screen {
         return new Vector2i(x, y);
     }
 
-    private void OnLeftDown() {
+    private void OnLeftDown()
+    {
         _dragging = false;
         _mouseDown = true;
     }
 
-    private void OnLeftUp() {
+    private void OnLeftUp()
+    {
         if (!_mouseDown) return;
         _mouseDown = false;
-        if (!_dragging) {
+        if (!_dragging)
+        {
             OnTileClick();
-        } else {
+        }
+        else
+        {
             _dragging = false;
             OnMouseDragEnd();
         }
     }
 
-    private void OnMiddleDown() {
+    private void OnMiddleDown()
+    {
         _middleDown = true;
         _lastMousePos = MouseInput.GetMousePosition();
     }
 
-    private void OnMiddleUp() {
+    private void OnMiddleUp()
+    {
         _middleDown = false;
         _lastMousePos = null;
     }
 
-    private void OnMouseMove() {
+    private void OnMouseMove()
+    {
         OnMouseMoved();
 
-        if (_mouseDown) {
+        if (_mouseDown)
+        {
             _dragging = true;
             if (KeyboardInput.IsShiftDown()) OnShiftMouseDrag();
             else OnMouseDrag();
@@ -391,23 +421,28 @@ public sealed class MapEditorScreen : Screen {
     }
 
     // The mouse left the map (went over a panel), end any drag like the original's ROLL_OUT
-    private void OnRollOut() {
+    private void OnRollOut()
+    {
         if (_dragging) OnMouseDragEnd();
         ResetMouseState();
     }
 
-    private void ResetMouseState() {
+    private void ResetMouseState()
+    {
         _dragging = false;
         _mouseDown = false;
         _middleDown = false;
         _lastMousePos = null;
     }
 
-    private void OnMouseWheel(MouseEvent e) {
+    private void OnMouseWheel(MouseEvent e)
+    {
         if (MapView == null || e.Delta == 0) return;
 
         var toolUsesBrush = SelectedTool.Id is METool.DrawId or METool.EraserId or METool.ShapeId;
-        if (KeyboardInput.IsCtrlDown() && toolUsesBrush) { // Brush size
+        if (KeyboardInput.IsCtrlDown() && toolUsesBrush)
+        {
+            // Brush size
             UserBrush.SetSize(UserBrush.Size + Math.Sign(e.Delta));
             return;
         }
@@ -433,7 +468,8 @@ public sealed class MapEditorScreen : Screen {
         UpdateZoomLevel();
     }
 
-    private void DragMap() {
+    private void DragMap()
+    {
         if (MapView == null || IsWindowOpened()) return;
         var mouse = MouseInput.GetMousePosition();
         _lastMousePos ??= mouse;
@@ -443,15 +479,18 @@ public sealed class MapEditorScreen : Screen {
         PositionMapView();
     }
 
-    private void OnMouseDrag() {
+    private void OnMouseDrag()
+    {
         if (MapView == null || IsWindowOpened()) return;
         SelectedTool.MouseDrag(GetMouseTilePosition(), History);
     }
 
     // Holding shift switches to the select tool while dragging, the previous tool comes back when the drag ends
-    private void OnShiftMouseDrag() {
+    private void OnShiftMouseDrag()
+    {
         if (MapView == null || IsWindowOpened()) return;
-        if (SelectedTool.Id != METool.SelectId) {
+        if (SelectedTool.Id != METool.SelectId)
+        {
             _previousTool = SelectedTool;
             OnToolSwitch(METool.SelectId);
         }
@@ -459,27 +498,32 @@ public sealed class MapEditorScreen : Screen {
         SelectedTool.MouseDrag(GetMouseTilePosition(), History);
     }
 
-    private void OnMouseDragEnd() {
+    private void OnMouseDragEnd()
+    {
         if (MapView == null || IsWindowOpened()) return;
         SelectedTool.MouseDragEnd(GetMouseTilePosition(), History);
-        if (_previousTool != null) {
+        if (_previousTool != null)
+        {
             OnToolSwitch(_previousTool.Id);
             _previousTool = null;
         }
     }
 
-    private void OnTileClick() {
+    private void OnTileClick()
+    {
         var tilePos = GetMouseTilePosition();
         if (tilePos == null || MapView == null || IsWindowOpened()) return;
         SelectedTool.TileClick(tilePos, History);
     }
 
-    private void OnMouseMoved() {
+    private void OnMouseMoved()
+    {
         if (MapView == null) return;
         UpdateSelectionPanel();
 
         var tilePos = GetMouseTilePosition();
-        if (tilePos == null) {
+        if (tilePos == null)
+        {
             _tileInfoPanel.Visible = false;
             MapView.HideOverlays();
             return;
@@ -492,9 +536,11 @@ public sealed class MapEditorScreen : Screen {
         SelectedTool.MouseMoved(tilePos, History);
     }
 
-    private void UpdateSelectionPanel() {
+    private void UpdateSelectionPanel()
+    {
         var sel = MapView?.Selection;
-        if (sel == null || sel.IsEmpty) {
+        if (sel == null || sel.IsEmpty)
+        {
             _selectionInfoPanel.Visible = false;
             return;
         }
@@ -505,9 +551,11 @@ public sealed class MapEditorScreen : Screen {
         _selectionInfoPanel.Y = _stageHeight - _selectionInfoPanel.PanelHeight - 15;
     }
 
-    private void UpdateTileInfoPanel(Vector2i pos) {
+    private void UpdateTileInfoPanel(Vector2i pos)
+    {
         var tile = MapView.TileMap.GetTileData(pos.X, pos.Y);
-        if (tile == null) {
+        if (tile == null)
+        {
             _tileInfoPanel.Visible = false;
             return;
         }
@@ -519,14 +567,16 @@ public sealed class MapEditorScreen : Screen {
         UpdateSelectionPanel();
     }
 
-    #endregion
+#endregion
 
-    #region Keyboard
+#region Keyboard
 
-    private void OnKeyDown(KeyboardEvent e) {
+    private void OnKeyDown(KeyboardEvent e)
+    {
         if (Parent == null) return;
 
-        if (IsWindowOpened()) {
+        if (IsWindowOpened())
+        {
             if (e.Key is Key.Return or Key.KeypadEnter) SubmitOpenWindow();
             else if (e.Key == Key.Escape) CloseOpenWindow();
             _ignoreKeyUp = e.Key;
@@ -535,8 +585,10 @@ public sealed class MapEditorScreen : Screen {
 
         if (TextInput.IsAnyFocused) return;
 
-        if (e.Ctrl) {
-            switch (e.Key) {
+        if (e.Ctrl)
+        {
+            switch (e.Key)
+            {
                 case Key.Z:
                     OnUndoAction();
                     break;
@@ -547,16 +599,20 @@ public sealed class MapEditorScreen : Screen {
         }
     }
 
-    private void OnKeyUp(KeyboardEvent e) {
-        if (_ignoreKeyUp == e.Key) {
+    private void OnKeyUp(KeyboardEvent e)
+    {
+        if (_ignoreKeyUp == e.Key)
+        {
             _ignoreKeyUp = null;
             return;
         }
 
         if (Parent == null || IsWindowOpened() || TextInput.IsAnyFocused) return;
 
-        if (e.Ctrl) {
-            switch (e.Key) {
+        if (e.Ctrl)
+        {
+            switch (e.Key)
+            {
                 case Key.C:
                     OnCopy();
                     break;
@@ -568,19 +624,21 @@ public sealed class MapEditorScreen : Screen {
             return;
         }
 
-        if (e.Shift) {
+        if (e.Shift)
+        {
             if (e.Key == Key.G) OnGridToggleKey();
             return;
         }
 
         if (e.Alt) return;
 
-        switch (e.Key) {
+        switch (e.Key)
+        {
             case Key.M: OnToolSwitch(METool.SelectId); break;
             case Key.D: OnToolSwitch(METool.DrawId); break;
             case Key.L: OnToolSwitch(METool.LineId); break;
             case Key.S: OnToolSwitch(METool.ShapeId); break;
-            case Key.G: OnToolSwitch(METool.BucketId); break;
+            case Key.B: OnToolSwitch(METool.BucketId); break;
             case Key.A: OnToolSwitch(METool.SampleId); break;
             case Key.E: OnToolSwitch(METool.EraserId); break;
             case Key.I: OnToolSwitch(METool.EditId); break;
@@ -596,27 +654,34 @@ public sealed class MapEditorScreen : Screen {
         }
     }
 
-    private void SubmitOpenWindow() {
-        foreach (var w in new EditorWindow[] { _createMapWindow, _mapDimensionsWindow, _editNameWindow, _pathPrompt, _closeMapPrompt })
-            if (w.Visible) {
+    private void SubmitOpenWindow()
+    {
+        foreach (var w in new EditorWindow[]
+                     { _createMapWindow, _mapDimensionsWindow, _editNameWindow, _pathPrompt, _closeMapPrompt })
+            if (w.Visible)
+            {
                 w.Submit();
                 return;
             }
     }
 
-    private void CloseOpenWindow() {
-        foreach (var w in new EditorWindow[] { _createMapWindow, _mapDimensionsWindow, _editNameWindow, _pathPrompt, _closeMapPrompt })
-            if (w.Visible) {
+    private void CloseOpenWindow()
+    {
+        foreach (var w in new EditorWindow[]
+                     { _createMapWindow, _mapDimensionsWindow, _editNameWindow, _pathPrompt, _closeMapPrompt })
+            if (w.Visible)
+            {
                 w.Close(false);
                 return;
             }
     }
 
-    #endregion
+#endregion
 
-    #region Tools
+#region Tools
 
-    public void OnToolSwitch(int toolId) {
+    public void OnToolSwitch(int toolId)
+    {
         SetSelectedTool(toolId);
         _toolBar.SetSelected(toolId);
         _brushOptions.OnToolChanged(toolId);
@@ -624,7 +689,8 @@ public sealed class MapEditorScreen : Screen {
         UpdatePositions();
     }
 
-    private void SetSelectedTool(int toolId) {
+    private void SetSelectedTool(int toolId)
+    {
         _lastMousePos = null;
         SelectedTool.Reset();
         SelectedTool = METool.GetTool(toolId, this);
@@ -635,7 +701,8 @@ public sealed class MapEditorScreen : Screen {
         SelectedTool.Init(GetMouseTilePosition(), History);
     }
 
-    private void OnBrushChanged() {
+    private void OnBrushChanged()
+    {
         _brushOptions.UpdateBrush(UserBrush);
         var tilePos = GetMouseTilePosition();
         if (tilePos is not { } p || MapView == null || IsWindowOpened()) return;
@@ -645,30 +712,35 @@ public sealed class MapEditorScreen : Screen {
         SelectedTool.BrushChanged(tilePos, History);
     }
 
-    private void OnUndoAction() {
+    private void OnUndoAction()
+    {
         if (MapView == null) return;
         if (_timeControl.UndoLastAction(MapView.Id)) _notifications.Show("Undone", 18, 1000);
     }
 
-    private void OnRedoAction() {
+    private void OnRedoAction()
+    {
         if (MapView == null) return;
         if (_timeControl.RedoLastUndoneAction(MapView.Id)) _notifications.Show("Redone", 18, 1000);
     }
 
-    private void OnCopy() {
+    private void OnCopy()
+    {
         if (MapView == null || MapView.Selection.IsEmpty) return;
         _clipboard.Clear();
         MapView.CopySelectionToClipboard(_clipboard);
         _notifications.Show("Copy");
     }
 
-    private void OnPaste() {
+    private void OnPaste()
+    {
         if (MapView == null || GetMouseTilePosition() is not { } pos) return;
         MapView.PasteFromClipboard(_clipboard, pos.X, pos.Y, History);
         _notifications.Show("Paste");
     }
 
-    private void OnClearSelection() {
+    private void OnClearSelection()
+    {
         if (MapView == null) return;
         if (SelectedTool.Id == METool.SelectId) SelectedTool.Reset();
         if (!MapView.Selection.IsEmpty) MapView.RecordSelectionClear(History);
@@ -676,12 +748,14 @@ public sealed class MapEditorScreen : Screen {
         UpdateSelectionPanel();
     }
 
-    private void OnDeleteSelection() {
+    private void OnDeleteSelection()
+    {
         if (MapView == null || MapView.Selection.IsEmpty) return;
         MEEraserTool.EraseSelection(MapView, UserBrush, MapView.Selection, History);
     }
 
-    private void MoveSelection(int dx, int dy) {
+    private void MoveSelection(int dx, int dy)
+    {
         if (MapView == null || SelectedTool.Id != METool.SelectId) return;
         ((MESelectTool)METool.GetTool(METool.SelectId, this)).DragSelection(dx, dy, History);
         UpdateSelectionPanel();
@@ -689,16 +763,18 @@ public sealed class MapEditorScreen : Screen {
 
     private void OnGridClick(bool value) => MapView?.SetGrid(value);
 
-    private void OnGridToggleKey() {
+    private void OnGridToggleKey()
+    {
         if (MapView == null) return;
         _gridCheckbox.SetValue(MapView.ToggleGrid());
     }
 
-    #endregion
+#endregion
 
-    #region Draw elements
+#region Draw elements
 
-    private void OnDrawTypeSwitch(int idx) {
+    private void OnDrawTypeSwitch(int idx)
+    {
         UserBrush.ElementType = (DrawType)idx;
         _drawElementsList.ResetFilters();
         _drawElementsList.SetContent(UserBrush.ElementType);
@@ -706,26 +782,30 @@ public sealed class MapEditorScreen : Screen {
         RefreshBrushOverlay();
     }
 
-    /// <summary>Selects the brush's current element in the list.</summary>
-    public void UpdateDrawElements() {
+    // Selects the brush's current element in the list
+    public void UpdateDrawElements()
+    {
         var element = UserBrush.GetElement(UserBrush.ElementType);
         _drawElementsList.SetSelected(element == MEBrush.EmptyValue(UserBrush.ElementType) ? int.MinValue : element);
     }
 
-    private void OnDrawElementSelected(int element) {
+    private void OnDrawElementSelected(int element)
+    {
         UserBrush.SetElement(UserBrush.ElementType, element);
         RefreshBrushOverlay();
     }
 
-    private void RefreshBrushOverlay() {
+    private void RefreshBrushOverlay()
+    {
         if (MapView == null || GetMouseTilePosition() is not { } p) return;
         if (SelectedTool.Id is METool.DrawId or METool.ShapeId) MapView.DrawBrushTiles(p.X, p.Y, UserBrush);
     }
 
-    /// <param name="cell">The hovered list cell (owner of the tooltip)</param>
-    public void OnElementHover(object cell, DrawType? type, int element) {
-        if (type == null) {
-            if (!_tooltip.IsOwner(cell)) return; // Another cell is already hovered
+    public void OnElementHover(object cell, DrawType? type, int element)
+    {
+        if (type == null)
+        {
+            if (!_tooltip.IsOwner(cell)) return;
             _hoveredElement = null;
             _tooltip.Hide(cell);
             return;
@@ -735,18 +815,23 @@ public sealed class MapEditorScreen : Screen {
         _tooltip.Show(BuildElementTooltip(type.Value, element), cell);
     }
 
-    private static string BuildElementTooltip(DrawType type, int element) {
+    private static string BuildElementTooltip(DrawType type, int element)
+    {
         var sb = new StringBuilder();
         sb.Append(EditorAssets.GetId(type, element) ?? "Unknown");
         sb.Append($"\nType: 0x{element:X4}");
         var xml = EditorAssets.GetXml(type, element);
-        if (xml != null) {
+        if (xml != null)
+        {
             var count = 0;
-            foreach (var child in xml.Elements()) {
+            foreach (var child in xml.Elements())
+            {
                 var name = child.Name.LocalName;
-                if (name is "Texture" or "AnimatedTexture" or "RandomTexture" or "AltTexture" or "Top" or "Edge" or "Corner" or "InnerCorner")
+                if (name is "Texture" or "AnimatedTexture" or "RandomTexture" or "AltTexture" or "Top" or "Edge"
+                    or "Corner" or "InnerCorner")
                     continue;
-                if (++count > 10) {
+                if (++count > 10)
+                {
                     sb.Append("\n...");
                     break;
                 }
@@ -768,8 +853,10 @@ public sealed class MapEditorScreen : Screen {
     public void HideTooltip() => _tooltip.Hide();
 
     // Number key: binds the hovered element to it, otherwise switches to the element bound to it
-    private void OnTileHotkey(int number) {
-        if (_hoveredElement is { } hovered) {
+    private void OnTileHotkey(int number)
+    {
+        if (_hoveredElement is { } hovered)
+        {
             _tileHotkeys.SetHotkey(number, hovered.type, hovered.element);
             _notifications.Show($"Hotkey {number}: {EditorAssets.GetId(hovered.type, hovered.element)}", 16, 1500);
             UpdatePositions();
@@ -779,18 +866,20 @@ public sealed class MapEditorScreen : Screen {
         SwitchToHotkey(number);
     }
 
-    private void SwitchToHotkey(int number) {
+    private void SwitchToHotkey(int number)
+    {
         if (_tileHotkeys.Get(number) is not { } hk) return;
         UserBrush.SetElement(hk.type, hk.element);
         _drawTypeSwitch.Select((int)hk.type, true);
         _tileHotkeys.SwitchTo(number);
     }
 
-    #endregion
+#endregion
 
-    #region Maps
+#region Maps
 
-    private void AddMap(MapData data) {
+    private void AddMap(MapData data)
+    {
         var id = _nextMapId++;
         var view = new MapView(id, data);
         view.OnMapLoaded();
@@ -805,9 +894,11 @@ public sealed class MapEditorScreen : Screen {
         _notifications.Clear();
     }
 
-    private void ViewMap(int mapId) {
+    private void ViewMap(int mapId)
+    {
         foreach (var view in _maps.Values) view.Visible = false;
-        if (!_maps.TryGetValue(mapId, out var map)) {
+        if (!_maps.TryGetValue(mapId, out var map))
+        {
             MapView = null;
             _mapInfoPanel.Visible = false;
             _selectionInfoPanel.Visible = false;
@@ -825,11 +916,25 @@ public sealed class MapEditorScreen : Screen {
         SelectedTool.Init(GetMouseTilePosition(), History);
     }
 
+    private void TryCreateDefaultMap()
+    {
+        if (_defaultMapCreated || !EditorAssets.IsLoaded) return; // Retried every frame until the assets arrive
+        _defaultMapCreated = true;
+        if (_maps.Count > 0) return; // Something was already loaded, don't add another map
+
+        var data = new MapData();
+        data.NewMap("map", 128, 128); // Saves as map.jm / map.wmap
+        data.SavedChanges = true; // Untouched default map shouldn't ask to be saved when closed
+        AddMap(data);
+    }
+
     private void OnMapSelected(int mapId) => ViewMap(mapId);
 
-    private void OnMapCloseRequest(int mapId) {
+    private void OnMapCloseRequest(int mapId)
+    {
         if (!_maps.TryGetValue(mapId, out var view)) return;
-        if (view.MapData.SavedChanges) {
+        if (view.MapData.SavedChanges)
+        {
             CloseMap(mapId);
             return;
         }
@@ -839,33 +944,40 @@ public sealed class MapEditorScreen : Screen {
         UpdatePositions();
     }
 
-    private void SaveThenClose(int mapId) {
+    private void SaveThenClose(int mapId)
+    {
         if (!_maps.TryGetValue(mapId, out var view)) return;
-        SaveMap(view.MapData, false, saved => {
+        SaveMap(view.MapData, false, saved =>
+        {
             if (saved) CloseMap(mapId);
         });
     }
 
-    private void CloseMap(int mapId) {
+    private void CloseMap(int mapId)
+    {
         if (!_maps.TryGetValue(mapId, out var view)) return;
         _mapContainer.RemoveChild(view);
         _maps.Remove(mapId);
         _timeControl.EraseHistory(mapId);
         _mapSelector.RemoveMap(mapId);
 
-        if (MapView == view) {
+        if (MapView == view)
+        {
             _mapSelector.SelectMap(-1);
             ViewMap(_mapSelector.SelectedMap);
         }
     }
 
-    private void OnLoadClick() {
-        if (!EditorAssets.IsLoaded) {
+    private void OnLoadClick()
+    {
+        if (!EditorAssets.IsLoaded)
+        {
             _notifications.Show("Assets aren't loaded yet", 18, 2500);
             return;
         }
 
-        if (FileDialogs.TryOpenMap(out var path)) {
+        if (FileDialogs.TryOpenMap(out var path))
+        {
             if (path != null) LoadMapFile(path);
             return;
         }
@@ -876,9 +988,11 @@ public sealed class MapEditorScreen : Screen {
         UpdatePositions();
     }
 
-    private void LoadMapFile(string path) {
+    private void LoadMapFile(string path)
+    {
         path = path?.Trim().Trim('"');
-        if (string.IsNullOrEmpty(path) || !File.Exists(path)) {
+        if (string.IsNullOrEmpty(path) || !File.Exists(path))
+        {
             Log.Warn($"Map file not found: '{path}'");
             _notifications.Show($"File not found: {path}", 16, 4000);
             return;
@@ -886,26 +1000,33 @@ public sealed class MapEditorScreen : Screen {
 
         FileDialogs.Remember(path);
         _notifications.Show($"Loading map {Path.GetFileName(path)}...", 18, -1);
-        RunLater(100, () => {
-            try {
+        RunLater(100, () =>
+        {
+            try
+            {
                 var data = new MapData();
                 var error = data.LoadFile(path);
-                if (error != null) {
+                if (error != null)
+                {
                     _notifications.Show(error, 16, 5000);
                     return;
                 }
 
                 AddMap(data);
                 Log.Info($"Loaded map {path} ({data.MapWidth}x{data.MapHeight})");
-            } catch (Exception e) {
+            }
+            catch (Exception e)
+            {
                 Log.Error($"Failed to open map {path}: {e}");
                 _notifications.Show($"Failed to open map: {e.Message}", 16, 5000);
             }
         });
     }
 
-    private void OnNewClick() {
-        if (!EditorAssets.IsLoaded) {
+    private void OnNewClick()
+    {
+        if (!EditorAssets.IsLoaded)
+        {
             _notifications.Show("Assets aren't loaded yet", 18, 2500);
             return;
         }
@@ -914,23 +1035,28 @@ public sealed class MapEditorScreen : Screen {
         UpdatePositions();
     }
 
-    private void OnMapCreate() {
+    private void OnMapCreate()
+    {
         var data = new MapData();
         data.NewMap(_createMapWindow.MapName, _createMapWindow.MapWidth, _createMapWindow.MapHeight);
         AddMap(data);
     }
 
-    private void OnSaveClick(bool wmap) {
+    private void OnSaveClick(bool wmap)
+    {
         if (MapData == null) return;
         SaveMap(MapData, wmap, null);
     }
 
-    private void SaveMap(MapData data, bool wmap, Action<bool> onDone) {
+    private void SaveMap(MapData data, bool wmap, Action<bool> onDone)
+    {
         var ext = wmap ? ".wmap" : ".jm";
         var name = (string.IsNullOrWhiteSpace(data.MapName) ? "untitled" : data.MapName) + ext;
 
-        void Write(string path) {
-            if (string.IsNullOrEmpty(path)) {
+        void Write(string path)
+        {
+            if (string.IsNullOrEmpty(path))
+            {
                 _notifications.Clear();
                 onDone?.Invoke(false);
                 return;
@@ -938,9 +1064,12 @@ public sealed class MapEditorScreen : Screen {
 
             if (!path.EndsWith(ext, StringComparison.OrdinalIgnoreCase)) path += ext;
             _notifications.Show($"Serializing map to {(wmap ? "WMap" : "JSON")}...", 18, -1);
-            RunLater(100, () => { // Make sure the notification is visible before serializing
+            RunLater(100, () =>
+            {
+                // Make sure the notification is visible before serializing
                 var error = data.SaveFile(path, wmap);
-                if (error != null) {
+                if (error != null)
+                {
                     _notifications.Show(error, 16, 4000);
                     onDone?.Invoke(false);
                     return;
@@ -953,7 +1082,8 @@ public sealed class MapEditorScreen : Screen {
             });
         }
 
-        if (FileDialogs.TrySaveMap(name, wmap, out var selected)) {
+        if (FileDialogs.TrySaveMap(name, wmap, out var selected))
+        {
             Write(selected);
             return;
         }
@@ -963,14 +1093,18 @@ public sealed class MapEditorScreen : Screen {
         UpdatePositions();
     }
 
-    private void OnTestMapClick() {
-        if (MapData == null) {
+    private void OnTestMapClick()
+    {
+        if (MapData == null)
+        {
             _notifications.Show("Open or create a map to test", 18, 2500);
             return;
         }
 
-        if (!MapTestSession.CanTest(out var title, out var reason)) {
-            DialogManager.Enqueue(new Ui.Components.Dialogs.Dialog(title, reason, new Ui.Components.Dialogs.DialogOption("Ok")));
+        if (!MapTestSession.CanTest(out var title, out var reason))
+        {
+            DialogManager.Enqueue(
+                new Ui.Components.Dialogs.Dialog(title, reason, new Ui.Components.Dialogs.DialogOption("Ok")));
             return;
         }
 
@@ -978,19 +1112,22 @@ public sealed class MapEditorScreen : Screen {
         MapTestSession.Start(MapData.GetMapJsonString(), this);
     }
 
-    private void OnBackClick() {
+    private void OnBackClick()
+    {
         ResetMouseState();
         ScreenManager.FadeTo(new TitleScreen());
     }
 
-    private void OnMapDimensionsClick() {
+    private void OnMapDimensionsClick()
+    {
         if (MapData == null) return;
         _mapDimensionsWindow.Open(MapData.MapWidth, MapData.MapHeight);
         UpdatePositions();
     }
 
     // Changing the size re-creates the map with the previous tiles centered in it
-    private void OnMapDimensionsChange() {
+    private void OnMapDimensionsChange()
+    {
         if (MapView == null) return;
         MapData.ChangeDimensions(_mapDimensionsWindow.MapWidth, _mapDimensionsWindow.MapHeight);
         MapView.OnMapLoaded();
@@ -1000,12 +1137,14 @@ public sealed class MapEditorScreen : Screen {
         UpdatePositions();
     }
 
-    public void ShowEditNameView(int x, int y, string objName) {
+    public void ShowEditNameView(int x, int y, string objName)
+    {
         _editNameWindow.Open(x, y, objName);
         UpdatePositions();
     }
 
-    private void OnEditName() {
+    private void OnEditName()
+    {
         if (MapView == null) return;
         var x = _editNameWindow.TileX;
         var y = _editNameWindow.TileY;
@@ -1016,11 +1155,12 @@ public sealed class MapEditorScreen : Screen {
         MapView.EditTileObjCfg(x, y, _editNameWindow.ObjName);
     }
 
-    #endregion
+#endregion
 
-    #region Zoom
+#region Zoom
 
-    private void OnZoomInputChange(string text) {
+    private void OnZoomInputChange(string text)
+    {
         if (_zoomInputUpdating || MapView == null || !int.TryParse(text, out var zoom) || zoom <= 0) return;
         zoom = Math.Min(zoom, MaxZoom);
         if (MapView.ZoomLevel == zoom) return;
@@ -1028,9 +1168,11 @@ public sealed class MapEditorScreen : Screen {
         UpdateZoomLevel();
     }
 
-    private void UpdateZoomLevel() {
+    private void UpdateZoomLevel()
+    {
         if (MapView == null) return;
-        if (!_zoomInput.Focused) {
+        if (!_zoomInput.Focused)
+        {
             _zoomInputUpdating = true;
             _zoomInput.SetText(MapView.ZoomLevel.ToString());
             _zoomInputUpdating = false;
@@ -1039,5 +1181,5 @@ public sealed class MapEditorScreen : Screen {
         PositionMapView();
     }
 
-    #endregion
+#endregion
 }
