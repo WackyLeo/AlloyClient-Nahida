@@ -29,11 +29,11 @@ public static class MapTestSession {
         }
 
         var rank = GlobalData.Get<AccountData>()?.Rank ?? 0;
-        if (rank < RequiredRank) {
+        /* if (rank < RequiredRank) {
             title = "Insufficient Rank";
             reason = $"Testing maps requires rank {RequiredRank} (your rank: {rank}).";
             return false;
-        }
+        } */
 
         var chars = GlobalData.Get<CharacterListData>()?.Characters;
         if (chars == null || chars.Length == 0) {

@@ -7,11 +7,11 @@ namespace AlloyClient.Editor;
 
 public abstract class METool {
     public const int SelectId = 0;
-    public const int PencilId = 1;
+    public const int DrawId = 1;
     public const int LineId = 2;
     public const int ShapeId = 3;
     public const int BucketId = 4;
-    public const int PickerId = 5;
+    public const int SampleId = 5;
     public const int EraserId = 6;
     public const int EditId = 7;
 
@@ -90,23 +90,23 @@ public abstract class METool {
 
     private static METool CreateTool(int toolId, MapEditorScreen editor) => toolId switch {
         SelectId => new MESelectTool(editor),
-        PencilId => new MEPencilTool(editor),
+        DrawId => new MEPencilTool(editor),
         LineId => new MELineTool(editor),
         ShapeId => new MEShapeTool(editor),
         BucketId => new MEBucketTool(editor),
         EraserId => new MEEraserTool(editor),
-        PickerId => new MEPickerTool(editor),
+        SampleId => new MEPickerTool(editor),
         EditId => new MEEditTool(editor),
         _ => new MESelectTool(editor)
     };
 
     public static string ToolIdToName(int id) => id switch {
         SelectId => "Select",
-        PencilId => "Pencil",
+        DrawId => "Draw",
         LineId => "Line",
         ShapeId => "Shape",
         BucketId => "Bucket",
-        PickerId => "Picker",
+        SampleId => "Sample",
         EraserId => "Eraser",
         EditId => "Edit",
         _ => "?"
@@ -114,9 +114,9 @@ public abstract class METool {
 
     public static string GetToolDescription(int id) => id switch {
         SelectId => "Keybind: M\nHold Shift while dragging to use.\nEscape to unselect.\nDelete to delete tiles in selection.\nArrow keys move the selection.",
-        PencilId => "Keybind: B\nCtrl + Scroll to change brush size.",
+        DrawId => "Keybind: B\nCtrl + Scroll to change brush size.",
         EraserId => "Keybind: E\nCtrl + Scroll to change brush size.",
-        PickerId => "Keybind: I\nClick a tile to pick its ground/object/region.",
+        SampleId => "Keybind: I\nClick a tile to pick its ground/object/region.",
         BucketId => "Keybind: G\nFills connected tiles.\nCtrl + Click to fill every matching tile.",
         LineId => "Keybind: L\nNot implemented.",
         ShapeId => "Keybind: U\nDraw random shapes with your brush.",
@@ -241,7 +241,7 @@ public sealed class MESelectTool(MapEditorScreen editor) : METool(SelectId, edit
     }
 }
 
-public sealed class MEPencilTool(MapEditorScreen editor) : METool(PencilId, editor) {
+public sealed class MEPencilTool(MapEditorScreen editor) : METool(DrawId, editor) {
     public override void Init(Vector2i? tilePos, MapHistory history) {
         if (tilePos is { } p) View.MoveBrushOverlay(p.X, p.Y, Brush, false, true);
     }
@@ -409,7 +409,7 @@ public sealed class MEBucketTool(MapEditorScreen editor) : METool(BucketId, edit
     }
 }
 
-public sealed class MEPickerTool(MapEditorScreen editor) : METool(PickerId, editor) {
+public sealed class MEPickerTool(MapEditorScreen editor) : METool(SampleId, editor) {
     public override void Init(Vector2i? tilePos, MapHistory history) {
         if (tilePos is { } p) View.HighlightTile(p.X, p.Y);
     }

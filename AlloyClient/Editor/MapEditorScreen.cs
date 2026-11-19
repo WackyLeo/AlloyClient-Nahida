@@ -406,7 +406,7 @@ public sealed class MapEditorScreen : Screen {
     private void OnMouseWheel(MouseEvent e) {
         if (MapView == null || e.Delta == 0) return;
 
-        var toolUsesBrush = SelectedTool.Id is METool.PencilId or METool.EraserId or METool.ShapeId;
+        var toolUsesBrush = SelectedTool.Id is METool.DrawId or METool.EraserId or METool.ShapeId;
         if (KeyboardInput.IsCtrlDown() && toolUsesBrush) { // Brush size
             UserBrush.SetSize(UserBrush.Size + Math.Sign(e.Delta));
             return;
@@ -577,11 +577,11 @@ public sealed class MapEditorScreen : Screen {
 
         switch (e.Key) {
             case Key.M: OnToolSwitch(METool.SelectId); break;
-            case Key.B: OnToolSwitch(METool.PencilId); break;
+            case Key.B: OnToolSwitch(METool.DrawId); break;
             case Key.L: OnToolSwitch(METool.LineId); break;
             case Key.U: OnToolSwitch(METool.ShapeId); break;
             case Key.G: OnToolSwitch(METool.BucketId); break;
-            case Key.I: OnToolSwitch(METool.PickerId); break;
+            case Key.I: OnToolSwitch(METool.SampleId); break;
             case Key.E: OnToolSwitch(METool.EraserId); break;
             case Key.D: OnToolSwitch(METool.EditId); break;
             case Key.T: _drawTypeSwitch.SelectNext(); break;
@@ -641,7 +641,7 @@ public sealed class MapEditorScreen : Screen {
         if (tilePos is not { } p || MapView == null || IsWindowOpened()) return;
 
         if (SelectedTool.Id == METool.EraserId) MapView.DrawBrushOutline(p.X, p.Y, UserBrush);
-        else if (SelectedTool.Id is METool.PencilId or METool.ShapeId) MapView.DrawBrushTiles(p.X, p.Y, UserBrush);
+        else if (SelectedTool.Id is METool.DrawId or METool.ShapeId) MapView.DrawBrushTiles(p.X, p.Y, UserBrush);
         SelectedTool.BrushChanged(tilePos, History);
     }
 
@@ -719,7 +719,7 @@ public sealed class MapEditorScreen : Screen {
 
     private void RefreshBrushOverlay() {
         if (MapView == null || GetMouseTilePosition() is not { } p) return;
-        if (SelectedTool.Id is METool.PencilId or METool.ShapeId) MapView.DrawBrushTiles(p.X, p.Y, UserBrush);
+        if (SelectedTool.Id is METool.DrawId or METool.ShapeId) MapView.DrawBrushTiles(p.X, p.Y, UserBrush);
     }
 
     /// <param name="cell">The hovered list cell (owner of the tooltip)</param>
