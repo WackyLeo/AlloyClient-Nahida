@@ -577,13 +577,13 @@ public sealed class MapEditorScreen : Screen {
 
         switch (e.Key) {
             case Key.M: OnToolSwitch(METool.SelectId); break;
-            case Key.B: OnToolSwitch(METool.DrawId); break;
+            case Key.D: OnToolSwitch(METool.DrawId); break;
             case Key.L: OnToolSwitch(METool.LineId); break;
-            case Key.U: OnToolSwitch(METool.ShapeId); break;
+            case Key.S: OnToolSwitch(METool.ShapeId); break;
             case Key.G: OnToolSwitch(METool.BucketId); break;
-            case Key.I: OnToolSwitch(METool.SampleId); break;
+            case Key.A: OnToolSwitch(METool.SampleId); break;
             case Key.E: OnToolSwitch(METool.EraserId); break;
-            case Key.D: OnToolSwitch(METool.EditId); break;
+            case Key.I: OnToolSwitch(METool.EditId); break;
             case Key.T: _drawTypeSwitch.SelectNext(); break;
             case Key.Escape: OnClearSelection(); break;
             case Key.Delete: OnDeleteSelection(); break;

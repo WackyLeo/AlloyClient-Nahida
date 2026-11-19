@@ -116,11 +116,11 @@ public abstract class METool {
         SelectId => "Keybind: M\nHold Shift while dragging to use.\nEscape to unselect.\nDelete to delete tiles in selection.\nArrow keys move the selection.",
         DrawId => "Keybind: B\nCtrl + Scroll to change brush size.",
         EraserId => "Keybind: E\nCtrl + Scroll to change brush size.",
-        SampleId => "Keybind: I\nClick a tile to pick its ground/object/region.",
+        SampleId => "Keybind: A\nClick a tile to pick its ground/object/region.",
         BucketId => "Keybind: G\nFills connected tiles.\nCtrl + Click to fill every matching tile.",
         LineId => "Keybind: L\nNot implemented.",
-        ShapeId => "Keybind: U\nDraw random shapes with your brush.",
-        EditId => "Keybind: D\nClick an object to edit its name/cfg (useful for signs).",
+        ShapeId => "Keybind: S\nDraw random shapes with your brush.",
+        EditId => "Keybind: I\nClick an object to edit its name/cfg (useful for signs).",
         _ => ""
     };
 
