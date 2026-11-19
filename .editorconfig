@@ -1,0 +1,14 @@
+# AlloyClient code style: braces always on their own line (Allman), else/catch/finally on their own line.
+# Single line statements may omit braces.
+root = true
+
+[*.cs]
+csharp_new_line_before_open_brace = all
+csharp_new_line_before_else = true
+csharp_new_line_before_catch = true
+csharp_new_line_before_finally = true
+csharp_new_line_before_members_in_object_initializers = true
+csharp_new_line_before_members_in_anonymous_types = true
+csharp_prefer_braces = when_multiline:silent
+indent_style = space
+indent_size = 4
