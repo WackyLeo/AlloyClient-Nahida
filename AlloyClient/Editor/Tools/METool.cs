@@ -119,7 +119,7 @@ public abstract class METool {
         SampleId => "Keybind: A\nClick a tile to pick its ground/object/region.",
         FillId => "Keybind: F\nFills connected tiles.\nCtrl + Click to fill every matching tile.",
         LineId => "Keybind: L\nNot implemented.",
-        ShapeId => "Keybind: S\nDraw random shapes with your brush.",
+        ShapeId => "Keybind: S\nDraw random shapes with your brush.\nHold Shift and move the mouse left/right to change the density.",
         EditId => "Keybind: I\nClick an object to edit its name/cfg (useful for signs).",
         _ => ""
     };

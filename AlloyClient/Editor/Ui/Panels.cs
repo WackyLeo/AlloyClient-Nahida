@@ -802,6 +802,7 @@ public sealed class BrushOptions : EditorPanel
     {
         _updating = true;
         if (_size != null && !_size.Focused && _size.IntValue != brush.Size) _size.SetText(brush.Size.ToString());
+        if (_chance != null && !_chance.Focused && _chance.IntValue != brush.Chance) _chance.SetText(brush.Chance.ToString()); // NEW
         _replace?.SetValue(brush.Replace);
         _shape?.SetText("Shape: " + ShapeName(brush.BrushShape));
         _updating = false;

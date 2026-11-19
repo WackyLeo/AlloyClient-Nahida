@@ -416,7 +416,7 @@ public sealed class MapEditorScreen : Screen
         {
             _dragging = true;
             // The draw tool uses shift for its rectangle fill, the other tools switch to select
-            if (KeyboardInput.IsShiftDown() && SelectedTool.Id != METool.DrawId) OnShiftMouseDrag();
+            if (KeyboardInput.IsShiftDown() && SelectedTool.Id is not (METool.DrawId or METool.ShapeId)) OnShiftMouseDrag();
             else OnMouseDrag();
         }
 
@@ -447,6 +447,13 @@ public sealed class MapEditorScreen : Screen
         {
             // Brush size
             UserBrush.SetSize(UserBrush.Size + Math.Sign(e.Delta));
+            return;
+        }
+        
+        if (KeyboardInput.IsShiftDown() && SelectedTool.Id == METool.ShapeId)
+        {
+            // Shape density (the Chance value)
+            UserBrush.SetChance(UserBrush.Chance + Math.Sign(e.Delta) * 1);
             return;
         }
 
@@ -783,7 +790,7 @@ public sealed class MapEditorScreen : Screen
     private void MoveSelection(int dx, int dy)
     {
         if (MapView == null || SelectedTool.Id != METool.SelectId) return;
-        ((MESelectTool)METool.GetTool(METool.DrawId, this)).DragSelection(dx, dy, History);
+        ((MESelectTool)METool.GetTool(METool.SelectId, this)).DragSelection(dx, dy, History);
         UpdateSelectionPanel();
     }
 
