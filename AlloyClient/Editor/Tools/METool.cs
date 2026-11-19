@@ -113,11 +113,11 @@ public abstract class METool {
     };
 
     public static string GetToolDescription(int id) => id switch {
-        SelectId => "Keybind: M\nHold Shift while dragging to use.\nEscape to unselect.\nDelete to delete tiles in selection.\nArrow keys move the selection.",
-        DrawId => "Keybind: B\nCtrl + Scroll to change brush size.",
+        SelectId => "Keybind: M\nHold Shift while dragging to use (not with the Draw tool).\nEscape to unselect.\nDelete to delete tiles in selection.\nArrow keys move the selection.",
+        DrawId => "Keybind: D\nCtrl + Scroll to change brush size.\nHold Shift and move the mouse to make a rectangle, click to fill it.",
         EraserId => "Keybind: E\nCtrl + Scroll to change brush size.",
         SampleId => "Keybind: A\nClick a tile to pick its ground/object/region.",
-        BucketId => "Keybind: G\nFills connected tiles.\nCtrl + Click to fill every matching tile.",
+        BucketId => "Keybind: B\nFills connected tiles.\nCtrl + Click to fill every matching tile.",
         LineId => "Keybind: L\nNot implemented.",
         ShapeId => "Keybind: S\nDraw random shapes with your brush.",
         EditId => "Keybind: I\nClick an object to edit its name/cfg (useful for signs).",
@@ -242,20 +242,93 @@ public sealed class MESelectTool(MapEditorScreen editor) : METool(SelectId, edit
 }
 
 public sealed class MEPencilTool(MapEditorScreen editor) : METool(DrawId, editor) {
+    // Holding shift anchors a rectangle at the tile under the mouse, clicking fills it (like the flash editor)
+    private Vector2i? _rectAnchor;
+
+    public bool RectActive => _rectAnchor != null;
+
     public override void Init(Vector2i? tilePos, MapHistory history) {
+        _rectAnchor = null;
         if (tilePos is { } p) View.MoveBrushOverlay(p.X, p.Y, Brush, false, true);
     }
 
+    public override void Reset()
+    {
+        _rectAnchor = null;
+        View?.HideRectPreview();
+    }
+
     public override void MouseDrag(Vector2i? tilePos, MapHistory history) {
+        if (RectActive)
+        {
+            return; // Dragging with shift only resizes the rectangle, it's filled on release
+        }
+
         if (tilePos is { } p) UsePencil(p, history);
+    }
+
+    public override void MouseDragEnd(Vector2i? tilePos, MapHistory history)
+    {
+        if (RectActive && tilePos is { } p)
+        {
+            FillRect(p, history);
+        }
     }
 
     public override void TileClick(Vector2i? tilePos, MapHistory history) {
-        if (tilePos is { } p) UsePencil(p, history);
+        if (tilePos is not { } p)
+        {
+            return;
+        }
+
+        if (RectActive)
+        {
+            FillRect(p, history);
+        }
+        else
+        {
+            UsePencil(p, history);
+        }
     }
 
     public override void MouseMoved(Vector2i? tilePos, MapHistory history) {
-        if (tilePos is { } p) View.MoveBrushOverlay(p.X, p.Y, Brush);
+        if (tilePos is not { } p)
+        {
+            return;
+        }
+
+        if (KeyboardInput.IsShiftDown())
+        {
+            _rectAnchor ??= p;
+            View.HideBrushOverlay();
+            View.DrawRectPreview(_rectAnchor.Value.X, _rectAnchor.Value.Y, p.X, p.Y);
+            return;
+        }
+
+        if (RectActive)
+        {
+            Reset();
+            View.MoveBrushOverlay(p.X, p.Y, Brush, false, true);
+            return;
+        }
+
+        View.MoveBrushOverlay(p.X, p.Y, Brush);
+    }
+
+    private void FillRect(Vector2i pos, MapHistory history)
+    {
+        var anchor = _rectAnchor!.Value;
+        var actions = new MapActionSet();
+        for (var y = Math.Min(anchor.Y, pos.Y); y <= Math.Max(anchor.Y, pos.Y); y++)
+        {
+            for (var x = Math.Min(anchor.X, pos.X); x <= Math.Max(anchor.X, pos.X); x++)
+            {
+                if (View.IsInsideSelection(x, y))
+                    actions.Push(PaintTile(x, y));
+            }
+        }
+
+        history?.RecordSet(actions);
     }
 
     private void UsePencil(Vector2i pos, MapHistory history) {

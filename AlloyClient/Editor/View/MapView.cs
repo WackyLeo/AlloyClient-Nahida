@@ -23,6 +23,7 @@ public sealed class MapView : Sprite {
     private readonly QuadLayer _grid = new(TextureType.Color);
     private readonly QuadBatch _highlight = new(TextureType.Color);
     private readonly QuadBatch _selectionRect = new(TextureType.Color);
+    private readonly QuadBatch _rectPreview = new(TextureType.Color);
     private readonly Sprite _brushOverlay = new();
     private readonly QuadLayer _brushTextures = new(TextureType.GameAtlas);
     private readonly QuadLayer _brushColors = new(TextureType.Color);
@@ -46,6 +47,7 @@ public sealed class MapView : Sprite {
         AddChild(_grid);
         AddChild(_highlight);
         AddChild(_selectionRect);
+        AddChild(_rectPreview);
 
         _brushOverlay.Alpha = 0.9f;
         _brushOverlay.Visible = false;
@@ -148,6 +150,27 @@ public sealed class MapView : Sprite {
     public void HideOverlays() {
         HighlightTile(-1, -1);
         HideBrushOverlay();
+        HideRectPreview();
+    }
+
+    /// <summary>Outlined, lightly filled rectangle of the tiles a shift+click fill will paint (corners in any order).</summary>
+    public void DrawRectPreview(int startX, int startY, int endX, int endY)
+    {
+        var x = Math.Min(startX, endX);
+        var y = Math.Min(startY, endY);
+        var w = (Math.Abs(endX - startX) + 1) * T;
+        var h = (Math.Abs(endY - startY) + 1) * T;
+
+        _rectPreview.Clear();
+        _rectPreview.AddColorQuad(x * T, y * T, w, h, 0x1AFFFFFF);
+        _rectPreview.AddOutline(x * T, y * T, w, h, 0.75f, 0xFFFFFFFF);
+        _rectPreview.Commit();
+    }
+
+    public void HideRectPreview()
+    {
+        _rectPreview.Clear();
+        _rectPreview.Commit();
     }
 
     public void MoveBrushOverlay(int mapX, int mapY, MEBrush brush, bool eraser = false, bool forceDraw = false) {

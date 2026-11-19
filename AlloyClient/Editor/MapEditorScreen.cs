@@ -415,7 +415,8 @@ public sealed class MapEditorScreen : Screen
         if (_mouseDown)
         {
             _dragging = true;
-            if (KeyboardInput.IsShiftDown()) OnShiftMouseDrag();
+            // The draw tool uses shift for its rectangle fill, the other tools switch to select
+            if (KeyboardInput.IsShiftDown() && SelectedTool.Id != METool.DrawId) OnShiftMouseDrag();
             else OnMouseDrag();
         }
 
@@ -587,6 +588,11 @@ public sealed class MapEditorScreen : Screen
 
         if (TextInput.IsAnyFocused) return;
 
+        if (e.Key is Key.LeftShift or Key.RightShift)
+        {
+            RefreshDrawRect();
+        }
+
         if (e.Ctrl)
         {
             switch (e.Key)
@@ -610,6 +616,12 @@ public sealed class MapEditorScreen : Screen
         }
 
         if (Parent == null || IsWindowOpened() || TextInput.IsAnyFocused) return;
+
+        if (e.Key is Key.LeftShift or Key.RightShift)
+        {
+            RefreshDrawRect();
+            return;
+        }
 
         if (e.Ctrl)
         {
@@ -654,6 +666,17 @@ public sealed class MapEditorScreen : Screen
             case Key.F3: _debugView.Visible = !_debugView.Visible; break;
             case >= Key.D0 and <= Key.D9: OnTileHotkey(e.Key - Key.D0); break;
         }
+    }
+
+    // Shift pressed/released with the draw tool: show or hide its rectangle right away, without waiting for a mouse move
+    private void RefreshDrawRect()
+    {
+        if (MapView == null || SelectedTool.Id != METool.DrawId) return;
+        var tilePos = GetMouseTilePosition();
+        if (tilePos == null) return;
+
+        MapView.HideOverlays();
+        SelectedTool.MouseMoved(tilePos, History);
     }
 
     private void SubmitOpenWindow()
@@ -708,6 +731,7 @@ public sealed class MapEditorScreen : Screen
         _brushOptions.UpdateBrush(UserBrush);
         var tilePos = GetMouseTilePosition();
         if (tilePos is not { } p || MapView == null || IsWindowOpened()) return;
+        if (SelectedTool is MEPencilTool { RectActive: true }) return; // Keep showing the rectangle
 
         if (SelectedTool.Id == METool.EraserId) MapView.DrawBrushOutline(p.X, p.Y, UserBrush);
         else if (SelectedTool.Id is METool.DrawId or METool.ShapeId) MapView.DrawBrushTiles(p.X, p.Y, UserBrush);
@@ -827,6 +851,7 @@ public sealed class MapEditorScreen : Screen
     private void RefreshBrushOverlay()
     {
         if (MapView == null || GetMouseTilePosition() is not { } p) return;
+        if (SelectedTool is MEPencilTool { RectActive: true }) return;
         if (SelectedTool.Id is METool.DrawId or METool.ShapeId) MapView.DrawBrushTiles(p.X, p.Y, UserBrush);
     }
 
