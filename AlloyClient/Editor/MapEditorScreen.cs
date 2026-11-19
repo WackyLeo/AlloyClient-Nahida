@@ -50,6 +50,7 @@ public sealed class MapEditorScreen : Screen
     private METool _previousTool; // Tool to go back to after a shift+drag selection
     private (DrawType type, int element)? _hoveredElement;
     private bool _defaultMapCreated;
+    private bool _defaultElementsSet;
 
     // Mouse state on the map
     private bool _mouseDown;
@@ -118,7 +119,7 @@ public sealed class MapEditorScreen : Screen
         AddChild(_uiLayer);
         AddChild(_windowLayer);
 
-        SelectedTool = METool.GetTool(METool.SelectId, this);
+        SelectedTool = METool.GetTool(METool.DrawId, this);
         UserBrush.Changed += OnBrushChanged;
 
         // Top buttons
@@ -198,7 +199,7 @@ public sealed class MapEditorScreen : Screen
         _tooltip = new EditorTooltip();
 
         _drawElementsList.SetContent(DrawType.Ground);
-        _brushOptions.OnToolChanged(METool.DrawId);
+        OnToolSwitch(METool.DrawId);
 
         AddEventListener(Event.AddedToStage, OnAddedToStage);
         AddEventListener(Event.RemovedFromStage, OnRemovedFromStage);
@@ -241,6 +242,7 @@ public sealed class MapEditorScreen : Screen
         var dt = Stage.GameTime.ElapsedMs;
 
         TryCreateDefaultMap();
+        TrySelectDefaultElements();
         foreach (var view in _maps.Values) view.TileMap.RebuildDirty();
 
         if (_debugView.Visible) _debugView.UpdateStats(dt, MapView);
@@ -757,7 +759,7 @@ public sealed class MapEditorScreen : Screen
     private void MoveSelection(int dx, int dy)
     {
         if (MapView == null || SelectedTool.Id != METool.SelectId) return;
-        ((MESelectTool)METool.GetTool(METool.SelectId, this)).DragSelection(dx, dy, History);
+        ((MESelectTool)METool.GetTool(METool.DrawId, this)).DragSelection(dx, dy, History);
         UpdateSelectionPanel();
     }
 
@@ -777,6 +779,33 @@ public sealed class MapEditorScreen : Screen
     {
         UserBrush.ElementType = (DrawType)idx;
         _drawElementsList.ResetFilters();
+        _drawElementsList.SetContent(UserBrush.ElementType);
+        UpdateDrawElements();
+        RefreshBrushOverlay();
+    }
+    
+    // Picks the first entry of the ground/object/region lists as the brush's starting element
+    private void TrySelectDefaultElements() {
+        if (_defaultElementsSet || !EditorAssets.IsLoaded) return;
+
+        var changed = false;
+        var allSet = true;
+        foreach (var type in Enum.GetValues<DrawType>()) {
+            if (UserBrush.GetElement(type) != MEBrush.EmptyValue(type)) continue; // Already chosen (hotkey, picker...)
+
+            var types = EditorAssets.GetTypes(type);
+            if (types.Count == 0) {
+                allSet = false; // This list isn't filled yet, try again next frame
+                continue;
+            }
+
+            UserBrush.SetElement(type, types[0]);
+            changed = true;
+        }
+
+        _defaultElementsSet = allSet;
+        if (!changed) return;
+
         _drawElementsList.SetContent(UserBrush.ElementType);
         UpdateDrawElements();
         RefreshBrushOverlay();
