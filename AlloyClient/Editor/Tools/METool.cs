@@ -546,10 +546,18 @@ public sealed class MEShapeTool(MapEditorScreen editor) : METool(ShapeId, editor
     private readonly List<Vector2i> _tiles = [];
     private static readonly Random Rng = new();
 
+    // Everything stamped during one drag, recorded as a single undo step when the drag ends
+    private MapActionSet _stroke;
+    private MapHistory _strokeHistory;
+    private Vector2i? _lastStamp; // Only stamp when the cursor enters a new tile
+
     public override void Init(Vector2i? tilePos, MapHistory history) {
+        CommitStroke();
         MakeRandomTiles();
         if (tilePos is { } p) View.MoveBrushOverlay(p.X, p.Y, Brush, false, true);
     }
+
+    public override void Reset() => CommitStroke();
 
     public override void MouseMoved(Vector2i? tilePos, MapHistory history) {
         if (tilePos is not { } p) return;
@@ -562,6 +570,21 @@ public sealed class MEShapeTool(MapEditorScreen editor) : METool(ShapeId, editor
         View.MoveBrushOverlay(p.X, p.Y, Brush, false, regenerated);
     }
 
+    public override void MouseDrag(Vector2i? tilePos, MapHistory history) {
+        if (tilePos is not { } p || _lastStamp == p) return;
+
+        if (_stroke != null && _strokeHistory != history) CommitStroke(); // Switched maps mid-stroke
+        _stroke ??= new MapActionSet();
+        _strokeHistory = history;
+        _lastStamp = p;
+
+        PlaceTiles(p, _stroke);
+        MakeRandomTiles(); // Fresh shape for the next stamp
+        View.MoveBrushOverlay(p.X, p.Y, Brush, false, true);
+    }
+
+    public override void MouseDragEnd(Vector2i? tilePos, MapHistory history) => CommitStroke();
+
     public override void BrushChanged(Vector2i? tilePos, MapHistory history) {
         MakeRandomTiles();
         if (tilePos is { } p) View.MoveBrushOverlay(p.X, p.Y, Brush, false, true);
@@ -569,27 +592,35 @@ public sealed class MEShapeTool(MapEditorScreen editor) : METool(ShapeId, editor
 
     public override void TileClick(Vector2i? tilePos, MapHistory history) {
         if (tilePos is not { } p) return;
-        PlaceTiles(p, history);
+        var actions = new MapActionSet();
+        PlaceTiles(p, actions);
+        history?.RecordSet(actions); // A single click is its own undo step
         MakeRandomTiles();
         View.MoveBrushOverlay(p.X, p.Y, Brush, false, true);
     }
 
-    private void PlaceTiles(Vector2i pos, MapHistory history) {
+    private void PlaceTiles(Vector2i pos, MapActionSet actions) {
         if (!View.IsInsideSelection(pos.X, pos.Y)) return;
 
         if (Brush.Size == 0) {
-            history?.Record(PaintTile(pos.X, pos.Y));
+            actions.Push(PaintTile(pos.X, pos.Y));
             return;
         }
 
-        var actions = new MapActionSet();
         foreach (var t in _tiles) {
             var x = t.X + pos.X;
             var y = t.Y + pos.Y;
             if (View.IsInsideSelection(x, y)) actions.Push(PaintTile(x, y));
         }
+    }
 
-        history?.RecordSet(actions);
+    private void CommitStroke() {
+        var set = _stroke;
+        var history = _strokeHistory;
+        _stroke = null;
+        _strokeHistory = null;
+        _lastStamp = null;
+        if (set != null) history?.RecordSet(set); // RecordSet ignores empty sets
     }
 
     private void MakeRandomTiles() {
