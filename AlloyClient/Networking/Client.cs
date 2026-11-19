@@ -343,7 +343,13 @@ public static class Client
         }
     }
 
-    public static void ReconnectToGame(int gameId, int keyTime, byte[] key) {
+    public static void ReconnectToGame(int gameId, int keyTime, byte[] key)
+    {
+        if (Editor.MapTestSession.IsActive)
+        {
+            Disconnect("Left map test");
+            return;
+        }
         IsReconnecting = true;
 
         ScreenManager.FadeOutCurrent(100, 0x000000, () => {
@@ -377,16 +383,17 @@ public static class Client
         });
     }
 
-    public static void Disconnect(string message = null) {
-        if (State != ConnectionState.Disconnected) {
-            State = ConnectionState.Disconnected;
-            Reset();
-            _tcp?.Close();
-            _socket?.Close();
-            _reader.BaseStream.Seek(0, SeekOrigin.Begin);
-            Log.Info($"Disconnecting client {(message != null ? $"({message})" : "")}");
-            while (IncomingQueue.TryDequeue(out var pkt)) pkt.ReturnPacket();
-        }
+    public static void Disconnect(string message = null)
+    {
+
+        if (State == ConnectionState.Disconnected) return;
+
+        State = ConnectionState.Disconnected;
+        Reset();
+        _tcp?.Close();
+        _socket?.Close();
+        _reader.BaseStream.Seek(0, SeekOrigin.Begin);
+        while (IncomingQueue.TryDequeue(out var pkt)) pkt.ReturnPacket();
 
         if (IsReconnecting) return;
 

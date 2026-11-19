@@ -7,18 +7,14 @@ using AlloyClient.UiLib.Extra;
 
 namespace AlloyClient.Editor;
 
-/// <summary>
-/// "Test" button of the editor: connects to the game server with the map json in the hello packet (same as the flash
-/// client's map editor, game id -6) and comes back to the editor once the connection ends.
-/// </summary>
 public static class MapTestSession {
     public const int MapTestGameId = -6;
 
     private static string _pendingJson;
     private static Screen _returnScreen;
     private static bool _active;
-
-    /// <summary>Rank needed to test maps: the same MapMinRank the server sends for the map editor.</summary>
+    public static bool IsActive => _active;
+    
     public static int RequiredRank => GlobalData.Get<CharacterListData>()?.MapMinRank ?? 0;
 
     public static bool CanTest(out string title, out string reason) {

@@ -181,7 +181,6 @@ public class Main {
     private void SetGraphicOptions(GraphicsOptions mode) {
         switch (mode) {
             case GraphicsOptions.TitleScreen:
-                Console.WriteLine("GraphicsOptions.TitleScreen dispatched");
                 _targetFrameTime = 1000d / 60;
                 break;
             case GraphicsOptions.InGame when Settings.VSync:
