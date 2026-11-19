@@ -10,7 +10,7 @@ public abstract class METool {
     public const int DrawId = 1;
     public const int LineId = 2;
     public const int ShapeId = 3;
-    public const int BucketId = 4;
+    public const int FillId = 4;
     public const int SampleId = 5;
     public const int EraserId = 6;
     public const int EditId = 7;
@@ -93,7 +93,7 @@ public abstract class METool {
         DrawId => new MEPencilTool(editor),
         LineId => new MELineTool(editor),
         ShapeId => new MEShapeTool(editor),
-        BucketId => new MEBucketTool(editor),
+        FillId => new MEBucketTool(editor),
         EraserId => new MEEraserTool(editor),
         SampleId => new MEPickerTool(editor),
         EditId => new MEEditTool(editor),
@@ -105,7 +105,7 @@ public abstract class METool {
         DrawId => "Draw",
         LineId => "Line",
         ShapeId => "Shape",
-        BucketId => "Bucket",
+        FillId => "Fill",
         SampleId => "Sample",
         EraserId => "Eraser",
         EditId => "Edit",
@@ -117,7 +117,7 @@ public abstract class METool {
         DrawId => "Keybind: D\nCtrl + Scroll to change brush size.\nHold Shift and move the mouse to make a rectangle, click to fill it.",
         EraserId => "Keybind: E\nCtrl + Scroll to change brush size.",
         SampleId => "Keybind: A\nClick a tile to pick its ground/object/region.",
-        BucketId => "Keybind: B\nFills connected tiles.\nCtrl + Click to fill every matching tile.",
+        FillId => "Keybind: F\nFills connected tiles.\nCtrl + Click to fill every matching tile.",
         LineId => "Keybind: L\nNot implemented.",
         ShapeId => "Keybind: S\nDraw random shapes with your brush.",
         EditId => "Keybind: I\nClick an object to edit its name/cfg (useful for signs).",
@@ -245,68 +245,65 @@ public sealed class MEPencilTool(MapEditorScreen editor) : METool(DrawId, editor
     // Holding shift anchors a rectangle at the tile under the mouse, clicking fills it (like the flash editor)
     private Vector2i? _rectAnchor;
 
+    // Everything painted during one mouse drag, recorded as a single undo step when the drag ends
+    private MapActionSet _stroke;
+    private MapHistory _strokeHistory;
+
     public bool RectActive => _rectAnchor != null;
 
     public override void Init(Vector2i? tilePos, MapHistory history) {
+        CommitStroke();
         _rectAnchor = null;
         if (tilePos is { } p) View.MoveBrushOverlay(p.X, p.Y, Brush, false, true);
     }
 
-    public override void Reset()
-    {
+    public override void Reset() {
+        CommitStroke(); // A stroke interrupted by a tool switch stays undoable
         _rectAnchor = null;
         View?.HideRectPreview();
     }
 
     public override void MouseDrag(Vector2i? tilePos, MapHistory history) {
-        if (RectActive)
-        {
+        if (RectActive) {
             return; // Dragging with shift only resizes the rectangle, it's filled on release
         }
 
-        if (tilePos is { } p) UsePencil(p, history);
+        if (tilePos is { } p) UsePencil(p, history, true);
     }
 
-    public override void MouseDragEnd(Vector2i? tilePos, MapHistory history)
-    {
-        if (RectActive && tilePos is { } p)
-        {
+    public override void MouseDragEnd(Vector2i? tilePos, MapHistory history) {
+        CommitStroke(); // Always, even if the mouse ended outside the map
+
+        if (RectActive && tilePos is { } p) {
             FillRect(p, history);
         }
     }
 
     public override void TileClick(Vector2i? tilePos, MapHistory history) {
-        if (tilePos is not { } p)
-        {
+        if (tilePos is not { } p) {
             return;
         }
 
-        if (RectActive)
-        {
+        if (RectActive) {
             FillRect(p, history);
-        }
-        else
-        {
-            UsePencil(p, history);
+        } else {
+            UsePencil(p, history, false);
         }
     }
 
     public override void MouseMoved(Vector2i? tilePos, MapHistory history) {
-        if (tilePos is not { } p)
-        {
+        if (tilePos is not { } p) {
             return;
         }
 
-        if (KeyboardInput.IsShiftDown())
-        {
+        if (KeyboardInput.IsShiftDown()) {
             _rectAnchor ??= p;
             View.HideBrushOverlay();
             View.DrawRectPreview(_rectAnchor.Value.X, _rectAnchor.Value.Y, p.X, p.Y);
             return;
         }
 
-        if (RectActive)
-        {
+        if (RectActive) {
             Reset();
             View.MoveBrushOverlay(p.X, p.Y, Brush, false, true);
             return;
@@ -315,14 +312,11 @@ public sealed class MEPencilTool(MapEditorScreen editor) : METool(DrawId, editor
         View.MoveBrushOverlay(p.X, p.Y, Brush);
     }
 
-    private void FillRect(Vector2i pos, MapHistory history)
-    {
+    private void FillRect(Vector2i pos, MapHistory history) {
         var anchor = _rectAnchor!.Value;
         var actions = new MapActionSet();
-        for (var y = Math.Min(anchor.Y, pos.Y); y <= Math.Max(anchor.Y, pos.Y); y++)
-        {
-            for (var x = Math.Min(anchor.X, pos.X); x <= Math.Max(anchor.X, pos.X); x++)
-            {
+        for (var y = Math.Min(anchor.Y, pos.Y); y <= Math.Max(anchor.Y, pos.Y); y++) {
+            for (var x = Math.Min(anchor.X, pos.X); x <= Math.Max(anchor.X, pos.X); x++) {
                 if (View.IsInsideSelection(x, y))
                     actions.Push(PaintTile(x, y));
             }
@@ -331,19 +325,36 @@ public sealed class MEPencilTool(MapEditorScreen editor) : METool(DrawId, editor
         history?.RecordSet(actions);
     }
 
-    private void UsePencil(Vector2i pos, MapHistory history) {
+    /// <param name="stroke">True while dragging: stamps are collected into one undo step. False for a single click.</param>
+    private void UsePencil(Vector2i pos, MapHistory history, bool stroke) {
         if (!View.IsInsideSelection(pos.X, pos.Y)) return;
 
-        if (Brush.Size == 0) {
-            history?.Record(PaintTile(pos.X, pos.Y));
-            return;
+        MapActionSet actions;
+        if (stroke) {
+            if (_stroke != null && _strokeHistory != history) CommitStroke(); // Switched maps mid-stroke
+            actions = _stroke ??= new MapActionSet();
+            _strokeHistory = history;
+        } else {
+            actions = new MapActionSet();
         }
 
-        var actions = new MapActionSet();
-        ForEachInBrush(pos.X, pos.Y, Brush.Size, (x, y) => {
-            if (View.IsInsideSelection(x, y)) actions.Push(PaintTile(x, y));
-        });
-        history?.RecordSet(actions);
+        if (Brush.Size == 0) {
+            actions.Push(PaintTile(pos.X, pos.Y));
+        } else {
+            ForEachInBrush(pos.X, pos.Y, Brush.Size, (x, y) => {
+                if (View.IsInsideSelection(x, y)) actions.Push(PaintTile(x, y));
+            });
+        }
+
+        if (!stroke) history?.RecordSet(actions); // A single click is its own undo step
+    }
+
+    private void CommitStroke() {
+        var set = _stroke;
+        var history = _strokeHistory;
+        _stroke = null;
+        _strokeHistory = null;
+        if (set != null) history?.RecordSet(set); // RecordSet ignores empty sets
     }
 }
 
@@ -412,7 +423,7 @@ public sealed class MEEraserTool(MapEditorScreen editor) : METool(EraserId, edit
     }
 }
 
-public sealed class MEBucketTool(MapEditorScreen editor) : METool(BucketId, editor) {
+public sealed class MEBucketTool(MapEditorScreen editor) : METool(FillId, editor) {
     public override void Init(Vector2i? tilePos, MapHistory history) {
         if (tilePos is { } p) View.HighlightTile(p.X, p.Y);
     }

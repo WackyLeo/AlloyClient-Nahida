@@ -98,18 +98,32 @@ public sealed class DrawElementListView : EditorPanel
 
         _listY = _search.Y + _search.Height + 4;
         _clip = new Container(new ContainerConfig
-            { X = ListX, Y = _listY, Width = Columns * Row, Height = 100, EnableClip = true });
+        {
+            X = ListX,
+            Y = _listY,
+            Width = Columns * Row,
+            Height = 100,
+            EnableClip = true
+        });
         AddChild(_clip);
         _clip.AddChild(_selection);
 
         _scrollTrack = new ColorRect(new ColorRectConfig
-            { Width = 8, Height = 20, Color = 0x151515, Alpha = 0.8f, MouseEnabled = true });
+        {
+            Width = 8,
+            Height = 20,
+            Color = 0x151515,
+            Alpha = 0.8f,
+            MouseEnabled = true
+        });
         _scrollTrack.X = PanelWidth_ - 10;
         _scrollTrack.AddEventListener(MouseEvent.LeftDown, () => BeginThumbDrag(false));
         AddChild(_scrollTrack);
 
         _scrollThumb = new ColorRect(new ColorRectConfig
-            { Width = 8, Height = 20, Color = 0x8A8A8A, MouseEnabled = true });
+        {
+            Width = 8, Height = 20, Color = 0x8A8A8A, MouseEnabled = true
+        });
         _scrollThumb.X = PanelWidth_ - 10;
         _scrollThumb.AddEventListener(MouseEvent.LeftDown, () => BeginThumbDrag(true));
         AddChild(_scrollThumb);
@@ -410,7 +424,13 @@ public sealed class MapSelectorView : EditorPanel
 
         _listY = title.Y + title.Height + 5;
         _clip = new Container(new ContainerConfig
-            { X = 4, Y = _listY, Width = PanelWidth_ - 8, Height = PanelHeight_ - _listY - 4, EnableClip = true });
+        {
+            X = 4,
+            Y = _listY,
+            Width = PanelWidth_ - 8,
+            Height = PanelHeight_ - _listY - 4,
+            EnableClip = true
+        });
         AddChild(_clip);
 
         MouseEnabled = true;
@@ -491,7 +511,9 @@ public sealed class MapSelectorView : EditorPanel
             MapId = mapId;
 
             AddChild(new ColorRect(new ColorRectConfig
-                { Width = PanelWidth_ - 30, Height = SlotHeight - 2, Color = 0x202020, Alpha = 0.8f }));
+            {
+                Width = PanelWidth_ - 30, Height = SlotHeight - 2, Color = 0x202020, Alpha = 0.8f
+            }));
             _text = EditorStyle.Text("", 11);
             _text.X = 3;
             _text.Y = 1;
@@ -539,11 +561,11 @@ public sealed class MapToolbar : EditorPanel
 {
     private static readonly int[] ToolOrder =
     [
-        METool.SelectId, METool.DrawId, METool.EraserId, METool.SampleId, METool.BucketId, METool.LineId,
+        METool.SelectId, METool.DrawId, METool.EraserId, METool.SampleId, METool.FillId, METool.LineId,
         METool.ShapeId, METool.EditId
     ];
 
-    private static readonly string[] Keys = ["M", "D", "E", "A", "B", "L", "S", "I"];
+    private static readonly string[] Keys = ["M", "D", "E", "A", "F", "L", "S", "I"];
     private readonly Dictionary<int, EditorButton> _buttons = new();
 
     public MapToolbar(MapEditorScreen editor) : base(78, 100)
@@ -658,7 +680,12 @@ public sealed class NotificationView : Sprite
 {
     private readonly SimpleText _text = new(new TextConfig
     {
-        Text = "", FontSize = 20, FontType = FontType.Bold, Color = 0xFFFFFF, OutlineColor = 0x0, OutlineThickness = 1f,
+        Text = "",
+        FontSize = 20,
+        FontType = FontType.Bold,
+        Color = 0xFFFFFF,
+        OutlineColor = 0x0,
+        OutlineThickness = 1f,
         Glow = 0.5f
     });
 
@@ -830,7 +857,11 @@ public sealed class TileHotkeys : EditorPanel
             entry.AddChild(icon);
             var text = new SimpleText(new TextConfig
             {
-                Text = number.ToString(), FontSize = 11, FontType = FontType.Bold, Color = 0xFFFFFF, OutlineColor = 0,
+                Text = number.ToString(),
+                FontSize = 11,
+                FontType = FontType.Bold,
+                Color = 0xFFFFFF,
+                OutlineColor = 0,
                 OutlineThickness = 1f
             });
             text.X = (IconSize - text.Width) / 2;

@@ -652,7 +652,7 @@ public sealed class MapEditorScreen : Screen
             case Key.D: OnToolSwitch(METool.DrawId); break;
             case Key.L: OnToolSwitch(METool.LineId); break;
             case Key.S: OnToolSwitch(METool.ShapeId); break;
-            case Key.B: OnToolSwitch(METool.BucketId); break;
+            case Key.F: OnToolSwitch(METool.FillId); break;
             case Key.A: OnToolSwitch(METool.SampleId); break;
             case Key.E: OnToolSwitch(METool.EraserId); break;
             case Key.I: OnToolSwitch(METool.EditId); break;
