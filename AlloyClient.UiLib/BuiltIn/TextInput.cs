@@ -11,7 +11,8 @@ using OpenTK.Platform;
 
 namespace AlloyClient.UiLib.BuiltIn;
 
-public struct InputConfig {
+public struct InputConfig
+{
     public int X = 0;
     public int Y = 0;
     public float FontSize = 10;
@@ -30,11 +31,13 @@ public struct InputConfig {
 
     public Action OnChange = null;
 
-    public InputConfig() {
+    public InputConfig()
+    {
     }
 }
 
-public sealed class TextInput : Sprite {
+public sealed class TextInput : Sprite
+{
     public const string BoxLookup = "textBox";
 
     private const int CutX = 2;
@@ -44,6 +47,7 @@ public sealed class TextInput : Sprite {
 
     /// <summary>True while any text input has keyboard focus (used to suppress hotkeys while typing).</summary>
     public static bool IsAnyFocused => ActiveInput != null;
+
     private readonly SimpleText _caret;
     private readonly bool _clickActivate;
     private readonly string _defaultText;
@@ -58,6 +62,9 @@ public sealed class TextInput : Sprite {
     private readonly Action _onUnfocus;
     private readonly float _outlineThickness;
     private readonly bool _password;
+    private bool _allSelected;
+    private readonly ColorRect _selection;
+    private readonly Action<KeyboardEvent> _keyListener;
 
     private readonly NineSliceRect _textBox;
     private readonly int _width;
@@ -69,7 +76,8 @@ public sealed class TextInput : Sprite {
     private Vector2i _mousePosition;
     private int _startIndex;
 
-    public TextInput(InputConfig config) {
+    public TextInput(InputConfig config)
+    {
         X = config.X;
         Y = config.Y;
         _fontScale = config.FontSize;
@@ -95,20 +103,43 @@ public sealed class TextInput : Sprite {
 
         _inputText.Append(config.DefaultText);
 
-        var caretConfig = new TextConfig {
-            Text = "|", FontSize = config.FontSize, FontType = config.FontType, Color = config.Color,
-            OutlineColor = config.OutlineColor, OutlineThickness = (int)_outlineThickness
+        var caretConfig = new TextConfig
+        {
+            Text = "|",
+            FontSize = config.FontSize,
+            FontType = config.FontType,
+            Color = config.Color,
+            OutlineColor = config.OutlineColor,
+            OutlineThickness = (int)_outlineThickness
         };
         _caret = new SimpleText(caretConfig);
         _caret.Visible = false;
         AddChild(_caret);
 
-        var rectConfig = new NineSliceConfig {
-            Width = _width, Height = (int)(_font.LineHeight * _fontScale) + CutY * 3, SliceData = BoxLookup,
-            CutX = CutX, CutY = CutY
+        var rectConfig = new NineSliceConfig
+        {
+            Width = _width,
+            Height = (int)(_font.LineHeight * _fontScale) + CutY * 3,
+            SliceData = BoxLookup,
+            CutX = CutX,
+            CutY = CutY
         };
         _textBox = new NineSliceRect(rectConfig);
         AddChild(_textBox);
+
+        _selection = new ColorRect(new ColorRectConfig
+        {
+            X = CutX * 3,
+            Y = CutY * 3,
+            Width = 1,
+            Height = (int)(_font.LineHeight * _fontScale),
+            Color = 0x4A7BD0,
+            Alpha = 0.45f
+        });
+        _selection.Visible = false;
+        AddChild(_selection);
+
+        _keyListener = OnKeyDown;
 
         SetHitboxType(CollisionType.Square);
 
@@ -119,14 +150,16 @@ public sealed class TextInput : Sprite {
         ResizeBackBuffer();
         FillData();
     }
-    
+
     public string Text => _inputText.ToString();
 
-    private void ResizeBackBuffer() {
+    private void ResizeBackBuffer()
+    {
         var size = _maxCharacters + 1;
         VertexData = new VertexUi[size * 4];
         Indices = new ushort[size * 6];
-        for (var i = 0; i < Indices.Length / 6; i++) {
+        for (var i = 0; i < Indices.Length / 6; i++)
+        {
             var idx6 = i * 6;
             var idx4 = i * 4;
 
@@ -139,7 +172,8 @@ public sealed class TextInput : Sprite {
         }
     }
 
-    private void OnFrameEnter() {
+    private void OnFrameEnter()
+    {
         if (!_isCaretActive) return;
         var gameTime = Stage.GameTime;
         if (gameTime.TotalMs - _lastCaretUpdateTime < 500) return;
@@ -148,7 +182,8 @@ public sealed class TextInput : Sprite {
         _caret.Visible = !_caret.Visible;
     }
 
-    private void FillData() {
+    private void FillData()
+    {
         var startX = CutX * 3;
         var startY = _font.Ascender * _fontScale + CutY * 3;
         var zero = new Vector2(startX, startY);
@@ -164,8 +199,10 @@ public sealed class TextInput : Sprite {
 
         var password = _password && !_isDefaultText;
 
-        for (var i = start; i < end; i++) {
-            if (!caret && i == _caretIndex) {
+        for (var i = start; i < end; i++)
+        {
+            if (!caret && i == _caretIndex)
+            {
                 caret = true;
                 i--;
 
@@ -177,7 +214,8 @@ public sealed class TextInput : Sprite {
             }
 
             var c = password ? '*' : _inputText[i];
-            switch (c) {
+            switch (c)
+            {
                 case '\n':
                 case '\r':
                     continue;
@@ -200,7 +238,8 @@ public sealed class TextInput : Sprite {
                         new VertexUi(new Vector2(zero.X + pos.X1 * _fontScale, zero.Y - pos.Y1 * _fontScale),
                             new Vector2(uv.X1, uv.Y1)); //br
 
-                    if (i < len - 1) {
+                    if (i < len - 1)
+                    {
                         var k = password ? '*' : _inputText[i + 1];
                         _font.Kernings.TryGetValue((c, k), out var kern);
                         zero.X += kern * _fontScale;
@@ -213,22 +252,27 @@ public sealed class TextInput : Sprite {
             }
         }
 
-        if (!caret) {
+        if (!caret)
+        {
             _caret.X = (int)zero.X;
             _caret.Y = CutY * 3;
         }
 
+        var showSelection = _allSelected && _inputText.Length > 0 && !_isDefaultText;
+        _selection.Visible = showSelection;
+        if (showSelection)
+            _selection.Resize(Math.Max(1, (int)(zero.X - CutX * 3)), (int)(_font.LineHeight * _fontScale));
         SetGraphicsBuffer();
     }
 
-    protected override bool CustomHitbox(Vector2i pos) 
+    protected override bool CustomHitbox(Vector2i pos)
     {
         var hit = pos.X > 0 && pos.X < _textBox.Width && pos.Y > 0 && pos.Y < _textBox.Height;
         _mousePosition = pos;
         return hit;
     }
 
-    private void OnGlobalMouseDown(MouseEvent e) 
+    private void OnGlobalMouseDown(MouseEvent e)
     {
         if (!IsInBounds(e.Coords))
         {
@@ -236,9 +280,10 @@ public sealed class TextInput : Sprite {
         }
     }
 
-    private void OnMouseClick(MouseEvent args) 
+    private void OnMouseClick(MouseEvent args)
     {
-        if (ActiveInput != this && _clickActivate) 
+        _allSelected = false;
+        if (ActiveInput != this && _clickActivate)
         {
             ActiveInput?.UnFocus();
             Parent?.SetTextInputIndex(this);
@@ -248,10 +293,10 @@ public sealed class TextInput : Sprite {
         SetCaretIndex();
     }
 
-    private void SetCaretIndex() 
+    private void SetCaretIndex()
     {
         var i = 1; // Offset by 1 for rect
-        for (var j = _startIndex; j < _inputText.Length; j++) 
+        for (var j = _startIndex; j < _inputText.Length; j++)
         {
             var p1 = VertexData[i * 4 + 1].Position.X;
             var p2 = VertexData[i * 4 + 3].Position.X;
@@ -271,7 +316,8 @@ public sealed class TextInput : Sprite {
         FillData();
     }
 
-    internal void OnTextInput(TextInputEventArgs e) {
+    internal void OnTextInput(TextInputEventArgs e)
+    {
         var text = e.Text;
         if (string.IsNullOrEmpty(text)) return;
         if (text.Length != 1) return;
@@ -281,40 +327,70 @@ public sealed class TextInput : Sprite {
         var backspace = c == '\b';
         var tab = c == '\t';
         var enter = c == '\n';
-        var allowedControlKey = backspace || tab || enter;
+        var delete = c == '\x7f';
+        var allowedControlKey = backspace || tab || enter || delete;
 
         if (char.IsControl(c) && !allowedControlKey) return;
 
-        switch (true) 
+        if (tab)
         {
-            case true when tab:
-                Parent?.TabToNextTextInput();
+            Parent?.TabToNextTextInput();
+            return;
+        }
+
+        if (enter) return;
+
+        if (_allSelected)
+        {
+            if (backspace || delete)
+            {
+                DeleteSelection();
                 return;
-            case true when enter:
-                
-            case true when backspace && _inputText.Length > 0:
-                if (_caretIndex == -1) 
-                {
-                    _inputText.Remove(_inputText.Length - 1, 1);
-                    FillData();
-                    _onChange?.Invoke();
-                } else if (_caretIndex > 0) 
-                {
-                    _caretIndex--;
-                    _inputText.Remove(_caretIndex, 1);
-                    FillData();
-                    _onChange?.Invoke();
-                }
+            }
+
+            DeleteSelection(); // Typing replaces the selection, then falls through to insert the character
+        }
+
+        if (backspace)
+        {
+            if (_inputText.Length == 0) return;
+            if (_caretIndex == -1)
+            {
+                _inputText.Remove(_inputText.Length - 1, 1);
+            }
+            else if (_caretIndex > 0)
+            {
+                _caretIndex--;
+                _inputText.Remove(_caretIndex, 1);
+            }
+            else
                 return;
+
+            FillData();
+            _onChange?.Invoke();
+            return;
+        }
+
+        if (delete)
+        {
+            if (_caretIndex < 0 || _caretIndex >= _inputText.Length) return;
+            _inputText.Remove(_caretIndex, 1);
+            if (_caretIndex >= _inputText.Length) _caretIndex = -1;
+            FillData();
+            _onChange?.Invoke();
+            return;
         }
 
         if (_inputText.Length == _maxCharacters) return;
         if (!_font.Glyphs.ContainsKey(c)) return;
         if (char.IsWhiteSpace(c) && c != ' ') return;
 
-        if (_caretIndex == -1) {
+        if (_caretIndex == -1)
+        {
             _inputText.Append(c);
-        } else {
+        }
+        else
+        {
             _inputText.Insert(_caretIndex, c);
             _caretIndex++;
         }
@@ -323,21 +399,22 @@ public sealed class TextInput : Sprite {
         _onChange?.Invoke();
     }
 
-    public bool HasText(bool ignoreWhitespace) {
+    public bool HasText(bool ignoreWhitespace)
+    {
         if (ignoreWhitespace) return !string.IsNullOrWhiteSpace(_inputText.ToString());
         return _inputText.Length > 0;
     }
 
-    public void Focus() 
+    public void Focus()
     {
-        if (ActiveInput != this) 
+        if (ActiveInput != this)
         {
             ActiveInput?.UnFocus();
             ActiveInput = this;
         }
 
         var changed = ClearIfDefault();
-        
+
         _caretIndex = -1;
         _isCaretActive = true;
         _caret.Visible = true;
@@ -345,13 +422,15 @@ public sealed class TextInput : Sprite {
 
         AddEventListener(Event.EnterFrame, OnFrameEnter);
         Stage?.AddEventListener(MouseEvent.LeftDown, _globalMouseListener);
+        Stage?.AddEventListener(KeyboardEvent.KeyDown, _keyListener);
 
         FillData();
-        
+
         if (changed) _onChange?.Invoke();
     }
 
-    public void UnFocus(bool clearText = false) {
+    public void UnFocus(bool clearText = false)
+    {
         if (ActiveInput == this) ActiveInput = null;
 
         _isCaretActive = false;
@@ -361,29 +440,36 @@ public sealed class TextInput : Sprite {
 
         var changed = false;
 
-        if (clearText && _inputText.Length > 0) {
+        if (clearText && _inputText.Length > 0)
+        {
             _inputText.Clear();
             changed = true;
         }
 
-        if (_inputText.Length == 0 && !_isDefaultText) {
+        if (_inputText.Length == 0 && !_isDefaultText)
+        {
             SetDefault();
             changed = true;
         }
 
         RemoveEventListener(Event.EnterFrame, OnFrameEnter);
         Stage?.RemoveEventListener(MouseEvent.LeftDown, _globalMouseListener);
+        Stage?.RemoveEventListener(KeyboardEvent.KeyDown, _keyListener);
         FillData();
 
         if (changed) _onChange?.Invoke();
     }
 
-    public void InsertText(string text) {
+    public void InsertText(string text)
+    {
         ClearIfDefault();
 
-        if (_caretIndex == -1) {
+        if (_caretIndex == -1)
+        {
             _inputText.Append(text);
-        } else {
+        }
+        else
+        {
             _inputText.Insert(_caretIndex, text);
             _caretIndex += text.Length;
         }
@@ -392,8 +478,10 @@ public sealed class TextInput : Sprite {
         _onChange?.Invoke();
     }
 
-    public void SetText(string text) {
-        if (text == string.Empty) {
+    public void SetText(string text)
+    {
+        if (text == string.Empty)
+        {
             SetDefault();
             _onChange?.Invoke();
             return;
@@ -405,7 +493,7 @@ public sealed class TextInput : Sprite {
         _onChange?.Invoke();
     }
 
-    private bool ClearIfDefault() 
+    private bool ClearIfDefault()
     {
         if (!_isDefaultText) return false;
         _inputText.Clear();
@@ -413,9 +501,95 @@ public sealed class TextInput : Sprite {
         return true;
     }
 
-    private void SetDefault() {
+    private void SetDefault()
+    {
         _inputText.Clear();
         _inputText.Append(_defaultText);
         _isDefaultText = true;
+    }
+
+    private void OnKeyDown(KeyboardEvent e)
+    {
+        if (ActiveInput != this || !e.Ctrl) return;
+        switch (e.Key)
+        {
+            case Key.A: SelectAll(); break;
+            case Key.C: CopySelection(); break;
+            case Key.X:
+                if (CopySelection()) DeleteSelection();
+                break;
+            case Key.V: PasteFromClipboard(); break;
+        }
+    }
+
+    private void SelectAll()
+    {
+        if (_isDefaultText || _inputText.Length == 0) return;
+        _allSelected = true;
+        _caretIndex = -1;
+        FillData();
+    }
+
+    private bool CopySelection()
+    {
+        if (!_allSelected || _password) return false; // Password fields never copy
+        Toolkit.Clipboard.SetClipboardText(Text);
+        return true;
+    }
+
+    private void DeleteSelection()
+    {
+        _allSelected = false;
+        _caretIndex = -1;
+        _inputText.Clear();
+        FillData();
+        _onChange?.Invoke();
+    }
+
+    private void PasteFromClipboard()
+    {
+        string clip;
+        try
+        {
+            clip = Toolkit.Clipboard.GetClipboardText();
+        }
+        catch
+        {
+            return;
+        }
+
+        if (string.IsNullOrEmpty(clip)) return;
+
+        if (_allSelected)
+        {
+            _allSelected = false;
+            _caretIndex = -1;
+            _inputText.Clear();
+        }
+
+        ClearIfDefault();
+
+        var added = 0;
+        foreach (var c in clip)
+        {
+            if (_inputText.Length >= _maxCharacters) break;
+            if (char.IsWhiteSpace(c) && c != ' ') continue; // Drop newlines and tabs
+            if (!_font.Glyphs.ContainsKey(c)) continue;
+
+            if (_caretIndex == -1)
+            {
+                _inputText.Append(c);
+            }
+            else
+            {
+                _inputText.Insert(_caretIndex, c);
+                _caretIndex++;
+            }
+
+            added++;
+        }
+
+        FillData();
+        if (added > 0) _onChange?.Invoke();
     }
 }
