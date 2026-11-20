@@ -25,31 +25,33 @@ public static class AppRequests
     
     public static async Task Startup()
     {
-        CheckConnection();
-        
         StartTimer.Enabled = true;
         StartTimer.AutoReset = true;
+        await CheckConnection(); // Check connection here so if successful, can stop timer before it continues
         StartTimer.Elapsed += async (sender, args) => 
         {
-            CheckConnection();
+            await CheckConnection();
         };
     }
 
-    private static async void CheckConnection()
+    private static async Task CheckConnection()
     {
         var result = await VerifyAsync();
             
         Console.WriteLine(result);
-
+        
         if (result.Message == "Invalid account credentials.")
         {
             StartTimer.Stop();
             Console.WriteLine($"Result: {result.Message}");
-                
+            
+            if (GlobalData.Contains<LoginData>())
+                GlobalData.Remove<LoginData>();
+            
+            Settings.SaveLocalAccount();
             AccountOverlay.OnVerifyAsyncSuccessLoggedOut.Dispatch();
             AccountOverlay.Connected = true;
-                
-            await Assets.RemoteAssetLoader.LoadAllAsync();
+            
             return;
         }
         if (result.Message == "Error")
@@ -57,16 +59,19 @@ public static class AppRequests
             StartTimer.Stop();
             Console.WriteLine($"Result: {result.Message}");
                 
+            if (GlobalData.Contains<LoginData>())
+                GlobalData.Remove<LoginData>();
+            
+            Settings.SaveLocalAccount();
             AccountOverlay.OnVerifyAsyncSuccessLoggedOut.Dispatch();
             AccountOverlay.Connected = true;
-                
-            await Assets.RemoteAssetLoader.LoadAllAsync();
+            
             return;
         } 
         if (result.Message != "Failed to contact server.")
         {
             StartTimer.Stop();
-            Console.WriteLine($"Result: {result.Message}");
+            Console.WriteLine($"Result: Success");
                 
             AccountOverlay.OnVerifyAsyncSuccess.Dispatch();
             AccountOverlay.Connected = true;
@@ -101,7 +106,7 @@ public static class AppRequests
         }
         if (response.Contains("Error"))
         {
-            return new AppResponse { Success = false, Message = "Error" };
+            return new AppResponse { Success = false, Message = response };
         }
 
         var xml = XElement.Parse(response);

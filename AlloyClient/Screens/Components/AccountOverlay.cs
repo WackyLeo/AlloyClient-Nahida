@@ -22,8 +22,8 @@ public class AccountOverlay : Sprite
     private readonly Container _container = new();
     private readonly TitleScreen  _titleScreen;
     
-    public static SingleSignal OnVerifyAsyncSuccess = new();
-    public static SingleSignal OnVerifyAsyncSuccessLoggedOut = new();
+    public static Signal OnVerifyAsyncSuccess = new();
+    public static Signal OnVerifyAsyncSuccessLoggedOut = new();
     public static bool Connected = true;
     
     private double _startTime = Stage.GameTime.TotalMs;
@@ -40,9 +40,11 @@ public class AccountOverlay : Sprite
         
         if (GlobalData.Contains<LoginData>()) 
         {
+            Console.WriteLine($"TRUE");
             CreateLogout();
         } else if (Connected)
         {
+            Console.WriteLine($"CONNECTED");
             CreateLogin();
         }
         
@@ -52,28 +54,21 @@ public class AccountOverlay : Sprite
     
     private void AddHandlers() 
     {
-        OnVerifyAsyncSuccess.Set(CreateLogout);
-        OnVerifyAsyncSuccessLoggedOut.Set(CreateLogin);
+        OnVerifyAsyncSuccess.Add(CreateLogout);
+        OnVerifyAsyncSuccessLoggedOut.Add(CreateLogin);
         AddEventListener(Event.EnterFrame, OnFrameEnter);
     }
 
     private void RemoveHandlers() 
     {
-        OnVerifyAsyncSuccess.Remove();
-        OnVerifyAsyncSuccessLoggedOut.Remove();
+        OnVerifyAsyncSuccess.Remove(CreateLogout);
+        OnVerifyAsyncSuccessLoggedOut.Remove(CreateLogin);
         RemoveEventListener(Event.EnterFrame, OnFrameEnter);
     }
     
-    public async void OnLogin() 
+    public void OnLogin() 
     {
-        var result = await AppRequests.GetCharList();
-        await Assets.RemoteAssetLoader.LoadAllAsync();
-
-        if (!result.Success)
-        {
-            ScreenManager.FadeToScreen(new TitleScreen(), Easing.SineInOut, 1000, 0x0);
-        }
-        else GTween.Add(Tween.New(_container, Easing.SineInOut, 150, 0f, EaseType.Alpha, onFinish: () => 
+        GTween.Add(Tween.New(_container, Easing.SineInOut, 150, 0f, EaseType.Alpha, onFinish: () => 
         {
             CreateLogout();
             GTween.Add(Tween.New(_container, Easing.SineInOut, 150, 1f, EaseType.Alpha));
@@ -192,8 +187,10 @@ public class AccountOverlay : Sprite
         
         if (account == null)    // We're not properly logged in
         {
-            if (Connected)
+            if (!Connected)
+            {
                 CreateLogin();
+            }
             return;
         }
         

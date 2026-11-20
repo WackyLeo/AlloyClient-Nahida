@@ -1,4 +1,5 @@
 ﻿using System;
+using AlloyClient.AppEngine;
 using AlloyClient.Data;
 using AlloyClient.Display;
 using AlloyClient.Screens.Components;
@@ -134,9 +135,10 @@ public class TitleScreen : TitleScreenBase {
         base.OnResize(args);
     }
 
-    private void OnPlay() {
-        if (GlobalData.Contains<LoginData>()) 
+    private async void OnPlay() {
+        if (GlobalData.Contains<LoginData>())
         {
+            await AppRequests.GetCharList();
             ScreenManager.FadeTo(new CharacterListScreen());
         }
         else 
