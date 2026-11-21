@@ -4,6 +4,7 @@ using System.Text;
 using AlloyClient.UiLib.Core;
 using AlloyClient.UiLib.Data;
 using AlloyClient.UiLib.Enums;
+using AlloyClient.UiLib.Input;
 using AlloyClient.UiLib.Rendering;
 using AlloyClient.UiLib.Signals;
 using OpenTK.Mathematics;
@@ -65,6 +66,11 @@ public sealed class TextInput : Sprite
     private bool _allSelected;
     private readonly ColorRect _selection;
     private readonly Action<KeyboardEvent> _keyListener;
+    private const double RepeatDelayMs = 400;
+    private const double RepeatIntervalMs = 35;
+    private Key? _heldKey;
+    private double _nextRepeatMs;
+    private readonly Action<KeyboardEvent> _keyUpListener;
 
     private readonly NineSliceRect _textBox;
     private readonly int _width;
@@ -140,6 +146,7 @@ public sealed class TextInput : Sprite
         AddChild(_selection);
 
         _keyListener = OnKeyDown;
+        _keyUpListener = OnKeyUp;
 
         SetHitboxType(CollisionType.Square);
 
@@ -174,6 +181,19 @@ public sealed class TextInput : Sprite
 
     private void OnFrameEnter()
     {
+        if (_heldKey is { } held)
+        {
+            var now = Stage.GameTime.TotalMs;
+            var steps = 0;
+            while (now >= _nextRepeatMs && steps++ < 5)
+            {
+                ApplyCaretKey(held);
+                _nextRepeatMs += RepeatIntervalMs;
+            }
+
+            if (now >= _nextRepeatMs) _nextRepeatMs = now + RepeatIntervalMs;
+        }
+
         if (!_isCaretActive) return;
         var gameTime = Stage.GameTime;
         if (gameTime.TotalMs - _lastCaretUpdateTime < 500) return;
@@ -295,26 +315,49 @@ public sealed class TextInput : Sprite
 
     private void SetCaretIndex()
     {
-        var i = 1; // Offset by 1 for rect
-        for (var j = _startIndex; j < _inputText.Length; j++)
-        {
-            var p1 = VertexData[i * 4 + 1].Position.X;
-            var p2 = VertexData[i * 4 + 3].Position.X;
-            var half = (p2 - p1) / 2f;
-
-            if (j == _startIndex && _mousePosition.X <= p1)
-                _caretIndex = 0;
-            else if (_mousePosition.X >= p1 && _mousePosition.X < p1 + half)
-                _caretIndex = _startIndex + i - 1;
-            else if (_mousePosition.X <= p2 && _mousePosition.X >= p2 - half)
-                _caretIndex = _startIndex + i;
-            else if (j + 1 == _inputText.Length && _mousePosition.X >= p2) _caretIndex = -1;
-
-            i++;
-        }
-
+        Console.WriteLine(
+            $"caret click: rel={GetRelativeMousePosition()} hit={_mousePosition} start={_startIndex} len={_inputText.Length}");
+        var mouseX = GetRelativeMousePosition().X; // Fresh position, local to this text box
+        _caretIndex = GetCaretIndexAt(mouseX);
         FillData();
     }
+
+    private int GetCaretIndexAt(float mouseX)
+    {
+        var password = _password && !_isDefaultText;
+        var len = _inputText.Length;
+        var x = (float)(CutX * 3);
+        var caretSkipped = false;
+
+        for (var i = _startIndex; i < len; i++)
+        {
+            // FillData leaves room for the caret before the character it sits in front of
+            if (!caretSkipped && i == _caretIndex)
+            {
+                x += _caret.Width;
+                caretSkipped = true;
+            }
+
+            var c = password ? '*' : _inputText[i];
+            float advance = 0;
+            if (c != '\n' && c != '\r' && _font.Glyphs.TryGetValue(c, out var glyph))
+            {
+                advance = glyph.Advance * _fontScale;
+                if (i < len - 1)
+                {
+                    var k = password ? '*' : _inputText[i + 1];
+                    _font.Kernings.TryGetValue((c, k), out var kern);
+                    advance += kern * _fontScale;
+                }
+            }
+
+            if (mouseX < x + advance / 2f) return i; // Left half of the character: caret goes before it
+            x += advance;
+        }
+
+        return -1; // Past the last character: end of text
+    }
+
 
     internal void OnTextInput(TextInputEventArgs e)
     {
@@ -351,6 +394,12 @@ public sealed class TextInput : Sprite
             DeleteSelection(); // Typing replaces the selection, then falls through to insert the character
         }
 
+        if ((backspace || delete) && KeyboardInput.IsCtrlDown())
+        {
+            DeleteWordBefore();
+            return;
+        }
+        
         if (backspace)
         {
             if (_inputText.Length == 0) return;
@@ -364,13 +413,15 @@ public sealed class TextInput : Sprite
                 _inputText.Remove(_caretIndex, 1);
             }
             else
-                return;
+            {
+                return; // Caret at the very start, nothing before it
+            }
 
             FillData();
             _onChange?.Invoke();
             return;
         }
-
+        
         if (delete)
         {
             if (_caretIndex < 0 || _caretIndex >= _inputText.Length) return;
@@ -399,6 +450,23 @@ public sealed class TextInput : Sprite
         _onChange?.Invoke();
     }
 
+    private void DeleteWordBefore()
+    {
+        if (_isDefaultText) return;
+        var end = _caretIndex == -1 ? _inputText.Length : _caretIndex;
+        if (end == 0) return;
+
+        var start = end;
+        while (start > 0 && char.IsWhiteSpace(_inputText[start - 1])) start--; // Trailing spaces
+        while (start > 0 && !char.IsWhiteSpace(_inputText[start - 1])) start--; // The word itself
+
+        _inputText.Remove(start, end - start);
+        if (_caretIndex != -1) _caretIndex = start;
+
+        FillData();
+        _onChange?.Invoke();
+    }
+
     public bool HasText(bool ignoreWhitespace)
     {
         if (ignoreWhitespace) return !string.IsNullOrWhiteSpace(_inputText.ToString());
@@ -422,6 +490,7 @@ public sealed class TextInput : Sprite
 
         AddEventListener(Event.EnterFrame, OnFrameEnter);
         Stage?.AddEventListener(MouseEvent.LeftDown, _globalMouseListener);
+        Stage?.AddEventListener(KeyboardEvent.KeyUp, _keyUpListener);
         Stage?.AddEventListener(KeyboardEvent.KeyDown, _keyListener);
 
         FillData();
@@ -452,7 +521,10 @@ public sealed class TextInput : Sprite
             changed = true;
         }
 
+
         RemoveEventListener(Event.EnterFrame, OnFrameEnter);
+        Stage?.RemoveEventListener(KeyboardEvent.KeyUp, _keyUpListener);
+        _heldKey = null;
         Stage?.RemoveEventListener(MouseEvent.LeftDown, _globalMouseListener);
         Stage?.RemoveEventListener(KeyboardEvent.KeyDown, _keyListener);
         FillData();
@@ -510,7 +582,24 @@ public sealed class TextInput : Sprite
 
     private void OnKeyDown(KeyboardEvent e)
     {
-        if (ActiveInput != this || !e.Ctrl) return;
+        if (ActiveInput != this) return;
+
+        if (!e.Ctrl)
+        {
+            var isArrow = e.Key is Key.LeftArrow or Key.RightArrow;
+            if (!isArrow && e.Key is not (Key.Home or Key.End)) return;
+
+            if (isArrow)
+            {
+                if (_heldKey == e.Key) return; // OS auto-repeat, our timer handles repeating
+                _heldKey = e.Key;
+                _nextRepeatMs = Stage.GameTime.TotalMs + RepeatDelayMs;
+            }
+
+            ApplyCaretKey(e.Key);
+            return;
+        }
+
         switch (e.Key)
         {
             case Key.A: SelectAll(); break;
@@ -520,6 +609,49 @@ public sealed class TextInput : Sprite
                 break;
             case Key.V: PasteFromClipboard(); break;
         }
+    }
+
+    private void OnKeyUp(KeyboardEvent e)
+    {
+        if (_heldKey == e.Key) _heldKey = null;
+    }
+
+    private void ApplyCaretKey(Key key)
+    {
+        switch (key)
+        {
+            case Key.LeftArrow: MoveCaret(-1); break;
+            case Key.RightArrow: MoveCaret(1); break;
+            case Key.Home: SetCaret(0); break;
+            case Key.End: SetCaret(-1); break;
+        }
+    }
+
+    private void MoveCaret(int dir)
+    {
+        if (_isDefaultText) return;
+        var len = _inputText.Length;
+
+        if (_allSelected)
+        {
+            // Collapse the selection: left goes to the start, right to the end
+            SetCaret(dir < 0 ? 0 : -1);
+            return;
+        }
+
+        var current = _caretIndex == -1 ? len : _caretIndex;
+        SetCaret(Math.Clamp(current + dir, 0, len));
+    }
+
+// index -1 or == length means end of text
+    private void SetCaret(int index)
+    {
+        if (_isDefaultText) return;
+        _allSelected = false;
+        _caretIndex = index >= _inputText.Length ? -1 : index;
+        _caret.Visible = true; // Show the caret right away instead of mid-blink
+        _lastCaretUpdateTime = Stage.GameTime.TotalMs;
+        FillData();
     }
 
     private void SelectAll()
